@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors plus floor/household and socket aggregates. Reference only; entity ids are anonymised and will not apply to the live instance.",
+  "note": "Resolved per-room sensors, the floor/household and socket aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised.",
   "entries": [
     {
       "domain": "min_max",
@@ -222,6 +222,16 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Climate health risk",
+      "options": {
+        "device_class": "problem",
+        "name": "Climate health risk",
+        "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
+        "template_type": "binary_sensor"
       }
     }
   ]
