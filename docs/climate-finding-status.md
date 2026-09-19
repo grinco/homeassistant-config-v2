@@ -7,7 +7,7 @@ session does not re-fix something already fixed or trust a chunk describing dele
 - Design of record: `docs/climate-control-design.md` (v4.3)
 - Automations: `automation.climate_maintain_per_room_targets` (id `1789725511503`),
   `automation.climate_stamp_ha_start`
-- 55 helpers. HA 2026.9.3 Supervised, Home.
+- 56 helpers. HA 2026.9.3 Supervised, Home.
 
 ## Still OPEN — safe to act on
 
@@ -15,8 +15,7 @@ session does not re-fix something already fixed or trust a chunk describing dele
 |---|---|
 | A1 | Hysteresis assumes the unit reports within one tick. Bounded by `settle` (240 s), not eliminated. |
 | A7 | A prolonged safety failure alerts on a repeating throttle, not an escalation. |
-| A11 | One `climate_ac_sensor_offset` (−2 °C) stands in for three uncalibrated units (Bedroom, Kids room 1, Kids room 2). Measured once, on one unit. |
-| M6 | The AC/TRV no-fight invariant is unenforceable until TRV entities exist. **Operator constraint: keep every TRV setpoint at or below the room's NIGHT TARGET (20 °C).** |
+| A11 | **Largely resolved by the Tado valves (v5).** The three bedrooms now read their own TRV, so the shared −2 °C offset no longer stands in for three rooms; it applies only to the AC probes, which are now fallbacks. A new `climate_trv_sensor_offset` is shared across the three valves and is still one number for three devices — but it is 0.0 and unmeasured, so it asserts nothing yet. |
 | P2 | A setpoint-only change at the wall is classified as a **fault**, not a person: `last_changed` does not move for attribute-only changes, and `last_updated` is bumped by every cloud poll so it is useless as a human signal. Bounded — `will_set_temp` is gated on `not tripped`, so the breaker halts the fight after ~3 ticks and alerts. |
 | R5 (cloud re-report) | SmartThings re-emitting an unchanged `hvac_mode` within `human_window` of our last command can still read as a human. Narrowed by the 1200 s cap, not closed. |
 | Observation | Whether `heat` above setpoint actually moves air, which decides if the in-season air-filter case should use `fan_only` instead. Needs watching, not a redesign. |
@@ -40,6 +39,7 @@ session does not re-fix something already fixed or trust a chunk describing dele
 | R6-3 | Closed in v4.2, before the review was read. Both actuating steps re-read live state at dispatch (`is_state(r.climate, …)`). |
 | R6-4 | Closed. The safety alert is **no longer gated on commanding** — it follows the safety condition, throttled by `input_datetime.climate_safety_alert_<room>`. |
 | R6-5 | Closed by the config-health notification. |
+| M6 | **Closed in v5 — now checked, not asserted.** The Tado valves expose their setpoint, so the config-health check compares each against its room's night target and names the room if it drifts above. Previously a prose-only operator constraint because no entity existed to verify it. |
 | R6-6 | **Closed by the hardware.** The units switch preset themselves on a heat start so the mesh opens (observed live: Living room `none` → `quiet`). No automation change was made, and none should be — the proposed fix would have added a preset call, the one call that turns an off unit on in cool. |
 
 ## Three hardware facts that caused real shipped bugs

@@ -143,6 +143,21 @@
         },
         {
           "type": "tile",
+          "entity": "input_number.climate_trv_sensor_offset",
+          "name": "TRV offset",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
           "entity": "input_datetime.climate_away_since",
           "name": "Away since",
           "color": "blue-grey",
@@ -334,6 +349,197 @@
           "entity": "input_datetime.climate_manual_until_kid2",
           "name": "Kids room 2",
           "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Radiator valves — read only",
+          "heading_style": "subtitle",
+          "icon": "mdi:radiator"
+        },
+        {
+          "type": "markdown",
+          "text_only": true,
+          "content": "The automation **reads** these and never commands them: the boiler is configured outside it and is the winter failsafe. *Heating %* says when a valve is driving the radiator, which is exactly when its temperature reading is biased. *Window* is Tado's open-window detection, currently unused by the automation. Each valve's setpoint is watched against that room's night target — a valve set above it makes the boiler and the AC alternate, and the config-health notification will say so."
+        },
+        {
+          "type": "heading",
+          "heading": "Bedroom",
+          "heading_style": "subtitle",
+          "icon": "mdi:thermometer"
+        },
+        {
+          "type": "tile",
+          "entity": "climate.bedroom_trv_bedroom_trv",
+          "name": "Valve",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.bedroom_trv_bedroom_trv_heating",
+          "name": "Heating %",
+          "color": "red",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.bedroom_trv_bedroom_trv_temperature",
+          "name": "Temp",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.bedroom_trv_bedroom_trv_humidity",
+          "name": "RH",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.bedroom_trv_bedroom_trv_window",
+          "name": "Window",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.bedroom_trv_bedroom_trv_connectivity",
+          "name": "Online",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Kids room 1",
+          "heading_style": "subtitle",
+          "icon": "mdi:thermometer"
+        },
+        {
+          "type": "tile",
+          "entity": "climate.kid1_room_trv_kid1_room_trv",
+          "name": "Valve",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid1_room_trv_kid1_room_trv_heating",
+          "name": "Heating %",
+          "color": "red",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid1_room_trv_kid1_room_trv_temperature",
+          "name": "Temp",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid1_room_trv_kid1_room_trv_humidity",
+          "name": "RH",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
+          "name": "Window",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_connectivity",
+          "name": "Online",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Kids room 2",
+          "heading_style": "subtitle",
+          "icon": "mdi:thermometer"
+        },
+        {
+          "type": "tile",
+          "entity": "climate.kid2_room_trv_kid2_room_trv",
+          "name": "Valve",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid2_room_trv_kid2_room_trv_heating",
+          "name": "Heating %",
+          "color": "red",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid2_room_trv_kid2_room_trv_temperature",
+          "name": "Temp",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid2_room_trv_kid2_room_trv_humidity",
+          "name": "RH",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
+          "name": "Window",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_connectivity",
+          "name": "Online",
+          "color": "green",
           "grid_options": {
             "columns": 6
           }

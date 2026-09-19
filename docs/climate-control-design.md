@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-19). Version 4.
+Status: **implemented and live** (2026-09-20). Version 5.1.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -21,8 +21,9 @@ Instance: HA 2026.9.2 Supervised, Home.
 | v3.1 | **Safety band made universal and unconditional**; breaker re-arms hourly | Round 2 found that v3's away-respects-lockouts change and its breaker both had holes — see §10 |
 | v3.2 | **Manual changes at the wall win**; gas boiler recognised as a low baseline | Operator requirements — see §11 |
 | v3.3 | Safety band outranks the manual hold; boiler flag no longer suppresses it; human-vs-fault detection rebuilt on the failure counter; hold now notifies | Round 3 found both v3.2 additions had safety holes — see §14 |
+| **v5.1** | **One resolved template sensor per room owns all sensor selection, bias and gating; the control loop, the graphs and the floor/household averages all read it. Tado TRVs become the bedrooms' preferred source, distrusted while the radiator is hot. Numeric-helper bounds and sensor-blackout alerting added.** | Tado valves installed; round-7 findings R7-3/5/6/9 — see §20 |
 | v3.4 | **Per-room boiler flags deleted entirely** (5 helpers, dashboard section, automation references) | Operator: "the boiler settings per room are redundant… they complicate the setup and the dashboard" |
-| **v4** | **Heat/cool becomes a global HOUSE decision from the outdoor temperature; each room gets a day target and a night target instead of two thresholds; new per-room air-filter mode; human detection rebuilt on a real command timestamp; setpoints rounded and clamped to the unit's range; `climate_safety_always` becomes a true master hatch** | Operator simplification request, plus round-4 findings R4-1 through R4-7 — see §15 and §16 |
+| v4 | **Heat/cool becomes a global HOUSE decision from the outdoor temperature; each room gets a day target and a night target instead of two thresholds; new per-room air-filter mode; human detection rebuilt on a real command timestamp; setpoints rounded and clamped to the unit's range; `climate_safety_always` becomes a true master hatch** | Operator simplification request, plus round-4 findings R4-1 through R4-7 — see §15 and §16 |
 
 ---
 
@@ -262,7 +263,7 @@ threshold at which we act and the setpoint we are able to send are different thi
 
 ## 4. Data model
 
-55 helpers, split across two pages by how often they are touched. The **Climate** view carries
+56 helpers, split across two pages by how often they are touched. The **Climate** view carries
 only the day-to-day controls: the master switch, the house-mode band, and per room its Maintain
 toggle, Air filter toggle and Day/Night targets. Everything set once — the night window, the away
 safety band, the safety master and frost/hysteresis, sensor calibration, the circuit breaker and
@@ -290,7 +291,8 @@ discard the restored value on every HA restart and silently reset the operator's
 | Away band | `input_number.climate_away_min` / `_away_max` | 18 / 30 °C |
 | Frost | `input_number.climate_frost_override` | 7 °C |
 | Hysteresis | `input_number.climate_hysteresis` | 1 °C |
-| Sensor bias | `input_number.climate_ac_sensor_offset` | −2 °C |
+| Sensor bias (AC probe) | `input_number.climate_ac_sensor_offset` | −2 °C |
+| Sensor bias (TRV) | `input_number.climate_trv_sensor_offset` | 0.0 °C, unmeasured |
 | Breaker | `input_number.climate_breaker_threshold` | 3 ticks |
 | Settle | `input_number.climate_command_settle` | 240 s |
 | Manual hold | `input_number.climate_manual_hold_hours` | 2 h |
@@ -683,7 +685,7 @@ automation, and none may be added to that list.
   cannot express a window crossing midnight. There is no single editable night range.
 - ~~The stated day comfort target is 22 °C but every room is seeded at 20.5.~~ **Resolved by v4** —
   the two-threshold pair is gone and every room is seeded at the stated 22 °C day / 20 °C night.
-- **55 helpers and one ~100-step run.** The automation is at the size where a decide/act split — a
+- **56 helpers and one ~100-step run.** The automation is at the size where a decide/act split — a
   template entity publishing each room's verdict, with a thin automation applying it — would make
   the decision continuously inspectable instead of only visible in a trace. See §13.
 - Thermostatic valve entities are coming. If they are read-only they become the best control
@@ -1117,3 +1119,183 @@ against a condition that cannot occur.
 The rule that follows: **before building a guard, establish whether the hardware already has one.**
 A guard for an impossible state is not free; it is new code on the actuation path, and on this
 system the actuation path is where every serious bug has lived.
+
+---
+
+## 20. v5 — Tado radiator valves as room sensors
+
+Three Tado Smart Radiator Thermostats arrived in the bedrooms on 2026-09-19. They are the first
+independent temperature sensors those rooms have ever had. The boiler is still configured entirely
+outside this automation and is still never commanded by it; what changed is that it now has
+**instruments** we can read.
+
+### The AC return-air probes were worse than the design admitted
+
+Measured side by side with the radiators cold (`heating = 0 %` on all three):
+
+| Room | TRV | AC probe raw → corrected | Δ |
+|---|---|---|---|
+| Bedroom | 23.04 | 25.0 → 23.0 | +0.04 |
+| Kids room 1 | 24.16 | 25.0 → 23.0 | +1.16 |
+| Kids room 2 | 24.16 | 25.0 → 23.0 | +1.16 |
+
+**All three probes reported exactly 25.0.** They resolve to whole degrees, so the automation has
+been treating three rooms as the same temperature when two of them were genuinely ~1.2 °C warmer
+than the third. That is finding **A11** — one shared offset standing in for three uncalibrated
+units — showing up as data rather than as an argument. The TRVs resolve to 0.01 °C and are not
+sitting in the return airflow of the very unit being controlled, which is a feedback path the
+probes always had.
+
+So the bedrooms now read **TRV first, AC probe as fallback**.
+
+### Bias belongs to the sensor, not the room
+
+The old model carried one `biased` boolean per room. That was wrong in a way that would only ever
+have shown up during a failure: Living room and Office were flagged *unbiased* because their
+primary is a SwitchBot meter — but their **fallback is the AC probe**, which reads ~2 °C high. If a
+meter had died, those rooms would have silently controlled on an uncorrected reading and
+under-heated by 2 °C, with nothing in the logs to say why.
+
+Each sensor now declares its own bias (`none`, `ac`, `trv`) and the correction is chosen by
+whichever source actually supplied the reading.
+
+### The TRV offset is 0.0, and that is a measurement, not an omission
+
+The valves sit on the radiator, so they will read high once it is hot. But with the radiators cold
+they agreed with the corrected probes to within those probes' own 1 °C resolution — there is no
+honest number to write down yet. `climate_trv_sensor_offset` exists, defaults to **0.0**, and is to
+be calibrated during the heating season against `sensor.<room>_trv_heating`, which reports the
+valve's output percent and is precisely the signal that says when the bias is active.
+
+> **A new `input_number` does not default to zero — it defaults to its minimum.** Created with
+> `min: -5`, this helper came up at **−5.0**, which made all three bedrooms read 5 °C cold. The
+> Bedroom landed at 18.04 °C against an 18 °C safety floor: 0.04 °C from starting an AC at
+> midnight on a fabricated reading. Nothing actuated, because those rooms are disabled and only the
+> safety band applies to them. This is the same class as the `input_datetime` that reports *today
+> 00:00* rather than `none` (§4). **Seed every new helper explicitly and read it back.**
+
+### Liveness comes from the valve, not from a timestamp
+
+"Available but not updating" is a failure this hardware genuinely has — it is exactly why the
+HomeKit-local path was abandoned. If the cloud path ever did the same, the entity would stay
+available holding a stale number and the automation would control on it.
+
+That cannot be caught with timestamps. Home Assistant dedupes, so `last_reported` tracks *changes*,
+not polls, and a stable room is indistinguishable from a stuck sensor. Measured 2026-09-20 with
+everything healthy:
+
+| Sensor | Since last change |
+|---|---|
+| TRVs | 1370 s |
+| Office meter | 2715 s |
+| Living room meter | 4085 s |
+| Bedroom AC probe | **43723 s** (12 h — it only resolves to whole degrees) |
+
+Any threshold loose enough to tolerate the probe would catch nothing; any threshold tight enough to
+be useful would fire on a healthy meter at 68 minutes. So liveness is taken from **Tado's own
+`connectivity` binary sensor** — evidence rather than inference. When it drops, the room falls back
+to the AC probe *with the probe's own correction*; if both sources are dead the room reports `skip`
+and is left alone.
+
+Rooms with no liveness sensor pass the gate unconditionally, so the SwitchBot meters are unaffected.
+
+### M6 is checked instead of asserted
+
+M6 has been open since round 3: the AC and the boiler do not fight *only while* each TRV setpoint
+stays at or below that room's night target. It was recorded as a prose constraint because no entity
+existed to verify it. The valves expose their setpoint, so the config-health check now compares
+each one against its room's night target and names the room if it drifts above.
+
+This is §11's boiler-flag lesson applied the right way round. The flag was rejected because a
+configuration value asserting something about the world is not evidence about the world. The TRV
+setpoint **is** evidence — so it is read, and still never written.
+
+### Not wired in, deliberately
+
+- **`binary_sensor.<room>_trv_window`** — Tado's open-window detection. An obvious candidate for
+  suppressing heating, and surfaced read-only on the advanced view, but not in the control path.
+- **`sensor.<room>_trv_heating`** — surfaced for calibration, not consumed.
+
+Both are there to be watched first. The rule from §19 applies: establish what the hardware actually
+does before building anything on top of it.
+
+### HomeKit local: disabled, and its entities removed
+
+The operator found the `homekit_controller` path was not updating device values and disabled it.
+That left **16 entities stranded as `unavailable`**, 15 of them still assigned to the three bedroom
+areas — and because the room views are strategy-generated from area membership, they would have
+rendered as dead tiles beside each working valve, including a duplicate `climate.*` per room. The
+disabled config entry was deleted, which removed them. Re-pairing is a zeroconf rediscovery if it
+is ever wanted.
+
+Running both the cloud integration and `homekit_controller` against the same hardware produces two
+entity sets for one device, so keeping only the cloud path is also the right call independent of
+the update problem.
+
+---
+
+## 21. v5.1 — one resolved temperature per room, and round 7
+
+Round 7 (`review-20260919-59bc.md`) made the strongest single finding of the series, and it was
+mine: **v5 moved the bias hazard into the safety band of the three disabled bedrooms.**
+
+Those rooms have comfort control switched off, so the safety band is their *only* automated
+protection. v5 switched their primary sensor from an AC probe corrected by −2 to a TRV corrected by
+**0** — and the valve sits on the radiator. During precisely the condition the cat floor exists for
+(cold weather, boiler running) the reading would have been radiator-local, biased high by an
+unmeasured amount, corrected by nothing. A genuinely 17 °C bedroom could read ≥18 and get no heat.
+That is F5 and A11 relocated out of the calibrated path and into the uncorrected one, landing in
+the rooms with nothing else to catch it.
+
+### The fix, and the structure that came with it
+
+Every room now has **one resolved template sensor**, `sensor.climate_temp_<room>`, which owns:
+
+- **source priority** — meter, else TRV, else AC probe
+- **per-sensor bias** — each source carries its own correction
+- **usability gating** — the TRV is used only while its `connectivity` is on **and** its
+  `heating` is 0 %. A valve driving a hot radiator is distrusted and the room falls back to the
+  calibrated AC probe.
+
+The automation reads that entity and nothing else. So does every graph. So do the floor and
+household averages. There is one implementation, it cannot drift, and the number the loop acted on
+is a real entity with history rather than a variable visible only inside a trace — which is what
+§13 has wanted since round 2.
+
+It also makes the system improve cheaply: **adding a better sensor to a room means editing one
+template**, and the graphs, both floor averages and the household average all get better at once.
+
+### The aggregates were wrong, and nobody could see it
+
+`indoor`, `downstairs` and `upstairs` temperature and humidity were `min_max` means built
+**entirely from AC probes**. Because those probes resolve to whole degrees and read ~2 °C high,
+every one of them was pinned at 25.0.
+
+| | before | after |
+|---|---|---|
+| Household temperature | 25.0 | **23.7** |
+| Household humidity | 37.2 | **48.5** |
+| Downstairs | 25.0 / 36.0 | 23.9 / 44.0 |
+| Upstairs | 25.0 / 38.0 | 23.6 / 51.4 |
+
+The humidity figure was **11 points low** — 37 % reads as "dry, consider humidifying" when the
+truth is an unremarkable 48.5 %. All six were repointed in place, so their long-term statistics
+history survives.
+
+### Other round-7 findings
+
+| # | Finding | Status |
+|---|---|---|
+| **R7-3** | TRV bias relocated into the disabled bedrooms' safety band | **Fixed** — TRV distrusted while `heating > 0`, falls back to the corrected probe |
+| **R7-4** | `trv_heating` observed but not consumed | **Fixed** — it is now the gate, so the observable that says "the bias is live" actually drives behaviour |
+| R7-5 | M6 compared against the night target always, so a fine daytime valve setting would flag | **Fixed** — compares against the target actually in force |
+| **R7-6** | The min-default hazard is general, not creation-only | **Fixed** — config-health range-checks `command_settle`, `hysteresis`, `away_min` and `frost_override`. `float()` catches non-numeric, never wrong-numeric |
+| R7-7 | A10 regression: were the triggers repointed? | **Not a regression** — they were repointed in v5; now they point at the resolved sensors, so a room re-evaluates the moment its best reading moves |
+| R7-8 | §2 and the status line still specified v4 | **Fixed** |
+| **R7-9** | A safety room with no usable temperature is silent — `skip` sits above every safety branch, so no command *and* no word | **Fixed** — a blackout now alerts. The bedrooms are two clouds deep (Tado, SmartThings) and one WAN outage takes both |
+| R7-1 | The doc showed the pre-v5 resolution template | **Resolved differently** — the template no longer lives in the doc at all; it lives in `sensor.climate_temp_<room>`, which is inspectable directly |
+| R7-2 | Source flap steps the corrected temperature and hysteresis cannot tell that from a real crossing | **Open, and now more likely** — the heating gate makes the bedrooms switch source as the radiator cycles. It matters only for an *enabled* bedroom; all three are currently disabled. Watch when one is enabled |
+
+R7-2 is worth stating plainly rather than burying: the fix for R7-3 makes R7-2 more probable. That
+is an accepted trade — reading a radiator-warmed valve in a safety band is a wrong number, while a
+source step is a timing artefact on a room whose comfort control is off.

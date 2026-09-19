@@ -643,10 +643,15 @@
           "icon": "mdi:thermometer"
         },
         {
+          "type": "markdown",
+          "text_only": true,
+          "content": "Each room's trace is its **resolved** temperature — the single value the control loop, the floor averages and the household average all read. It picks the best available sensor for that room and applies that sensor's own correction, so adding a better sensor later improves this graph, the aggregates and the automation together. The *meter* and *outside* traces are raw instruments, shown for comparison."
+        },
+        {
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.living_room_livingroom_ac_temperature",
+              "entity": "sensor.climate_temp_living_room",
               "name": "Living room",
               "color": "#ff9800"
             }
@@ -700,7 +705,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.office_guest_room_office_ac_temperature",
+              "entity": "sensor.climate_temp_office",
               "name": "Office",
               "color": "#3f51b5"
             }
@@ -727,7 +732,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.master_bedroom_bedroom_ac_temperature",
+              "entity": "sensor.climate_temp_bedroom",
               "name": "Bedroom",
               "color": "#9c27b0"
             }
@@ -754,7 +759,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.kid1_room_ac_temperature",
+              "entity": "sensor.climate_temp_kid1",
               "name": "Kids room 1",
               "color": "#e91e63"
             }
@@ -781,7 +786,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.kid2_room_ac_temperature",
+              "entity": "sensor.climate_temp_kid2",
               "name": "Kids room 2",
               "color": "#00bcd4"
             }
@@ -890,27 +895,27 @@
           "name": "All rooms, 24 h",
           "entities": [
             {
-              "entity": "sensor.living_room_livingroom_ac_temperature",
+              "entity": "sensor.climate_temp_living_room",
               "name": "Living room",
               "color": "#ff9800"
             },
             {
-              "entity": "sensor.office_guest_room_office_ac_temperature",
+              "entity": "sensor.climate_temp_office",
               "name": "Office",
               "color": "#3f51b5"
             },
             {
-              "entity": "sensor.master_bedroom_bedroom_ac_temperature",
+              "entity": "sensor.climate_temp_bedroom",
               "name": "Bedroom",
               "color": "#9c27b0"
             },
             {
-              "entity": "sensor.kid1_room_ac_temperature",
+              "entity": "sensor.climate_temp_kid1",
               "name": "Kids room 1",
               "color": "#e91e63"
             },
             {
-              "entity": "sensor.kid2_room_ac_temperature",
+              "entity": "sensor.climate_temp_kid2",
               "name": "Kids room 2",
               "color": "#00bcd4"
             },
@@ -965,10 +970,15 @@
           "icon": "mdi:water-percent"
         },
         {
+          "type": "markdown",
+          "text_only": true,
+          "content": "Resolved per room: the SwitchBot meters where they exist, the Tado valves in the bedrooms, and the AC probe only as a last resort — its humidity reads roughly 10 points low."
+        },
+        {
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.living_room_livingroom_ac_humidity",
+              "entity": "sensor.climate_humidity_living_room",
               "name": "Living room",
               "color": "#ff9800"
             }
@@ -1022,7 +1032,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.office_guest_room_office_ac_humidity",
+              "entity": "sensor.climate_humidity_office",
               "name": "Office",
               "color": "#3f51b5"
             }
@@ -1049,7 +1059,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.master_bedroom_bedroom_ac_humidity",
+              "entity": "sensor.climate_humidity_bedroom",
               "name": "Bedroom",
               "color": "#9c27b0"
             }
@@ -1076,7 +1086,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.kid1_room_ac_humidity",
+              "entity": "sensor.climate_humidity_kid1",
               "name": "Kids room 1",
               "color": "#e91e63"
             }
@@ -1103,7 +1113,7 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.kid2_room_ac_humidity",
+              "entity": "sensor.climate_humidity_kid2",
               "name": "Kids room 2",
               "color": "#00bcd4"
             }
@@ -1185,27 +1195,27 @@
           "name": "All rooms, 24 h",
           "entities": [
             {
-              "entity": "sensor.living_room_livingroom_ac_humidity",
+              "entity": "sensor.climate_humidity_living_room",
               "name": "Living room",
               "color": "#ff9800"
             },
             {
-              "entity": "sensor.office_guest_room_office_ac_humidity",
+              "entity": "sensor.climate_humidity_office",
               "name": "Office",
               "color": "#3f51b5"
             },
             {
-              "entity": "sensor.master_bedroom_bedroom_ac_humidity",
+              "entity": "sensor.climate_humidity_bedroom",
               "name": "Bedroom",
               "color": "#9c27b0"
             },
             {
-              "entity": "sensor.kid1_room_ac_humidity",
+              "entity": "sensor.climate_humidity_kid1",
               "name": "Kids room 1",
               "color": "#e91e63"
             },
             {
-              "entity": "sensor.kid2_room_ac_humidity",
+              "entity": "sensor.climate_humidity_kid2",
               "name": "Kids room 2",
               "color": "#00bcd4"
             },
