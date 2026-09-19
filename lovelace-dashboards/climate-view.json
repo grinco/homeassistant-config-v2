@@ -733,11 +733,6 @@
           "icon": "mdi:home-floor-l"
         },
         {
-          "type": "markdown",
-          "text_only": true,
-          "content": "{% set dt = states('sensor.downstairs_temperature') | float(0) %}{% set ut = states('sensor.upstairs_temperature') | float(0) %}{% set dh = states('sensor.downstairs_humidity') | float(0) %}{% set uh = states('sensor.upstairs_humidity') | float(0) %}{% set ot = states('sensor.house_temperature') | float(0) %}{% set oh = states('sensor.house_humidity') | float(0) %}| | Temp | RH |\n|---|---:|---:|\n| **Downstairs** | {{ dt }} °C | {{ dh }} % |\n| **Upstairs** | {{ ut }} °C | {{ uh }} % |\n| Difference | {{ '%+.1f' | format(ut - dt) }} °C | {{ '%+.1f' | format(uh - dh) }} % |\n| Outside | {{ ot }} °C | {{ oh }} % |"
-        },
-        {
           "type": "tile",
           "entity": "sensor.downstairs_temperature",
           "name": "Downstairs",
