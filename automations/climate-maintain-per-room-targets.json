@@ -1,0 +1,552 @@
+{
+  "id": "1789725511503",
+  "alias": "Climate — maintain per-room targets",
+  "description": "v4. The HOUSE decides heat vs cool from the outdoor temperature (heat below / cool above, both global). Each ROOM has a day target and a night target — the temperature we are aiming to achieve — plus an optional air-filter mode that starts the unit at that target even when it has no thermal work to do. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, and is gated as a whole by input_boolean.climate_safety_always, which is the one switch that disables every unconditional action. Manual changes at the wall are detected from a per-room command timestamp versus the unit's own last_changed, not from the failure counter. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Wind-free presets are applied to COOLING ONLY - the units do not offer them in heat, and a preset sent to an off unit turns it on in cool.",
+  "triggers": [
+    {
+      "trigger": "time_pattern",
+      "minutes": "/10"
+    },
+    {
+      "trigger": "state",
+      "entity_id": [
+        "input_boolean.climate_auto",
+        "input_boolean.climate_safety_always",
+        "input_boolean.climate_room_living_room",
+        "input_boolean.climate_room_office",
+        "input_boolean.climate_room_bedroom",
+        "input_boolean.climate_room_kid1",
+        "input_boolean.climate_room_kid2",
+        "input_boolean.climate_air_filter_living_room",
+        "input_boolean.climate_air_filter_office",
+        "input_boolean.climate_air_filter_bedroom",
+        "input_boolean.climate_air_filter_kid1",
+        "input_boolean.climate_air_filter_kid2",
+        "schedule.climate_night",
+        "alarm_control_panel.home"
+      ]
+    },
+    {
+      "trigger": "state",
+      "entity_id": [
+        "sensor.living_room_meter_pro_co2_be_temperature",
+        "sensor.meter_pro_co2_e9_temperature",
+        "sensor.master_bedroom_bedroom_ac_temperature",
+        "sensor.kid1_room_ac_temperature",
+        "sensor.kid2_room_ac_temperature"
+      ]
+    },
+    {
+      "trigger": "state",
+      "entity_id": [
+        "input_number.climate_target_day_living_room",
+        "input_number.climate_target_night_living_room",
+        "input_number.climate_target_day_office",
+        "input_number.climate_target_night_office",
+        "input_number.climate_target_day_bedroom",
+        "input_number.climate_target_night_bedroom",
+        "input_number.climate_target_day_kid1",
+        "input_number.climate_target_night_kid1",
+        "input_number.climate_target_day_kid2",
+        "input_number.climate_target_night_kid2",
+        "input_number.climate_heat_below_outdoor",
+        "input_number.climate_cool_above_outdoor",
+        "input_number.climate_away_min",
+        "input_number.climate_away_max",
+        "input_number.climate_hysteresis",
+        "input_number.climate_frost_override",
+        "input_number.climate_ac_sensor_offset",
+        "input_number.climate_breaker_threshold",
+        "input_number.climate_manual_hold_hours",
+        "input_number.climate_command_settle"
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "condition": "or",
+      "conditions": [
+        {
+          "condition": "state",
+          "entity_id": "input_boolean.climate_auto",
+          "state": "on"
+        },
+        {
+          "condition": "state",
+          "entity_id": "input_boolean.climate_safety_always",
+          "state": "on"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "variables": {
+        "comfort": "{{ is_state('input_boolean.climate_auto','on') }}",
+        "safety_on": "{{ is_state('input_boolean.climate_safety_always','on') }}",
+        "night": "{{ is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') }}",
+        "away_stamp": "{{ state_attr('input_datetime.climate_away_since','timestamp') }}",
+        "outdoor": "{{ states('sensor.house_temperature') | float(-999) }}",
+        "away_min": "{{ states('input_number.climate_away_min') | float(18) }}",
+        "away_max": "{{ states('input_number.climate_away_max') | float(30) }}",
+        "frost": "{{ states('input_number.climate_frost_override') | float(7) }}",
+        "hyst": "{{ states('input_number.climate_hysteresis') | float(1) }}",
+        "ac_offset": "{{ states('input_number.climate_ac_sensor_offset') | float(-2) }}",
+        "breaker": "{{ states('input_number.climate_breaker_threshold') | int(3) }}",
+        "settle": "{{ states('input_number.climate_command_settle') | float(120) }}",
+        "manual_hold": "{{ states('input_number.climate_manual_hold_hours') | float(2) }}",
+        "heat_below_out": "{{ states('input_number.climate_heat_below_outdoor') | float(17) }}",
+        "cool_above_out": "{{ states('input_number.climate_cool_above_outdoor') | float(20) }}",
+        "rooms": [
+          {
+            "name": "Living room",
+            "climate": "climate.living_room_livingroom_ac",
+            "sensor": "sensor.living_room_meter_pro_co2_be_temperature",
+            "fallback": "sensor.living_room_livingroom_ac_temperature",
+            "biased": false,
+            "enable": "input_boolean.climate_room_living_room",
+            "filter": "input_boolean.climate_air_filter_living_room",
+            "day_t": "input_number.climate_target_day_living_room",
+            "night_t": "input_number.climate_target_night_living_room",
+            "fails": "counter.climate_fail_living_room",
+            "manual": "input_datetime.climate_manual_until_living_room",
+            "cmd": "input_datetime.climate_cmd_living_room",
+            "alert": "input_datetime.climate_safety_alert_living_room"
+          },
+          {
+            "name": "Office",
+            "climate": "climate.office_guest_room_office_ac",
+            "sensor": "sensor.meter_pro_co2_e9_temperature",
+            "fallback": "sensor.office_guest_room_office_ac_temperature",
+            "biased": false,
+            "enable": "input_boolean.climate_room_office",
+            "filter": "input_boolean.climate_air_filter_office",
+            "day_t": "input_number.climate_target_day_office",
+            "night_t": "input_number.climate_target_night_office",
+            "fails": "counter.climate_fail_office",
+            "manual": "input_datetime.climate_manual_until_office",
+            "cmd": "input_datetime.climate_cmd_office",
+            "alert": "input_datetime.climate_safety_alert_office"
+          },
+          {
+            "name": "Bedroom",
+            "climate": "climate.master_bedroom_bedroom_ac",
+            "sensor": "sensor.master_bedroom_bedroom_ac_temperature",
+            "fallback": "sensor.master_bedroom_bedroom_ac_temperature",
+            "biased": true,
+            "enable": "input_boolean.climate_room_bedroom",
+            "filter": "input_boolean.climate_air_filter_bedroom",
+            "day_t": "input_number.climate_target_day_bedroom",
+            "night_t": "input_number.climate_target_night_bedroom",
+            "fails": "counter.climate_fail_bedroom",
+            "manual": "input_datetime.climate_manual_until_bedroom",
+            "cmd": "input_datetime.climate_cmd_bedroom",
+            "alert": "input_datetime.climate_safety_alert_bedroom"
+          },
+          {
+            "name": "Kids room 1",
+            "climate": "climate.kid1_room_ac",
+            "sensor": "sensor.kid1_room_ac_temperature",
+            "fallback": "sensor.kid1_room_ac_temperature",
+            "biased": true,
+            "enable": "input_boolean.climate_room_kid1",
+            "filter": "input_boolean.climate_air_filter_kid1",
+            "day_t": "input_number.climate_target_day_kid1",
+            "night_t": "input_number.climate_target_night_kid1",
+            "fails": "counter.climate_fail_kid1",
+            "manual": "input_datetime.climate_manual_until_kid1",
+            "cmd": "input_datetime.climate_cmd_kid1",
+            "alert": "input_datetime.climate_safety_alert_kid1"
+          },
+          {
+            "name": "Kids room 2",
+            "climate": "climate.kid2_room_ac",
+            "sensor": "sensor.kid2_room_ac_temperature",
+            "fallback": "sensor.kid2_room_ac_temperature",
+            "biased": true,
+            "enable": "input_boolean.climate_room_kid2",
+            "filter": "input_boolean.climate_air_filter_kid2",
+            "day_t": "input_number.climate_target_day_kid2",
+            "night_t": "input_number.climate_target_night_kid2",
+            "fails": "counter.climate_fail_kid2",
+            "manual": "input_datetime.climate_manual_until_kid2",
+            "cmd": "input_datetime.climate_cmd_kid2",
+            "alert": "input_datetime.climate_safety_alert_kid2"
+          }
+        ],
+        "human_window": 1200,
+        "retry_throttle": 3000,
+        "ha_started": "{{ state_attr('input_datetime.climate_ha_started','timestamp') | float(0) }}",
+        "uptime": "{{ now().timestamp() - (state_attr('input_datetime.climate_ha_started','timestamp') | float(0)) }}"
+      },
+      "note": "The room list is an explicit ALLOW-LIST. This automation only ever addresses the five climate.* AC entities named here. The gas boiler and its thermostatic valve entities are configured entirely outside it and must never be added to this list — the boiler is the winter failsafe and is not ours to drive."
+    },
+    {
+      "variables": {
+        "away": "{{ is_state('alarm_control_panel.home','armed_away') and ( (now().timestamp() - (away_stamp | float(0))) > 1800 if away_stamp else (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 ) }}",
+        "house": "{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}",
+        "preset": "{{ 'wind_free_sleep' if night else 'wind_free' }}"
+      },
+      "note": "HOUSE MODE is a property of the weather, not of a room. Below 'heat below (outdoor)' the house heats; above 'cool above (outdoor)' it cools; the band between them is shoulder season, where no mechanical heating or cooling happens at all. That band is what stops the system flipping between heating and cooling on a mild day. If the outdoor sensor is unusable the house falls to SHOULDER rather than guessing a season - a wrong guess would run every unit on a fabricated reading. The safety band does not read the outdoor sensor and still runs. INVARIANT: heat_below < cool_above. The two helpers are independent sliders and CAN be dragged into overlap; at 21 C outdoor with heat_below 22 and cool_above 20 both tests pass, and a first-match-wins chain would heat the house at 21 C outdoor - the v1 incident re-entered through a dashboard slider. An overlapping band is a misconfiguration, so it collapses to SHOULDER: comfort control stands down and the safety band, which does not depend on either helper, keeps running."
+    },
+    {
+      "if": [
+        {
+          "condition": "template",
+          "value_template": "{{ heat_below_out >= cool_above_out or uptime > 34560000 }}"
+        }
+      ],
+      "then": [
+        {
+          "action": "persistent_notification.create",
+          "data": {
+            "title": "Climate: configuration problem",
+            "notification_id": "climate_config_health",
+            "message": "{% if heat_below_out >= cool_above_out %}**The house-mode band is inverted.** 'Heat below' ({{ heat_below_out }}) is not below 'Cool above' ({{ cool_above_out }}), so the house cannot resolve a season and ALL COMFORT HEATING AND COOLING IS STOOD DOWN. Only the safety band is still acting{% if not safety_on %} - and 'Safety limits always' is OFF, so NOTHING is protecting these rooms at all{% endif %}. Set 'Heat below' a few degrees under 'Cool above'.{% endif %}{% if uptime > 34560000 %}{% if heat_below_out >= cool_above_out %}\n\n{% endif %}**The restart stamp is stale.** input_datetime.climate_ha_started has not been written since Home Assistant last started, so the guard that stops a post-restart fault being mistaken for someone at the wall is inert. Check that automation.climate_stamp_ha_start exists and is enabled.{% endif %}"
+          }
+        }
+      ],
+      "else": [
+        {
+          "action": "persistent_notification.dismiss",
+          "data": {
+            "notification_id": "climate_config_health"
+          },
+          "continue_on_error": true
+        }
+      ],
+      "note": "R6-5 and R6-1: both failure modes are SILENT without this. An inverted house band stands comfort control down completely - the correct safe failure, but indistinguishable from 'mild day, nothing to do' unless someone is told. Worse, it composes: overlap stands down comfort, and if climate_safety_always is also off then nothing at all is protecting the rooms, which is a state two individually reasonable toggles can reach without any warning. A stale restart stamp silently degrades unit_moved back to its pre-v4.1 two-term form, which is the P1 misclassification. The climate loop cannot see whether the stamp automation ran, so it checks the evidence instead of trusting the claim - the same lesson as the boiler flag in section 11."
+    },
+    {
+      "repeat": {
+        "for_each": "{{ rooms }}",
+        "sequence": [
+          {
+            "variables": {
+              "r": "{{ repeat.item }}"
+            }
+          },
+          {
+            "variables": {
+              "temp": "{% set raw = states(r.sensor) | float(states(r.fallback) | float(-999)) %}{{ (raw + ac_offset) if (raw > -900 and r.biased) else raw }}",
+              "enabled": "{{ is_state(r.enable, 'on') }}",
+              "filter_on": "{{ is_state(r.filter, 'on') }}",
+              "now_mode": "{{ states(r.climate) }}",
+              "now_target": "{{ state_attr(r.climate,'temperature') | float(-1) }}",
+              "now_preset": "{{ state_attr(r.climate,'preset_mode') }}",
+              "umin": "{{ state_attr(r.climate,'min_temp') | float(16) }}",
+              "umax": "{{ state_attr(r.climate,'max_temp') | float(30) }}",
+              "fail_count": "{{ states(r.fails) | int(0) }}",
+              "target": "{{ (states(r.night_t) if night else states(r.day_t)) | float(21) }}",
+              "manual_ts": "{{ state_attr(r.manual, 'timestamp') }}",
+              "cmd_ts": "{{ state_attr(r.cmd, 'timestamp') }}"
+            }
+          },
+          {
+            "variables": {
+              "manual_active": "{{ manual_ts is not none and now().timestamp() < (manual_ts | float(0)) }}",
+              "since_cmd": "{{ (now().timestamp() - (cmd_ts | float(0))) if cmd_ts is not none else 999999 }}",
+              "alert_ts": "{{ state_attr(r.alert, 'timestamp') | float(0) }}"
+            },
+            "note": "since_cmd is how long ago WE last sent this room a command. With no stamp at all it is effectively infinite, which is correct: nothing of ours is in flight."
+          },
+          {
+            "variables": {
+              "in_flight": "{{ since_cmd < settle }}",
+              "unit_moved": "{% set lc = (now() - states[r.climate].last_changed).total_seconds() %}{{ lc < since_cmd and lc < human_window and lc < (uptime - 60) }}",
+              "throttle_ok": "{{ since_cmd >= retry_throttle }}"
+            },
+            "note": "THE IN-FLIGHT SIGNAL. in_flight says our own command has not had time to land yet; unit_moved says the unit changed state MORE RECENTLY than we commanded it, which only a person at the wall (or the unit acting on its own) can do. A unit that simply ignores us never changes state, so it cannot masquerade as a human. THAT ASYMMETRY HOLDS ONLY WITHIN ONE CONTINUOUS UPTIME. A climate entity's last_changed does NOT survive a restart: every entity is re-created at boot and last_changed resets to the boot instant, while the command stamp, being an input_datetime, IS restored. So after a restart a unit that never complied shows a tiny lc against a large since_cmd and reads as a person - a 2 h hold stamped on a fault, which then starves the retry. Hence the third term: if lc is as old as the uptime, the timestamp was manufactured by the restart and says nothing about anybody. The 60 s margin makes the first minute after boot conservative, which is the safe direction - a misread there is a fault (retried) rather than a hold (not retried)."
+          },
+          {
+            "variables": {
+              "mode": "{% if temp <= -900 %}skip{% elif safety_on and temp < frost %}heat{% elif safety_on and temp < away_min %}heat{% elif safety_on and temp > away_max %}cool{% elif manual_active %}manual{% elif not comfort %}off{% elif away or not enabled %}off{% elif house == 'heat' %}{% if temp < target or (now_mode == 'heat' and temp < target + hyst) or filter_on %}heat{% else %}off{% endif %}{% elif house == 'cool' %}{% if temp > target or (now_mode == 'cool' and temp > target - hyst) or filter_on %}cool{% else %}off{% endif %}{% else %}{% if filter_on %}fan_only{% else %}off{% endif %}{% endif %}",
+              "want_target": "{% if safety_on and temp > -900 and temp < frost %}{{ frost }}{% elif safety_on and temp > -900 and temp < away_min %}{{ away_min }}{% elif safety_on and temp > -900 and temp > away_max %}{{ away_max }}{% else %}{{ target }}{% endif %}"
+            },
+            "note": "Precedence: frost > away floor > away ceiling > manual hold > comfort. The three safety branches are now gated on safety_on, so input_boolean.climate_safety_always is a genuine master hatch for every unconditional action rather than a frost-only flag. AIR FILTER: when the house has a season but the room needs no thermal work, filter_on still starts the unit in that season's mode at the room's target (heat 22 in a 24 C room), which is what was asked for. In shoulder season it runs fan_only, the only mode that guarantees airflow with no thermal intent."
+          },
+          {
+            "variables": {
+              "set_target": "{{ [[ (want_target | float(21)) | round(0) | int, umin | int ] | max, umax | int ] | min }}",
+              "is_safety": "{{ safety_on and temp > -900 and (temp < away_min or temp > away_max) }}",
+              "active": "{{ mode not in ['skip','manual'] }}",
+              "reachable": "{{ now_mode not in ['unavailable','unknown'] }}",
+              "mode_ok": "{{ now_mode == mode }}",
+              "needs_temp": "{{ mode in ['heat','cool'] }}"
+            },
+            "note": "SETPOINT CLAMPING. The units report min_temp 16 / max_temp 30 / target_temp_step 1. A frost target of 7 C and any half-degree helper value are both setpoints the hardware cannot accept: it would silently keep its old value and every later tick would read as divergence. Every commanded setpoint is therefore rounded to a whole degree and clamped into the unit's own advertised range. The frost TRIGGER stays at 7 C; only the commanded setpoint is lifted to the unit's floor."
+          },
+          {
+            "variables": {
+              "target_ok": "{{ (not needs_temp) or ((now_target | float(-1)) | round(0) | int) == set_target }}"
+            }
+          },
+          {
+            "variables": {
+              "converged": "{{ mode_ok and target_ok }}",
+              "human_moved": "{{ active and reachable and not mode_ok and not in_flight and unit_moved }}",
+              "tripped": "{{ fail_count >= breaker and not is_safety }}",
+              "safety_throttled": "{{ is_safety and manual_active and not throttle_ok }}"
+            },
+            "note": "converged now covers the SETPOINT as well as the mode. A unit that accepts 'heat' but silently drops the setpoint used to look converged forever, so the breaker never tripped and nobody was told. It now counts as divergence and raises the same alert as a unit that ignores the mode."
+          },
+          {
+            "variables": {
+              "may_act": "{{ active and reachable and not mode_ok and not human_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
+              "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
+              "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
+              "alert_due": "{{ is_safety and (now().timestamp() - alert_ts) > retry_throttle }}"
+            }
+          },
+          {
+            "variables": {
+              "diverged": "{{ active and reachable and not converged and not in_flight and not may_act and not human_moved and not will_set_temp }}"
+            },
+            "note": "Divergence is only counted once our command has had its settle window AND we are not issuing a fresh command of our own this tick - neither a mode command (may_act) nor a SETPOINT command (will_set_temp). Excluding only may_act was a bug: a room whose mode already matched but whose setpoint we were in the middle of correcting counted a failure against the unit on the very tick we were fixing it. That is the same class as R4-2/M1 - the automation reading its own in-flight command as the unit's fault - relocated from the mode path into the setpoint path. Observed live on 2026-09-19 when the Living room setpoint was moved 19 -> 22 and the counter went to 1."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ human_moved and not manual_active }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.manual }}"
+                },
+                "data": {
+                  "datetime": "{{ (now() + timedelta(hours = manual_hold | float(2))).strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              },
+              {
+                "action": "counter.reset",
+                "target": {
+                  "entity_id": "{{ r.fails }}"
+                }
+              },
+              {
+                "action": "persistent_notification.create",
+                "data": {
+                  "title": "Climate: {{ r.name }} on manual",
+                  "notification_id": "climate_manual_{{ r.name | lower | replace(' ','_') }}",
+                  "message": "{{ r.name }} was changed at the unit (it reports '{{ now_mode }}', the automation wanted '{{ mode }}'). Backing off for {{ manual_hold }} h. Safety limits still apply, throttled to hourly while the hold is live."
+                }
+              },
+              {
+                "action": "notify.send_message",
+                "target": {
+                  "entity_id": "notify.vadims_iphone_17"
+                },
+                "data": {
+                  "title": "Climate: {{ r.name }} on manual",
+                  "message": "{{ r.name }} changed at the unit — automation backing off {{ manual_hold }} h."
+                },
+                "continue_on_error": true
+              }
+            ],
+            "note": "Resetting the counter here is now safe, and was not in v3. human_moved requires unit_moved — the unit genuinely changed state after our command — which a unit that is merely ignoring us can never do. v3 could not tell the two apart, so it deliberately left the counter running, which is what let a breaker trip re-stamp a fresh two-hour hold on every expiry and starve the hourly re-arm for good."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ may_act }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "climate.set_hvac_mode",
+                "target": {
+                  "entity_id": "{{ r.climate }}"
+                },
+                "data": {
+                  "hvac_mode": "{{ mode }}"
+                }
+              },
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.cmd }}"
+                },
+                "data": {
+                  "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              }
+            ]
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ alert_due }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "persistent_notification.create",
+                "data": {
+                  "title": "Climate: {{ r.name }} outside the safety band",
+                  "notification_id": "climate_safety_{{ r.name | lower | replace(' ','_') }}",
+                  "message": "{{ r.name }} is at {{ temp | round(1) }} C, outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}**The unit is {{ now_mode }} - we cannot command it at all.** Nothing this automation does will warm or cool this room until it comes back.{% elif converged %}The unit reports '{{ now_mode }}' at {{ now_target }} C, which is what we asked for, so it is nominally obeying - if the room is not recovering, the unit is losing to an open window, an undersized load or a mechanical fault.{% else %}The unit reports '{{ now_mode }}' at {{ now_target }} C; we want '{{ mode }}' at {{ set_target }} C.{% endif %}{% if manual_active %} A manual hold is live and the safety band is overriding it.{% endif %}"
+                }
+              },
+              {
+                "action": "notify.send_message",
+                "target": {
+                  "entity_id": "notify.vadims_iphone_17"
+                },
+                "data": {
+                  "title": "Climate: {{ r.name }} at {{ temp | round(1) }} C",
+                  "message": "Outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}Unit UNREACHABLE - cannot act.{% elif converged %}Unit says '{{ now_mode }}' and is obeying, room still out of band.{% else %}Unit says '{{ now_mode }}', we want '{{ mode }}'.{% endif %}"
+                },
+                "continue_on_error": true
+              },
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.alert }}"
+                },
+                "data": {
+                  "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              }
+            ],
+            "note": "R6-4. This alert is driven by THE SAFETY CONDITION, not by whether we managed to send a command. The previous gate (may_act, later may_act or will_set_temp) had two silent holes, and they were the two that matter most: a unit that is UNAVAILABLE cannot be commanded, so may_act was false and a freezing room with an offline AC alerted NOBODY; and a unit that reports the commanded mode is 'converged', so may_act was false again even while the room went on falling - a unit losing to an open window or a mechanical fault, in silence. Those are precisely the cases where the operator is the only remaining actuator. Throttled per room by its own alert stamp (retry_throttle, 3000 s) rather than by the command stamp, because when nothing is commanded the command stamp never advances and the throttle would never close. The message says which of the three situations it is."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ diverged }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "counter.increment",
+                "target": {
+                  "entity_id": "{{ r.fails }}"
+                }
+              },
+              {
+                "if": [
+                  {
+                    "condition": "template",
+                    "value_template": "{{ fail_count + 1 == breaker }}"
+                  }
+                ],
+                "then": [
+                  {
+                    "action": "persistent_notification.create",
+                    "data": {
+                      "title": "Climate: {{ r.name }} isolated",
+                      "notification_id": "climate_breaker_{{ r.name | lower | replace(' ','_') }}",
+                      "message": "{{ r.name }} did not reach '{{ mode }}' at {{ set_target }} C after {{ breaker }} attempts (it reports '{{ now_mode }}' at {{ now_target }} C). Comfort commands for this room are now throttled to hourly retries so one unresponsive unit cannot rate-limit the other four. Safety heating and cooling still run at full rate. It clears itself the moment the unit obeys."
+                    }
+                  },
+                  {
+                    "action": "notify.send_message",
+                    "target": {
+                      "entity_id": "notify.vadims_iphone_17"
+                    },
+                    "data": {
+                      "title": "Climate: {{ r.name }} isolated",
+                      "message": "{{ r.name }} AC not obeying '{{ mode }}' after {{ breaker }} tries. Comfort control throttled; safety limits still active."
+                    },
+                    "continue_on_error": true
+                  }
+                ]
+              }
+            ],
+            "note": "The breaker is a THROTTLE, not a lockout: past the threshold the room still retries once every retry_throttle (3000 s), measured from our own last command to that room, so it can always recover. The alert fires once per trip because the counter only resets on convergence - not because commanding stops, which it does not."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ converged and fail_count > 0 }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "counter.reset",
+                "target": {
+                  "entity_id": "{{ r.fails }}"
+                }
+              },
+              {
+                "action": "persistent_notification.dismiss",
+                "data": {
+                  "notification_id": "climate_breaker_{{ r.name | lower | replace(' ','_') }}"
+                },
+                "continue_on_error": true
+              }
+            ]
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ will_set_temp and is_state(r.climate, mode) }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "climate.set_temperature",
+                "target": {
+                  "entity_id": "{{ r.climate }}"
+                },
+                "data": {
+                  "temperature": "{{ set_target }}"
+                }
+              },
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.cmd }}"
+                },
+                "data": {
+                  "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              }
+            ],
+            "note": "The setpoint is only ever sent once the mode already matches. These units reject setpoint changes while off, so sending one in the same tick as a mode change would be swallowed and then read as a fault. The is_state() re-read closes the same TOCTOU as the preset step: mode_ok was sampled at the top of this room's iteration and the unit can have changed underneath us before this call executes."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ will_set_preset and is_state(r.climate, 'cool') }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "climate.set_preset_mode",
+                "target": {
+                  "entity_id": "{{ r.climate }}"
+                },
+                "data": {
+                  "preset_mode": "{{ preset }}"
+                }
+              },
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.cmd }}"
+                },
+                "data": {
+                  "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              }
+            ],
+            "note": "WIND-FREE IS A COOLING-ONLY FEATURE on these units - not offered in heat, most likely so the plastic diffuser mesh never sits behind hot coils. The preset is asserted ONLY when the unit is in 'cool'. In heat, dry and fan_only it is left exactly as whoever last touched the unit set it: that setting is not ours to own outside cooling. THE RE-READ IS A SAFETY INTERLOCK, NOT A TIDY-UP. climate.set_preset_mode on a unit that is OFF does not stage a preference - it TURNS THE UNIT ON, IN COOL (verified 2026-09-19 on the Office AC). now_mode is sampled at the top of this room's iteration and this call executes ~17 steps and several cloud round trips later, so mode_ok is a stale reading by the time it matters. If the unit went off in that gap - someone at the wall, a cloud push, a power blip - the cached mode_ok would have us send a preset to an off unit and start it COOLING, in winter, unasked. is_state() re-reads at execution time."
+          }
+        ]
+      }
+    }
+  ],
+  "mode": "single",
+  "max_exceeded": "silent"
+}

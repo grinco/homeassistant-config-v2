@@ -1,0 +1,344 @@
+{
+  "title": "Climate — advanced",
+  "path": "climate-advanced",
+  "icon": "mdi:tune-variant",
+  "type": "sections",
+  "subview": true,
+  "max_columns": 2,
+  "sections": [
+    {
+      "type": "grid",
+      "column_span": 1,
+      "background": {
+        "color": "green",
+        "opacity": 8
+      },
+      "cards": [
+        {
+          "type": "markdown",
+          "text_only": true,
+          "content": "Set-once controls. Nothing here needs changing in normal use — the day-to-day knobs live on the Climate view."
+        },
+        {
+          "type": "heading",
+          "heading": "Night window",
+          "heading_style": "subtitle",
+          "icon": "mdi:weather-night"
+        },
+        {
+          "type": "tile",
+          "entity": "schedule.climate_night",
+          "name": "Night schedule",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Away safety band — armed away 30+ min",
+          "heading_style": "subtitle",
+          "icon": "mdi:shield-home-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_away_min",
+          "name": "Never below",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_away_max",
+          "name": "Never above",
+          "color": "red",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Safety — runs even with the master switch off",
+          "heading_style": "subtitle",
+          "icon": "mdi:shield-check"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_safety_always",
+          "name": "Safety limits always",
+          "color": "green",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_frost_override",
+          "name": "Frost override",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_hysteresis",
+          "name": "Hysteresis",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Sensor calibration",
+          "heading_style": "subtitle",
+          "icon": "mdi:tune-vertical"
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_ac_sensor_offset",
+          "name": "AC sensor offset",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_away_since",
+          "name": "Away since",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 1,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Circuit breaker — isolates a unit that stops responding",
+          "heading_style": "subtitle",
+          "icon": "mdi:electric-switch"
+        },
+        {
+          "type": "markdown",
+          "text_only": true,
+          "content": "{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room'),('Office','counter.climate_fail_office'),('Bedroom','counter.climate_fail_bedroom'),('Kids room 1','counter.climate_fail_kid1'),('Kids room 2','counter.climate_fail_kid2')] %}{% set ns = namespace(bad=[]) %}{% for n, c in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% endfor %}{% if ns.bad %}🔌 **Isolated: {{ ns.bad | join(', ') }}** — comfort commands throttled to hourly retries; safety still runs at full rate. Clears itself the moment the unit obeys.{% else %}All five units responding to commands.{% endif %}"
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_breaker_threshold",
+          "name": "Trip after",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_command_settle",
+          "name": "Settle",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "counter.climate_fail_living_room",
+          "name": "Living room",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "counter-actions"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "counter.climate_fail_office",
+          "name": "Office",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "counter-actions"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "counter.climate_fail_bedroom",
+          "name": "Bedroom",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "counter-actions"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "counter.climate_fail_kid1",
+          "name": "Kids room 1",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "counter-actions"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "counter.climate_fail_kid2",
+          "name": "Kids room 2",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "counter-actions"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Manual control wins",
+          "heading_style": "subtitle",
+          "icon": "mdi:hand-back-right"
+        },
+        {
+          "type": "markdown",
+          "text_only": true,
+          "content": "{% set rooms = [('Living room','input_datetime.climate_manual_until_living_room'),('Office','input_datetime.climate_manual_until_office'),('Bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','input_datetime.climate_manual_until_kid1'),('Kids room 2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(held=[]) %}{% for n, e in rooms %}{% set t = state_attr(e,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n ~ ' (until ' ~ (t | timestamp_custom('%H:%M')) ~ ')'] %}{% endif %}{% endfor %}{% if ns.held %}✋ **Manual control: {{ ns.held | join(', ') }}** — the automation is keeping its hands off {{ 'that room' if ns.held | count == 1 else 'those rooms' }} until the hold expires.{% else %}No manual holds — the automation has control of all five rooms.{% endif %}"
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_manual_hold_hours",
+          "name": "Hold for",
+          "color": "purple",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_manual_until_living_room",
+          "name": "Living room",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_manual_until_office",
+          "name": "Office",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_manual_until_bedroom",
+          "name": "Bedroom",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_manual_until_kid1",
+          "name": "Kids room 1",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "input_datetime.climate_manual_until_kid2",
+          "name": "Kids room 2",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          }
+        }
+      ]
+    }
+  ]
+}
