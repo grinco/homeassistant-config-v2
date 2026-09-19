@@ -1,0 +1,82 @@
+# Working in this repository
+
+This repo is a **public reference** for a private Home Assistant instance. Nothing here is
+deployable: it holds design records and sanitised snapshots of a live configuration.
+
+If you are an AI agent working on this repo, read this before you write, export, or commit
+anything.
+
+---
+
+## 1. This repository is public and the instance is a family home
+
+The live instance is named after the people who live there — **including children**. Real
+entity ids and friendly names therefore contain given names, surnames and, in at least one case,
+a full name in a `person.*` entity.
+
+**None of that may ever be committed.** Exports are anonymised: rooms and people appear under
+neutral placeholders, and the published files intentionally do not match the live instance.
+
+### The substitution map is not in this repo, by design
+
+An earlier attempt documented the mapping in a repo README — a table of "live value → published
+value". That file republished, in full, exactly the information the anonymisation existed to
+remove. **Do not write the mapping down here.** It lives in the operator's local agent memory.
+
+If you are an agent with access to that memory, look for a note about **repo anonymisation**. If
+you do not have it, **stop and ask the operator** rather than inventing a mapping or exporting
+raw.
+
+---
+
+## 2. Rules for any export
+
+Exports are produced by reading the live instance (`automations.yaml`, `.storage/lovelace.*`,
+`.storage/core.config_entries`) and writing sanitised JSON here. Every time:
+
+1. **Anchor every replacement to a word or token boundary.** Naive substring replacement corrupts
+   ordinary English and Jinja. Real examples that have bitten:
+   - one of the room names is a substring of *deliberately*, *believe*, *relies* and *delivered*,
+     all of which occur in the design document;
+   - another is a substring of the Jinja keyword `elif`, which appears throughout the automation
+     templates. Corrupting it silently breaks the control logic in the published copy.
+2. **Verify with canaries, not by eye.** Count a fixed list of those words before and after the
+   substitution. If any count changed, the pattern was too greedy — stop and fix it.
+3. **Then grep the result** for every original term and expect **zero** hits.
+4. **Re-run the scan on the actual export every time.** Each newly exported view can introduce
+   names the existing mapping has never seen. A mapping that was complete last week is not
+   evidence that it is complete now.
+5. **Scan for more than room names.** `person.*` entities, `notify.*` targets and sensor names
+   derived from a person's device or desk all carry names. So do `device_tracker.*` and anything
+   named after a phone.
+6. **Check the commit message too**, not just the files.
+
+### Where the names hide
+
+Entity ids are not the only place. Check: `friendly_name`, card `name` / `primary` / `secondary`,
+markdown card bodies, `notify` service targets, automation `alias` and `description`, persistent
+notification titles, area names, and the *options* of `min_max` / `group` helpers — those live in
+`core.config_entries`, not in any dashboard, so a dashboard-only scan misses them.
+
+---
+
+## 3. Before you commit
+
+- Scan the **committed blobs**, not the working tree: `git grep -i <term> HEAD`.
+- Scan the commit message.
+- If a name has already been pushed, say so plainly and immediately — it is a public repo and a
+  child's name; it needs history rewriting and a force push, not a follow-up commit.
+- Also scan for the usual secrets: tokens, passwords, API keys, cookies, coordinates, IPs.
+
+---
+
+## 4. Other conventions
+
+- **Commit attribution:** commits are authored by the repository owner. Do **not** add
+  `Co-Authored-By` trailers or "generated with" footers.
+- **Exports are snapshots, not sources.** The live instance is authoritative. If someone edits
+  through the Home Assistant UI, the files here go stale silently — re-export before relying on
+  them, and re-apply the anonymisation when you do.
+- **The design record is `docs/climate-control-design.md`.** It is the reasoning; the JSON is the
+  artefact. Rationale belongs there and not in the dashboards, which the household uses daily and
+  where explanatory text is unwanted.
