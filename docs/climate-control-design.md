@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-20). Version 5.1.
+Status: **implemented and live** (2026-09-20). Version 5.2.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -21,7 +21,8 @@ Instance: HA 2026.9.2 Supervised, Home.
 | v3.1 | **Safety band made universal and unconditional**; breaker re-arms hourly | Round 2 found that v3's away-respects-lockouts change and its breaker both had holes — see §10 |
 | v3.2 | **Manual changes at the wall win**; gas boiler recognised as a low baseline | Operator requirements — see §11 |
 | v3.3 | Safety band outranks the manual hold; boiler flag no longer suppresses it; human-vs-fault detection rebuilt on the failure counter; hold now notifies | Round 3 found both v3.2 additions had safety holes — see §14 |
-| **v5.1** | **One resolved template sensor per room owns all sensor selection, bias and gating; the control loop, the graphs and the floor/household averages all read it. Tado TRVs become the bedrooms' preferred source, distrusted while the radiator is hot. Numeric-helper bounds and sensor-blackout alerting added.** | Tado valves installed; round-7 findings R7-3/5/6/9 — see §20 |
+| v5.1 | **One resolved template sensor per room owns all sensor selection, bias and gating; the control loop, the graphs and the floor/household averages all read it. Tado TRVs become the bedrooms' preferred source, distrusted while the radiator is hot. Numeric-helper bounds and sensor-blackout alerting added.** | Tado valves installed; round-7 findings R7-3/5/6/9 — see §20 |
+| **v5.2** | **Blackout alert suppressed during the post-boot window; plausibility checks on the two calibration offsets** | Round-8 findings R8-1 and R8-4 — see §22 |
 | v3.4 | **Per-room boiler flags deleted entirely** (5 helpers, dashboard section, automation references) | Operator: "the boiler settings per room are redundant… they complicate the setup and the dashboard" |
 | v4 | **Heat/cool becomes a global HOUSE decision from the outdoor temperature; each room gets a day target and a night target instead of two thresholds; new per-room air-filter mode; human detection rebuilt on a real command timestamp; setpoints rounded and clamped to the unit's range; `climate_safety_always` becomes a true master hatch** | Operator simplification request, plus round-4 findings R4-1 through R4-7 — see §15 and §16 |
 
@@ -123,6 +124,11 @@ calibration constant, not a comfort setting, which is why it is one global helpe
 five.
 
 ---
+
+> **Note on §2's resolution expression.** From v5.1 the sensor resolution no longer happens in the
+> automation at all — it lives in `sensor.climate_temp_<room>`, a template sensor. Any resolution
+> template shown above §3 is the **pre-v5 form**, kept as history. The current behaviour is
+> described in §21 and the live implementation is the template entity itself.
 
 ## 3. Control model
 
@@ -382,8 +388,8 @@ Properties:
   `counter-actions` so one can be cleared by hand.
 - **Notification fires exactly once** per trip, because the counter only resets on convergence, so
   counter stops advancing.
-- Notification uses `notify.send_message` with `entity_id: notify.vadims_iphone_17`. The bare
-  `notify.vadims_iphone_17` *service* does not exist — that name is an entity of the newer
+- Notification uses `notify.send_message` with `entity_id: notify.operator_phone`. The bare
+  `notify.operator_phone` *service* does not exist — that name is an entity of the newer
   entity-based notify platform, and the config API's service-registry validation catches the
   mistake.
 
@@ -1299,3 +1305,30 @@ history survives.
 R7-2 is worth stating plainly rather than burying: the fix for R7-3 makes R7-2 more probable. That
 is an accepted trade — reading a radiator-warmed valve in a safety band is a wrong number, while a
 source step is a timing artefact on a room whose comfort control is off.
+
+---
+
+## 22. Round-8 review, and v5.2
+
+Review artifact `review-20260919-b64a.md`. Its verdict on the v5.1 structure was that the
+concentration was right and that it moved the hazard rather than removing it: the resolved sensor
+is now the sole input to control, display *and* aggregates at once, and the bedrooms' resolved
+sensors — four dependencies, two behind clouds — are the most fragile ones in the system while
+protecting the rooms with no comfort control to fall back on.
+
+| # | Finding | Status |
+|---|---|---|
+| **R8-1** | The R7-9 blackout alert fires on **every routine restart**. A bedroom's resolved sensor depends on cloud entities that initialise late, so it reads `unknown` for minutes after boot, resolves to `skip`, and pushes "no usable temperature" — on a version bump. R7-9 traded a silence failure for a cry-wolf failure, and cry-wolf destroys the alert it added | **Fixed.** The blackout arm is suppressed until `uptime > 600 s`. The *other* arm — the room is out of band on a reading we do have — is not suppressed, because that is real from the first tick |
+| R8-2 | The measured 1.2 °C source step **exceeds the 1 °C hysteresis**, so a single TRV↔probe flip can traverse the whole band in one sample; and the resulting churn is **invisible to the breaker**, because every oscillating command is one the unit obeys | **Open, and stated more honestly than v5.1 did.** Still gated by all three bedrooms being disabled. The review is right that "watch when enabled" is too weak given the numbers — before enabling a bedroom, either widen hysteresis past the step or add a dwell on source switching |
+| R8-3 | `min_max` mean over resolved sensors: a mean of [23, 23, 18, 23, 23] looks fine while one room sits at the cat floor, and the aggregates now inherit the two-cloud fragility the AC probes never had | **Open.** A `min` alongside the mean would surface the cold room. Not added — the safety band already alerts per room, so this is a display improvement rather than a protection gap |
+| **R8-4** | The R7-6 bounds check covered four helpers and **omitted the one that actually demonstrated the hazard**: `climate_trv_sensor_offset` came up at −5.0, which is *inside* its valid range | **Fixed.** Both calibration offsets now get **plausibility** checks, not range checks — an offset is wrong long before it is out of bounds. This matters more since v5.1, because the offsets are applied inside the resolved sensor, ahead of everything: one wrong number moves the safety band, the graphs and the household average together, where no downstream guard can see it |
+| R8-4 (part) | `breaker_threshold = 0` re-opens the A5 liveness trap through a slider; `manual_hold_hours = 0` disables human detection | **Rejected — not reachable.** Verified live: `breaker_threshold` has `min: 2.0` and `manual_hold_hours` has `min: 0.5`. The helper bounds already prevent both |
+| R8-5 | §2 still showed the pre-v5 resolution template unannotated, so a reader cannot tell which is current | **Fixed** — §2 now carries a note pointing at §21 |
+
+### The pattern, eight rounds in
+
+R8-1 is the one worth carrying. Round 7 closed a *silence* by adding an alert; round 8 found that
+the alert fires on a routine event, which would have taught the operator to mute it — converting a
+fixed silence into a worse one. Every previous relocation moved a hazard between mechanisms. This
+one moved it between **a system property and a human one**: the alert is technically correct and
+practically useless, and nothing in the code would ever have shown that.

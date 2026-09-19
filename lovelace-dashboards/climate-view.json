@@ -73,375 +73,13 @@
           ]
         },
         {
-          "type": "heading",
-          "heading": "House mode — decided by the weather",
-          "heading_style": "subtitle",
-          "icon": "mdi:home-thermometer-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_heat_below_outdoor",
-          "name": "Heat below",
-          "color": "deep-orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_cool_above_outdoor",
-          "name": "Cool above",
-          "color": "light-blue",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Room targets",
-          "heading_style": "subtitle",
-          "icon": "mdi:home-thermometer"
-        },
-        {
-          "type": "heading",
-          "heading": "Living room",
-          "heading_style": "subtitle",
-          "icon": "mdi:sofa-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_living_room",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_living_room",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_living_room",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_living_room",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Office",
-          "heading_style": "subtitle",
-          "icon": "mdi:desk"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_office",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_office",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_office",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_office",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Bedroom",
-          "heading_style": "subtitle",
-          "icon": "mdi:bed-king-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_bedroom",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_bedroom",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_bedroom",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_bedroom",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 1",
-          "heading_style": "subtitle",
-          "icon": "mdi:bed-single-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_kid1",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_kid1",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_kid1",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_kid1",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 2",
-          "heading_style": "subtitle",
-          "icon": "mdi:teddy-bear"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_kid2",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_kid2",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_kid2",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_kid2",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
           "type": "markdown",
           "text_only": true,
           "content": "{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room','input_datetime.climate_manual_until_living_room'),('Office','counter.climate_fail_office','input_datetime.climate_manual_until_office'),('Bedroom','counter.climate_fail_bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','counter.climate_fail_kid1','input_datetime.climate_manual_until_kid1'),('Kids room 2','counter.climate_fail_kid2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(bad=[], held=[]) %}{% for n, c, m in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% set t = state_attr(m,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n] %}{% endif %}{% endfor %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% if ns.bad %}🔌 **Not responding: {{ ns.bad | join(', ') }}** — comfort throttled, safety still running.\n\n{% endif %}{% if ns.held %}✋ **Manual hold: {{ ns.held | join(', ') }}** — automation hands off until it expires.\n\n{% endif %}{% if hbo >= cao %}⚠️ **House band inverted** ({{ hbo }} / {{ cao }}) — all comfort control is stood down.\n\n{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}⚠️ **Safety limits are OFF** — no frost protection, no away band.\n\n{% endif %}{% if not ns.bad and not ns.held and hbo < cao and is_state('input_boolean.climate_safety_always','on') %}All five units responding · no manual holds · safety limits on.{% endif %}"
         },
         {
           "type": "button",
-          "name": "Safety, breaker & manual holds",
+          "name": "Settings",
           "icon": "mdi:tune-variant",
           "icon_height": "28px",
           "tap_action": {
@@ -643,44 +281,12 @@
           "icon": "mdi:thermometer"
         },
         {
-          "type": "markdown",
-          "text_only": true,
-          "content": "Each room's trace is its **resolved** temperature — the single value the control loop, the floor averages and the household average all read. It picks the best available sensor for that room and applies that sensor's own correction, so adding a better sensor later improves this graph, the aggregates and the automation together. The *meter* and *outside* traces are raw instruments, shown for comparison."
-        },
-        {
           "type": "custom:mini-graph-card",
           "entities": [
             {
               "entity": "sensor.climate_temp_living_room",
               "name": "Living room",
               "color": "#ff9800"
-            }
-          ],
-          "icon": "mdi:thermometer",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "font_size": 75,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": false,
-            "legend": false,
-            "fill": "fade"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 3
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.living_room_meter_pro_co2_be_temperature",
-              "name": "Living room meter",
-              "color": "#607d8b"
             }
           ],
           "icon": "mdi:thermometer",
@@ -813,60 +419,6 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.janka_s_desk_temperature",
-              "name": "Janka's desk",
-              "color": "#795548"
-            }
-          ],
-          "icon": "mdi:thermometer",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "font_size": 75,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": false,
-            "legend": false,
-            "fill": "fade"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 3
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.meter_pro_co2_e9_temperature",
-              "name": "Office meter",
-              "color": "#8bc34a"
-            }
-          ],
-          "icon": "mdi:thermometer",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "font_size": 75,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": false,
-            "legend": false,
-            "fill": "fade"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 3
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
               "entity": "sensor.house_temperature",
               "name": "Outside",
               "color": "#4caf50"
@@ -886,7 +438,7 @@
             "fill": "fade"
           },
           "grid_options": {
-            "columns": 6,
+            "columns": 12,
             "rows": 3
           }
         },
@@ -920,24 +472,9 @@
               "color": "#00bcd4"
             },
             {
-              "entity": "sensor.janka_s_desk_temperature",
-              "name": "Janka's desk",
-              "color": "#795548"
-            },
-            {
               "entity": "sensor.house_temperature",
               "name": "Outside",
               "color": "#4caf50"
-            },
-            {
-              "entity": "sensor.meter_pro_co2_e9_temperature",
-              "name": "Office meter",
-              "color": "#8bc34a"
-            },
-            {
-              "entity": "sensor.living_room_meter_pro_co2_be_temperature",
-              "name": "Living room meter",
-              "color": "#607d8b"
             }
           ],
           "hours_to_show": 24,
@@ -970,44 +507,12 @@
           "icon": "mdi:water-percent"
         },
         {
-          "type": "markdown",
-          "text_only": true,
-          "content": "Resolved per room: the SwitchBot meters where they exist, the Tado valves in the bedrooms, and the AC probe only as a last resort — its humidity reads roughly 10 points low."
-        },
-        {
           "type": "custom:mini-graph-card",
           "entities": [
             {
               "entity": "sensor.climate_humidity_living_room",
               "name": "Living room",
               "color": "#ff9800"
-            }
-          ],
-          "icon": "mdi:water-percent",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "font_size": 75,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": false,
-            "legend": false,
-            "fill": "fade"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 3
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.living_room_meter_pro_co2_be_humidity",
-              "name": "Living room meter",
-              "color": "#607d8b"
             }
           ],
           "icon": "mdi:water-percent",
@@ -1140,9 +645,9 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
-              "entity": "sensor.janka_s_desk_humidity",
-              "name": "Janka's desk",
-              "color": "#795548"
+              "entity": "sensor.house_humidity",
+              "name": "Outside",
+              "color": "#4caf50"
             }
           ],
           "icon": "mdi:water-percent",
@@ -1159,34 +664,7 @@
             "fill": "fade"
           },
           "grid_options": {
-            "columns": 6,
-            "rows": 3
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.meter_pro_co2_e9_humidity",
-              "name": "Office meter",
-              "color": "#8bc34a"
-            }
-          ],
-          "icon": "mdi:water-percent",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "font_size": 75,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": false,
-            "legend": false,
-            "fill": "fade"
-          },
-          "grid_options": {
-            "columns": 6,
+            "columns": 12,
             "rows": 3
           }
         },
@@ -1220,19 +698,9 @@
               "color": "#00bcd4"
             },
             {
-              "entity": "sensor.janka_s_desk_humidity",
-              "name": "Janka's desk",
-              "color": "#795548"
-            },
-            {
-              "entity": "sensor.meter_pro_co2_e9_humidity",
-              "name": "Office meter",
-              "color": "#8bc34a"
-            },
-            {
-              "entity": "sensor.living_room_meter_pro_co2_be_humidity",
-              "name": "Living room meter",
-              "color": "#607d8b"
+              "entity": "sensor.house_humidity",
+              "name": "Outside",
+              "color": "#4caf50"
             }
           ],
           "hours_to_show": 24,

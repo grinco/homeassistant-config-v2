@@ -184,7 +184,8 @@
         "retry_throttle": 3000,
         "ha_started": "{{ state_attr('input_datetime.climate_ha_started','timestamp') | float(0) }}",
         "uptime": "{{ now().timestamp() - (state_attr('input_datetime.climate_ha_started','timestamp') | float(0)) }}",
-        "trv_offset": "{{ states('input_number.climate_trv_sensor_offset') | float(0) }}"
+        "trv_offset": "{{ states('input_number.climate_trv_sensor_offset') | float(0) }}",
+        "boot_grace": 600
       },
       "note": "The room list is an explicit ALLOW-LIST OF ACTUATED ENTITIES: the only entity this automation ever passes to a climate.* service is r.climate, the room's Samsung AC. The gas boiler and its Tado valves are configured entirely outside it and are NEVER commanded here - the boiler is the winter failsafe and is not ours to drive. r.resolved and r.trv_watch are READ-ONLY: the resolved temperature is consumed as a sensor and the TRV setpoint is watched to verify the M6 invariant, but nothing is ever written to either. If you add a field here, check before use whether it is a read or a write."
     },
@@ -200,7 +201,7 @@
       "if": [
         {
           "condition": "template",
-          "value_template": "{% set ns = namespace(bad=false) %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}{% set ns.bad = true %}{% endif %}{% endif %}{% endfor %}{% set settle_bad = (states('input_number.climate_command_settle') | float(240)) < 60 %}{% set hyst_bad = (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}{% set floor_bad = (states('input_number.climate_away_min') | float(18)) < 15 %}{% set frost_bad = (states('input_number.climate_frost_override') | float(7)) < 5 %}{{ heat_below_out >= cool_above_out or uptime > 34560000 or ns.bad or settle_bad or hyst_bad or floor_bad or frost_bad }}"
+          "value_template": "{% set ns = namespace(bad=false) %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}{% set ns.bad = true %}{% endif %}{% endif %}{% endfor %}{% set settle_bad = (states('input_number.climate_command_settle') | float(240)) < 60 %}{% set hyst_bad = (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}{% set floor_bad = (states('input_number.climate_away_min') | float(18)) < 15 %}{% set frost_bad = (states('input_number.climate_frost_override') | float(7)) < 5 %}{% set trv_bad = (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}{% set ac_bad = (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}{{ heat_below_out >= cool_above_out or uptime > 34560000 or ns.bad or settle_bad or hyst_bad or floor_bad or frost_bad or trv_bad or ac_bad }}"
         }
       ],
       "then": [
@@ -209,7 +210,7 @@
           "data": {
             "title": "Climate: configuration problem",
             "notification_id": "climate_config_health",
-            "message": "{% if heat_below_out >= cool_above_out %}**The house-mode band is inverted.** 'Heat below' ({{ heat_below_out }}) is not below 'Cool above' ({{ cool_above_out }}), so the house cannot resolve a season and ALL COMFORT HEATING AND COOLING IS STOOD DOWN. Only the safety band is still acting{% if not safety_on %} - and 'Safety limits always' is OFF, so NOTHING is protecting these rooms at all{% endif %}.\n\n{% endif %}{% if uptime > 34560000 %}**The restart stamp is stale.** The guard that stops a post-restart fault being mistaken for someone at the wall is inert. Check automation.climate_stamp_ha_start.\n\n{% endif %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}**{{ r.name }}: the radiator valve is set above the room's current target** (TRV {{ sp }} C vs {{ 'night' if night else 'day' }} target {{ at }} C). The boiler and the AC will alternate. Set the TRV at or below {{ at }} C.\n\n{% endif %}{% endif %}{% endfor %}{% if (states('input_number.climate_command_settle') | float(240)) < 60 %}**Command settle is {{ states('input_number.climate_command_settle') }} s** - below 60 s our own in-flight commands read as unit faults.\n\n{% endif %}{% if (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}**Hysteresis is {{ states('input_number.climate_hysteresis') }} C** - below 0.5 C rooms will flap at their target.\n\n{% endif %}{% if (states('input_number.climate_away_min') | float(18)) < 15 %}**The away floor is {{ states('input_number.climate_away_min') }} C** - that is below anything safe for the cats or the pipes. It should be about 18.\n\n{% endif %}{% if (states('input_number.climate_frost_override') | float(7)) < 5 %}**The frost override is {{ states('input_number.climate_frost_override') }} C** - too low to protect plumbing.\n\n{% endif %}"
+            "message": "{% if heat_below_out >= cool_above_out %}**The house-mode band is inverted.** 'Heat below' ({{ heat_below_out }}) is not below 'Cool above' ({{ cool_above_out }}), so the house cannot resolve a season and ALL COMFORT HEATING AND COOLING IS STOOD DOWN. Only the safety band is still acting{% if not safety_on %} - and 'Safety limits always' is OFF, so NOTHING is protecting these rooms at all{% endif %}.\n\n{% endif %}{% if uptime > 34560000 %}**The restart stamp is stale.** The guard that stops a post-restart fault being mistaken for someone at the wall is inert. Check automation.climate_stamp_ha_start.\n\n{% endif %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}**{{ r.name }}: the radiator valve is set above the room's current target** (TRV {{ sp }} C vs {{ 'night' if night else 'day' }} target {{ at }} C). The boiler and the AC will alternate. Set the TRV at or below {{ at }} C.\n\n{% endif %}{% endif %}{% endfor %}{% if (states('input_number.climate_command_settle') | float(240)) < 60 %}**Command settle is {{ states('input_number.climate_command_settle') }} s** - below 60 s our own in-flight commands read as unit faults.\n\n{% endif %}{% if (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}**Hysteresis is {{ states('input_number.climate_hysteresis') }} C** - below 0.5 C rooms will flap at their target.\n\n{% endif %}{% if (states('input_number.climate_away_min') | float(18)) < 15 %}**The away floor is {{ states('input_number.climate_away_min') }} C** - that is below anything safe for the cats or the pipes. It should be about 18.\n\n{% endif %}{% if (states('input_number.climate_frost_override') | float(7)) < 5 %}**The frost override is {{ states('input_number.climate_frost_override') }} C** - too low to protect plumbing.\n\n{% endif %}{% if (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}**The TRV sensor offset is {{ states('input_number.climate_trv_sensor_offset') }} C.** That is far larger than any plausible radiator-valve bias, and it shifts the three bedrooms' temperature everywhere at once - the safety band, the graphs and the household average. A freshly created input_number comes up at its MINIMUM, which for this helper is -5: if that is what you are seeing, it was never set. It should be 0 until measured against a running radiator.\n\n{% endif %}{% if (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}**The AC sensor offset is {{ states('input_number.climate_ac_sensor_offset') }} C** - larger than the measured return-air bias of about -2, and it corrupts every room that has fallen back to its AC probe.\n\n{% endif %}"
           }
         }
       ],
@@ -222,7 +223,7 @@
           "continue_on_error": true
         }
       ],
-      "note": "Silent failure modes, all of which pass a float() guard because the value is REAL but wrong. (1) An inverted house band stands comfort down completely and composes with safety_always being off into a fully unprotected flat. (2) A stale restart stamp degrades unit_moved to its pre-v4.1 form. (3) M6: the AC and boiler only avoid fighting while each TRV setpoint stays at or below the room's CURRENT target - compared against day or night as actually in force (R7-5), since comparing always against the lower night target would flag a perfectly good daytime setting and train the operator to dismiss the notice. (4) R7-6, NUMERIC BOUNDS. A new input_number comes up at its MINIMUM, not zero - that already happened once here and put a bedroom 0.04 C from its safety floor. The same lands on any helper that is recreated or reset: away_min at its min of 5 would drop the cat floor to 5 C silently, settle below 60 s would make every one of our own commands read as a fault, hysteresis at 0 would make every room flap. float() catches non-numeric, never wrong-numeric, so these are range-checked."
+      "note": "Silent failure modes, all of which pass a float() guard because the value is REAL but wrong. (1) An inverted house band stands comfort down completely and composes with safety_always being off into a fully unprotected flat. (2) A stale restart stamp degrades unit_moved to its pre-v4.1 form. (3) M6: the AC and boiler only avoid fighting while each TRV setpoint stays at or below the room's CURRENT target - compared against day or night as actually in force (R7-5), since comparing always against the lower night target would flag a perfectly good daytime setting and train the operator to dismiss the notice. (4) R7-6, NUMERIC BOUNDS. A new input_number comes up at its MINIMUM, not zero - that already happened once here and put a bedroom 0.04 C from its safety floor. The same lands on any helper that is recreated or reset: away_min at its min of 5 would drop the cat floor to 5 C silently, settle below 60 s would make every one of our own commands read as a fault, hysteresis at 0 would make every room flap. float() catches non-numeric, never wrong-numeric, so these are range-checked. R8-4 extends the bounds check to the two CALIBRATION offsets, which is where the hazard actually bit: climate_trv_sensor_offset was created with min -5 and came up at -5.0, and -5.0 is INSIDE its valid range, so a range check alone would have passed it. These are therefore PLAUSIBILITY checks, not range checks - an offset is wrong long before it is out of bounds. They matter more since v5.1 because the offsets are applied inside the resolved template sensor, ahead of everything: a wrong offset moves the safety band, the dashboard and the household average from one place, and no guard further down the chain can see it. Checked and NOT added: breaker_threshold (helper min is 2, so the 0 that would re-open the A5 liveness trap is unreachable) and manual_hold_hours (min 0.5, not 0)."
     },
     {
       "repeat": {
@@ -303,8 +304,8 @@
               "may_act": "{{ active and reachable and not mode_ok and not human_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
-              "alert_due": "{{ (is_safety or (safety_on and temp <= -900)) and (now().timestamp() - alert_ts) > retry_throttle }}",
-              "no_temp": "{{ safety_on and temp <= -900 }}"
+              "alert_due": "{{ (is_safety or (safety_on and temp <= -900 and uptime > boot_grace)) and (now().timestamp() - alert_ts) > retry_throttle }}",
+              "no_temp": "{{ safety_on and temp <= -900 and uptime > boot_grace }}"
             }
           },
           {
@@ -347,7 +348,7 @@
               {
                 "action": "notify.send_message",
                 "target": {
-                  "entity_id": "notify.vadims_iphone_17"
+                  "entity_id": "notify.operator_phone"
                 },
                 "data": {
                   "title": "Climate: {{ r.name }} on manual",
@@ -405,7 +406,7 @@
               {
                 "action": "notify.send_message",
                 "target": {
-                  "entity_id": "notify.vadims_iphone_17"
+                  "entity_id": "notify.operator_phone"
                 },
                 "data": {
                   "title": "{% if no_temp %}Climate: {{ r.name }} sensor blackout{% else %}Climate: {{ r.name }} at {{ temp | round(1) }} C{% endif %}",
@@ -423,7 +424,7 @@
                 }
               }
             ],
-            "note": "R6-4 and R7-9. The alert follows THE CONDITION, never whether we managed to send a command. Two holes were closed in round 6 (an unavailable unit cannot be commanded, so may_act was false on a freezing room; a nominally converged unit losing to an open window was equally silent). R7-9 closes the third and worst: 'temp is unusable' sits ABOVE every safety branch in the precedence chain, which is correct - acting on a fabricated number is how v1 failed - but it meant a room whose every sensor was down produced no command AND no word. For the bedrooms that is now two clouds deep (Tado for the valve, SmartThings for the probe) and one WAN outage takes both, in the rooms the cats sleep in. 'I cannot tell whether the cats are freezing' is exactly a condition where the operator is the only remaining actuator."
+            "note": "R6-4, R7-9 and R8-1. The alert follows THE CONDITION, never whether we managed to send a command - round 6 closed two silent holes (an unavailable unit cannot be commanded; a nominally converged unit losing to an open window) and R7-9 closed the third: 'temp is unusable' sits above every safety branch, so a room whose every sensor was down produced no command AND no word. R8-1 then caught what that fix cost: the resolved sensor for a bedroom depends on four entities, two behind clouds that initialise LATE, so it reads unknown for minutes after every restart - and the blackout alert would fire on every routine HA update, on the three rooms that are two clouds deep. An alert that cries wolf on a version bump is how the one alert that matters gets muted. Hence boot_grace: the blackout arm is suppressed until HA has been up 600 s, which is longer than cloud entities take to restore and far shorter than a genuine two-cloud outage. The OTHER arm - the room is outside the safety band on a reading we do have - is NOT suppressed, because that is real from the first tick."
           },
           {
             "if": [
@@ -458,7 +459,7 @@
                   {
                     "action": "notify.send_message",
                     "target": {
-                      "entity_id": "notify.vadims_iphone_17"
+                      "entity_id": "notify.operator_phone"
                     },
                     "data": {
                       "title": "Climate: {{ r.name }} isolated",

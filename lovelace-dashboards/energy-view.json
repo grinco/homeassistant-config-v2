@@ -1,0 +1,509 @@
+{
+  "title": "Energy",
+  "path": "energy",
+  "type": "sections",
+  "icon": "mdi:lightning-bolt",
+  "max_columns": 3,
+  "badges": [
+    {
+      "type": "entity",
+      "entity": "sensor.ac_power_total",
+      "name": "AC load now",
+      "show_state": true,
+      "color": "green"
+    },
+    {
+      "type": "entity",
+      "entity": "sensor.socket_power_total",
+      "name": "Socket load",
+      "show_state": true,
+      "color": "teal"
+    },
+    {
+      "type": "entity",
+      "entity": "sensor.volvo_xc40_charging_power",
+      "name": "Car charging",
+      "show_state": true,
+      "color": "blue",
+      "visibility": [
+        {
+          "condition": "numeric_state",
+          "entity": "sensor.volvo_xc40_charging_power",
+          "above": 0
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Load now",
+          "icon": "mdi:speedometer"
+        },
+        {
+          "type": "custom:mini-graph-card",
+          "entities": [
+            {
+              "entity": "sensor.ac_power_total",
+              "name": "All air conditioners",
+              "color": "#4caf50"
+            },
+            {
+              "entity": "sensor.socket_power_total",
+              "name": "All sockets",
+              "color": "#00bcd4"
+            }
+          ],
+          "icon": "mdi:lightning-bolt",
+          "hours_to_show": 24,
+          "points_per_hour": 4,
+          "line_width": 2,
+          "height": 140,
+          "lower_bound": 0,
+          "show": {
+            "name": true,
+            "icon": true,
+            "state": true,
+            "labels": true,
+            "legend": false,
+            "fill": "fade",
+            "extrema": true
+          },
+          "grid_options": {
+            "columns": 12,
+            "rows": "auto"
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Per unit",
+          "heading_style": "subtitle",
+          "icon": "mdi:air-conditioner"
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.living_room_livingroom_ac_power",
+          "name": "Living room",
+          "icon": "mdi:air-conditioner",
+          "color": "orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.office_guest_room_office_ac_power",
+          "name": "Office",
+          "icon": "mdi:air-conditioner",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.master_bedroom_bedroom_ac_power",
+          "name": "Bedroom",
+          "icon": "mdi:air-conditioner",
+          "color": "purple",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid1_room_ac_power",
+          "name": "Kids room 1",
+          "icon": "mdi:air-conditioner",
+          "color": "pink",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.kid2_room_ac_power",
+          "name": "Kids room 2",
+          "icon": "mdi:air-conditioner",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.volvo_xc40_charging_power",
+          "name": "Car charger",
+          "icon": "mdi:ev-station",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 3700
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Sockets",
+          "heading_style": "subtitle",
+          "icon": "mdi:power-socket-de"
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.living_room_tv_socket_power",
+          "name": "TV",
+          "icon": "mdi:television-classic",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 500
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.living_room_vacuum_socket_power",
+          "name": "Vacuum dock",
+          "icon": "mdi:robot-vacuum",
+          "color": "teal",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 1000
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.downstairs_toilet_power",
+          "name": "Toilet down",
+          "icon": "mdi:toilet",
+          "color": "teal",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 2000
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.upstairs_toilet_power",
+          "name": "Toilet up",
+          "icon": "mdi:toilet",
+          "color": "teal",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 2000
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.poe_network_power",
+          "name": "PoE network",
+          "icon": "mdi:server-network",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 200
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.lr_powerline_power",
+          "name": "LR powerline",
+          "icon": "mdi:transmission-tower",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Consumption",
+          "icon": "mdi:chart-bar"
+        },
+        {
+          "type": "energy-date-selection",
+          "grid_options": {
+            "columns": "full"
+          }
+        },
+        {
+          "type": "energy-devices-graph",
+          "title": "Per device",
+          "grid_options": {
+            "columns": "full",
+            "rows": 6
+          }
+        },
+        {
+          "type": "statistics-graph",
+          "title": "Daily kWh, last 14 days",
+          "chart_type": "bar",
+          "period": "day",
+          "days_to_show": 14,
+          "stat_types": [
+            "change"
+          ],
+          "grid_options": {
+            "columns": "full",
+            "rows": 6
+          },
+          "entities": [
+            {
+              "entity": "sensor.living_room_livingroom_ac_energy",
+              "name": "Living room",
+              "color": "orange"
+            },
+            {
+              "entity": "sensor.office_guest_room_office_ac_energy",
+              "name": "Office",
+              "color": "indigo"
+            },
+            {
+              "entity": "sensor.master_bedroom_bedroom_ac_energy",
+              "name": "Bedroom",
+              "color": "purple"
+            },
+            {
+              "entity": "sensor.kid1_room_ac_energy",
+              "name": "Kids room 1",
+              "color": "pink"
+            },
+            {
+              "entity": "sensor.kid2_room_ac_energy",
+              "name": "Kids room 2",
+              "color": "cyan"
+            },
+            {
+              "entity": "sensor.downstairs_toilet_energy",
+              "name": "Toilet down socket",
+              "color": "teal"
+            },
+            {
+              "entity": "sensor.upstairs_toilet_energy",
+              "name": "Toilet up socket",
+              "color": "brown"
+            },
+            {
+              "entity": "sensor.poe_network_energy",
+              "name": "PoE network",
+              "color": "blue-grey"
+            },
+            {
+              "entity": "sensor.lr_powerline_energy",
+              "name": "LR powerline",
+              "color": "brown"
+            },
+            {
+              "entity": "sensor.living_room_tv_socket_total_energy",
+              "name": "TV socket",
+              "color": "amber"
+            },
+            {
+              "entity": "sensor.living_room_vacuum_socket_total_energy",
+              "name": "Vacuum socket",
+              "color": "purple"
+            }
+          ]
+        },
+        {
+          "type": "statistics-graph",
+          "title": "Monthly kWh, last 12 months",
+          "chart_type": "bar-stack",
+          "period": "month",
+          "days_to_show": 365,
+          "stat_types": [
+            "change"
+          ],
+          "grid_options": {
+            "columns": "full",
+            "rows": 6
+          },
+          "entities": [
+            {
+              "entity": "sensor.living_room_livingroom_ac_energy",
+              "name": "Living room",
+              "color": "orange"
+            },
+            {
+              "entity": "sensor.office_guest_room_office_ac_energy",
+              "name": "Office",
+              "color": "indigo"
+            },
+            {
+              "entity": "sensor.master_bedroom_bedroom_ac_energy",
+              "name": "Bedroom",
+              "color": "purple"
+            },
+            {
+              "entity": "sensor.kid1_room_ac_energy",
+              "name": "Kids room 1",
+              "color": "pink"
+            },
+            {
+              "entity": "sensor.kid2_room_ac_energy",
+              "name": "Kids room 2",
+              "color": "cyan"
+            },
+            {
+              "entity": "sensor.downstairs_toilet_energy",
+              "name": "Toilet down socket",
+              "color": "teal"
+            },
+            {
+              "entity": "sensor.upstairs_toilet_energy",
+              "name": "Toilet up socket",
+              "color": "brown"
+            },
+            {
+              "entity": "sensor.poe_network_energy",
+              "name": "PoE network",
+              "color": "blue-grey"
+            },
+            {
+              "entity": "sensor.lr_powerline_energy",
+              "name": "LR powerline",
+              "color": "brown"
+            },
+            {
+              "entity": "sensor.living_room_tv_socket_total_energy",
+              "name": "TV socket",
+              "color": "amber"
+            },
+            {
+              "entity": "sensor.living_room_vacuum_socket_total_energy",
+              "name": "Vacuum socket",
+              "color": "purple"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Car",
+          "icon": "mdi:car-electric",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/appliances"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.volvo_xc40_battery",
+          "name": "Battery",
+          "icon": "mdi:battery-charging",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.volvo_xc40_charging_status",
+          "name": "Charging",
+          "icon": "mdi:ev-station",
+          "color": "blue",
+          "grid_options": {
+            "columns": 6
+          }
+        }
+      ]
+    }
+  ]
+}

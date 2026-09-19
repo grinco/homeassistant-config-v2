@@ -15,9 +15,366 @@
       },
       "cards": [
         {
-          "type": "markdown",
-          "text_only": true,
-          "content": "Set-once controls. Nothing here needs changing in normal use — the day-to-day knobs live on the Climate view."
+          "type": "heading",
+          "heading": "House mode — decided by the weather",
+          "heading_style": "subtitle",
+          "icon": "mdi:home-thermometer-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_heat_below_outdoor",
+          "name": "Heat below",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_cool_above_outdoor",
+          "name": "Cool above",
+          "color": "light-blue",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Room targets",
+          "heading_style": "subtitle",
+          "icon": "mdi:home-thermometer"
+        },
+        {
+          "type": "heading",
+          "heading": "Living room",
+          "heading_style": "subtitle",
+          "icon": "mdi:sofa-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_room_living_room",
+          "name": "Maintain",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_air_filter_living_room",
+          "name": "Air filter",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_day_living_room",
+          "name": "Day",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_night_living_room",
+          "name": "Night",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Office",
+          "heading_style": "subtitle",
+          "icon": "mdi:desk"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_room_office",
+          "name": "Maintain",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_air_filter_office",
+          "name": "Air filter",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_day_office",
+          "name": "Day",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_night_office",
+          "name": "Night",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Bedroom",
+          "heading_style": "subtitle",
+          "icon": "mdi:bed-king-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_room_bedroom",
+          "name": "Maintain",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_air_filter_bedroom",
+          "name": "Air filter",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_day_bedroom",
+          "name": "Day",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_night_bedroom",
+          "name": "Night",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Kids room 1",
+          "heading_style": "subtitle",
+          "icon": "mdi:bed-single-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_room_kid1",
+          "name": "Maintain",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_air_filter_kid1",
+          "name": "Air filter",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_day_kid1",
+          "name": "Day",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_night_kid1",
+          "name": "Night",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Kids room 2",
+          "heading_style": "subtitle",
+          "icon": "mdi:teddy-bear"
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_room_kid2",
+          "name": "Maintain",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.climate_air_filter_kid2",
+          "name": "Air filter",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_day_kid2",
+          "name": "Day",
+          "color": "amber",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_number.climate_target_night_kid2",
+          "name": "Night",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
         },
         {
           "type": "heading",
@@ -358,11 +715,6 @@
           "heading": "Radiator valves — read only",
           "heading_style": "subtitle",
           "icon": "mdi:radiator"
-        },
-        {
-          "type": "markdown",
-          "text_only": true,
-          "content": "The automation **reads** these and never commands them: the boiler is configured outside it and is the winter failsafe. *Heating %* says when a valve is driving the radiator, which is exactly when its temperature reading is biased. *Window* is Tado's open-window detection, currently unused by the automation. Each valve's setpoint is watched against that room's night target — a valve set above it makes the boiler and the AC alternate, and the config-health notification will say so."
         },
         {
           "type": "heading",

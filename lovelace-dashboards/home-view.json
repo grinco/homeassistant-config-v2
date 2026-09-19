@@ -1,0 +1,1208 @@
+{
+  "title": "Home",
+  "path": "home",
+  "type": "sections",
+  "icon": "mdi:home",
+  "max_columns": 3,
+  "header": {
+    "layout": "responsive",
+    "badges_position": "bottom",
+    "badges_wrap": "scroll",
+    "card": {
+      "type": "markdown",
+      "text_only": true,
+      "content": "{% set h = now().hour %}## {% if h < 5 %}Good night{% elif h < 12 %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good evening{% endif %}\n{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ n }} light{{ 's' if n != 1 }} on{% set ac = states.climate | rejectattr('state','eq','off') | list | count %}{% if ac %} · {{ ac }} AC running{% endif %}{% set nr = as_timestamp(states('sensor.sun_next_rising'), 0) %}{% set nd = as_timestamp(states('sensor.sun_next_setting'), 0) %}{% if nr and nd %} · {% if nr < nd %}sunrise {{ nr | timestamp_custom('%H:%M', true) }}{% else %}sunset {{ nd | timestamp_custom('%H:%M', true) }}{% endif %}{% endif %}"
+    }
+  },
+  "badges": [
+    {
+      "type": "shortcut",
+      "text": "Ask",
+      "icon": "mdi:microphone-message",
+      "color": "purple",
+      "tap_action": {
+        "action": "assist"
+      }
+    },
+    {
+      "type": "entity",
+      "entity": "sensor.indoor_temperature",
+      "name": "Indoors",
+      "show_state": true,
+      "color": "orange"
+    },
+    {
+      "type": "entity",
+      "entity": "sensor.indoor_humidity",
+      "name": "RH",
+      "show_state": true,
+      "color": "cyan"
+    },
+    {
+      "type": "entity",
+      "entity": "person.adult1_person",
+      "name": "Adult 1",
+      "show_name": true,
+      "show_state": false,
+      "show_entity_picture": true,
+      "color": "green"
+    },
+    {
+      "type": "entity",
+      "entity": "person.adult2_person",
+      "name": "Adult 2",
+      "show_name": true,
+      "show_state": false,
+      "show_entity_picture": true,
+      "color": "green"
+    },
+    {
+      "type": "entity",
+      "entity": "person.kid1_person",
+      "name": "Kids room 1",
+      "show_name": true,
+      "show_state": false,
+      "show_entity_picture": true,
+      "color": "green"
+    }
+  ],
+  "sections": [
+    {
+      "type": "grid",
+      "column_span": 2,
+      "background": {
+        "color": "red",
+        "opacity": 12
+      },
+      "visibility": [
+        {
+          "condition": "or",
+          "conditions": [
+            {
+              "condition": "state",
+              "entity": "binary_sensor.shower_sink_leak_water_leak",
+              "state": "on"
+            },
+            {
+              "condition": "state",
+              "entity": "binary_sensor.any_battery_low",
+              "state": "on"
+            },
+            {
+              "condition": "state",
+              "entity": "alarm_control_panel.home",
+              "state": "triggered"
+            }
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Needs attention",
+          "icon": "mdi:alert-circle-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "alarm_control_panel.home",
+          "name": "Alarm triggered",
+          "icon": "mdi:shield-alert",
+          "color": "red",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "alarm-modes",
+              "modes": [
+                "armed_home",
+                "armed_away"
+              ]
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "state",
+              "entity": "alarm_control_panel.home",
+              "state": "triggered"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "binary_sensor.shower_sink_leak_water_leak",
+          "name": "Water leak — shower sink",
+          "icon": "mdi:water-alert",
+          "color": "red",
+          "grid_options": {
+            "columns": 12
+          },
+          "visibility": [
+            {
+              "condition": "state",
+              "entity": "binary_sensor.shower_sink_leak_water_leak",
+              "state": "on"
+            }
+          ]
+        },
+        {
+          "type": "markdown",
+          "visibility": [
+            {
+              "condition": "state",
+              "entity": "binary_sensor.any_battery_low",
+              "state": "on"
+            }
+          ],
+          "content": "{% set alias = {'0x0017880106495a81':'Outdoor motion, front door','0x1035970000139e5b':'IKEA BILRESA remote','0x5c0272fffeac2293':'IKEA motion sensor','0x8c65a3fffe350702':'Tuya smart knob','0x0ceff6fffe5e5be4':'SONOFF button'} %}{% set ns = namespace(low=[]) %}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','battery') | rejectattr('entity_id','search','volvo') %}{%- if s.state not in ['unknown','unavailable'] and s.state | float(101) < 35 %}{%- set raw = s.name | replace(' Battery','') %}{%- set ns.low = ns.low + [(s.state | float(0), alias.get(raw, raw))] %}{%- endif %}{%- endfor %}**{{ ns.low | count }} low batter{{ 'ies' if ns.low | count != 1 else 'y' }}** — {% for pct, nm in ns.low | sort %}{{ nm }} {{ pct | round(0) }}%{{ ', ' if not loop.last }}{% endfor %}"
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "primary": "Lights",
+          "icon": "mdi:lightbulb-group",
+          "secondary": "{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ n ~ ' on' if n else 'All off' }}",
+          "color": "{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ 'amber' if n else 'grey' }}",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "light.turn_off",
+            "target": {
+              "area_id": [
+                "living_room",
+                "kitchen",
+                "bedroom",
+                "corridor",
+                "bedroom_2",
+                "kid1_room",
+                "kid2_room",
+                "hallway",
+                "bathroom",
+                "shower",
+                "laundry_room",
+                "closet"
+              ]
+            },
+            "confirmation": {
+              "text": "Turn off every light in the house?"
+            }
+          },
+          "icon_tap_action": {
+            "action": "none"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "sensor.indoor_temperature",
+          "primary": "Indoors",
+          "icon": "mdi:home-thermometer",
+          "secondary": "{{ states('sensor.indoor_temperature') | float(0) | round(1) }}° · {{ states('sensor.indoor_humidity') | float(0) | round(0) | int }}%",
+          "color": "{% set t = states('sensor.indoor_temperature') | float(0) %}{{ 'blue' if t < 20 else 'green' if t <= 24 else 'amber' if t <= 26 else 'deep-orange' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "alarm_control_panel.home",
+          "primary": "Alarm",
+          "icon": "{{ {'disarmed':'mdi:shield-outline','armed_home':'mdi:shield-home','armed_night':'mdi:shield-moon','armed_away':'mdi:shield-lock','arming':'mdi:shield-sync','pending':'mdi:shield-sync','triggered':'mdi:shield-alert'}.get(states('alarm_control_panel.home'), 'mdi:shield-off-outline') }}",
+          "secondary": "{{ {'disarmed':'Disarmed','armed_home':'Armed home','armed_night':'Armed night','armed_away':'Armed away','arming':'Arming…','pending':'Pending…','triggered':'TRIGGERED'}.get(states('alarm_control_panel.home'), 'Unavailable') }}",
+          "color": "{{ {'disarmed':'green','armed_home':'blue','armed_night':'indigo','armed_away':'red','arming':'amber','pending':'amber','triggered':'red'}.get(states('alarm_control_panel.home'), 'grey') }}",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/security"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          },
+          "features_position": "bottom"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "weather.house",
+          "primary": "Outside",
+          "icon": "{% set m = {'clear-night':'mdi:weather-night','cloudy':'mdi:weather-cloudy','fog':'mdi:weather-fog','hail':'mdi:weather-hail','lightning':'mdi:weather-lightning','lightning-rainy':'mdi:weather-lightning-rainy','partlycloudy':'mdi:weather-partly-cloudy','pouring':'mdi:weather-pouring','rainy':'mdi:weather-rainy','snowy':'mdi:weather-snowy','snowy-rainy':'mdi:weather-snowy-rainy','sunny':'mdi:weather-sunny','windy':'mdi:weather-windy','windy-variant':'mdi:weather-windy-variant'} %}{{ m.get(states('weather.house'), 'mdi:weather-cloudy') }}",
+          "secondary": "{{ state_attr('weather.house','temperature') | float(0) | round(0) | int }}° · {{ states('sensor.house_precipitation_probability') }}% rain",
+          "color": "{{ 'indigo' if is_state('sun.sun','below_horizon') else 'light-blue' }}",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "sensor.outside_openweathermap_air_quality_index",
+          "primary": "Air quality",
+          "icon": "mdi:air-filter",
+          "secondary": "{{ {'1':'Good','2':'Fair','3':'Moderate','4':'Poor','5':'Very poor'}.get(states('sensor.outside_openweathermap_air_quality_index'), '—') }} · PM2.5 {{ states('sensor.outside_openweathermap_pm2_5') | float(0) | round(0) | int }}",
+          "color": "{{ {'1':'green','2':'light-green','3':'amber','4':'orange','5':'red'}.get(states('sensor.outside_openweathermap_air_quality_index'), 'grey') }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "vacuum.zorik",
+          "primary": "Žorik",
+          "icon": "mdi:robot-vacuum",
+          "secondary": "{{ states('sensor.zorik_status') | replace('_',' ') | capitalize }} · {{ states('sensor.zorik_battery') }}%",
+          "color": "{{ 'teal' if is_state('binary_sensor.zorik_cleaning','on') else 'red' if states('sensor.zorik_vacuum_error') not in ['none','unknown','unavailable'] else 'grey' }}",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/appliances"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Rooms",
+          "icon": "mdi:floor-plan",
+          "badges": [
+            {
+              "type": "button",
+              "icon": "mdi:lightbulb-off-outline",
+              "text": "All off",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "light.turn_off",
+                "target": {
+                  "area_id": [
+                    "living_room",
+                    "kitchen",
+                    "bedroom",
+                    "corridor",
+                    "bedroom_2",
+                    "kid1_room",
+                    "kid2_room",
+                    "hallway",
+                    "bathroom",
+                    "shower",
+                    "laundry_room",
+                    "closet"
+                  ]
+                },
+                "confirmation": {
+                  "text": "Turn off every light in the house?"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Lower floor",
+          "heading_style": "subtitle",
+          "icon": "mdi:home-floor-l"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "light.living_room_lights",
+          "area": "living_room",
+          "primary": "Living room",
+          "icon": "mdi:sofa-outline",
+          "secondary": "{% if is_state('light.living_room_lights','on') %}On{% set b = state_attr('light.living_room_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.living_room_livingroom_ac_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.living_room_livingroom_ac_temperature') }}",
+          "color": "{{ 'amber' if is_state('light.living_room_lights','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/living-room"
+          },
+          "double_tap_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/living-room"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_living_room_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "light.gallery",
+          "area": "kitchen",
+          "primary": "Kitchen",
+          "icon": "mdi:countertop-outline",
+          "secondary": "{% if is_state('light.gallery','on') %}On{% set b = state_attr('light.gallery','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · cooktop on' if is_state('sensor.house_cooktop_operation_state','run') }}{{ ' · oven on' if states('sensor.house_oven_operation_state') in ['run','delayedstart'] }}",
+          "color": "{{ 'amber' if is_state('light.gallery','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/kitchen"
+          },
+          "double_tap_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/kitchen"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kitchen_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "light.office_lights",
+          "area": "bedroom",
+          "primary": "Office",
+          "icon": "mdi:desk",
+          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.adult2_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.adult2_desk_temperature') }}",
+          "color": "{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/guest-room"
+          },
+          "double_tap_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/guest-room"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_guest_room_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "light.corridor_lights",
+          "area": "corridor",
+          "primary": "Corridor",
+          "icon": "mdi:stairs",
+          "secondary": "{% if is_state('light.corridor_lights','on') %}On{% set b = state_attr('light.corridor_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}",
+          "color": "{{ 'amber' if is_state('light.corridor_lights','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/corridor"
+          },
+          "double_tap_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/corridor"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_corridor_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "area": "laundry_room",
+          "primary": "Laundry",
+          "icon": "mdi:washing-machine",
+          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
+          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else 'grey' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/laundry-room"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/laundry-room"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "area": "shower",
+          "primary": "Shower",
+          "icon": "mdi:shower-head",
+          "secondary": "{{ 'LEAK' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'Dry' }} · {{ states('sensor.shower_sink_leak_battery') }}% batt",
+          "color": "{{ 'red' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'light-blue' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/shower"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/shower"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_shower_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "heading",
+          "heading": "Upper floor",
+          "heading_style": "subtitle",
+          "icon": "mdi:home-roof"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "climate.master_bedroom_bedroom_ac",
+          "area": "bedroom_2",
+          "primary": "Bedroom",
+          "icon": "mdi:bed-king-outline",
+          "secondary": "{% set s = states('climate.master_bedroom_bedroom_ac') %}{{ state_attr('climate.master_bedroom_bedroom_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.master_bedroom_bedroom_ac','temperature') ~ '°' }}",
+          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.master_bedroom_bedroom_ac'), 'grey') }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/bedroom"
+          },
+          "hold_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_bedroom_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "climate.kid1_room_ac",
+          "area": "kid1_room",
+          "primary": "Kids room 1",
+          "icon": "mdi:bed-single-outline",
+          "secondary": "{% set s = states('climate.kid1_room_ac') %}{{ state_attr('climate.kid1_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid1_room_ac','temperature') ~ '°' }}",
+          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid1_room_ac'), 'grey') }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/kid1"
+          },
+          "hold_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kid1_room_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "climate.kid2_room_ac",
+          "area": "kid2_room",
+          "primary": "Kids room 2",
+          "icon": "mdi:teddy-bear",
+          "secondary": "{% set s = states('climate.kid2_room_ac') %}{{ state_attr('climate.kid2_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid2_room_ac','temperature') ~ '°' }}",
+          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid2_room_ac'), 'grey') }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/kid2"
+          },
+          "hold_action": {
+            "action": "more-info"
+          },
+          "icon_tap_action": {
+            "action": "more-info"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kid2_room_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "area": "hallway",
+          "primary": "Hallway",
+          "icon": "mdi:stairs-up",
+          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
+          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else 'grey' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/hallway"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/hallway"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "area": "bathroom",
+          "primary": "Bathroom",
+          "icon": "mdi:bathtub-outline",
+          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
+          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else 'grey' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/bathroom"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/bathroom"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
+          "badge_color": "green"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 4
+          },
+          "area": "closet",
+          "primary": "Closet",
+          "icon": "mdi:hanger",
+          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
+          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else 'grey' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/closet"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/closet"
+          },
+          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
+          "badge_color": "green"
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Air conditioning",
+          "icon": "mdi:air-conditioner",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.living_room_livingroom_ac",
+          "name": "Living room",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "fill_container": true,
+          "hvac_modes": [
+            "off",
+            "cool",
+            "heat",
+            "dry",
+            "fan_only"
+          ],
+          "show_temperature_control": true,
+          "collapsible_controls": true,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.office_guest_room_office_ac",
+          "name": "Office",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "fill_container": true,
+          "hvac_modes": [
+            "off",
+            "cool",
+            "heat",
+            "dry",
+            "fan_only"
+          ],
+          "show_temperature_control": true,
+          "collapsible_controls": true,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.master_bedroom_bedroom_ac",
+          "name": "Bedroom",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "fill_container": true,
+          "hvac_modes": [
+            "off",
+            "cool",
+            "heat",
+            "dry",
+            "fan_only"
+          ],
+          "show_temperature_control": true,
+          "collapsible_controls": true,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.kid1_room_ac",
+          "name": "Kids room 1",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "fill_container": true,
+          "hvac_modes": [
+            "off",
+            "cool",
+            "heat",
+            "dry",
+            "fan_only"
+          ],
+          "show_temperature_control": true,
+          "collapsible_controls": true,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:mushroom-climate-card",
+          "entity": "climate.kid2_room_ac",
+          "name": "Kids room 2",
+          "icon": "mdi:air-conditioner",
+          "layout": "horizontal",
+          "fill_container": true,
+          "hvac_modes": [
+            "off",
+            "cool",
+            "heat",
+            "dry",
+            "fan_only"
+          ],
+          "show_temperature_control": true,
+          "collapsible_controls": true,
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Media",
+          "icon": "mdi:television-play"
+        },
+        {
+          "type": "custom:mini-media-player",
+          "entity": "media_player.living_room_living_room_tv",
+          "name": "Living room TV",
+          "icon": "mdi:television",
+          "artwork": "cover",
+          "info": "short",
+          "toggle_power": true,
+          "volume_stateless": false,
+          "source": "icon",
+          "sound_mode": "icon",
+          "grid_options": {
+            "columns": 12
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Sockets",
+          "icon": "mdi:power-socket-de",
+          "badges": [
+            {
+              "type": "entity",
+              "entity": "sensor.socket_power_total",
+              "name": "Load",
+              "show_state": true,
+              "color": "green"
+            }
+          ],
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/energy"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.living_room_tv_socket",
+          "primary": "TV",
+          "icon": "mdi:television-classic",
+          "secondary": "{% if is_state('switch.living_room_tv_socket','on') %}{{ states('sensor.living_room_tv_socket_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
+          "color": "{{ 'amber' if is_state('switch.living_room_tv_socket','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.living_room_tv_socket_switchbot_bridge",
+          "primary": "Switchbot bridge",
+          "icon": "mdi:bridge",
+          "secondary": "{{ 'On' if is_state('switch.living_room_tv_socket_switchbot_bridge','on') else 'Off' }}",
+          "color": "{{ 'blue' if is_state('switch.living_room_tv_socket_switchbot_bridge','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.living_room_vacuum_socket",
+          "primary": "Vacuum dock",
+          "icon": "mdi:robot-vacuum",
+          "secondary": "{% if is_state('switch.living_room_vacuum_socket','on') %}{{ states('sensor.living_room_vacuum_socket_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
+          "color": "{{ 'teal' if is_state('switch.living_room_vacuum_socket','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.living_room_vacuum_socket_magsafe_charger",
+          "primary": "MagSafe charger",
+          "icon": "mdi:cellphone-charging",
+          "secondary": "{{ 'On' if is_state('switch.living_room_vacuum_socket_magsafe_charger','on') else 'Off' }}",
+          "color": "{{ 'blue' if is_state('switch.living_room_vacuum_socket_magsafe_charger','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.downstairs_toilet",
+          "primary": "Toilet down",
+          "icon": "mdi:toilet",
+          "secondary": "{% if is_state('switch.downstairs_toilet','on') %}{{ states('sensor.downstairs_toilet_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
+          "color": "{{ 'teal' if is_state('switch.downstairs_toilet','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.upstairs_toilet",
+          "primary": "Toilet up",
+          "icon": "mdi:toilet",
+          "secondary": "{% if is_state('switch.upstairs_toilet','on') %}{{ states('sensor.upstairs_toilet_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
+          "color": "{{ 'teal' if is_state('switch.upstairs_toilet','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.poe_network",
+          "primary": "PoE network",
+          "icon": "mdi:server-network",
+          "secondary": "{% if is_state('switch.poe_network','on') %}{{ states('sensor.poe_network_power') | float(0) | round(0) | int }} W{% else %}OFF{% endif %}",
+          "color": "{{ 'blue-grey' if is_state('switch.poe_network','on') else 'red' }}",
+          "tap_action": {
+            "action": "toggle",
+            "confirmation": {
+              "text": "Cut power to the PoE network gear? Switches, access points and anything else powered centrally over Ethernet will drop - including, most likely, this dashboard."
+            }
+          },
+          "icon_tap_action": {
+            "action": "toggle",
+            "confirmation": {
+              "text": "Cut power to the PoE network gear? Switches, access points and anything else powered centrally over Ethernet will drop - including, most likely, this dashboard."
+            }
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "switch.lr_powerline",
+          "primary": "LR powerline",
+          "icon": "mdi:transmission-tower",
+          "secondary": "{% if is_state('switch.lr_powerline','on') %}{{ states('sensor.lr_powerline_power') | float(0) | round(0) | int }} W{% else %}OFF{% endif %}",
+          "color": "{{ 'blue-grey' if is_state('switch.lr_powerline','on') else 'red' }}",
+          "tap_action": {
+            "action": "toggle",
+            "confirmation": {
+              "text": "Cut power to the Living Room powerline adapter? Anything bridged through it drops."
+            }
+          },
+          "icon_tap_action": {
+            "action": "toggle",
+            "confirmation": {
+              "text": "Cut power to the Living Room powerline adapter? Anything bridged through it drops."
+            }
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "entity": "sensor.socket_power_total",
+          "primary": "Socket load",
+          "icon": "mdi:flash",
+          "secondary": "{{ states('sensor.socket_power_total') | float(0) | round(0) | int }} W",
+          "color": "{% set w = states('sensor.socket_power_total') | float(0) %}{{ 'grey' if w < 20 else 'green' if w < 500 else 'amber' if w < 1500 else 'deep-orange' }}",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/energy"
+          },
+          "icon_tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/energy"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "At a glance",
+          "icon": "mdi:eye-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.downstairs_temperature",
+          "name": "Downstairs",
+          "icon": "mdi:home-floor-l",
+          "color": "orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.upstairs_temperature",
+          "name": "Upstairs",
+          "icon": "mdi:home-roof",
+          "color": "orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.ac_power_total",
+          "name": "AC load",
+          "icon": "mdi:lightning-bolt",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/energy"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.house_temperature",
+          "name": "Outside",
+          "icon": "mdi:sun-thermometer-outline",
+          "color": "light-blue",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Around the house",
+          "icon": "mdi:home-automation"
+        },
+        {
+          "type": "custom:vacuum-card",
+          "entity": "vacuum.zorik",
+          "show_toolbar": true,
+          "show_status": true,
+          "compact_view": false,
+          "grid_options": {
+            "columns": 12
+          },
+          "stats": {
+            "default": [
+              {
+                "entity_id": "sensor.zorik_filter_time_left",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "h",
+                "subtitle": "Filter"
+              },
+              {
+                "entity_id": "sensor.zorik_main_brush_time_left",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "h",
+                "subtitle": "Main brush"
+              },
+              {
+                "entity_id": "sensor.zorik_side_brush_time_left",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "h",
+                "subtitle": "Side brush"
+              }
+            ],
+            "cleaning": [
+              {
+                "entity_id": "sensor.zorik_cleaning_time",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "min",
+                "subtitle": "Time"
+              },
+              {
+                "entity_id": "sensor.zorik_cleaning_area",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "m²",
+                "subtitle": "Area"
+              },
+              {
+                "entity_id": "sensor.zorik_cleaning_progress",
+                "value_template": "{{ value | float(0) | round(0) | int }}",
+                "unit": "%",
+                "subtitle": "Done"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:mushroom-entity-card",
+          "entity": "sensor.cat_toilet_excretion_times_day",
+          "name": "Cat visits today",
+          "icon": "mdi:cat",
+          "icon_color": "brown",
+          "fill_container": true,
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:mushroom-entity-card",
+          "entity": "switch.cat_toilet_auto_clean",
+          "name": "Auto clean",
+          "icon": "mdi:autorenew",
+          "icon_color": "brown",
+          "fill_container": true,
+          "tap_action": {
+            "action": "toggle"
+          },
+          "grid_options": {
+            "columns": 6
+          }
+        }
+      ]
+    }
+  ]
+}

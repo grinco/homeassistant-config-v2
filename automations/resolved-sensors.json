@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors and the floor/household aggregates derived from them. Reference only; entity ids are anonymised and will not apply to the live instance.",
+  "note": "Resolved per-room sensors plus floor/household and socket aggregates. Reference only; entity ids are anonymised and will not apply to the live instance.",
   "entries": [
     {
       "domain": "min_max",
@@ -15,8 +15,7 @@
         "name": "Indoor Temperature",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "min_max",
@@ -32,8 +31,7 @@
         "name": "Indoor Humidity",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "min_max",
@@ -46,8 +44,7 @@
         "name": "Downstairs Temperature",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "min_max",
@@ -60,8 +57,7 @@
         "name": "Downstairs Humidity",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "min_max",
@@ -75,8 +71,7 @@
         "name": "Upstairs Temperature",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "min_max",
@@ -90,8 +85,24 @@
         "name": "Upstairs Humidity",
         "round_digits": 1.0,
         "type": "mean"
-      },
-      "data": {}
+      }
+    },
+    {
+      "domain": "min_max",
+      "title": "Socket power total",
+      "options": {
+        "entity_ids": [
+          "sensor.downstairs_toilet_power",
+          "sensor.upstairs_toilet_power",
+          "sensor.poe_network_power",
+          "sensor.lr_powerline_power",
+          "sensor.living_room_tv_socket_power",
+          "sensor.living_room_vacuum_socket_power"
+        ],
+        "name": "Socket power total",
+        "round_digits": 0.0,
+        "type": "sum"
+      }
     },
     {
       "domain": "template",
@@ -103,8 +114,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -116,8 +126,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -129,8 +138,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -142,8 +150,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -155,8 +162,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -168,8 +174,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -181,8 +186,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -194,8 +198,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -207,8 +210,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
-      },
-      "data": {}
+      }
     },
     {
       "domain": "template",
@@ -220,8 +222,7 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
-      },
-      "data": {}
+      }
     }
   ]
 }
