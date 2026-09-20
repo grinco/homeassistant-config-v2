@@ -81,6 +81,53 @@ notification titles, area names, and the *options* of `min_max` / `group` helper
   artefact. Rationale belongs there and not in the dashboards, which the household uses daily and
   where explanatory text is unwanted.
 
+## Write the test first
+
+**New behaviour starts with a failing test.** Not "write the feature, then cover
+it" — the case goes in, it fails for the right reason, *then* the change ships.
+
+Order, every time:
+
+1. **Write the case.** Inputs and expected output, in `tests/climate/cases.py`,
+   with `finding=` naming what it locks down.
+2. **Run it and watch it fail.** A new case that passes immediately is testing
+   nothing — either the behaviour already exists, or the case does not reach the
+   code you think it does. Find out which before going further.
+3. **Make the change.**
+4. **Run the suite.** The new case passes; nothing else moved.
+5. **Run `mutate.py`.** Confirm that reintroducing the bug turns something red.
+
+This is not ceremony, and it is not generic advice imported from elsewhere. It
+is the direct lesson of this repo's history:
+
+- Twelve review rounds, and **every single one** found that the previous round's
+  fix had moved a hazard rather than closed it.
+- The worst bug reached production and **pushed the operator a notification
+  blaming them** for something they had not done.
+- Two fixes in a row — v5.4 and v5.5 — each corrected one direction of a
+  two-directional hazard and shipped the mirror of the bug they were fixing.
+  Both were written with conviction and a prose failure table.
+
+Every one of those was a change made confidently, verified by reasoning, and
+wrong. A failing test written *before* the change is the only step in the
+workflow that cannot be satisfied by a convincing argument.
+
+**Two ways a test lies, both seen in this repo:**
+
+- **It cannot fail.** An `ext_recurring` case used a toy timestamp where the
+  expression tests against a year-2000 sentinel, so it could never be true — and
+  its negative sibling passed for the wrong reason. Step 2 catches this.
+- **It does not straddle the threshold.** Checking a 2 °C error at a room
+  temperature where both the right and the wrong answer are "don't heat" proves
+  direction, not consequence. An assertion about a threshold needs an input that
+  **crosses** it.
+
+For anything that cannot be reached by a test — actuation, cloud round-trips,
+notification delivery — say so explicitly rather than implying coverage, and
+verify it by replicating the decision expression against live state with
+`ha_eval_template`. **Never by `automation.trigger`**, which skips conditions and
+actuates real hardware.
+
 ## Validating a change to the climate automation
 
 There is a test suite at `tests/climate/`. Run it **before and after** any change
