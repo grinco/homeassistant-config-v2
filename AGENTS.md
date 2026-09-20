@@ -80,3 +80,22 @@ notification titles, area names, and the *options* of `min_max` / `group` helper
 - **The design record is `docs/climate-control-design.md`.** It is the reasoning; the JSON is the
   artefact. Rationale belongs there and not in the dashboards, which the household uses daily and
   where explanatory text is unwanted.
+
+## Validating a change to the climate automation
+
+There is a test suite at `tests/climate/`. Run it **before and after** any change
+to `automation.climate_maintain_per_room_targets` or the `Climate temp *` template
+sensors:
+
+```bash
+python3 tests/climate/run.py        # 52 scenarios against the LIVE expressions
+python3 tests/climate/mutate.py     # confirms the scenarios actually detect bugs
+```
+
+It reads the expressions out of the running configuration at run time, so it
+tests what is deployed, not a copy. **Never put the logic in the test.** A case
+supplies inputs and an expected output only.
+
+When a review round finds something, add the case **before** shipping the fix,
+with `finding=` naming the round, then run `mutate.py` to confirm the case turns
+red when the bug is reintroduced. A case that cannot fail is worse than no case.
