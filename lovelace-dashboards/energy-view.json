@@ -335,48 +335,48 @@
           "entities": [
             {
               "entity": "sensor.living_room_livingroom_ac_energy",
-              "name": "Living room",
+              "name": "Living room AC",
               "color": "orange"
             },
             {
               "entity": "sensor.office_guest_room_office_ac_energy",
-              "name": "Office",
+              "name": "Office AC",
               "color": "indigo"
             },
             {
               "entity": "sensor.master_bedroom_bedroom_ac_energy",
-              "name": "Bedroom",
+              "name": "Bedroom AC",
               "color": "purple"
             },
             {
               "entity": "sensor.kid1_room_ac_energy",
-              "name": "Kids room 1",
+              "name": "Kids room 1' AC",
               "color": "pink"
             },
             {
               "entity": "sensor.kid2_room_ac_energy",
-              "name": "Kids room 2",
+              "name": "Kids room 2's AC",
               "color": "cyan"
             },
             {
               "entity": "sensor.downstairs_toilet_energy",
-              "name": "Toilet down socket",
+              "name": "Downstairs Toilet socket",
               "color": "teal"
             },
             {
               "entity": "sensor.upstairs_toilet_energy",
-              "name": "Toilet up socket",
+              "name": "Upstairs Toilet socket",
               "color": "brown"
             },
             {
               "entity": "sensor.poe_network_energy",
-              "name": "PoE network",
+              "name": "PoE network socket",
               "color": "blue-grey"
             },
             {
               "entity": "sensor.lr_powerline_energy",
-              "name": "LR powerline",
-              "color": "brown"
+              "name": "LR powerline socket",
+              "color": "green"
             },
             {
               "entity": "sensor.living_room_tv_socket_total_energy",
@@ -386,7 +386,7 @@
             {
               "entity": "sensor.living_room_vacuum_socket_total_energy",
               "name": "Vacuum socket",
-              "color": "purple"
+              "color": "deep-purple"
             }
           ]
         },
@@ -406,48 +406,48 @@
           "entities": [
             {
               "entity": "sensor.living_room_livingroom_ac_energy",
-              "name": "Living room",
+              "name": "Living room AC",
               "color": "orange"
             },
             {
               "entity": "sensor.office_guest_room_office_ac_energy",
-              "name": "Office",
+              "name": "Office AC",
               "color": "indigo"
             },
             {
               "entity": "sensor.master_bedroom_bedroom_ac_energy",
-              "name": "Bedroom",
+              "name": "Bedroom AC",
               "color": "purple"
             },
             {
               "entity": "sensor.kid1_room_ac_energy",
-              "name": "Kids room 1",
+              "name": "Kids room 1' AC",
               "color": "pink"
             },
             {
               "entity": "sensor.kid2_room_ac_energy",
-              "name": "Kids room 2",
+              "name": "Kids room 2's AC",
               "color": "cyan"
             },
             {
               "entity": "sensor.downstairs_toilet_energy",
-              "name": "Toilet down socket",
+              "name": "Downstairs Toilet socket",
               "color": "teal"
             },
             {
               "entity": "sensor.upstairs_toilet_energy",
-              "name": "Toilet up socket",
+              "name": "Upstairs Toilet socket",
               "color": "brown"
             },
             {
               "entity": "sensor.poe_network_energy",
-              "name": "PoE network",
+              "name": "PoE network socket",
               "color": "blue-grey"
             },
             {
               "entity": "sensor.lr_powerline_energy",
-              "name": "LR powerline",
-              "color": "brown"
+              "name": "LR powerline socket",
+              "color": "green"
             },
             {
               "entity": "sensor.living_room_tv_socket_total_energy",
@@ -457,7 +457,7 @@
             {
               "entity": "sensor.living_room_vacuum_socket_total_energy",
               "name": "Vacuum socket",
-              "color": "purple"
+              "color": "deep-purple"
             }
           ]
         }
