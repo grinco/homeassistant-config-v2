@@ -293,6 +293,23 @@
               "max": 100
             }
           ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.media_corner_power",
+          "name": "Media corner",
+          "icon": "mdi:audio-video",
+          "color": "pink",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 500
+            }
+          ]
         }
       ]
     },
@@ -387,6 +404,11 @@
               "entity": "sensor.living_room_vacuum_socket_total_energy",
               "name": "Vacuum socket",
               "color": "deep-purple"
+            },
+            {
+              "entity": "sensor.media_corner_energy",
+              "name": "Media corner socket",
+              "color": "pink"
             }
           ]
         },
@@ -458,6 +480,11 @@
               "entity": "sensor.living_room_vacuum_socket_total_energy",
               "name": "Vacuum socket",
               "color": "deep-purple"
+            },
+            {
+              "entity": "sensor.media_corner_energy",
+              "name": "Media corner socket",
+              "color": "pink"
             }
           ]
         }

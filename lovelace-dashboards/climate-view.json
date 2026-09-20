@@ -201,7 +201,7 @@
         },
         {
           "type": "heading",
-          "heading": "Air quality",
+          "heading": "Air quality — outside",
           "heading_style": "subtitle",
           "icon": "mdi:air-filter"
         },
@@ -268,6 +268,85 @@
           "grid_options": {
             "columns": 6
           }
+        },
+        {
+          "type": "heading",
+          "heading": "Air quality — indoors",
+          "heading_style": "title",
+          "icon": "mdi:air-purifier"
+        },
+        {
+          "type": "tile",
+          "entity": "fan.corridor_xiaomi_air_purifier",
+          "name": "Air purifier · corridor",
+          "icon": "mdi:air-purifier",
+          "grid_options": {
+            "columns": 12
+          },
+          "features_position": "bottom",
+          "features": [
+            {
+              "type": "fan-preset-modes",
+              "style": "dropdown"
+            },
+            {
+              "type": "fan-speed"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
+          "name": "PM2.5 indoors",
+          "icon": "mdi:blur",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+          "name": "Filter life",
+          "icon": "mdi:air-filter",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.corridor_xiaomi_air_purifier_temperature",
+          "name": "Corridor",
+          "icon": "mdi:thermometer",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.corridor_xiaomi_air_purifier_humidity",
+          "name": "Corridor",
+          "icon": "mdi:water-percent",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "markdown",
+          "grid_options": {
+            "columns": "full"
+          },
+          "entity_id": [
+            "sensor.corridor_xiaomi_air_purifier_pm2_5",
+            "fan.corridor_xiaomi_air_purifier"
+          ],
+          "content": "{% set age = (now() - states.sensor.corridor_xiaomi_air_purifier_pm2_5.last_changed).total_seconds() %}{% set fan = states('fan.corridor_xiaomi_air_purifier') %}PM2.5 **{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}** µg/m³ · unchanged for {% if age < 3600 %}{{ (age / 60) | round(0) | int }} min{% elif age < 86400 %}{{ (age / 3600) | round(1) }} h{% else %}{{ (age / 86400) | round(1) }} days{% endif %} · purifier {{ fan }}\n\n{% if fan != 'on' %}**Not sampling.** This unit only draws air across its sensor while the fan runs, so a still reading now means nothing.{% elif age > 21600 %}**Suspect** — unchanged for {{ (age / 3600) | round(0) | int }} h with the fan running. A working sensor should move.{% else %}Sampling — the fan is running, so this reading is live.{% endif %}"
         }
       ]
     },

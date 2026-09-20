@@ -166,6 +166,91 @@
               "state": "on"
             }
           ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+          "name": "Air purifier filter",
+          "icon": "mdi:air-filter",
+          "color": "orange",
+          "visibility": [
+            {
+              "condition": "numeric_state",
+              "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+              "below": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "column_span": 2,
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "At a glance",
+          "icon": "mdi:eye-outline"
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.downstairs_temperature",
+          "name": "Downstairs",
+          "icon": "mdi:home-floor-l",
+          "color": "orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.upstairs_temperature",
+          "name": "Upstairs",
+          "icon": "mdi:home-roof",
+          "color": "orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.ac_power_total",
+          "name": "AC load",
+          "icon": "mdi:lightning-bolt",
+          "color": "green",
+          "grid_options": {
+            "columns": 6
+          },
+          "vertical": true,
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/energy"
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.house_temperature",
+          "name": "Outside",
+          "icon": "mdi:sun-thermometer-outline",
+          "color": "light-blue",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/climate"
+          }
         }
       ]
     },
@@ -679,136 +764,6 @@
       "cards": [
         {
           "type": "heading",
-          "heading": "Air conditioning",
-          "icon": "mdi:air-conditioner",
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
-          }
-        },
-        {
-          "type": "custom:mushroom-climate-card",
-          "entity": "climate.living_room_livingroom_ac",
-          "name": "Living room",
-          "icon": "mdi:air-conditioner",
-          "layout": "horizontal",
-          "fill_container": true,
-          "hvac_modes": [
-            "off",
-            "cool",
-            "heat",
-            "dry",
-            "fan_only"
-          ],
-          "show_temperature_control": true,
-          "collapsible_controls": true,
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12
-          }
-        },
-        {
-          "type": "custom:mushroom-climate-card",
-          "entity": "climate.office_guest_room_office_ac",
-          "name": "Office",
-          "icon": "mdi:air-conditioner",
-          "layout": "horizontal",
-          "fill_container": true,
-          "hvac_modes": [
-            "off",
-            "cool",
-            "heat",
-            "dry",
-            "fan_only"
-          ],
-          "show_temperature_control": true,
-          "collapsible_controls": true,
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12
-          }
-        },
-        {
-          "type": "custom:mushroom-climate-card",
-          "entity": "climate.master_bedroom_bedroom_ac",
-          "name": "Bedroom",
-          "icon": "mdi:air-conditioner",
-          "layout": "horizontal",
-          "fill_container": true,
-          "hvac_modes": [
-            "off",
-            "cool",
-            "heat",
-            "dry",
-            "fan_only"
-          ],
-          "show_temperature_control": true,
-          "collapsible_controls": true,
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12
-          }
-        },
-        {
-          "type": "custom:mushroom-climate-card",
-          "entity": "climate.kid1_room_ac",
-          "name": "Kids room 1",
-          "icon": "mdi:air-conditioner",
-          "layout": "horizontal",
-          "fill_container": true,
-          "hvac_modes": [
-            "off",
-            "cool",
-            "heat",
-            "dry",
-            "fan_only"
-          ],
-          "show_temperature_control": true,
-          "collapsible_controls": true,
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12
-          }
-        },
-        {
-          "type": "custom:mushroom-climate-card",
-          "entity": "climate.kid2_room_ac",
-          "name": "Kids room 2",
-          "icon": "mdi:air-conditioner",
-          "layout": "horizontal",
-          "fill_container": true,
-          "hvac_modes": [
-            "off",
-            "cool",
-            "heat",
-            "dry",
-            "fan_only"
-          ],
-          "show_temperature_control": true,
-          "collapsible_controls": true,
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
           "heading": "Media",
           "icon": "mdi:television-play"
         },
@@ -1037,6 +992,27 @@
           "grid_options": {
             "columns": 6
           },
+          "entity": "switch.media_corner",
+          "primary": "Media corner",
+          "icon": "mdi:audio-video",
+          "secondary": "{% if is_state('switch.media_corner','on') %}{{ states('sensor.media_corner_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
+          "color": "{{ 'amber' if is_state('switch.media_corner','on') else 'grey' }}",
+          "tap_action": {
+            "action": "toggle"
+          },
+          "icon_tap_action": {
+            "action": "toggle"
+          },
+          "hold_action": {
+            "action": "more-info"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "vertical": true,
+          "grid_options": {
+            "columns": 6
+          },
           "entity": "sensor.socket_power_total",
           "primary": "Socket load",
           "icon": "mdi:flash",
@@ -1052,77 +1028,6 @@
           },
           "hold_action": {
             "action": "more-info"
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "At a glance",
-          "icon": "mdi:eye-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.downstairs_temperature",
-          "name": "Downstairs",
-          "icon": "mdi:home-floor-l",
-          "color": "orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
-          }
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.upstairs_temperature",
-          "name": "Upstairs",
-          "icon": "mdi:home-roof",
-          "color": "orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
-          }
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.ac_power_total",
-          "name": "AC load",
-          "icon": "mdi:lightning-bolt",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/energy"
-          }
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.house_temperature",
-          "name": "Outside",
-          "icon": "mdi:sun-thermometer-outline",
-          "color": "light-blue",
-          "vertical": true,
-          "grid_options": {
-            "columns": 6
-          },
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
           }
         }
       ]
