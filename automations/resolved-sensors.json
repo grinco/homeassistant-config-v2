@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised, so this will not apply to a live instance as-is. Every aggregate reads the RESOLVED per-room sensor, never a device probe, so adding a better sensor to a room improves the floor and household figures at the same time.",
+  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised, so this will not apply to a live instance as-is. Every aggregate reads the RESOLVED per-room sensor, never a device probe. Since v5.4 each resolved sensor refuses ANY source whose calibration offset is implausible, including the fallback probe: if no source is trustworthy it emits nothing rather than a fabricated reading.",
   "entries": [
     {
       "domain": "min_max",
@@ -126,7 +126,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp living room",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set p = states('sensor.living_room_meter_pro_co2_be_temperature') | float(-999) %}{% set f = states('sensor.living_room_livingroom_ac_temperature') | float(-999) %}{% if p > -900 %}{{ p | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set ac_ok = ac >= -3.5 %}{% set p = states('sensor.living_room_meter_pro_co2_be_temperature') | float(-999) %}{% set f = (states('sensor.living_room_livingroom_ac_temperature') | float(-999)) if ac_ok else -999 %}{% if p > -900 %}{{ p | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
@@ -138,7 +138,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp office",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set p = states('sensor.meter_pro_co2_e9_temperature') | float(-999) %}{% set f = states('sensor.office_guest_room_office_ac_temperature') | float(-999) %}{% if p > -900 %}{{ p | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set ac_ok = ac >= -3.5 %}{% set p = states('sensor.meter_pro_co2_e9_temperature') | float(-999) %}{% set f = (states('sensor.office_guest_room_office_ac_temperature') | float(-999)) if ac_ok else -999 %}{% if p > -900 %}{{ p | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
@@ -150,7 +150,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp bedroom",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.bedroom_trv_bedroom_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set ac_ok = ac >= -3.5 %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.bedroom_trv_bedroom_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = (states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999)) if ac_ok else -999 %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
@@ -162,7 +162,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp kid1",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid1_room_ac_temperature') | float(-999) %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set ac_ok = ac >= -3.5 %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = (states('sensor.kid1_room_ac_temperature') | float(-999)) if ac_ok else -999 %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
@@ -174,7 +174,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp kid2",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.kid2_room_trv_kid2_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid2_room_ac_temperature') | float(-999) %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set ac_ok = ac >= -3.5 %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') and (tv | abs) <= 3 %}{% set cold = (states('sensor.kid2_room_trv_kid2_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = (states('sensor.kid2_room_ac_temperature') | float(-999)) if ac_ok else -999 %}{% if p > -900 %}{{ (p + tv) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"

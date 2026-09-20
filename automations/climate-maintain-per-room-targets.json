@@ -1,7 +1,7 @@
 {
   "id": "1789725511503",
   "alias": "Climate — maintain per-room targets",
-  "description": "v5. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating; the control loop, the dashboards and the floor/household averages all read it. The three bedrooms prefer their Tado TRV, falling back to the AC return-air probe when the valve is offline OR is driving the radiator, because a valve on a hot radiator reads high by an unmeasured amount. The HOUSE decides heat vs cool from the outdoor temperature (heat below / cool above, both global). Each ROOM has a day target and a night target — the temperature we are aiming to achieve — plus an optional air-filter mode that starts the unit at that target even when it has no thermal work to do. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, and is gated as a whole by input_boolean.climate_safety_always, which is the one switch that disables every unconditional action. Manual changes at the wall are detected from a per-room command timestamp versus the unit's own last_changed, not from the failure counter. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Wind-free presets are applied to COOLING ONLY - the units do not offer them in heat, and a preset sent to an off unit turns it on in cool.",
+  "description": "v5.4. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating; the control loop, the dashboards and the floor/household averages all read it. The three bedrooms prefer their Tado TRV, falling back to the AC return-air probe when the valve is offline OR is driving the radiator. The HOUSE decides heat vs cool from the outdoor temperature with exit-only hysteresis. Each ROOM has a day target and a night target plus an optional air-filter mode. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, gated as a whole by input_boolean.climate_safety_always. Changes made outside this automation are detected from a per-room command timestamp versus the unit's own last_changed. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Wind-free presets are applied to COOLING ONLY - the units do not offer them in heat, and a preset sent to an off unit turns it on in cool.",
   "triggers": [
     {
       "trigger": "time_pattern",
@@ -112,6 +112,7 @@
             "manual": "input_datetime.climate_manual_until_living_room",
             "cmd": "input_datetime.climate_cmd_living_room",
             "alert": "input_datetime.climate_safety_alert_living_room",
+            "bad": "input_datetime.climate_sensor_bad_since_living_room",
             "trv_watch": "",
             "resolved": "sensor.climate_temp_living_room"
           },
@@ -128,6 +129,7 @@
             "manual": "input_datetime.climate_manual_until_office",
             "cmd": "input_datetime.climate_cmd_office",
             "alert": "input_datetime.climate_safety_alert_office",
+            "bad": "input_datetime.climate_sensor_bad_since_office",
             "trv_watch": "",
             "resolved": "sensor.climate_temp_office"
           },
@@ -144,6 +146,7 @@
             "manual": "input_datetime.climate_manual_until_bedroom",
             "cmd": "input_datetime.climate_cmd_bedroom",
             "alert": "input_datetime.climate_safety_alert_bedroom",
+            "bad": "input_datetime.climate_sensor_bad_since_bedroom",
             "trv_watch": "climate.bedroom_trv_bedroom_trv",
             "resolved": "sensor.climate_temp_bedroom"
           },
@@ -160,6 +163,7 @@
             "manual": "input_datetime.climate_manual_until_kid1",
             "cmd": "input_datetime.climate_cmd_kid1",
             "alert": "input_datetime.climate_safety_alert_kid1",
+            "bad": "input_datetime.climate_sensor_bad_since_kid1",
             "trv_watch": "climate.kid1_room_trv_kid1_room_trv",
             "resolved": "sensor.climate_temp_kid1"
           },
@@ -176,6 +180,7 @@
             "manual": "input_datetime.climate_manual_until_kid2",
             "cmd": "input_datetime.climate_cmd_kid2",
             "alert": "input_datetime.climate_safety_alert_kid2",
+            "bad": "input_datetime.climate_sensor_bad_since_kid2",
             "trv_watch": "climate.kid2_room_trv_kid2_room_trv",
             "resolved": "sensor.climate_temp_kid2"
           }
@@ -187,7 +192,7 @@
         "trv_offset": "{{ states('input_number.climate_trv_sensor_offset') | float(0) }}",
         "boot_grace": 600
       },
-      "note": "The room list is an explicit ALLOW-LIST OF ACTUATED ENTITIES: the only entity this automation ever passes to a climate.* service is r.climate, the room's Samsung AC. The gas boiler and its Tado valves are configured entirely outside it and are NEVER commanded here - the boiler is the winter failsafe and is not ours to drive. r.resolved and r.trv_watch are READ-ONLY: the resolved temperature is consumed as a sensor and the TRV setpoint is watched to verify the M6 invariant, but nothing is ever written to either. If you add a field here, check before use whether it is a read or a write."
+      "note": "The room list is an explicit ALLOW-LIST OF ACTUATED ENTITIES: the only entity this automation ever passes to a climate.* service is r.climate, the room's Samsung AC. The gas boiler and its Tado valves are configured entirely outside it and are NEVER commanded here - the boiler is the winter failsafe and is not ours to drive. r.resolved and r.trv_watch are READ-ONLY. r.bad is a per-room 'sensor unusable since' stamp, written by this loop only (round 10, finding R10-6). If you add a field here, check before use whether it is a read or a write."
     },
     {
       "variables": {
@@ -195,7 +200,7 @@
         "house": "{% set prev = states('input_select.climate_house_mode') %}{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif prev == 'heat' %}{% if outdoor > heat_below_out + hyst %}{% if outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% else %}heat{% endif %}{% elif prev == 'cool' %}{% if outdoor < cool_above_out - hyst %}{% if outdoor <= heat_below_out %}heat{% else %}shoulder{% endif %}{% else %}cool{% endif %}{% else %}{% if outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% endif %}",
         "preset": "{{ 'wind_free_sleep' if night else 'wind_free' }}"
       },
-      "note": "HOUSE MODE is a property of the weather, not of a room, and it is now STICKY. Below 'heat below (outdoor)' the house heats; above 'cool above (outdoor)' it cools; between them is shoulder season, where nothing mechanical runs. EXIT-ONLY HYSTERESIS, the same shape every room already had. Entering a season uses the bare threshold; LEAVING it requires clearing the threshold by the hysteresis margin. Without this the boundary was a bare comparison with nothing damping it: on 2026-09-20 the outdoor reading sat at 17.3 C against a 17.0 C threshold, and a reading that wanders either side of the line would flip the whole house heat<->shoulder, taking every air-filter room with it, one cloud round trip per crossing. Every ROOM-level decision had hysteresis; the HOUSE-level one did not. The previous mode is remembered in input_select.climate_house_mode, whose options are ordered with 'shoulder' FIRST so that a freshly created or reset helper defaults to the season that does nothing - the same min-default hazard that put a bedroom 0.04 C from its safety floor. If the helper holds anything unexpected the expression falls through to the memoryless comparison, so a bad value costs stickiness and never correctness. It reuses climate_hysteresis rather than adding a knob: it is the same kind of quantity, a deadband in degrees. The coupling is real and deliberate - widening room hysteresis also makes the season stickier. If the outdoor sensor is unusable the house falls to SHOULDER rather than guessing a season, and an inverted band (heat_below >= cool_above) does the same. The safety band reads neither helper and keeps running regardless."
+      "note": "HOUSE MODE is a property of the weather, not of a room, and it is STICKY. EXIT-ONLY HYSTERESIS, the same shape every room already had: entering a season uses the bare threshold; LEAVING it requires clearing the threshold by the hysteresis margin. ROUND 10 (R10-4, R10-5) asked whether the memory can PIN the house in a season it should have left. It cannot in the two cases that matter, and the branch ORDER is what guarantees it: 'outdoor <= -900' (dead sensor) and 'heat_below >= cool_above' (inverted band) are both tested BEFORE prev is consulted, so each falls to shoulder unconditionally and the write-back below then CLEARS the remembered season. A dead outdoor sensor therefore forfeits stickiness by design rather than freezing the last season - the v4 fall-to-shoulder safety property survives v5.3 intact. R10-3 is real but far from reach: hysteresis erodes the shoulder only as it approaches (cool_above - heat_below); with the live band 17->28 that is 11 C against a hysteresis of 1. Do not let hysteresis approach half the shoulder width. It reuses climate_hysteresis rather than adding a knob; the coupling is deliberate. The safety band reads neither helper and keeps running regardless - verified in round 10."
     },
     {
       "if": [
@@ -215,13 +220,13 @@
           }
         }
       ],
-      "note": "The house mode is written back ONLY when it changes, so this is not a write every tick. It is the state memory the exit-only hysteresis needs: rooms can use the unit's own reported mode as memory, but the house has no equivalent, so it keeps its own. Written after the decision, never read by anything except the decision above."
+      "note": "The house mode is written back ONLY when it changes, so this is not a write every tick. It is the state memory the exit-only hysteresis needs. Written after the decision, never read by anything except the decision above."
     },
     {
       "if": [
         {
           "condition": "template",
-          "value_template": "{% set ns = namespace(bad=false) %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}{% set ns.bad = true %}{% endif %}{% endif %}{% endfor %}{% set settle_bad = (states('input_number.climate_command_settle') | float(240)) < 60 %}{% set hyst_bad = (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}{% set floor_bad = (states('input_number.climate_away_min') | float(18)) < 15 %}{% set frost_bad = (states('input_number.climate_frost_override') | float(7)) < 5 %}{% set trv_bad = (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}{% set ac_bad = (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}{{ heat_below_out >= cool_above_out or uptime > 34560000 or ns.bad or settle_bad or hyst_bad or floor_bad or frost_bad or trv_bad or ac_bad }}"
+          "value_template": "{% set ns = namespace(bad=false) %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}{% set ns.bad = true %}{% endif %}{% endif %}{% endfor %}{% set settle_bad = (states('input_number.climate_command_settle') | float(240)) < 60 %}{% set hyst_bad = (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}{% set floor_bad = (states('input_number.climate_away_min') | float(18)) < 15 %}{% set frost_bad = (states('input_number.climate_frost_override') | float(7)) < 5 %}{% set trv_bad = (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}{% set ac_bad = (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}{% set house_bad = states('input_select.climate_house_mode') not in ['shoulder','heat','cool'] %}{% set hyst_wide = (states('input_number.climate_hysteresis') | float(1)) >= (cool_above_out - heat_below_out) / 2 %}{{ heat_below_out >= cool_above_out or uptime > 34560000 or ns.bad or settle_bad or hyst_bad or floor_bad or frost_bad or trv_bad or ac_bad or house_bad or hyst_wide }}"
         }
       ],
       "then": [
@@ -230,7 +235,7 @@
           "data": {
             "title": "Climate: configuration problem",
             "notification_id": "climate_config_health",
-            "message": "{% if heat_below_out >= cool_above_out %}**The house-mode band is inverted.** 'Heat below' ({{ heat_below_out }}) is not below 'Cool above' ({{ cool_above_out }}), so the house cannot resolve a season and ALL COMFORT HEATING AND COOLING IS STOOD DOWN. Only the safety band is still acting{% if not safety_on %} - and 'Safety limits always' is OFF, so NOTHING is protecting these rooms at all{% endif %}.\n\n{% endif %}{% if uptime > 34560000 %}**The restart stamp is stale.** The guard that stops a post-restart fault being mistaken for someone at the wall is inert. Check automation.climate_stamp_ha_start.\n\n{% endif %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}**{{ r.name }}: the radiator valve is set above the room's current target** (TRV {{ sp }} C vs {{ 'night' if night else 'day' }} target {{ at }} C). The boiler and the AC will alternate. Set the TRV at or below {{ at }} C.\n\n{% endif %}{% endif %}{% endfor %}{% if (states('input_number.climate_command_settle') | float(240)) < 60 %}**Command settle is {{ states('input_number.climate_command_settle') }} s** - below 60 s our own in-flight commands read as unit faults.\n\n{% endif %}{% if (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}**Hysteresis is {{ states('input_number.climate_hysteresis') }} C** - below 0.5 C rooms will flap at their target.\n\n{% endif %}{% if (states('input_number.climate_away_min') | float(18)) < 15 %}**The away floor is {{ states('input_number.climate_away_min') }} C** - that is below anything safe for the cats or the pipes. It should be about 18.\n\n{% endif %}{% if (states('input_number.climate_frost_override') | float(7)) < 5 %}**The frost override is {{ states('input_number.climate_frost_override') }} C** - too low to protect plumbing.\n\n{% endif %}{% if (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}**The TRV sensor offset is {{ states('input_number.climate_trv_sensor_offset') }} C.** That is far larger than any plausible radiator-valve bias, and it shifts the three bedrooms' temperature everywhere at once - the safety band, the graphs and the household average. A freshly created input_number comes up at its MINIMUM, which for this helper is -5: if that is what you are seeing, it was never set. It should be 0 until measured against a running radiator.\n\n{% endif %}{% if (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}**The AC sensor offset is {{ states('input_number.climate_ac_sensor_offset') }} C** - larger than the measured return-air bias of about -2, and it corrupts every room that has fallen back to its AC probe.\n\n{% endif %}"
+            "message": "{% if heat_below_out >= cool_above_out %}**The house-mode band is inverted.** 'Heat below' ({{ heat_below_out }}) is not below 'Cool above' ({{ cool_above_out }}), so the house cannot resolve a season and ALL COMFORT HEATING AND COOLING IS STOOD DOWN. Only the safety band is still acting{% if not safety_on %} - and 'Safety limits always' is OFF, so NOTHING is protecting these rooms at all{% endif %}.\n\n{% endif %}{% if uptime > 34560000 %}**The restart stamp is stale.** The guard that stops a post-restart fault being mistaken for a change made outside the automation is inert. Check automation.climate_stamp_ha_start.\n\n{% endif %}{% if states('input_select.climate_house_mode') not in ['shoulder','heat','cool'] %}**The house-mode memory helper is missing or holds an unexpected value** ('{{ states('input_select.climate_house_mode') }}'). The season boundary has fallen back to a bare threshold comparison, so the house can flap between heat and shoulder on a wandering outdoor reading. Recreate input_select.climate_house_mode with options shoulder, heat, cool.\n\n{% endif %}{% if (states('input_number.climate_hysteresis') | float(1)) >= (cool_above_out - heat_below_out) / 2 %}**Hysteresis ({{ states('input_number.climate_hysteresis') }} C) is at least half the shoulder band** ({{ cool_above_out - heat_below_out }} C wide). The season boundary is eroding: at this width the exit threshold of one season reaches the entry threshold of the other and the neutral shoulder shrinks or disappears. Widen the band or narrow the hysteresis.\n\n{% endif %}{% for r in rooms %}{% if r.trv_watch != '' %}{% set sp = state_attr(r.trv_watch,'temperature') | float(0) %}{% set at = (states(r.night_t) if night else states(r.day_t)) | float(20) %}{% if sp > at %}**{{ r.name }}: the radiator valve is set above the room's current target** (TRV {{ sp }} C vs {{ 'night' if night else 'day' }} target {{ at }} C). The boiler and the AC will alternate. Set the TRV at or below {{ at }} C.\n\n{% endif %}{% endif %}{% endfor %}{% if (states('input_number.climate_command_settle') | float(240)) < 60 %}**Command settle is {{ states('input_number.climate_command_settle') }} s** - below 60 s our own in-flight commands read as unit faults.\n\n{% endif %}{% if (states('input_number.climate_hysteresis') | float(1)) < 0.5 %}**Hysteresis is {{ states('input_number.climate_hysteresis') }} C** - below 0.5 C rooms will flap at their target.\n\n{% endif %}{% if (states('input_number.climate_away_min') | float(18)) < 15 %}**The away floor is {{ states('input_number.climate_away_min') }} C** - that is below anything safe for the cats or the pipes. It should be about 18.\n\n{% endif %}{% if (states('input_number.climate_frost_override') | float(7)) < 5 %}**The frost override is {{ states('input_number.climate_frost_override') }} C** - too low to protect plumbing.\n\n{% endif %}{% if (states('input_number.climate_trv_sensor_offset') | float(0) | abs) > 3 %}**The TRV sensor offset is {{ states('input_number.climate_trv_sensor_offset') }} C.** That is far larger than any plausible radiator-valve bias. The three bedrooms are now IGNORING their valves and reading their AC probes instead. A freshly created input_number comes up at its MINIMUM, which for this helper is -5: if that is what you are seeing, it was never set. It should be 0 until measured against a running radiator.\n\n{% endif %}{% if (states('input_number.climate_ac_sensor_offset') | float(-2)) < -3.5 %}**The AC sensor offset is {{ states('input_number.climate_ac_sensor_offset') }} C** - larger than the measured return-air bias of about -2. EVERY room is now refusing its AC probe, so any room whose primary sensor is also down has NO usable temperature at all and cannot be protected by the safety band. Set this back to about -2.\n\n{% endif %}"
           }
         }
       ],
@@ -243,7 +248,7 @@
           "continue_on_error": true
         }
       ],
-      "note": "Silent failure modes, all of which pass a float() guard because the value is REAL but wrong. (1) An inverted house band stands comfort down completely and composes with safety_always being off into a fully unprotected flat. (2) A stale restart stamp degrades unit_moved to its pre-v4.1 form. (3) M6: the AC and boiler only avoid fighting while each TRV setpoint stays at or below the room's CURRENT target - compared against day or night as actually in force (R7-5), since comparing always against the lower night target would flag a perfectly good daytime setting and train the operator to dismiss the notice. (4) R7-6, NUMERIC BOUNDS. A new input_number comes up at its MINIMUM, not zero - that already happened once here and put a bedroom 0.04 C from its safety floor. The same lands on any helper that is recreated or reset: away_min at its min of 5 would drop the cat floor to 5 C silently, settle below 60 s would make every one of our own commands read as a fault, hysteresis at 0 would make every room flap. float() catches non-numeric, never wrong-numeric, so these are range-checked. R8-4 extends the bounds check to the two CALIBRATION offsets, which is where the hazard actually bit: climate_trv_sensor_offset was created with min -5 and came up at -5.0, and -5.0 is INSIDE its valid range, so a range check alone would have passed it. These are therefore PLAUSIBILITY checks, not range checks - an offset is wrong long before it is out of bounds. They matter more since v5.1 because the offsets are applied inside the resolved template sensor, ahead of everything: a wrong offset moves the safety band, the dashboard and the household average from one place, and no guard further down the chain can see it. Checked and NOT added: breaker_threshold (helper min is 2, so the 0 that would re-open the A5 liveness trap is unreachable) and manual_hold_hours (min 0.5, not 0)."
+      "note": "Silent failure modes, all of which pass a float() guard because the value is REAL but wrong. ROUND 10 added two: (R10-9) the new house-mode memory helper, whose absence silently degrades the season boundary back to the bare-threshold flapping v5.3 was written to stop - a fix that depends on a helper must notice when the helper is gone; and (R10-3) hysteresis approaching half the shoulder width, which erodes the neutral season from both sides. The two calibration-offset messages were rewritten in round 10: since v5.4 an implausible offset makes the resolved sensor REFUSE that source rather than apply it, so the operator needs to be told what has been switched off, not merely that a number looks wrong."
     },
     {
       "repeat": {
@@ -269,15 +274,17 @@
               "manual_ts": "{{ state_attr(r.manual, 'timestamp') }}",
               "cmd_ts": "{{ state_attr(r.cmd, 'timestamp') }}"
             },
-            "note": "ONE RESOLVED TEMPERATURE PER ROOM, SHARED BY EVERYTHING. r.resolved is a template sensor (sensor.climate_temp_<room>) that owns the whole resolution: source priority, per-sensor bias, and the usability gates. The control loop, the dashboard graphs and the floor and household averages all read THAT SAME ENTITY, so they cannot disagree - and when a better sensor is added to a room, only that one template changes and every aggregate improves with it. It also makes the decision inspectable, which the design has wanted since section 13: the number the loop acted on is a real entity with history, not a variable that only exists inside a trace. Duplicating this logic here would create two implementations that drift, so the automation deliberately owns none of it and simply reads the result. If the sensor is unavailable or unknown it yields -999, which is the existing 'skip' sentinel: issue nothing, leave the room alone."
+            "note": "ONE RESOLVED TEMPERATURE PER ROOM, SHARED BY EVERYTHING. r.resolved is a template sensor that owns the whole resolution: source priority, per-sensor bias, and the usability gates. The control loop, the dashboard graphs and the floor and household averages all read THAT SAME ENTITY, so they cannot disagree. If the sensor is unavailable or unknown it yields -999, which is the 'skip' sentinel: issue nothing, leave the room alone."
           },
           {
             "variables": {
               "manual_active": "{{ manual_ts is not none and now().timestamp() < (manual_ts | float(0)) }}",
               "since_cmd": "{{ (now().timestamp() - (cmd_ts | float(0))) if cmd_ts is not none else 999999 }}",
-              "alert_ts": "{{ state_attr(r.alert, 'timestamp') | float(0) }}"
+              "alert_ts": "{{ state_attr(r.alert, 'timestamp') | float(0) }}",
+              "bad_ts": "{{ state_attr(r.bad, 'timestamp') | float(0) }}",
+              "bad_armed": "{{ (state_attr(r.bad, 'timestamp') | float(0)) > 1000000000 }}"
             },
-            "note": "since_cmd is how long ago WE last sent this room a command. With no stamp at all it is effectively infinite, which is correct: nothing of ours is in flight."
+            "note": "since_cmd is how long ago WE last sent this room a command. bad_ts/bad_armed are READ HERE, before any write later in this iteration, so the decision below uses the value as it stood at the START of the tick: the tick on which a sensor first goes bad starts the grace, it does not also expire it."
           },
           {
             "variables": {
@@ -285,14 +292,14 @@
               "unit_moved": "{% set lc = (now() - states[r.climate].last_changed).total_seconds() %}{{ lc < since_cmd - settle and lc < human_window and lc < (uptime - 60) }}",
               "throttle_ok": "{{ since_cmd >= retry_throttle }}"
             },
-            "note": "THE IN-FLIGHT SIGNAL. in_flight says our own command has not had time to land; unit_moved says the unit changed state on its own, which only a person at the wall (or the unit acting by itself) can do. THE FIRST TERM IS 'lc < since_cmd - settle', NOT 'lc < since_cmd'. That subtraction is the whole point and its absence was a live bug on 2026-09-20. A unit that OBEYS us changes state about 1.5 s after we command it, so its last_changed is permanently a hair MORE RECENT than our command stamp - 'lc < since_cmd' is therefore true for ever after any successful command, not briefly. It stayed hidden because human_moved also needs 'not mode_ok', and a command that succeeded leaves the mode matching. The moment the WANTED mode changed for another reason - the operator switched the air filter off, so a room holding fan_only should go off - mode_ok went false while unit_moved was still true from our OWN earlier command. The automation stamped a two-hour manual hold on the Living room and pushed the operator a notification telling them they had changed a unit they had not touched. Subtracting settle asks the right question: did the unit change MORE THAN one cloud round trip after we commanded it? Our own command landing 1.5 s later cannot qualify; a person pressing a button minutes later always does. This is M1/R4-2 - the automation reading its own command as the unit's fault - for the third time, and the first time it has been the SUCCESSFUL command rather than an in-flight one. The remaining terms are unchanged: human_window bounds how stale a change can be and still count as a person, and lc < uptime - 60 stops a restart, which resets every entity's last_changed to the boot instant, from looking like everybody touched everything at once."
+            "note": "THE IN-FLIGHT SIGNAL. in_flight says our own command has not had time to land; unit_moved says the unit changed state for a reason that was not us. THE FIRST TERM IS 'lc < since_cmd - settle', NOT 'lc < since_cmd'. That subtraction is the whole point and its absence was a live bug on 2026-09-20: a unit that OBEYS changes state about 1.5 s after we command it, so 'lc < since_cmd' was true for ever after any successful command. It stayed hidden because the hold also needs 'not mode_ok', and a command that succeeded leaves the mode matching - until the WANTED mode changed for another reason, at which point the automation stamped a two-hour hold and told the operator they had changed a unit they had not touched. This is M1/R4-2 for the third time and the first on a SUCCESSFUL command. KNOWN AND ACCEPTED GAP (operator, 2026-09-20): a person pressing a button INSIDE the settle window right after our command is no longer detected; judged too rare to guard. R10-2 remains open: settle does three jobs at once (in-flight window, command-echo dead zone, config-health lower bound) and the echo only needs seconds, so raising settle for cloud latency silently widens the human- and fault-detection dead zones in proportion."
           },
           {
             "variables": {
               "mode": "{% if temp <= -900 %}skip{% elif safety_on and temp < frost %}heat{% elif safety_on and temp < away_min %}heat{% elif safety_on and temp > away_max %}cool{% elif manual_active %}manual{% elif not comfort %}off{% elif away or not enabled %}off{% elif house == 'heat' %}{% if temp < target or (now_mode == 'heat' and temp < target + hyst) or filter_on %}heat{% else %}off{% endif %}{% elif house == 'cool' %}{% if temp > target or (now_mode == 'cool' and temp > target - hyst) or filter_on %}cool{% else %}off{% endif %}{% else %}{% if filter_on %}fan_only{% else %}off{% endif %}{% endif %}",
               "want_target": "{% if safety_on and temp > -900 and temp < frost %}{{ frost }}{% elif safety_on and temp > -900 and temp < away_min %}{{ away_min }}{% elif safety_on and temp > -900 and temp > away_max %}{{ away_max }}{% else %}{{ target }}{% endif %}"
             },
-            "note": "Precedence: frost > away floor > away ceiling > manual hold > comfort. The three safety branches are now gated on safety_on, so input_boolean.climate_safety_always is a genuine master hatch for every unconditional action rather than a frost-only flag. AIR FILTER: when the house has a season but the room needs no thermal work, filter_on still starts the unit in that season's mode at the room's target (heat 22 in a 24 C room), which is what was asked for. In shoulder season it runs fan_only, the only mode that guarantees airflow with no thermal intent."
+            "note": "Precedence: frost > away floor > away ceiling > manual hold > comfort. The three safety branches are gated on safety_on, so input_boolean.climate_safety_always is a genuine master hatch for every unconditional action. AIR FILTER: when the house has a season but the room needs no thermal work, filter_on still starts the unit in that season's mode at the room's target. In shoulder season it runs fan_only."
           },
           {
             "variables": {
@@ -303,7 +310,7 @@
               "mode_ok": "{{ now_mode == mode }}",
               "needs_temp": "{{ mode in ['heat','cool'] }}"
             },
-            "note": "SETPOINT CLAMPING. The units report min_temp 16 / max_temp 30 / target_temp_step 1. A frost target of 7 C and any half-degree helper value are both setpoints the hardware cannot accept: it would silently keep its old value and every later tick would read as divergence. Every commanded setpoint is therefore rounded to a whole degree and clamped into the unit's own advertised range. The frost TRIGGER stays at 7 C; only the commanded setpoint is lifted to the unit's floor."
+            "note": "SETPOINT CLAMPING. The units report min_temp 16 / max_temp 30 / target_temp_step 1. A frost target of 7 C and any half-degree helper value are both setpoints the hardware cannot accept. Every commanded setpoint is rounded to a whole degree and clamped into the unit's own advertised range. The frost TRIGGER stays at 7 C; only the commanded setpoint is lifted to the unit's floor."
           },
           {
             "variables": {
@@ -313,32 +320,32 @@
           {
             "variables": {
               "converged": "{{ mode_ok and target_ok }}",
-              "human_moved": "{{ active and reachable and not mode_ok and not in_flight and unit_moved }}",
+              "external_moved": "{{ active and reachable and not mode_ok and not in_flight and unit_moved }}",
               "tripped": "{{ fail_count >= breaker and not is_safety }}",
-              "safety_throttled": "{{ is_safety and manual_active and not throttle_ok }}"
+              "safety_throttled": "{{ is_safety and manual_active and not throttle_ok }}",
+              "no_temp": "{{ safety_on and temp <= -900 and bad_armed and (now().timestamp() - bad_ts) > boot_grace }}"
             },
-            "note": "converged now covers the SETPOINT as well as the mode. A unit that accepts 'heat' but silently drops the setpoint used to look converged forever, so the breaker never tripped and nobody was told. It now counts as divergence and raises the same alert as a unit that ignores the mode."
+            "note": "RENAMED IN ROUND 10: this was 'human_moved'. It is not. The predicate can only see that the unit changed state for a reason that was not our command; it cannot tell a person at the wall from the Samsung app, a cloud push, a unit-side timer or a power restore, and there is no presence signal in this flat that could. Calling it human_moved is what produced a notification asserting the operator had touched a unit - a claim the automation was never in a position to make. The BEHAVIOUR is unchanged and deliberate: backing off is right whatever moved it, because something outside this automation is now driving that unit. Only the claim is corrected. no_temp now reads the per-room 'bad since' stamp instead of the resolved sensor's last_changed - see the note on the stamp steps at the end of this sequence."
           },
           {
             "variables": {
-              "may_act": "{{ active and reachable and not mode_ok and not human_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
+              "may_act": "{{ active and reachable and not mode_ok and not external_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
-              "alert_due": "{{ (is_safety or (safety_on and temp <= -900 and (now() - states[r.resolved].last_changed).total_seconds() > boot_grace)) and (now().timestamp() - alert_ts) > retry_throttle }}",
-              "no_temp": "{{ safety_on and temp <= -900 and (now() - states[r.resolved].last_changed).total_seconds() > boot_grace }}"
+              "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}"
             }
           },
           {
             "variables": {
-              "diverged": "{{ active and reachable and not converged and not in_flight and not may_act and not human_moved and not will_set_temp }}"
+              "diverged": "{{ active and reachable and not converged and not in_flight and not may_act and not external_moved and not will_set_temp }}"
             },
-            "note": "Divergence is only counted once our command has had its settle window AND we are not issuing a fresh command of our own this tick - neither a mode command (may_act) nor a SETPOINT command (will_set_temp). Excluding only may_act was a bug: a room whose mode already matched but whose setpoint we were in the middle of correcting counted a failure against the unit on the very tick we were fixing it. That is the same class as R4-2/M1 - the automation reading its own in-flight command as the unit's fault - relocated from the mode path into the setpoint path. Observed live on 2026-09-19 when the Living room setpoint was moved 19 -> 22 and the counter went to 1."
+            "note": "Divergence is only counted once our command has had its settle window AND we are not issuing a fresh command of our own this tick - neither a mode command (may_act) nor a SETPOINT command (will_set_temp). Excluding only may_act was a bug: a room whose mode already matched but whose setpoint we were in the middle of correcting counted a failure against the unit on the very tick we were fixing it."
           },
           {
             "if": [
               {
                 "condition": "template",
-                "value_template": "{{ human_moved and not manual_active }}"
+                "value_template": "{{ external_moved and not manual_active }}"
               }
             ],
             "then": [
@@ -360,9 +367,9 @@
               {
                 "action": "persistent_notification.create",
                 "data": {
-                  "title": "Climate: {{ r.name }} on manual",
+                  "title": "Climate: {{ r.name }} changed outside the automation",
                   "notification_id": "climate_manual_{{ r.name | lower | replace(' ','_') }}",
-                  "message": "{{ r.name }} was changed at the unit (it reports '{{ now_mode }}', the automation wanted '{{ mode }}'). Backing off for {{ manual_hold }} h. Safety limits still apply, throttled to hourly while the hold is live."
+                  "message": "{{ r.name }} reports '{{ now_mode }}'; the automation wanted '{{ mode }}'. Something outside this automation changed it - a remote, the Samsung app, a timer on the unit itself, or a power restore. Backing off for {{ manual_hold }} h so we do not fight it. Safety limits still apply, throttled to hourly while the hold is live."
                 }
               },
               {
@@ -371,13 +378,13 @@
                   "entity_id": "notify.operator_phone"
                 },
                 "data": {
-                  "title": "Climate: {{ r.name }} on manual",
-                  "message": "{{ r.name }} changed at the unit — automation backing off {{ manual_hold }} h."
+                  "title": "Climate: {{ r.name }} changed outside the automation",
+                  "message": "{{ r.name }} is in '{{ now_mode }}', we wanted '{{ mode }}'. Backing off {{ manual_hold }} h."
                 },
                 "continue_on_error": true
               }
             ],
-            "note": "Resetting the counter here is now safe, and was not in v3. human_moved requires unit_moved — the unit genuinely changed state after our command — which a unit that is merely ignoring us can never do. v3 could not tell the two apart, so it deliberately left the counter running, which is what let a breaker trip re-stamp a fresh two-hour hold on every expiry and starve the hourly re-arm for good."
+            "note": "Resetting the counter here is safe: external_moved requires unit_moved - the unit genuinely changed state well after our command - which a unit that is merely ignoring us can never do. ROUND 10 (R10-1) corrected the WORDING, not the behaviour. The old text told the operator they had changed the unit at the wall; the automation cannot know that, and on a unit-side timer or a cloud push the statement is simply false. It now reports what it can actually observe."
           },
           {
             "if": [
@@ -420,7 +427,7 @@
                 "data": {
                   "title": "Climate: {{ r.name }} outside the safety band",
                   "notification_id": "climate_safety_{{ r.name | lower | replace(' ','_') }}",
-                  "message": "{% if no_temp %}**{{ r.name }} has no usable temperature reading.** Its resolved sensor ({{ r.resolved }}) is unavailable, so every source for this room is down at once. The safety band CANNOT be evaluated here - not because the room is fine, but because we cannot see it. Nothing will be commanded until a reading returns.{% else %}{{ r.name }} is at {{ temp | round(1) }} C, outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}**The unit is {{ now_mode }} - we cannot command it at all.** Nothing this automation does will warm or cool this room until it comes back.{% elif converged %}The unit reports '{{ now_mode }}' at {{ now_target }} C, which is what we asked for, so it is nominally obeying - if the room is not recovering, the unit is losing to an open window, an undersized load or a mechanical fault.{% else %}The unit reports '{{ now_mode }}' at {{ now_target }} C; we want '{{ mode }}' at {{ set_target }} C.{% endif %}{% if manual_active %} A manual hold is live and the safety band is overriding it.{% endif %}{% endif %}"
+                  "message": "{% if no_temp %}**{{ r.name }} has no usable temperature reading.** Its resolved sensor ({{ r.resolved }}) has been unusable since {{ states(r.bad) }}, so every source for this room is down at once. The safety band CANNOT be evaluated here - not because the room is fine, but because we cannot see it. Nothing will be commanded until a reading returns.{% else %}{{ r.name }} is at {{ temp | round(1) }} C, outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}**The unit is {{ now_mode }} - we cannot command it at all.** Nothing this automation does will warm or cool this room until it comes back.{% elif converged %}The unit reports '{{ now_mode }}' at {{ now_target }} C, which is what we asked for, so it is nominally obeying - if the room is not recovering, the unit is losing to an open window, an undersized load or a mechanical fault.{% else %}The unit reports '{{ now_mode }}' at {{ now_target }} C; we want '{{ mode }}' at {{ set_target }} C.{% endif %}{% if manual_active %} A manual hold is live and the safety band is overriding it.{% endif %}{% endif %}"
                 }
               },
               {
@@ -430,7 +437,7 @@
                 },
                 "data": {
                   "title": "{% if no_temp %}Climate: {{ r.name }} sensor blackout{% else %}Climate: {{ r.name }} at {{ temp | round(1) }} C{% endif %}",
-                  "message": "{% if no_temp %}NO USABLE TEMPERATURE - every sensor for this room is down, the safety band cannot be evaluated.{% else %}Outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}Unit UNREACHABLE - cannot act.{% elif converged %}Unit says '{{ now_mode }}' and is obeying, room still out of band.{% else %}Unit says '{{ now_mode }}', we want '{{ mode }}'.{% endif %}{% endif %}"
+                  "message": "{% if no_temp %}NO USABLE TEMPERATURE since {{ states(r.bad) }} - every sensor for this room is down, the safety band cannot be evaluated.{% else %}Outside the {{ away_min }}-{{ away_max }} C safety band. {% if not reachable %}Unit UNREACHABLE - cannot act.{% elif converged %}Unit says '{{ now_mode }}' and is obeying, room still out of band.{% else %}Unit says '{{ now_mode }}', we want '{{ mode }}'.{% endif %}{% endif %}"
                 },
                 "continue_on_error": true
               },
@@ -444,7 +451,7 @@
                 }
               }
             ],
-            "note": "R6-4, R7-9, R8-1 and round 9. The alert follows THE CONDITION, never whether we managed to send a command. Round 6 closed two silent holes (an unavailable unit cannot be commanded; a nominally converged unit losing to an open window). R7-9 closed the third: 'temp is unusable' sits above every safety branch, so a room whose every sensor was down produced no command AND no word. R8-1 then caught the cost: a bedroom's resolved sensor depends on cloud entities that initialise late, so it reads unknown for minutes after every restart and the blackout alert would have fired on every routine update. THE GRACE IS NOW KEYED TO THE SENSOR, NOT TO UPTIME. The first version gated on uptime > 600 s, which quietly made this alert a second consumer of input_datetime.climate_ha_started - the same stamp the restart guard reads, and one the loop cannot verify. The two consumers need OPPOSITE things from it: a stale stamp makes uptime enormous, which defeats the restart guard AND makes this suppression pass trivially, re-arming the very cry-wolf it was added to stop; a spurious mid-run write makes uptime tiny, which disables human detection AND silences a real blackout for ten minutes. One helper, two safety mechanisms, failing in opposite directions. So the test is now how long THIS ROOM'S resolved sensor has been unusable - the event being throttled, per the rule this design coined for the wall-clock gate in section 16. It needs no stamp, it lasts exactly as long as a slow restore actually takes rather than a guessed 600 s, and it fails safe: if the sensor is genuinely dead the alert arms on schedule."
+            "note": "R6-4, R7-9, R8-1, round 9 and round 10. The alert follows THE CONDITION, never whether we managed to send a command."
           },
           {
             "if": [
@@ -490,7 +497,7 @@
                 ]
               }
             ],
-            "note": "The breaker is a THROTTLE, not a lockout: past the threshold the room still retries once every retry_throttle (3000 s), measured from our own last command to that room, so it can always recover. The alert fires once per trip because the counter only resets on convergence - not because commanding stops, which it does not."
+            "note": "The breaker is a THROTTLE, not a lockout: past the threshold the room still retries once every retry_throttle (3000 s), measured from our own last command to that room, so it can always recover."
           },
           {
             "if": [
@@ -542,7 +549,7 @@
                 }
               }
             ],
-            "note": "The setpoint is only ever sent once the mode already matches. These units reject setpoint changes while off, so sending one in the same tick as a mode change would be swallowed and then read as a fault. The is_state() re-read closes the same TOCTOU as the preset step: mode_ok was sampled at the top of this room's iteration and the unit can have changed underneath us before this call executes."
+            "note": "The setpoint is only ever sent once the mode already matches. These units reject setpoint changes while off. The is_state() re-read closes the same TOCTOU as the preset step."
           },
           {
             "if": [
@@ -571,7 +578,47 @@
                 }
               }
             ],
-            "note": "WIND-FREE IS A COOLING-ONLY FEATURE on these units - not offered in heat, most likely so the plastic diffuser mesh never sits behind hot coils. The preset is asserted ONLY when the unit is in 'cool'. In heat, dry and fan_only it is left exactly as whoever last touched the unit set it: that setting is not ours to own outside cooling. THE RE-READ IS A SAFETY INTERLOCK, NOT A TIDY-UP. climate.set_preset_mode on a unit that is OFF does not stage a preference - it TURNS THE UNIT ON, IN COOL (verified 2026-09-19 on the Office AC). now_mode is sampled at the top of this room's iteration and this call executes ~17 steps and several cloud round trips later, so mode_ok is a stale reading by the time it matters. If the unit went off in that gap - someone at the wall, a cloud push, a power blip - the cached mode_ok would have us send a preset to an off unit and start it COOLING, in winter, unasked. is_state() re-reads at execution time."
+            "note": "WIND-FREE IS A COOLING-ONLY FEATURE on these units. THE RE-READ IS A SAFETY INTERLOCK: climate.set_preset_mode on a unit that is OFF does not stage a preference - it TURNS THE UNIT ON, IN COOL (verified 2026-09-19 on the Office AC)."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ temp <= -900 and not bad_armed }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.bad }}"
+                },
+                "data": {
+                  "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              }
+            ],
+            "note": "ROUND 10, R10-6. The blackout grace needs a clock that answers ONE question: how long has this room had no usable reading? v5.2 asked the shared restart stamp, which round 9 correctly rejected because two safety mechanisms then depended on one helper in opposite directions. v5.3 switched to the resolved sensor's own last_changed, and round 10 showed that merely RELOCATED the hazard: last_changed resets at an HA restart exactly as the stamp does, so a sensor dead for days came back from a restart with its grace re-armed and stayed silent for another 600 s; worse, during a slow cloud restore the bedroom sensors flap between unknown and unavailable, and EVERY flap resets last_changed, so the age never reached the grace and a real blackout could be suppressed INDEFINITELY - a silence failure strictly worse than the cry-wolf it replaced. This stamp has neither property. It is written ONCE on the transition into unusable and cleared ONCE on the transition back, so flapping between unknown and unavailable does not touch it (both are 'unusable'); it is an input_datetime, so it survives a restart with its value intact and the grace expires on schedule rather than restarting; and it costs two writes per outage rather than one per tick."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ temp > -900 and bad_armed }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.bad }}"
+                },
+                "data": {
+                  "datetime": "2000-01-01 00:00:00"
+                }
+              }
+            ],
+            "note": "The cleared sentinel is the year 2000, and 'armed' is tested as timestamp > 1e9 (2001-09-09). This matters because a freshly created input_datetime reports TODAY 00:00 and is never none - a value that is plausible, wrong, and would read as 'bad since midnight'. Seeding to a far past date makes 'never bad' unambiguous, and the fail direction is the safe one: an unseeded helper makes the alert arm early, never late."
           }
         ]
       }
