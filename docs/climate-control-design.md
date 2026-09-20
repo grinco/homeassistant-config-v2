@@ -1417,6 +1417,21 @@ window is evaluated but not acted on, so it waits for the next tick — up to te
 under the in-flight rule, but the operator experiences it as the switch not working. Recorded, not
 changed.
 
+**The gap the fix opens, accepted 2026-09-20.** Subtracting `settle` buys correctness at the edge of
+the window: a person who presses a button at the wall *inside* the settle window, immediately after
+we commanded that same unit, now falls outside the test and is not detected as a manual override —
+the loop reads their change as its own command landing and may correct them on the next tick. The
+old rule caught that case, at the price of the false holds in this section.
+
+The operator's call: **not worth guarding.** It requires someone to be standing at a specific unit
+in the ~120 s after the automation happened to command that same unit, which is a coincidence rather
+than a pattern of use, and the cost of being wrong is one corrected setting rather than an unsafe
+one. Re-open it if a hold is ever missed in practice.
+
+This is the shape of every trade in this document worth restating: the fix is not free, the price is
+named, and the decision to pay it is recorded next to it rather than discovered later by whoever
+wonders why the window has a hole in it.
+
 ---
 
 ## 25. Round-9 review
