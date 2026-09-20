@@ -192,10 +192,30 @@
     {
       "variables": {
         "away": "{{ is_state('alarm_control_panel.home','armed_away') and ( (now().timestamp() - (away_stamp | float(0))) > 1800 if away_stamp else (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 ) }}",
-        "house": "{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}",
+        "house": "{% set prev = states('input_select.climate_house_mode') %}{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif prev == 'heat' %}{% if outdoor > heat_below_out + hyst %}{% if outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% else %}heat{% endif %}{% elif prev == 'cool' %}{% if outdoor < cool_above_out - hyst %}{% if outdoor <= heat_below_out %}heat{% else %}shoulder{% endif %}{% else %}cool{% endif %}{% else %}{% if outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% endif %}",
         "preset": "{{ 'wind_free_sleep' if night else 'wind_free' }}"
       },
-      "note": "HOUSE MODE is a property of the weather, not of a room. Below 'heat below (outdoor)' the house heats; above 'cool above (outdoor)' it cools; the band between them is shoulder season, where no mechanical heating or cooling happens at all. That band is what stops the system flipping between heating and cooling on a mild day. If the outdoor sensor is unusable the house falls to SHOULDER rather than guessing a season - a wrong guess would run every unit on a fabricated reading. The safety band does not read the outdoor sensor and still runs. INVARIANT: heat_below < cool_above. The two helpers are independent sliders and CAN be dragged into overlap; at 21 C outdoor with heat_below 22 and cool_above 20 both tests pass, and a first-match-wins chain would heat the house at 21 C outdoor - the v1 incident re-entered through a dashboard slider. An overlapping band is a misconfiguration, so it collapses to SHOULDER: comfort control stands down and the safety band, which does not depend on either helper, keeps running."
+      "note": "HOUSE MODE is a property of the weather, not of a room, and it is now STICKY. Below 'heat below (outdoor)' the house heats; above 'cool above (outdoor)' it cools; between them is shoulder season, where nothing mechanical runs. EXIT-ONLY HYSTERESIS, the same shape every room already had. Entering a season uses the bare threshold; LEAVING it requires clearing the threshold by the hysteresis margin. Without this the boundary was a bare comparison with nothing damping it: on 2026-09-20 the outdoor reading sat at 17.3 C against a 17.0 C threshold, and a reading that wanders either side of the line would flip the whole house heat<->shoulder, taking every air-filter room with it, one cloud round trip per crossing. Every ROOM-level decision had hysteresis; the HOUSE-level one did not. The previous mode is remembered in input_select.climate_house_mode, whose options are ordered with 'shoulder' FIRST so that a freshly created or reset helper defaults to the season that does nothing - the same min-default hazard that put a bedroom 0.04 C from its safety floor. If the helper holds anything unexpected the expression falls through to the memoryless comparison, so a bad value costs stickiness and never correctness. It reuses climate_hysteresis rather than adding a knob: it is the same kind of quantity, a deadband in degrees. The coupling is real and deliberate - widening room hysteresis also makes the season stickier. If the outdoor sensor is unusable the house falls to SHOULDER rather than guessing a season, and an inverted band (heat_below >= cool_above) does the same. The safety band reads neither helper and keeps running regardless."
+    },
+    {
+      "if": [
+        {
+          "condition": "template",
+          "value_template": "{{ house != states('input_select.climate_house_mode') }}"
+        }
+      ],
+      "then": [
+        {
+          "action": "input_select.select_option",
+          "target": {
+            "entity_id": "input_select.climate_house_mode"
+          },
+          "data": {
+            "option": "{{ house }}"
+          }
+        }
+      ],
+      "note": "The house mode is written back ONLY when it changes, so this is not a write every tick. It is the state memory the exit-only hysteresis needs: rooms can use the unit's own reported mode as memory, but the house has no equivalent, so it keeps its own. Written after the decision, never read by anything except the decision above."
     },
     {
       "if": [
@@ -262,10 +282,10 @@
           {
             "variables": {
               "in_flight": "{{ since_cmd < settle }}",
-              "unit_moved": "{% set lc = (now() - states[r.climate].last_changed).total_seconds() %}{{ lc < since_cmd and lc < human_window and lc < (uptime - 60) }}",
+              "unit_moved": "{% set lc = (now() - states[r.climate].last_changed).total_seconds() %}{{ lc < since_cmd - settle and lc < human_window and lc < (uptime - 60) }}",
               "throttle_ok": "{{ since_cmd >= retry_throttle }}"
             },
-            "note": "THE IN-FLIGHT SIGNAL. in_flight says our own command has not had time to land yet; unit_moved says the unit changed state MORE RECENTLY than we commanded it, which only a person at the wall (or the unit acting on its own) can do. A unit that simply ignores us never changes state, so it cannot masquerade as a human. THAT ASYMMETRY HOLDS ONLY WITHIN ONE CONTINUOUS UPTIME. A climate entity's last_changed does NOT survive a restart: every entity is re-created at boot and last_changed resets to the boot instant, while the command stamp, being an input_datetime, IS restored. So after a restart a unit that never complied shows a tiny lc against a large since_cmd and reads as a person - a 2 h hold stamped on a fault, which then starves the retry. Hence the third term: if lc is as old as the uptime, the timestamp was manufactured by the restart and says nothing about anybody. The 60 s margin makes the first minute after boot conservative, which is the safe direction - a misread there is a fault (retried) rather than a hold (not retried)."
+            "note": "THE IN-FLIGHT SIGNAL. in_flight says our own command has not had time to land; unit_moved says the unit changed state on its own, which only a person at the wall (or the unit acting by itself) can do. THE FIRST TERM IS 'lc < since_cmd - settle', NOT 'lc < since_cmd'. That subtraction is the whole point and its absence was a live bug on 2026-09-20. A unit that OBEYS us changes state about 1.5 s after we command it, so its last_changed is permanently a hair MORE RECENT than our command stamp - 'lc < since_cmd' is therefore true for ever after any successful command, not briefly. It stayed hidden because human_moved also needs 'not mode_ok', and a command that succeeded leaves the mode matching. The moment the WANTED mode changed for another reason - the operator switched the air filter off, so a room holding fan_only should go off - mode_ok went false while unit_moved was still true from our OWN earlier command. The automation stamped a two-hour manual hold on the Living room and pushed the operator a notification telling them they had changed a unit they had not touched. Subtracting settle asks the right question: did the unit change MORE THAN one cloud round trip after we commanded it? Our own command landing 1.5 s later cannot qualify; a person pressing a button minutes later always does. This is M1/R4-2 - the automation reading its own command as the unit's fault - for the third time, and the first time it has been the SUCCESSFUL command rather than an in-flight one. The remaining terms are unchanged: human_window bounds how stale a change can be and still count as a person, and lc < uptime - 60 stops a restart, which resets every entity's last_changed to the boot instant, from looking like everybody touched everything at once."
           },
           {
             "variables": {
@@ -304,8 +324,8 @@
               "may_act": "{{ active and reachable and not mode_ok and not human_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
-              "alert_due": "{{ (is_safety or (safety_on and temp <= -900 and uptime > boot_grace)) and (now().timestamp() - alert_ts) > retry_throttle }}",
-              "no_temp": "{{ safety_on and temp <= -900 and uptime > boot_grace }}"
+              "alert_due": "{{ (is_safety or (safety_on and temp <= -900 and (now() - states[r.resolved].last_changed).total_seconds() > boot_grace)) and (now().timestamp() - alert_ts) > retry_throttle }}",
+              "no_temp": "{{ safety_on and temp <= -900 and (now() - states[r.resolved].last_changed).total_seconds() > boot_grace }}"
             }
           },
           {
@@ -424,7 +444,7 @@
                 }
               }
             ],
-            "note": "R6-4, R7-9 and R8-1. The alert follows THE CONDITION, never whether we managed to send a command - round 6 closed two silent holes (an unavailable unit cannot be commanded; a nominally converged unit losing to an open window) and R7-9 closed the third: 'temp is unusable' sits above every safety branch, so a room whose every sensor was down produced no command AND no word. R8-1 then caught what that fix cost: the resolved sensor for a bedroom depends on four entities, two behind clouds that initialise LATE, so it reads unknown for minutes after every restart - and the blackout alert would fire on every routine HA update, on the three rooms that are two clouds deep. An alert that cries wolf on a version bump is how the one alert that matters gets muted. Hence boot_grace: the blackout arm is suppressed until HA has been up 600 s, which is longer than cloud entities take to restore and far shorter than a genuine two-cloud outage. The OTHER arm - the room is outside the safety band on a reading we do have - is NOT suppressed, because that is real from the first tick."
+            "note": "R6-4, R7-9, R8-1 and round 9. The alert follows THE CONDITION, never whether we managed to send a command. Round 6 closed two silent holes (an unavailable unit cannot be commanded; a nominally converged unit losing to an open window). R7-9 closed the third: 'temp is unusable' sits above every safety branch, so a room whose every sensor was down produced no command AND no word. R8-1 then caught the cost: a bedroom's resolved sensor depends on cloud entities that initialise late, so it reads unknown for minutes after every restart and the blackout alert would have fired on every routine update. THE GRACE IS NOW KEYED TO THE SENSOR, NOT TO UPTIME. The first version gated on uptime > 600 s, which quietly made this alert a second consumer of input_datetime.climate_ha_started - the same stamp the restart guard reads, and one the loop cannot verify. The two consumers need OPPOSITE things from it: a stale stamp makes uptime enormous, which defeats the restart guard AND makes this suppression pass trivially, re-arming the very cry-wolf it was added to stop; a spurious mid-run write makes uptime tiny, which disables human detection AND silences a real blackout for ten minutes. One helper, two safety mechanisms, failing in opposite directions. So the test is now how long THIS ROOM'S resolved sensor has been unusable - the event being throttled, per the rule this design coined for the wall-clock gate in section 16. It needs no stamp, it lasts exactly as long as a slow restore actually takes rather than a guessed 600 s, and it fails safe: if the sensor is genuinely dead the alert arms on schedule."
           },
           {
             "if": [

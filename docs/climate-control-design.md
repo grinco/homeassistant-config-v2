@@ -1,10 +1,10 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-20). Version 5.2.
+Status: **implemented and live** (2026-09-20). Version 5.3.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
-Instance: HA 2026.9.2 Supervised, Home.
+Instance: HA 2026.9.3 Supervised, Home.
 
 > **Naming note.** The two children's rooms appear throughout this document and in the exported
 > configs as **Kids room 1** and **Kids room 2** (`kid1_*`, `kid2_*`). The live instance uses the
@@ -22,7 +22,8 @@ Instance: HA 2026.9.2 Supervised, Home.
 | v3.2 | **Manual changes at the wall win**; gas boiler recognised as a low baseline | Operator requirements — see §11 |
 | v3.3 | Safety band outranks the manual hold; boiler flag no longer suppresses it; human-vs-fault detection rebuilt on the failure counter; hold now notifies | Round 3 found both v3.2 additions had safety holes — see §14 |
 | v5.1 | **One resolved template sensor per room owns all sensor selection, bias and gating; the control loop, the graphs and the floor/household averages all read it. Tado TRVs become the bedrooms' preferred source, distrusted while the radiator is hot. Numeric-helper bounds and sensor-blackout alerting added.** | Tado valves installed; round-7 findings R7-3/5/6/9 — see §20 |
-| **v5.2** | **Blackout alert suppressed during the post-boot window; plausibility checks on the two calibration offsets** | Round-8 findings R8-1 and R8-4 — see §22 |
+| v5.2 | **Blackout alert suppressed during the post-boot window; plausibility checks on the two calibration offsets** | Round-8 findings R8-1 and R8-4 — see §22 |
+| **v5.3** | **Exit-only hysteresis on the house-mode boundary; the blackout grace keyed to the sensor instead of the uptime stamp; an implausible offset now distrusts its source; family view shows the newer safety symptoms. Fixes a LIVE bug where the automation read its own successful command as a person at the wall** | Operator report plus round-9 findings — see §23 and §24 |
 | v3.4 | **Per-room boiler flags deleted entirely** (5 helpers, dashboard section, automation references) | Operator: "the boiler settings per room are redundant… they complicate the setup and the dashboard" |
 | v4 | **Heat/cool becomes a global HOUSE decision from the outdoor temperature; each room gets a day target and a night target instead of two thresholds; new per-room air-filter mode; human detection rebuilt on a real command timestamp; setpoints rounded and clamped to the unit's range; `climate_safety_always` becomes a true master hatch** | Operator simplification request, plus round-4 findings R4-1 through R4-7 — see §15 and §16 |
 
@@ -269,7 +270,7 @@ threshold at which we act and the setpoint we are able to send are different thi
 
 ## 4. Data model
 
-56 helpers, split across two pages by how often they are touched. The **Climate** view carries
+57 helpers plus 11 template entities, split across two pages by how often they are touched. The **Climate** view carries
 only the day-to-day controls: the master switch, the house-mode band, and per room its Maintain
 toggle, Air filter toggle and Day/Night targets. Everything set once — the night window, the away
 safety band, the safety master and frost/hysteresis, sensor calibration, the circuit breaker and
@@ -691,9 +692,11 @@ automation, and none may be added to that list.
   cannot express a window crossing midnight. There is no single editable night range.
 - ~~The stated day comfort target is 22 °C but every room is seeded at 20.5.~~ **Resolved by v4** —
   the two-threshold pair is gone and every room is seeded at the stated 22 °C day / 20 °C night.
-- **56 helpers and one ~100-step run.** The automation is at the size where a decide/act split — a
+- **57 helpers and one ~100-step run.** The automation is at the size where a decide/act split — a
   template entity publishing each room's verdict, with a thin automation applying it — would make
-  the decision continuously inspectable instead of only visible in a trace. See §13.
+  the decision continuously inspectable instead of only visible in a trace. See §13. **Partly done
+  in v5.1**: the per-room *temperature* now resolves in a template entity, so the input to the
+  decision is inspectable. The verdict itself still only exists inside a trace.
 - Thermostatic valve entities are coming. If they are read-only they become the best control
   sensor for the three rooms still on AC return-air probes, closing the single-offset assumption
   and the tick-bound latency for those rooms at once.
@@ -1332,3 +1335,104 @@ the alert fires on a routine event, which would have taught the operator to mute
 fixed silence into a worse one. Every previous relocation moved a hazard between mechanisms. This
 one moved it between **a system property and a human one**: the alert is technically correct and
 practically useless, and nothing in the code would ever have shown that.
+
+---
+
+## 23. v5.3 — the house boundary gets hysteresis
+
+Every *room* decision had exit-only hysteresis from v3 onward. The *house* decision never did: it
+was a bare comparison of the outdoor reading against two thresholds, with nothing damping it.
+
+The operator hit this on 2026-09-20. Outdoor climbed past `heat_below` (17.0) to 17.3 — a margin of
+0.3 °C — and the whole house flipped from heat to shoulder, taking a room that had just been
+switched to air-filter mode with it, from `heat` to `fan_only`.
+
+That instance was benign, but the shape is not: a reading that wanders either side of the line
+flips the season, and with it every air-filter room, one cloud round trip per crossing. Walked
+against the morning's real readings:
+
+| | old rule | new rule |
+|---|---|---|
+| at outdoor 17.3 | flips to shoulder | holds heat |
+| at outdoor 18.1 | shoulder | shoulder |
+| on a day hovering at 17 | **8 mode flips** | **0** |
+
+Entering a season uses the bare threshold; leaving it requires clearing the threshold by the
+hysteresis margin. The previous mode is remembered in `input_select.climate_house_mode`, whose
+options are ordered **shoulder first** so a reset defaults to the season that does nothing — the
+min-default hazard, applied deliberately this time. If the helper holds anything unexpected the
+expression falls through to the memoryless comparison, so a bad value costs stickiness, never
+correctness.
+
+It reuses `climate_hysteresis` rather than adding a knob. The coupling is real and deliberate:
+widening room hysteresis also makes the season stickier.
+
+---
+
+## 24. The automation blamed the operator for its own command
+
+This is the most instructive bug in the whole series, because it was found by the operator, in
+production, and the automation's report of it was actively false.
+
+**What they saw.** A push notification saying a unit had been changed at the wall and that control
+was backing off for two hours, plus a manual hold on the Living room. They had touched nothing.
+
+**What happened.** When the loop commands a unit, the unit obeys about **1.5 seconds later**. The
+human-detection test asked:
+
+```
+unit_moved := lc < since_cmd        # did the unit change AFTER we commanded it?
+```
+
+A unit that *obeys* changes state a moment after the command, so its `last_changed` is permanently
+a hair more recent than our command stamp. **`lc < since_cmd` is therefore true for ever after any
+successful command**, not briefly.
+
+It stayed hidden for four versions because `human_moved` also requires `not mode_ok`, and a command
+that succeeded leaves the mode matching. The two halves could not be true together — until the
+*wanted* mode changed for an unrelated reason. The operator switched an air filter off, so a room
+holding `fan_only` should have gone `off`; `mode_ok` went false while `unit_moved` was still stale
+from our own command. The automation stamped a two-hour hold and told the operator they had done
+something they had not.
+
+**The fix** subtracts the settle window:
+
+```
+unit_moved := lc < since_cmd - settle
+```
+
+which asks the right question: did the unit change **more than one cloud round trip** after we
+commanded it? Our own command landing 1.5 s later cannot qualify. A person pressing a button
+minutes later always does. Verified against the live data at the time: old rule `True`, new rule
+`False`, and a simulated wall change 100 s ago against a command 900 s ago still `True`.
+
+**This is the third appearance of one idea** — the automation reading its own command as somebody
+else's doing. M1 caught it on the in-flight command. R4-2 caught it on the divergence counter. This
+is the first time it has been the *successful* command, which is why none of the previous fixes
+covered it. The lesson worth carrying: *a command that works still leaves evidence, and evidence of
+our own action must never be counted as evidence of someone else's.*
+
+A secondary observation from the same incident: a state-triggered change arriving inside the settle
+window is evaluated but not acted on, so it waits for the next tick — up to ten minutes. Correct
+under the in-flight rule, but the operator experiences it as the switch not working. Recorded, not
+changed.
+
+---
+
+## 25. Round-9 review
+
+Review artifact `review-20260919-e3a6.md`.
+
+| # | Finding | Status |
+|---|---|---|
+| **1** | The boot grace made the blackout alert a **second consumer of `climate_ha_started`**, the same stamp the restart guard reads — and the two need *opposite* things from it. A stale stamp makes `uptime` enormous, defeating the restart guard *and* making the suppression pass trivially, re-arming the cry-wolf it was added to stop. A spurious mid-run write makes `uptime` tiny, disabling human detection *and* silencing a real blackout | **Fixed.** The grace is keyed to how long *that room's own resolved sensor* has been unusable. No stamp involved, it lasts as long as a slow restore actually takes rather than a guessed 600 s, and it fails safe |
+| 2 | 600 s was an unvalidated constant, and it violated the rule this design coined — *a throttle must be keyed to the event it throttles* | **Fixed by the same change.** The review was right that v5.2 broke v4.3's own rule |
+| 3 | The offset bounds encode an unmeasured assumption; the AC check is one-sided and would miss a wrong-sign entry | **Partly rejected.** Wrong sign is **unreachable**: `climate_ac_sensor_offset` is bounded −4…0, so a positive value cannot be entered. The TRV bound stands because the heating gate means the offset only applies while the radiator is *cold*, where a 3 °C valve bias is not plausible |
+| **4** | The plausibility check **notified but still applied** the bad offset, so a fabricated reading could still drive the safety band | **Fixed.** An implausible offset now makes the resolved sensor distrust that source and fall back to the calibrated probe |
+| **5** | The dashboard split honoured "do not move the symptoms out of sight" for the 2025-era symptoms and broke it for every symptom added since — blackout, stale stamp, calibration, valve drift were phone-only | **Fixed.** All four now render on the family view |
+| 6 | R8-3 (household mean hides a cold room) leans on a per-room alert that R8-1 made boot-fragile | **Open**, and the dependency is now weaker since the grace no longer depends on the stamp |
+| 7 | R8-2 source-step churn is invisible to the breaker because every oscillating command is obeyed | **Open**, still gated on the bedrooms being disabled |
+| 8 | Stale header (2026.9.2), revision table out of order | **Fixed** |
+
+Round 9 predicted the relocation correctly and in the right place. It did not find §24 — the
+operator did, an hour later, from a notification that accused them of something they had not done.

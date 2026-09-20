@@ -40,7 +40,7 @@
     },
     {
       "type": "entity",
-      "entity": "person.adult1_person",
+      "entity": "person.adult1",
       "name": "Adult 1",
       "show_name": true,
       "show_state": false,
@@ -49,7 +49,7 @@
     },
     {
       "type": "entity",
-      "entity": "person.adult2_person",
+      "entity": "person.adult2",
       "name": "Adult 2",
       "show_name": true,
       "show_state": false,
@@ -58,7 +58,7 @@
     },
     {
       "type": "entity",
-      "entity": "person.kid1_person",
+      "entity": "person.kid1",
       "name": "Kids room 1",
       "show_name": true,
       "show_state": false,
@@ -432,7 +432,7 @@
           "area": "bedroom",
           "primary": "Office",
           "icon": "mdi:desk",
-          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.adult2_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.adult2_desk_temperature') }}",
+          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.desk_socket_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.desk_socket_temperature') }}",
           "color": "{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}",
           "tap_action": {
             "action": "toggle"
