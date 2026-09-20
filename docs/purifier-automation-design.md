@@ -1,7 +1,7 @@
 # Corridor air purifier — design
 
-Status: **implemented and live** (2026-09-20). Version 3, after round 1 of review.
-**It has now run once for real** — see §7.
+Status: **implemented and live** (2026-09-20). Version 4, after round 1 of review and
+**two live incidents**. See §7.
 Instance: HA 2026.9.3 Supervised, Home.
 
 A Xiaomi zhimi mb3 air purifier and a MINI-C self-cleaning litter box share the corridor,
@@ -43,6 +43,15 @@ Three decisions, in increasing order of how much they matter.
 
 **It is displayed.** The climate view has an "Air quality — indoors" group: the fan, PM2.5,
 filter life, and the corridor temperature and humidity the purifier also reports.
+
+> **Update, 2026-09-20 23:10 — the inference in §1 is probably wrong.** During incident 7.2
+> the fan ran **46 minutes at motor speed ~1560**, immediately after a cat visit, and PM2.5
+> never left 1. An idle sensor explains a still reading when the fan is off; it does not
+> explain a still reading through three quarters of an hour of full airflow. The operator's
+> original suspicion — that the sensor cannot be trusted — now has direct evidence behind it,
+> and my "it is merely not sampling" reading does not. The design is unaffected, because it
+> was built to not depend on the answer: an unresponsive sensor gets no vote and the full
+> window runs. That is the whole value of having put the trust boundary where it is.
 
 **It is shown with the evidence needed to judge it.** A card renders the value, how long it
 has been unchanged, and whether the fan was running, then says which of three things that
@@ -199,32 +208,62 @@ and the device's reported state, not from an observed cycle.
 
 ---
 
-## 7. The first real cycle, and what it taught
+## 7. Two live incidents, and what they cost
 
-A cat used the box at 22:07 on 2026-09-20. **v1 ran.** Writing v2 minutes later reloaded the
-automation with that run in flight, and the fan was left on with the ownership flag set.
+### 7.1 The reload (22:07)
+
+A cat used the box at 22:07. **v1 ran.** Writing v2 minutes later reloaded the automation with
+that run in flight, and the fan was left on with the ownership flag set.
 
 **A reload is not a restart.** It kills an in-progress run exactly as a restart does, but it
-does not raise the `homeassistant` `start` event, so the recovery branch never fired and
-nothing existed to clean up after it. Recovery now also triggers on `automation_reloaded`.
-
-This is the P1 shape from the climate work — state that outlives the thing meant to clean it
-up — and no review round found it. It was found by changing the file while the system was
-doing its job, which is the same way the worst climate bug was found: in production, doing
-something ordinary.
+does not raise the `homeassistant` `start` event, so recovery never fired. Recovery now also
+triggers on `automation_reloaded`.
 
 Recovery is gated on the **ownership flag alone**. A draft briefly used "flag on OR fan on",
 which would have switched off a purifier a person started by hand on every reload and every
-restart — taking control away from the operator, which is the thing this design exists to
-avoid. Flag-off-fan-on cannot occur anyway, because ownership is claimed only after the fan
-is confirmed running.
+restart — the thing this design exists to avoid.
 
-**A second self-inflicted one.** `input_datetime.purifier_manual_stop` was created and not
-seeded, so it read *today 00:00* — which passes the `> 1e9` armed test. It happened to be
-old enough not to block anything, but had it been created within thirty minutes of a cat
-visit it would have silently suppressed a real run. That is verbatim the hazard recorded in
-this project's own notes about fresh `input_datetime` helpers, and I walked into it anyway.
-Seeded to 2000-01-01.
+### 7.2 Reading the device too soon (22:23) — the expensive one
+
+A cat visited at 22:23. v2 ran, commanded the fan on, and **declared the start a failure.**
+Measured from history:
+
+| time | fan | what happened |
+|---|---|---|
+| 22:23:05.19 | **on** | our `fan.turn_on`, reported optimistically |
+| 22:23:06.38 | **off** | the miio integration polled the device, which had not acted yet |
+| 22:23:10 | *(our read)* | saw `off` → **FAILED TO START** → released ownership, stopped |
+| 22:23:23.14 | **on** | the device actually started, motor to 1524 |
+
+The run abandoned ownership *while the fan was coming on*. Nothing owned it and nothing would
+stop it: **it ran for 46 minutes until the operator noticed.** Worse, `already_running`
+(fan on, flag off) would have made every future visit abort — silently, for ever.
+
+**This is the climate `unit_moved` bug in a different device.** That one read a unit's
+`last_changed` too soon after commanding it and mistook obedience for a person at the wall.
+This one read a fan's state too soon after commanding it and mistook success for failure. v2's
+own note said *"never assume the service call worked"* — and then implemented the check as a
+single sample at a **guessed 5-second offset**, which is the same error with the opposite sign.
+
+**The fix is to stop sampling at a guess.** The start is confirmed by *waiting* for the fan to
+report `on` and hold it 15 seconds, with a 120-second timeout. That is self-timing: it costs
+nothing when the device is quick, the 15-second hold ignores the 1.2-second optimistic blip,
+and it tolerates a device that takes 18 seconds — or 60 — without any constant needing to be
+right. The same hold is now on the human-stop trigger, so the identical flap cannot be misread
+as a person switching the fan off mid-run.
+
+**If the start is never confirmed, the fan is commanded off.** Abandoning is what stranded it.
+
+**`already_running` now speaks.** Refusing a fan somebody else started is still right, but a
+*silent* refusal is how a stranded fan would have disabled this automation permanently without
+a word. It now writes a line saying why it did nothing.
+
+### 7.3 The pattern
+
+Neither incident was found by review. Both were found by the system doing its job while
+somebody watched — the reload by editing a file mid-run, the misread by the operator noticing
+a fan that would not stop. That is now three times in this project that the worst bug was
+found in production and not on paper.
 
 ---
 

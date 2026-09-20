@@ -1,7 +1,7 @@
 {
   "id": "1789947000001",
   "alias": "Purifier — run after the cat toilet",
-  "description": "v3. Runs the corridor purifier after a cat visit for up to ~28 minutes, ending early ONLY if the PM2.5 sensor proved it is responsive (it rose after the visit) and then came back down. A sensor pinned at its floor gets no vote and the full window runs. Shutdown depends on a run-local fact, never on the ownership flag, so the flag cannot strand the fan on. A manual switch-off suppresses re-starts for a cooldown. Recovery fires on an automation RELOAD as well as a restart, because a reload also kills an in-progress run.",
+  "description": "v4. Runs the corridor purifier after a cat visit for up to ~28 minutes, ending early ONLY if the PM2.5 sensor proved it is responsive (rose after the visit) and then came back down. A sensor pinned at its floor gets no vote and the full window runs. The start is confirmed by WAITING for the fan to report on, never by reading its state at a guessed offset: this device reports on optimistically, then flips back to off when the integration polls it, and only settles on for real about 18 seconds later. Shutdown depends on a run-local fact, and if the start cannot be confirmed the fan is commanded off rather than abandoned.",
   "triggers": [
     {
       "trigger": "state",
@@ -89,9 +89,27 @@
           }
         },
         {
-          "condition": "template",
-          "value_template": "{{ not already_running }}",
-          "alias": "not_already_running"
+          "if": [
+            {
+              "condition": "template",
+              "value_template": "{{ already_running }}"
+            }
+          ],
+          "then": [
+            {
+              "action": "input_text.set_value",
+              "target": {
+                "entity_id": "input_text.purifier_last_run"
+              },
+              "data": {
+                "value": "{{ now().strftime('%m-%d %H:%M') }} skipped - fan already on and not ours"
+              }
+            },
+            {
+              "stop": "the purifier is already running and we do not own it"
+            }
+          ],
+          "alias": "Never take over a fan somebody else started - but SAY SO, because a stranded fan would otherwise silence this automation permanently"
         },
         {
           "condition": "template",
@@ -113,15 +131,27 @@
           "continue_on_error": true
         },
         {
-          "delay": {
-            "seconds": 5
-          }
+          "wait_for_trigger": [
+            {
+              "trigger": "state",
+              "entity_id": "fan.corridor_xiaomi_air_purifier",
+              "to": "on",
+              "for": {
+                "seconds": 15
+              }
+            }
+          ],
+          "timeout": {
+            "seconds": 120
+          },
+          "continue_on_timeout": true,
+          "alias": "WAIT for the fan to actually report on - do not sample at a guessed offset"
         },
         {
           "variables": {
             "we_started": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"
           },
-          "alias": "Did the fan ACTUALLY start? re-read, never assume the call worked"
+          "alias": "Confirmed running?"
         },
         {
           "if": [
@@ -131,6 +161,13 @@
             }
           ],
           "then": [
+            {
+              "action": "fan.turn_off",
+              "target": {
+                "entity_id": "fan.corridor_xiaomi_air_purifier"
+              },
+              "continue_on_error": true
+            },
             {
               "action": "input_boolean.turn_off",
               "target": {
@@ -143,13 +180,14 @@
                 "entity_id": "input_text.purifier_last_run"
               },
               "data": {
-                "value": "{{ now().strftime('%m-%d %H:%M') }} FAILED TO START"
+                "value": "{{ now().strftime('%m-%d %H:%M') }} FAILED TO START (commanded off again)"
               }
             },
             {
-              "stop": "fan.turn_on did not take effect"
+              "stop": "fan never confirmed running"
             }
-          ]
+          ],
+          "alias": "Give up - but command it OFF first, never abandon a fan that may yet come on"
         },
         {
           "action": "input_boolean.turn_on",
@@ -211,6 +249,9 @@
                       "trigger": "state",
                       "entity_id": "fan.corridor_xiaomi_air_purifier",
                       "to": "off",
+                      "for": {
+                        "seconds": 15
+                      },
                       "id": "human"
                     }
                   ],
@@ -230,6 +271,9 @@
                   "trigger": "state",
                   "entity_id": "fan.corridor_xiaomi_air_purifier",
                   "to": "off",
+                  "for": {
+                    "seconds": 15
+                  },
                   "id": "human"
                 }
               ],
@@ -303,10 +347,10 @@
           "data": {
             "value": "{{ now().strftime('%m-%d %H:%M') }} {{ outcome }} | {{ ((now().timestamp() - started_at) / 60) | round(0) | int }}min | pm {{ pm_before | int }}>{{ pm_after_settle | int }}>{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}{{ '' if sensor_responsive else ' UNRESPONSIVE' }} | corridor {{ corridor_before | round(1) }}>{{ corridor_after | round(1) }}"
           },
-          "alias": "One line of evidence per run - see note"
+          "alias": "One line of evidence per run"
         }
       ],
-      "note": "v3. Round 1 of review (review-20260920-2ca2) plus one finding the review could not have made, because it was observed live.\n\nF9, THE RELOAD. Writing v2 reloaded the automation while a real run was in flight - a cat had used the box ten minutes earlier and v1 was mid-window. A reload kills the run exactly as a restart does, but it does NOT raise the homeassistant start event, so the recovery branch never fired and the fan was left on with the ownership flag set and nothing to clear it. Recovery now also triggers on the automation_reloaded event. This is the same class as P1 in the climate work: state that outlives the thing that was supposed to clean it up.\n\nRecovery is gated on the OWNERSHIP FLAG ALONE, deliberately. v2 briefly used 'flag on OR fan on', which would have turned off a purifier a person had started by hand on every reload and every restart - taking control away from the operator, the thing this design exists to avoid. Flag-off-fan-on can no longer occur anyway, because ownership is claimed only after the fan is confirmed running.\n\nF2, THE STRANDED FAN. Shutdown used to require the persistent flag, which made the 25-minute backstop conditional on the very state whose failure is the failure mode. It now turns on we_started, a RUN-LOCAL fact established by RE-READING the fan after commanding it - never assume a service call worked, the same interlock the climate loop uses before every actuating call.\n\nF3/F1, THE SENSOR THAT TELLS US NOTHING. The early stop is armed only if PM2.5 rose above the floor after the visit. The operator's worry is a reading that is 'almost always at one'; if it is still at the floor after three minutes of fan then we have learned nothing, so it gets no vote and the full window runs. The old shape leaned on a subtlety - a numeric_state trigger does not fire when its condition already matches at attach - which gives the safe answer but should not be load-bearing.\n\nF4, RE-IGNITING AFTER A MANUAL STOP. A manual switch-off is stamped and suppresses re-starts for 30 minutes, so the litter box cannot overrule a person who wanted quiet.\n\nINSTRUMENTATION. input_text.purifier_last_run records one line per run: outcome, duration, PM before/after-settle/final, whether the sensor was responsive, and corridor temperature before and after. That last pair is the measurement that decides whether the purifier's motor heat biases the corridor reading enough to matter to the household average, and whether the corridor may ever join the mould check. Meant to be read after a few cycles and then removed."
+      "note": "v4, after the SECOND live incident. Measured from history, 2026-09-20 22:23:\n\n  22:23:05.19  fan -> on     our fan.turn_on, reported optimistically\n  22:23:06.38  fan -> off    the miio integration polled the device, which had not acted yet\n  22:23:10     (our read)    saw 'off' -> declared FAILED TO START, released, stopped\n  22:23:23.14  fan -> on     the device actually started, motor 1524\n\nThe run abandoned ownership while the fan was coming on, so nothing owned it and nothing would stop it. It ran 46 minutes until the operator noticed. Worse, already_running (fan on, flag off) would have made EVERY future visit abort, silently, for ever.\n\nThis is the climate unit_moved bug again, in a new device: READING A DEVICE'S STATE TOO SOON AFTER COMMANDING IT AND MISTAKING THE RESULT FOR FAILURE. I wrote 'never assume the service call worked' in v2 and then implemented the check as a single sample at a guessed 5-second offset, which is the same error with the opposite sign.\n\nTHE FIX IS TO STOP SAMPLING AT A GUESS. The start is now confirmed by WAITING for the fan to report on and hold it for 15 seconds, with a 120-second timeout. That is self-timing: it costs nothing when the device is quick, it ignores the 1.2-second optimistic blip because of the 'for', and it tolerates a device that takes 18 seconds - or 60 - without any constant needing to be right. The same 'for: 15 seconds' is now on the human-stop trigger, so the identical optimistic-then-corrected flap cannot be misread as a person switching the fan off mid-run.\n\nIF THE START IS NEVER CONFIRMED, THE FAN IS COMMANDED OFF. Abandoning was what stranded it. Leaving the world as we found it is the only safe exit.\n\nALREADY_RUNNING NOW SPEAKS. It is still right to refuse a fan somebody else started, but a silent refusal is how a stranded fan would have disabled this automation permanently without a word. It now writes a line to input_text.purifier_last_run saying why it did nothing.\n\nSTILL TRUE from earlier versions: the visit guard rejects the midnight reset, a restart restore and a repeated report; recovery fires on reload as well as restart; a manual stop suppresses re-starts for 30 minutes; the early stop is armed only if PM2.5 actually rose."
     }
   ],
   "mode": "restart",
