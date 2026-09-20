@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-20). Version 5.4.
+Status: **implemented and live** (2026-09-20). Version 5.5.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -27,6 +27,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | v5.2 | **Blackout alert suppressed during the post-boot window; plausibility checks on the two calibration offsets** | Round-8 findings R8-1 and R8-4 — see §22 |
 | **v5.3** | **Exit-only hysteresis on the house-mode boundary; the blackout grace keyed to the sensor instead of the uptime stamp; an implausible offset now distrusts its source; family view shows the newer safety symptoms. Fixes a LIVE bug where the automation read its own successful command as a person at the wall** | Operator report plus round-9 findings — see §23 and §24 |
 | **v5.4** | **Offset distrust made symmetric (an implausible AC offset no longer poisons the fallback it falls back to); blackout grace re-keyed to a per-room persistent stamp that survives a restart and ignores sensor flapping; `human_moved` renamed `external_moved` and its notification stopped claiming the operator did it** | Round-10 findings R10-7, R10-6, R10-1 — see §26 |
+| **v5.5** | **An implausible calibration offset is now REPLACED BY THE MEASURED DEFAULT instead of discarding the source — v5.4 cost a room its safety floor to avoid a wrong number; the boot grace is restored alongside the per-room blackout clock; a unit that keeps changing itself is escalated as possibly faulty** | Round-11 findings F11-1, F11-3, F11-4 — see §27 |
 
 ---
 
@@ -278,7 +279,7 @@ threshold at which we act and the setpoint we are able to send are different thi
 
 ## 4. Data model
 
-62 helpers plus 11 template entities, split across two pages by how often they are touched. The **Climate** view carries
+67 helpers plus 11 template entities, split across two pages by how often they are touched. The **Climate** view carries
 only the day-to-day controls: the master switch, the house-mode band, and per room its Maintain
 toggle, Air filter toggle and Day/Night targets. Everything set once — the night window, the away
 safety band, the safety master and frost/hysteresis, sensor calibration, the circuit breaker and
@@ -702,7 +703,7 @@ automation, and none may be added to that list.
   cannot express a window crossing midnight. There is no single editable night range.
 - ~~The stated day comfort target is 22 °C but every room is seeded at 20.5.~~ **Resolved by v4** —
   the two-threshold pair is gone and every room is seeded at the stated 22 °C day / 20 °C night.
-- **62 helpers and one ~110-step run.** The automation is at the size where a decide/act split — a
+- **67 helpers and one ~115-step run.** The automation is at the size where a decide/act split — a
   template entity publishing each room's verdict, with a thin automation applying it — would make
   the decision continuously inspectable instead of only visible in a trace. See §13. **Partly done
   in v5.1**: the per-room *temperature* now resolves in a template entity, so the input to the
@@ -1565,3 +1566,114 @@ claims more than the code can know will eventually be repeated to a human as fac
 - **R10-8.** `climate_ha_started` still feeds the restart guard, so R6-1.1 is only half closed.
 - **R10-9.** The outdoor sensor is not a state trigger, so a season crossing waits up to ten minutes.
 - **R8-2, R8-3, R9-6/7**, unchanged, still gated on the bedrooms being disabled.
+
+---
+
+## 27. Round-11 review, and v5.5
+
+Review artifact `review-20260920-2a65.md`. This round found that **my round-10 fix made the system
+less safe**, and it is the most important finding in the series so far, because it is the first time
+a fix traded a bounded failure for an unbounded one.
+
+| # | Finding | Verified against live state | Status |
+|---|---|---|---|
+| **F11-1** | Symmetric distrust converts a *wrong number* hazard into a *no protection* hazard. `skip` is tested above every safety branch, so a room with no reading loses its frost and cat floors too | Confirmed, and worse than stated. `ac_sensor_offset`'s slider reaches **−4.0**, past the −3.5 line, in one drag; and the bedrooms' TRV is distrusted whenever the radiator is driving, so **in heating season the probe is their only source**. One bad slider → three rooms with no safety floor, in the weather it exists for | **Fixed** |
+| **F11-3** | v5.4 silently dropped the boot grace | Confirmed. After a restart the sensors come up `unknown`, the new clock arms, and any cloud restore slower than 600 s cries wolf — the R8-1 shape, re-armed and unstated | **Fixed** |
+| **F11-4** | A unit that self-changes on a recurring timer is invisible to *both* detectors and held in a rolling hold forever | Confirmed: every external move resets the breaker counter, and during the hold the room is `manual` so `active` is false and the breaker cannot count at all | **Fixed** |
+| F11-8 | A self-change *inside* the settle window is read as our own command, so the breaker blames the unit for an external override | Confirmed. Bounded and visible, but mislabelled | **Documented**, open |
+| F11-2 | The arm/clear steps never run when the automation does not fire, so an outage inside a comfort-off window is never alerted | **Mostly wrong.** The condition is `climate_auto OR climate_safety_always`, and safety_always is on, so the loop runs regardless of comfort. The residue needs *both* off — a state config health already shouts about | Doc noted |
+| F11-5 | The new guards can cry wolf, and the config-health channel has no throttle | **Half right.** The `input_select` transient point is real and is fixed. The fatigue point is not: this check writes one notification with a **fixed id**, so it replaces rather than stacks, and never pushes to a phone | Transient **fixed** |
+| F11-6, F11-7 | §19 prose stale (the stamp now has one consumer); §4 helper table missing the new helpers | Confirmed | Doc fixed |
+
+### F11-1 — the direction a thing fails in matters more than whether it fails
+
+Round 9 said: do not apply an implausible offset. Round 10 implemented that as: refuse the source.
+Round 11 showed refusing the source is worse than applying the bad number, and the reason is the
+precedence order this design has had since v3:
+
+```
+        skip  (no usable reading)      ← tested FIRST
+        frost / away floor / away ceiling
+        manual hold
+        comfort
+```
+
+`skip` sits **above** the safety band. That is correct — you cannot act on a reading you do not
+have — but it means *anything that destroys the reading also destroys the floor*. v5.4 put a single
+global configuration number on that path.
+
+Compare the failure directions with the live numbers. The Bedroom probe reads 25; the true room is
+about 23:
+
+| | emitted | against an 18 °C floor |
+|---|---|---|
+| v5.3, applied the bad offset (−9) | 16.0 °C | heats a 23 °C room — wrong, wasteful, **fails warm** |
+| v5.4, refused the source | nothing | no reading, no floor — **fails cold, silently** |
+| **v5.5, substitutes the measured default (−2)** | **23.0 °C** | correct reading, correct decision |
+
+`ac_sensor_offset` is bounded at or below zero, so a bad value can only ever subtract, which is why
+v5.3's failure was always toward over-heating. That is a tolerable failure in a flat with cats and
+water pipes. Having no reading at all is not.
+
+**The fix is to refuse the number without refusing the source.** An implausible offset is replaced
+by the measured default — −2 for the AC probe, 0 for the TRV — so the sensor keeps producing a
+reading built on the best knowledge available, and config health says loudly which knob is wrong.
+That satisfies what round 9 actually wanted (never act on a fabricated correction) without what
+round 10 mistakenly paid for it (act on nothing).
+
+**The review's own suggested fix was wrong, in the opposite direction.** It proposed falling back to
+the *raw uncorrected* probe, reasoning that a probe reading ~2 °C high "over-heats, which is the safe
+direction for a frost floor." It does not. A probe that reads high makes the room look *warmer* than
+it is, so we heat *less* — raw would under-protect by exactly the bias. The sign matters, and it is
+worth recording that a reviewer arguing correctly about failure *direction* can still get the
+*sign* of a specific correction backwards. Checked against live values before implementing.
+
+The general rule this earns: **when a guard sits above a safety interlock in a precedence order,
+that guard must never be able to fire on a configuration value.** Configuration is the thing most
+likely to be wrong and least likely to be noticed.
+
+### F11-3 — two graces, two questions
+
+v5.2 suppressed the blackout alert on `uptime`. Round 9 killed that. v5.4 replaced it with the
+per-room clock and, without saying so, deleted the boot suppression entirely. Round 11 caught it:
+after a restart the sensors come up `unknown`, the per-room clock arms on the first tick, and 600 s
+later the alert fires — R8-1, back, for any cloud restore slower than ten minutes.
+
+The two graces answer genuinely different questions and v5.5 keeps both:
+
+- *Has this room been genuinely unreadable for ten minutes?* — the per-room stamp.
+- *Is this just boot noise?* — `uptime`.
+
+Round 9's objection to `uptime` does not apply now, and the reason is worth stating precisely: it
+objected to `uptime` being the **only** gate, where a stale stamp made the suppression pass
+trivially. Here it is ANDed with the per-room clock, so a stale stamp makes `uptime` enormous, which
+simply **stops suppressing** and lets the per-room clock govern — the safe direction. A spurious
+mid-run write delays a genuine alert by at most 600 s. Verified across all four cases.
+
+### F11-4 — a diagnosis, not a new policy
+
+The predicate cannot tell a person from a unit-side timer (§26), so the hold stays: backing off is
+right whatever moved the unit. But *recurrence* is observable even when *cause* is not, and the old
+design was blind to it in a way that compounded:
+
+every external move reset the breaker counter; during the resulting hold the room is `manual`, so
+`active` is false and the breaker could not count at all; the hold expired; the timer fired again; a
+fresh hold was stamped. A unit with its own hourly schedule sat permanently outside comfort control
+while the operator got an identical "backing off" notice each time and was never told it was
+recurring.
+
+`r.ext` records when the last external change happened. A second one inside six hours escalates the
+same notification to a different message naming the likely causes — a timer set on the unit, a
+recurring power interruption, a failing control board. The hold behaviour is unchanged. This adds a
+diagnosis, not a policy.
+
+### Still open after round 11
+
+- **R10-2 / F11-8.** `settle` does three jobs, and the command-echo dead zone it provides means a
+  unit self-change *inside* 240 s of our command is read as our own command — so the breaker counts
+  it as a unit fault rather than an external move. Bounded and visible, but mislabelled.
+- **R10-8.** `climate_ha_started` still feeds the restart guard. It now has that one consumer.
+- **R10-9.** The outdoor sensor is not a state trigger, so a season crossing waits up to ten minutes.
+- **F11-2 residue.** With *both* master switches off nothing runs, including the stamps — the state
+  config health already calls out as fully unprotected.
+- **R8-2, R8-3**, unchanged, still gated on the bedrooms being disabled.
