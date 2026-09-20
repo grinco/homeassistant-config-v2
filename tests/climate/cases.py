@@ -325,14 +325,23 @@ A(guard("a fan that did not come on is not ours", "we_started", "False",
 # Round 1 F3/F1: the early stop may only be armed once the sensor has PROVED it is
 # responsive. A sensor pinned at its floor tells us nothing, so there is nothing to
 # wait for -- run the full window instead of ending early on a reading we distrust.
-A(guard("a responsive sensor arms the early stop", "sensor_responsive", "True",
-        {"pm_after_settle": "12.0"},
+# 2026-09-20: the sensor did not move across 46 min of full airflow right after a
+# visit, so the operator declared it broken for now. That assumption is an explicit,
+# reversible TOGGLE rather than something baked into the logic -- cleaning the laser
+# intake later is one switch, not a code change. pm_usable is the whole gate.
+TRUSTED = "is_state('input_boolean.purifier_pm25_trusted','on')"
+
+A(guard("an untrusted sensor never arms the early stop", "pm_usable", "False",
+        {TRUSTED: "false", "pm_after_settle": "12.0"},
+        finding="operator declared it broken; even a plausible reading gets no vote"))
+A(guard("a trusted responsive sensor arms the early stop", "pm_usable", "True",
+        {TRUSTED: "true", "pm_after_settle": "12.0"},
         finding="F3: PM rose after the visit, so 'back down' is meaningful"))
-A(guard("a sensor pinned at the floor does not arm it", "sensor_responsive", "False",
-        {"pm_after_settle": "1.0"},
-        finding="F1/F3: THE operator's stated worry - never leaves 1, so we learn nothing"))
-A(guard("a zero reading does not arm it either", "sensor_responsive", "False",
-        {"pm_after_settle": "0.0"}, finding="F3: 0 is still the floor"))
+A(guard("a trusted sensor pinned at the floor does not arm it", "pm_usable", "False",
+        {TRUSTED: "true", "pm_after_settle": "1.0"},
+        finding="F1/F3: never leaves 1, so we learn nothing even when trusted"))
+A(guard("a trusted zero reading does not arm it either", "pm_usable", "False",
+        {TRUSTED: "true", "pm_after_settle": "0.0"}, finding="F3: 0 is still the floor"))
 
 # Round 1 F4: a person who switches the fan off BETWEEN visits had it re-ignited by
 # the next cat, with no signal. A manual stop now suppresses re-starts for a while.

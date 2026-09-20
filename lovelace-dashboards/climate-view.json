@@ -297,7 +297,7 @@
         {
           "type": "tile",
           "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
-          "name": "PM2.5 indoors",
+          "name": "PM2.5 (not trusted)",
           "icon": "mdi:blur",
           "grid_options": {
             "columns": 6
@@ -344,9 +344,10 @@
           },
           "entity_id": [
             "sensor.corridor_xiaomi_air_purifier_pm2_5",
-            "fan.corridor_xiaomi_air_purifier"
+            "fan.corridor_xiaomi_air_purifier",
+            "input_boolean.purifier_pm25_trusted"
           ],
-          "content": "{% set age = (now() - states.sensor.corridor_xiaomi_air_purifier_pm2_5.last_changed).total_seconds() %}{% set fan = states('fan.corridor_xiaomi_air_purifier') %}PM2.5 **{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}** µg/m³ · unchanged for {% if age < 3600 %}{{ (age / 60) | round(0) | int }} min{% elif age < 86400 %}{{ (age / 3600) | round(1) }} h{% else %}{{ (age / 86400) | round(1) }} days{% endif %} · purifier {{ fan }}\n\n{% if fan != 'on' %}**Not sampling.** This unit only draws air across its sensor while the fan runs, so a still reading now means nothing.{% elif age > 21600 %}**Suspect** — unchanged for {{ (age / 3600) | round(0) | int }} h with the fan running. A working sensor should move.{% else %}Sampling — the fan is running, so this reading is live.{% endif %}"
+          "content": "{% set age = (now() - states.sensor.corridor_xiaomi_air_purifier_pm2_5.last_changed).total_seconds() %}{% set fan = states('fan.corridor_xiaomi_air_purifier') %}{% set pm = states('sensor.corridor_xiaomi_air_purifier_pm2_5') %}{% set trusted = is_state('input_boolean.purifier_pm25_trusted','on') %}PM2.5 **{{ pm }}** µg/m³ · unchanged for {% if age < 3600 %}{{ (age / 60) | round(0) | int }} min{% elif age < 86400 %}{{ (age / 3600) | round(1) }} h{% else %}{{ (age / 86400) | round(1) }} days{% endif %} · purifier {{ fan }}\n\n{% if not trusted %}**Assumed broken.** It did not move across 46 minutes of full airflow right after a cat visit on 20 Sep, so it gets no say in anything — runs go the full window and this number drives nothing.{% if pm | int(0) >= 2 %} **But it has moved since. Worth rechecking.**{% elif fan == 'on' and age > 1800 %} Still pinned after {{ (age / 60) | round(0) | int }} min of fan.{% endif %}{% elif fan != 'on' %}Not sampling — this unit only draws air across its sensor while the fan runs.{% elif age > 21600 %}**Suspect** — unchanged for {{ (age / 3600) | round(0) | int }} h with the fan running.{% else %}Sampling — the fan is running, so this reading is live.{% endif %}"
         }
       ]
     },

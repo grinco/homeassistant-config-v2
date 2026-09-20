@@ -1,7 +1,7 @@
 {
   "id": "1789947000001",
   "alias": "Purifier — run after the cat toilet",
-  "description": "v4. Runs the corridor purifier after a cat visit for up to ~28 minutes, ending early ONLY if the PM2.5 sensor proved it is responsive (rose after the visit) and then came back down. A sensor pinned at its floor gets no vote and the full window runs. The start is confirmed by WAITING for the fan to report on, never by reading its state at a guessed offset: this device reports on optimistically, then flips back to off when the integration polls it, and only settles on for real about 18 seconds later. Shutdown depends on a run-local fact, and if the start cannot be confirmed the fan is commanded off rather than abandoned.",
+  "description": "v5. Runs the corridor purifier after a cat visit for up to ~28 minutes. The PM2.5 sensor is currently ASSUMED BROKEN (input_boolean.purifier_pm25_trusted is off), so it gets no vote and every run goes the full window; turning that toggle on restores the early stop, which additionally requires the reading to have risen after the visit before 'back down' means anything. The start is confirmed by WAITING for the fan to report on, never by reading its state at a guessed offset. If the start cannot be confirmed the fan is commanded off rather than abandoned.",
   "triggers": [
     {
       "trigger": "state",
@@ -210,7 +210,7 @@
           "delay": {
             "minutes": 3
           },
-          "alias": "Let the sensor actually sample before reading it"
+          "alias": "Let the sensor sample - still done while untrusted, because it is the evidence that would show the sensor recovering"
         },
         {
           "variables": {
@@ -220,9 +220,9 @@
         },
         {
           "variables": {
-            "sensor_responsive": "{{ pm_after_settle >= 2 }}"
+            "pm_usable": "{{ is_state('input_boolean.purifier_pm25_trusted','on') and pm_after_settle >= 2 }}"
           },
-          "alias": "Did PM actually rise? only then is 'back down' meaningful"
+          "alias": "Is the reading allowed a vote at all, and did it actually rise?"
         },
         {
           "choose": [
@@ -230,7 +230,7 @@
               "conditions": [
                 {
                   "condition": "template",
-                  "value_template": "{{ sensor_responsive }}"
+                  "value_template": "{{ pm_usable }}"
                 }
               ],
               "sequence": [
@@ -261,7 +261,7 @@
                   "continue_on_timeout": true
                 }
               ],
-              "alias": "Responsive: wait for it to come back down"
+              "alias": "Trusted and responsive: wait for it to come back down"
             }
           ],
           "default": [
@@ -283,7 +283,7 @@
               "continue_on_timeout": true
             }
           ],
-          "alias": "Not responsive: the sensor gets no vote, run the full window"
+          "alias": "No usable reading: the sensor gets no vote, run the full window"
         },
         {
           "variables": {
@@ -345,12 +345,12 @@
             "entity_id": "input_text.purifier_last_run"
           },
           "data": {
-            "value": "{{ now().strftime('%m-%d %H:%M') }} {{ outcome }} | {{ ((now().timestamp() - started_at) / 60) | round(0) | int }}min | pm {{ pm_before | int }}>{{ pm_after_settle | int }}>{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}{{ '' if sensor_responsive else ' UNRESPONSIVE' }} | corridor {{ corridor_before | round(1) }}>{{ corridor_after | round(1) }}"
+            "value": "{{ now().strftime('%m-%d %H:%M') }} {{ outcome }} | {{ ((now().timestamp() - started_at) / 60) | round(0) | int }}min | pm {{ pm_before | int }}>{{ pm_after_settle | int }}>{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}{% if not is_state('input_boolean.purifier_pm25_trusted','on') %} (untrusted{{ ' - MOVED, worth rechecking' if pm_after_settle >= 2 else '' }}){% elif not pm_usable %} UNRESPONSIVE{% endif %} | corridor {{ corridor_before | round(1) }}>{{ corridor_after | round(1) }}"
           },
           "alias": "One line of evidence per run"
         }
       ],
-      "note": "v4, after the SECOND live incident. Measured from history, 2026-09-20 22:23:\n\n  22:23:05.19  fan -> on     our fan.turn_on, reported optimistically\n  22:23:06.38  fan -> off    the miio integration polled the device, which had not acted yet\n  22:23:10     (our read)    saw 'off' -> declared FAILED TO START, released, stopped\n  22:23:23.14  fan -> on     the device actually started, motor 1524\n\nThe run abandoned ownership while the fan was coming on, so nothing owned it and nothing would stop it. It ran 46 minutes until the operator noticed. Worse, already_running (fan on, flag off) would have made EVERY future visit abort, silently, for ever.\n\nThis is the climate unit_moved bug again, in a new device: READING A DEVICE'S STATE TOO SOON AFTER COMMANDING IT AND MISTAKING THE RESULT FOR FAILURE. I wrote 'never assume the service call worked' in v2 and then implemented the check as a single sample at a guessed 5-second offset, which is the same error with the opposite sign.\n\nTHE FIX IS TO STOP SAMPLING AT A GUESS. The start is now confirmed by WAITING for the fan to report on and hold it for 15 seconds, with a 120-second timeout. That is self-timing: it costs nothing when the device is quick, it ignores the 1.2-second optimistic blip because of the 'for', and it tolerates a device that takes 18 seconds - or 60 - without any constant needing to be right. The same 'for: 15 seconds' is now on the human-stop trigger, so the identical optimistic-then-corrected flap cannot be misread as a person switching the fan off mid-run.\n\nIF THE START IS NEVER CONFIRMED, THE FAN IS COMMANDED OFF. Abandoning was what stranded it. Leaving the world as we found it is the only safe exit.\n\nALREADY_RUNNING NOW SPEAKS. It is still right to refuse a fan somebody else started, but a silent refusal is how a stranded fan would have disabled this automation permanently without a word. It now writes a line to input_text.purifier_last_run saying why it did nothing.\n\nSTILL TRUE from earlier versions: the visit guard rejects the midnight reset, a restart restore and a repeated report; recovery fires on reload as well as restart; a manual stop suppresses re-starts for 30 minutes; the early stop is armed only if PM2.5 actually rose."
+      "note": "v5. The operator has declared the PM2.5 sensor broken for now, after it failed to move across 46 minutes of full airflow immediately following a cat visit (see the design doc, incident 7.2).\n\nTHE ASSUMPTION IS A TOGGLE, NOT A REWRITE. input_boolean.purifier_pm25_trusted is off, and pm_usable requires it before the reading is allowed any influence at all. Cleaning the laser intake later is one switch, not a code change - and nothing about the automation's shape records a guess about the hardware that a future reader would have to reverse-engineer.\n\nWITH IT OFF, EVERY RUN GOES THE FULL WINDOW. That is the same behaviour an unresponsive-but-trusted sensor already produced, so the change is small; what it buys is honesty. The old logic happened to do the right thing because the reading never rose. Now it does the right thing because we decided it should.\n\nTHE SETTLE AND THE READ ARE STILL DONE. They serve no control purpose while the sensor is untrusted, and that is deliberate: the run log records pm before, after settle and final on every cycle, so if the sensor ever starts moving again the line says '(untrusted - MOVED, worth rechecking)'. Deleting the read would make recovery invisible and would mean the toggle could never be flipped back on evidence.\n\nEVERYTHING ELSE IS UNCHANGED from v4: the start is confirmed by waiting for the fan to report on and hold it 15 s rather than sampling at a guessed offset; an unconfirmed start commands the fan off rather than abandoning it; already_running refuses a fan somebody else started and says so; recovery fires on reload as well as restart; a manual stop suppresses re-starts for 30 minutes."
     }
   ],
   "mode": "restart",

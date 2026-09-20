@@ -1,7 +1,7 @@
 # Corridor air purifier — design
 
-Status: **implemented and live** (2026-09-20). Version 4, after round 1 of review and
-**two live incidents**. See §7.
+Status: **implemented and live** (2026-09-20). Version 5, after round 1 of review and
+**two live incidents**. The PM2.5 sensor is **assumed broken** — see §2.1.
 Instance: HA 2026.9.3 Supervised, Home.
 
 A Xiaomi zhimi mb3 air purifier and a MINI-C self-cleaning litter box share the corridor,
@@ -44,16 +44,33 @@ Three decisions, in increasing order of how much they matter.
 **It is displayed.** The climate view has an "Air quality — indoors" group: the fan, PM2.5,
 filter life, and the corridor temperature and humidity the purifier also reports.
 
-> **Update, 2026-09-20 23:10 — the inference in §1 is probably wrong.** During incident 7.2
-> the fan ran **46 minutes at motor speed ~1560**, immediately after a cat visit, and PM2.5
-> never left 1. An idle sensor explains a still reading when the fan is off; it does not
-> explain a still reading through three quarters of an hour of full airflow. The operator's
-> original suspicion — that the sensor cannot be trusted — now has direct evidence behind it,
-> and my "it is merely not sampling" reading does not. The design is unaffected, because it
-> was built to not depend on the answer: an unresponsive sensor gets no vote and the full
-> window runs. That is the whole value of having put the trust boundary where it is.
+### 2.1 The sensor is assumed broken, and that assumption is a toggle
 
-**It is shown with the evidence needed to judge it.** A card renders the value, how long it
+During incident 7.2 the fan ran **46 minutes at motor speed ~1560**, immediately after a cat
+visit, and PM2.5 never left 1. An idle sensor explains a still reading when the fan is off; it
+does not explain a still reading through three quarters of an hour of full airflow. **The
+inference in §1 is not supported and the operator's original suspicion is.** Their call, on the
+evidence: *"for now lets just assume it broken."*
+
+That assumption lives in `input_boolean.purifier_pm25_trusted`, which is **off**. It is a
+toggle rather than a rewrite for three reasons:
+
+- **Cleaning the laser intake later is one switch**, not a code change. These units clog and
+  pin at a floor value; the operator intends to try.
+- **Nothing in the automation's shape encodes a guess about the hardware** that a future reader
+  would have to reverse-engineer. The logic says "is this reading allowed a vote", and a helper
+  answers.
+- **The behaviour barely changes**, which is the point. An unresponsive-but-trusted sensor
+  already produced full-window runs. What the toggle buys is that the right thing now happens
+  *because it was decided*, not because the reading happened never to rise.
+
+**The settle and the read are still performed while untrusted.** They serve no control purpose
+and that is deliberate: every run logs PM before, after settle and final, so if the sensor
+starts moving again the line reads `(untrusted - MOVED, worth rechecking)` and the dashboard
+card says the same. Deleting the read would make recovery invisible and leave no evidence on
+which to ever flip the toggle back.
+
+**It is shown with the evidence**It is shown with the evidence needed to judge it.** A card renders the value, how long it
 has been unchanged, and whether the fan was running, then says which of three things that
 means: *not sampling* (fan off), *sampling* (fan on, reading fresh), or **suspect** (fan on
 and unchanged for six hours — a working sensor should move). The reading argues for or

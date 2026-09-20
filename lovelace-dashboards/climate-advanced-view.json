@@ -895,6 +895,29 @@
           "grid_options": {
             "columns": 6
           }
+        },
+        {
+          "type": "tile",
+          "entity": "input_boolean.purifier_pm25_trusted",
+          "name": "Trust the purifier PM2.5",
+          "icon": "mdi:blur",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "toggle"
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "input_text.purifier_last_run",
+          "name": "Purifier last run",
+          "icon": "mdi:history",
+          "grid_options": {
+            "columns": 12
+          }
         }
       ]
     }

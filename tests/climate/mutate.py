@@ -40,8 +40,10 @@ BUGS = [
   lambda t: "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and is_state('input_boolean.purifier_auto_run','on') }}"),
  ("purifier F2: trusts fan.turn_on without re-reading", "expr2", "we_started",
   lambda t: "{{ true }}"),
- ("purifier F3: arms the early stop on an unresponsive sensor", "expr2", "sensor_responsive",
+ ("purifier F3: arms the early stop on an unresponsive sensor", "expr2", "pm_usable",
   lambda t: "{{ true }}"),
+ ("purifier: ignores the 'sensor is broken' toggle", "expr2", "pm_usable",
+  lambda t: "{{ pm_after_settle >= 2 }}"),
  ("purifier F4: no cooldown after a manual stop", "expr2", "manual_cooldown",
   lambda t: "{{ false }}"),
 ]
