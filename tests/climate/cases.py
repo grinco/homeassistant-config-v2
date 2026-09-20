@@ -365,3 +365,55 @@ A(guard("a purifier already running is not ours to take", "already_running", "Tr
         finding="if it was on before the visit, a person started it"))
 A(guard("an idle purifier is ours to start", "already_running", "False",
         {FAN_ON: "false", OWNED: "false"}, finding="the normal path"))
+
+
+# ---------------------------------------------------------------- CO2 (SwitchBot BLE)
+# The same two Meter Pro CO2 devices are exposed twice: Matter gives temperature and
+# humidity (what the climate loop already uses), the SwitchBot BLE proxy adds carbon
+# dioxide. Room mapping was PROVEN by cross-checking both platforms' readings, not by
+# the entity-id suffix: living room = b5be, office = 5fe9.
+CO2_LR = "Climate co2 living room"
+CO2_OF = "Climate co2 office"
+CO2_LR_SRC = "states('sensor.meter_pro_co2_b5be_carbon_dioxide')"
+CO2_OF_SRC = "states('sensor.meter_pro_co2_5fe9_carbon_dioxide')"
+
+A(sensor_case("living room CO2 resolves from its BLE meter", "463",
+              {CO2_LR_SRC: "'463'"}, sensor=CO2_LR,
+              finding="aggregates and checks read resolved sensors, never device probes"))
+A(sensor_case("a dead CO2 source yields nothing, not a fabricated number", "",
+              {CO2_LR_SRC: "'unavailable'"}, sensor=CO2_LR,
+              finding="same skip-sentinel discipline as temperature"))
+A(sensor_case("office CO2 resolves from its BLE meter", "1031",
+              {CO2_OF_SRC: "'1031'"}, sensor=CO2_OF,
+              finding="proven mapping: 5fe9 is the office"))
+
+# The health-risk sensor gains CO2. It iterates five rooms but only two have a meter,
+# so a missing reading must never fire it -- the same shape as the existing temp/humidity
+# guard. Substituting the whole states(...) call sets every room at once, which is what
+# these cases want.
+HR = "Climate health risk"
+HR_T = "states('sensor.climate_temp_' ~ r)"
+HR_H = "states('sensor.climate_humidity_' ~ r)"
+HR_C = "states('sensor.climate_co2_' ~ r)"
+HR_AQI = "states('sensor.outside_openweathermap_air_quality_index')"
+
+
+def hr(name, expect, t, h, c, aqi="1", finding=""):
+    return dict(name=name, sensor=HR, expect=expect, given={},
+                subs={HR_T: "'" + t + "'", HR_H: "'" + h + "'",
+                      HR_C: "'" + c + "'", HR_AQI: "'" + aqi + "'"},
+                finding=finding)
+
+
+A(hr("comfortable rooms with fresh air are no risk", "False", "22", "45", "500",
+     finding="baseline: nothing fires"))
+A(hr("CO2 above the impairment line is a risk", "True", "22", "45", "1500",
+     finding="documented cognitive effects; the office already sits near 1000"))
+A(hr("CO2 just below the line is not", "False", "22", "45", "1399",
+     finding="boundary - the threshold must be an inequality, not a vibe"))
+A(hr("a missing CO2 reading never fires it", "False", "22", "45", "unavailable",
+     finding="only 2 of the 5 rooms have a meter; absence must not read as danger"))
+A(hr("CO2 does not mask a humidity risk", "True", "22", "70", "500",
+     finding="the existing mould check must survive the addition"))
+A(hr("CO2 does not mask a cold-room risk", "True", "14", "45", "500",
+     finding="the existing cold check must survive the addition"))

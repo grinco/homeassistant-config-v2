@@ -277,6 +277,84 @@
         },
         {
           "type": "tile",
+          "entity": "sensor.climate_co2_living_room",
+          "name": "CO₂ living room",
+          "icon": "mdi:molecule-co2",
+          "grid_options": {
+            "columns": 6
+          },
+          "color": "green",
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 400,
+              "max": 2000
+            }
+          ]
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.climate_co2_office",
+          "name": "CO₂ office",
+          "icon": "mdi:molecule-co2",
+          "grid_options": {
+            "columns": 6
+          },
+          "color": "green",
+          "features": [
+            {
+              "type": "bar-gauge",
+              "min": 400,
+              "max": 2000
+            }
+          ]
+        },
+        {
+          "type": "markdown",
+          "grid_options": {
+            "columns": "full"
+          },
+          "entity_id": [
+            "sensor.climate_co2_living_room",
+            "sensor.climate_co2_office"
+          ],
+          "content": "{% set ns = namespace(worst = -1, room = '') %}{% for r, n in [('living_room','Living room'), ('office','Office')] %}{% set v = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if v > ns.worst %}{% set ns.worst = v %}{% set ns.room = n %}{% endif %}{% endfor %}{% if ns.worst < 0 %}No CO₂ reading.{% elif ns.worst >= 1400 %}**{{ ns.room }} {{ ns.worst | int }} ppm — open a window.** Above about 1400 ppm concentration and alertness measurably suffer.{% elif ns.worst >= 1000 %}**{{ ns.room }} {{ ns.worst | int }} ppm** — stuffy. Worth airing; this is the usual sign a room has been shut too long.{% else %}Highest {{ ns.room }} at {{ ns.worst | int }} ppm — well ventilated. Outdoor air is about 420.{% endif %}\n\nThe purifier does **not** reduce CO₂ — it filters particulates. Only fresh air does."
+        },
+        {
+          "type": "custom:mini-graph-card",
+          "name": "CO₂, 24 h",
+          "entities": [
+            {
+              "entity": "sensor.climate_co2_living_room",
+              "name": "Living room",
+              "color": "#4caf50"
+            },
+            {
+              "entity": "sensor.climate_co2_office",
+              "name": "Office",
+              "color": "#3f51b5"
+            }
+          ],
+          "hours_to_show": 24,
+          "points_per_hour": 2,
+          "line_width": 2,
+          "height": 140,
+          "show": {
+            "name": true,
+            "icon": false,
+            "state": true,
+            "labels": true,
+            "legend": true,
+            "fill": "fade",
+            "extrema": true
+          },
+          "grid_options": {
+            "columns": "full",
+            "rows": "auto"
+          }
+        },
+        {
+          "type": "tile",
           "entity": "fan.corridor_xiaomi_air_purifier",
           "name": "Air purifier · corridor",
           "icon": "mdi:air-purifier",

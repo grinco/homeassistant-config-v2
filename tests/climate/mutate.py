@@ -46,6 +46,13 @@ BUGS = [
   lambda t: "{{ pm_after_settle >= 2 }}"),
  ("purifier F4: no cooldown after a manual stop", "expr2", "manual_cooldown",
   lambda t: "{{ false }}"),
+ # CO2 additions
+ ("health risk: CO2 check dropped", "sensor", "Climate health risk",
+  lambda t: t.replace("{% if c >= 1400 %}{% set ns.risk = true %}{% endif %}", "")),
+ ("health risk: missing CO2 reads as danger", "sensor", "Climate health risk",
+  lambda t: t.replace("{% if c >= 1400 %}", "{% if c < 1400 %}")),
+ ("health risk: CO2 check swallows the humidity check", "sensor", "Climate health risk",
+  lambda t: t.replace("{% if h >= 65 or h < 30 or t < 16 %}", "{% if false %}")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

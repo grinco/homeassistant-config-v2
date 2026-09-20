@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised. Every aggregate reads the RESOLVED per-room sensor, never a device probe -- including the corridor, which has a resolved sensor of its own despite having a single source, so a better corridor sensor later is wired in one place. The corridor is NOT a controlled room: it feeds the household and downstairs averages only, and the control loop's room list is unchanged. Since v5.6 a calibration offset inside its helper's range is always honoured; only the TRV offset, whose range is far wider than any bias physically possible on a cold radiator, is still substituted.",
+  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised. Every aggregate and every health check reads the RESOLVED per-room sensor, never a device probe. CO2 comes from two SwitchBot Meter Pro CO2 units exposed over a Bluetooth proxy; the SAME devices also appear via Matter for temperature and humidity, and the room mapping between the two platforms was proven by cross-checking their readings, not inferred from entity-id suffixes. Only two of the five rooms have a CO2 meter, so the health check must treat a missing reading as absence of evidence, never as safety.",
   "entries": [
     {
       "domain": "min_max",
@@ -250,7 +250,7 @@
       "options": {
         "device_class": "problem",
         "name": "Climate health risk",
-        "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
+        "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% set c = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% if c >= 1400 %}{% set ns.risk = true %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
         "template_type": "binary_sensor"
       }
     },
@@ -276,6 +276,30 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Climate co2 living room",
+      "options": {
+        "device_class": "carbon_dioxide",
+        "name": "Climate co2 living room",
+        "state": "{% set p = states('sensor.meter_pro_co2_b5be_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
+        "state_class": "measurement",
+        "template_type": "sensor",
+        "unit_of_measurement": "ppm"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Climate co2 office",
+      "options": {
+        "device_class": "carbon_dioxide",
+        "name": "Climate co2 office",
+        "state": "{% set p = states('sensor.meter_pro_co2_5fe9_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
+        "state_class": "measurement",
+        "template_type": "sensor",
+        "unit_of_measurement": "ppm"
       }
     }
   ]
