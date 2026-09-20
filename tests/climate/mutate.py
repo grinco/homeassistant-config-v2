@@ -26,12 +26,45 @@ BUGS = [
   lambda t: "{% if outdoor <= -900 %}shoulder{% elif outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}"),
  ("boot grace dropped again (v5.4)", "expr", "no_temp",
   lambda t: t.replace(" and uptime > boot_grace", "")),
+ # purifier automation -- bugs it would be natural to write
+ ("purifier: bare state trigger (fires on midnight reset)", "expr2", "visit_happened",
+  lambda t: "{{ trigger.id == 'visit' }}"),
+ ("purifier: no numeric guard on the previous value", "expr2", "visit_happened",
+  lambda t: t.replace("(trigger.from_state.state | float(-1)) >= 0 and ", "")),
+ ("purifier: turns off a purifier a person started", "expr2", "we_may_stop",
+  lambda t: "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"),
+ ("purifier: takes over a running purifier", "expr2", "already_running",
+  lambda t: "{{ false }}"),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
 allgood = True
 for label, kind, key, mutate in BUGS:
     exprs, sens = dict(REAL_EXPR), dict(REAL_SENS)
+    if kind == "expr2":
+        # A second automation: mutate its expression by shadowing the loader,
+        # so the case still runs against everything else unchanged.
+        exprs2 = dict(harness.load_expressions("1789947000001"))
+        before = exprs2[key]
+        exprs2[key] = mutate(before)
+        if exprs2[key] == before:
+            print("  ?? %-46s MUTATION DID NOT APPLY" % label); allgood = False; continue
+        orig = harness.load_expressions
+        harness.load_expressions = lambda aid=None, _o=orig, _e=exprs2: (
+            _e if aid == "1789947000001" else _o(aid) if aid else _o())
+        try:
+            rendered = harness.evaluate(harness.build_template(CASES, exprs, sens))
+            got = harness.split_results(rendered, len(CASES))
+            caught = [c["name"] for c, g in zip(CASES, got) if g != str(c["expect"])]
+        except harness.ExtractionError as exc:
+            caught = ["structural: " + str(exc).split(":")[0]]
+        finally:
+            harness.load_expressions = orig
+        if caught:
+            print("  CAUGHT  %-46s by %d case(s): %s" % (label, len(caught), caught[0]))
+        else:
+            print("  MISSED  %-46s NO CASE DETECTED THIS" % label); allgood = False
+        continue
     tgt = exprs if kind == "expr" else sens
     before = tgt[key]; tgt[key] = mutate(before)
     if tgt[key] == before:

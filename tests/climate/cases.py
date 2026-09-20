@@ -257,3 +257,54 @@ A(sensor_case("corridor humidity resolves from the purifier", "55.0",
 A(sensor_case("a dead corridor humidity source yields nothing", "",
               {COR_H_SRC: "'unavailable'"}, sensor=COR_H,
               finding="same skip-sentinel discipline as the rooms"))
+
+
+# ---------------------------------------------------------------- purifier after the cat toilet
+# A second automation. Its logic is mostly SEQUENCING (turn on, settle, wait,
+# turn off), which is precisely the class tests/climate cannot reach -- see the
+# README. What IS testable is its guards, so those are what live here.
+PURIFIER = "1789947000001"
+
+
+def guard(name, expr, expect, subs=None, finding=""):
+    return dict(name=name, automation=PURIFIER, expr=expr, expect=expect,
+                given={}, subs=subs or {}, finding=finding)
+
+
+CNT = "states('sensor.cat_toilet_excretion_times_day')"
+WAS = "trigger.from_state.state"
+IS_VISIT = "trigger.id == 'visit'"
+FAN_ON = "is_state('fan.corridor_xiaomi_air_purifier','on')"
+OWNED = "is_state('input_boolean.purifier_auto_run','on')"
+
+
+def visit(name, expect, was, now_, finding=""):
+    return guard(name, "visit_happened", expect,
+                 {IS_VISIT: "true", CNT: "'" + now_ + "'", WAS: "'" + was + "'"}, finding)
+
+
+A(visit("a real visit increments the counter", "True", "7", "8",
+        "the counter is the only unambiguous 'a cat just used it' event"))
+A(visit("the midnight reset is NOT a visit", "False", "7", "0",
+        "excretion_times_DAY resets to 0 at midnight; a bare state trigger fires on it"))
+A(visit("a restart restore is NOT a visit", "False", "unknown", "7",
+        "P1 class: entities come back at restart and look like fresh events"))
+A(visit("an unchanged repeat report is NOT a visit", "False", "7", "7",
+        "cloud integrations re-report the same value"))
+A(guard("the boot trigger is never a visit", "visit_happened", "False",
+        {IS_VISIT: "false", CNT: "'8'", WAS: "'7'"},
+        finding="the same automation handles restart recovery; it must not start a run"))
+A(guard("we own a purifier we started ourselves", "we_may_stop", "True",
+        {FAN_ON: "true", OWNED: "true"},
+        finding="only ever turn off what we turned on"))
+A(guard("we do not stop a purifier a person started", "we_may_stop", "False",
+        {FAN_ON: "true", OWNED: "false"},
+        finding="the climate lesson: never take control away from the operator"))
+A(guard("nothing to stop if the fan is already off", "we_may_stop", "False",
+        {FAN_ON: "false", OWNED: "true"},
+        finding="a person switched it off mid-run; abandon rather than re-command"))
+A(guard("a purifier already running is not ours to take", "already_running", "True",
+        {FAN_ON: "true", OWNED: "false"},
+        finding="if it was on before the visit, a person started it"))
+A(guard("an idle purifier is ours to start", "already_running", "False",
+        {FAN_ON: "false", OWNED: "false"}, finding="the normal path"))

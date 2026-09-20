@@ -24,7 +24,8 @@ import urllib.request
 
 AUTOMATIONS = os.environ.get("HA_AUTOMATIONS", "/usr/share/hassio/homeassistant/automations.yaml")
 ENTRIES = os.environ.get("HA_ENTRIES", "/usr/share/hassio/homeassistant/.storage/core.config_entries")
-AUTOMATION_ID = "1789725511503"
+AUTOMATION_ID = "1789725511503"          # climate -- maintain per-room targets
+PURIFIER_ID = "1789947000001"            # purifier -- run after the cat toilet
 HA_URL = os.environ.get("HA_URL", "http://localhost:8123")
 
 SENTINEL = "|CASE|"
@@ -34,15 +35,20 @@ class ExtractionError(Exception):
     pass
 
 
-def load_expressions():
-    """Pull every named `variables:` expression out of the live automation."""
+def load_expressions(automation_id=AUTOMATION_ID):
+    """Pull every named `variables:` expression out of a live automation.
+
+    Also collects `value_template` strings from conditions, keyed by the step's
+    `alias` where it has one -- a guard expressed as a condition is still a
+    decision, and this system's habit is to put the interesting logic there.
+    """
     import yaml
 
     with io.open(AUTOMATIONS, encoding="utf-8") as fh:
         autos = yaml.safe_load(fh)
-    match = [a for a in autos if str(a.get("id")) == AUTOMATION_ID]
+    match = [a for a in autos if str(a.get("id")) == automation_id]
     if not match:
-        raise ExtractionError("automation %s not found in %s" % (AUTOMATION_ID, AUTOMATIONS))
+        raise ExtractionError("automation %s not found in %s" % (automation_id, AUTOMATIONS))
 
     found = {}
 
@@ -53,13 +59,16 @@ def load_expressions():
                 for name, tpl in block.items():
                     if isinstance(tpl, str):
                         found.setdefault(name, tpl)
+            if node.get("alias") and isinstance(node.get("value_template"), str):
+                found.setdefault(node["alias"], node["value_template"])
             for value in node.values():
                 walk(value)
         elif isinstance(node, list):
             for value in node:
                 walk(value)
 
-    walk(match[0]["actions"])
+    walk(match[0].get("actions") or [])
+    walk(match[0].get("conditions") or [])
     return found
 
 
@@ -155,6 +164,10 @@ def render_case(case, expressions, sensors):
         source = sensors
         key = case["sensor"]
         kind = "sensor"
+    elif case.get("automation"):
+        source = load_expressions(case["automation"])
+        key = case["expr"]
+        kind = "expression"
     else:
         source = expressions
         key = case["expr"]
