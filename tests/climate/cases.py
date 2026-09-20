@@ -219,3 +219,16 @@ A(sensor_case(
     {AC_OFF: "'-2.0'", TRV_OK: "false", TRV_HEAT: "'0'", TRV_TEMP: "'unavailable'",
      PROBE: "'unavailable'", TRV_OFF: "'0'"},
     finding="R7-9: resolves to the skip sentinel and the blackout alert speaks"))
+
+
+# ---------------------------------------------------------------- the suite guarding itself
+# Round 13 (3c): substitution is a source-to-source rewrite, so it can change an
+# expression's MEANING rather than inject a value. This case only holds under a
+# type-preserving rewrite: `states()` yields a STRING, and 'unavailable' must
+# still travel the `| float(-999)` path to become the skip sentinel. Substituting
+# a bare number here would silently stop testing that path.
+A(sensor_case(
+    "a source reporting 'unavailable' still reaches the skip sentinel", "",
+    {AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'unavailable'",
+     TRV_TEMP: "'unavailable'", PROBE: "'unavailable'", TRV_OFF: "'0'"},
+    finding="R13 3c: only passes if states() is substituted as a STRING"))

@@ -13,14 +13,62 @@ the runner uses the local `ha-mcp` endpoint from `~/.claude.json` as transport.
 Elsewhere (CI, another machine), set `HA_TOKEN` or drop a long-lived token in
 `tests/climate/.ha_token` (gitignored), and `HA_URL` if it is not `:8123`.
 
+## What this CANNOT catch
+
+Read this before trusting a green run. **A suite that oversells itself is worse
+than no suite — it manufactures confidence.**
+
+This is an **expression-level** oracle. It evaluates decision expressions
+against supplied inputs. It has no notion of step order, no second evaluation
+after a write, no restart, and no triggers. So it is blind to:
+
+- **Sequencing and TOCTOU.** The `is_state()` re-reads on the actuating steps
+  exist because a value sampled at the top of a room's iteration is stale ~17
+  steps later. There is only one evaluation here, so "the state changed between
+  step 3 and step 20" is inexpressible.
+- **How variables get populated.** Cases *bind* `lc`, `since_cmd`, `temp`.
+  Nothing checks that the live automation sources them from the right field —
+  `last_changed` vs `last_updated`, the right stamp, a field that survives a
+  restart.
+- **Persistence and restart semantics.** No restart happens here.
+- **Trigger coverage.** A case can assert the correct verdict for a season
+  crossing while the automation still only re-evaluates on the `/10` tick.
+- **The repeat loop.** Rooms are tested independently; a global sampled once at
+  the top and stale by room 5, or a write in room 1 read by room 2, is invisible.
+- **Actuation, cloud round-trips, notification delivery.**
+
+**Concretely: this suite would NOT have found the two bugs that mattered most.**
+
+| bug | why it was missed |
+|---|---|
+| The 2026-09-20 `unit_moved` bug — the automation blamed the operator for its own command | Plumbing. The case here binds `lc` directly; finding the bug required knowing an obeying unit changes ~1.5 s *after* the command. The case encodes knowledge gained *from* the incident |
+| P1 — `last_changed` resets at restart, so a routine update looked like everybody touched everything | Persistence. There is no restart in this harness |
+
+Both were found the hard way: one by the operator, from a false accusation; one
+by an unplanned auto-update an hour after the guard shipped.
+
+**So what is it good for?** Regression. Of the thirteen review rounds, it would
+have caught the four most recent headline findings (R7, R10-7, F11-1, F-1.1) —
+all expression-level — and locks in every fix since. Its coverage rises as the
+remaining bugs move out of the state machine and into the arithmetic, which
+means it is weakest exactly where this system has historically been most
+dangerous. Treat a green run as "nothing known has regressed", never as
+"this is correct".
+
 ## The one rule
 
-**The tests never contain the logic.**
+**The tests never duplicate the expression.**
 
 Every expression under test is read out of the running system at run time —
 `automations.yaml` for the control loop, `.storage/core.config_entries` for the
 resolved-temperature sensors. A case supplies **inputs and an expected output**,
 never a reimplementation.
+
+(The claim is deliberately narrow. The expected-output column *does* encode the
+intended behaviour — as examples rather than as an expression. That is what any
+golden test does, and it drifts the same way: a case authored against an older
+expression can keep passing while meaning something different. What is avoided
+is a second copy of the *logic*, which would have agreed with every bad fix.)
 
 This matters more here than in most codebases. The entire failure history of
 this automation is *fixes that moved a hazard rather than closing it* — twelve

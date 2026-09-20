@@ -330,6 +330,13 @@ because a climate entity's `last_changed` does **not** survive a restart — see
 seeded to 2000-01-01 so that on a long-running instance the restart guard is inert, and it
 becomes accurate the first time HA restarts.
 
+**Since v5.5 it has TWO readers** (round 12, F-3.2): the restart guard inside `unit_moved`, and
+the boot half of the blackout grace. Round 9 killed an earlier two-consumer arrangement because
+the two needed *opposite* things from the stamp; these two do not — both tolerate a stale stamp
+in the same direction, which is why the coupling is benign here. It is still a coupling: **when
+R10-8 is closed, both readers must be updated**, or the grace silently breaks. Round 13 flagged
+this prose as the only place that still described a single consumer.
+
 `input_datetime.climate_cmd_<room>` is seeded to **2000-01-01**, not left at its creation
 default. A freshly created `input_datetime` reports *today 00:00* and is never `none`, so "we
 have never commanded this room" is otherwise indistinguishable from "we commanded it at
@@ -1783,3 +1790,103 @@ Round 12 is right that "verified" should show its work:
   this document records as unmeasured.
 - **F-4.1.** 6 h is a judgement, not a measurement; now stated as such in the code.
 - **R10-2 / F11-8, R10-8** (now with F-3.2's coupling noted in the code), **R10-9**, **R8-2**, **R8-3**.
+
+---
+
+## 29. Round-13 review: the closing round
+
+Review artifact `review-20260920-c720.md`. **The first round in the series that
+found no new open item of its own in the automation** — and the first whose most
+valuable finding was about the *tests* rather than the code.
+
+### v5.6 stands
+
+The F-1.1 deletion was checked and upheld, including the question it was most
+exposed on: *is deleting a safety check ever right?* Yes — when the check guards
+a value the bounds already exclude and its only effect is to override a correct
+operator input. The asymmetry between the two offsets holds, on three grounds
+the AC case lacks: the TRV range admits a wrong sign, `−5.0` was a real incident,
+and the offset applies only while the radiator is **cold**, where a bias above
+3 °C is physically impossible. That is the §28 criterion exactly — a check earns
+its place when it rejects what the bounds allow *and* physics forbids.
+
+F-1.5 and F-4.2/3/4 were confirmed as closing real defects without reopening the
+set, and no prior finding regressed.
+
+Two items recorded rather than fixed:
+
+- **`retry_throttle` now has a fourth consumer** (breaker re-arm, safety throttle,
+  alert throttle, and now the calibration push). The "one interval, named" rule
+  still holds, but changing it now also changes how often the operator hears
+  about a bad calibration. Name it when the interval is next revisited.
+- **The TRV substitution still falls back to an unmeasured default** (0.0). Correct
+  today because the heating gate means it only applies to a cold radiator — and
+  the same "substitute a value we have not measured" shape that F-1.1 attacked on
+  the AC side. It goes live the moment radiators run. On the heating-season list.
+
+### The test suite is a regression net, not a discovery tool
+
+This is the finding worth carrying. The suite is an **expression-level** oracle:
+it evaluates decision expressions against supplied inputs. It has no step order,
+no second evaluation after a write, no restart, and no triggers. The review
+mapped every round's headline bug against it, and the result is uncomfortable
+in the right way:
+
+> **It would not have found the two bugs that mattered most** — §24 (the
+> automation blaming the operator for its own command) and P1 (`last_changed`
+> resetting at restart). Both are plumbing and persistence defects. It *would*
+> have caught the four most recent findings, all of which were expression-level.
+
+The trend that reveals matters more than the tally: **the suite's coverage rises
+as the remaining bugs move out of the state machine and into the arithmetic, so
+it is weakest exactly where this system has historically been most dangerous.**
+Reporting "53 cases, all five shipped bugs detected" without that sentence would
+manufacture the confidence the suite exists to replace. It is now the first thing
+`tests/climate/README.md` says.
+
+Two of the review's criticisms were actioned in the harness:
+
+- **Substitution is a source-to-source rewrite and can change meaning, not just
+  inject a value.** My substitutions happened to be type-correct — `states()`
+  replaced by quoted strings, `is_state()` by bare booleans — but only by
+  discipline; nothing enforced it. The harness now rejects a mismatched literal,
+  and a case was added that only passes under a type-preserving rewrite (a source
+  reporting `'unavailable'` must still travel the `| float(-999)` path to reach
+  the skip sentinel). `mutate.py` now also proves both guards *fire*, since a
+  guard that never triggers is indistinguishable from a broken one.
+- **"The tests never contain the logic" was overstated.** The expected-output
+  column encodes the intended behaviour as examples, and golden examples drift.
+  The claim is narrowed to "never duplicate the *expression*", with the caveat
+  stated.
+
+The review's highest-value suggestion is **not** done: a thin *wiring* layer that
+fires the loop and asserts side effects on the bookkeeping helpers, covering the
+plumbing class. That is the one remaining gap worth building, and it needs care —
+the standing rule forbids `automation.trigger`, which skips conditions and
+actuates real hardware.
+
+### Stopping criterion
+
+Thirteen rounds, and the returns are now genuinely declining: R10 found three
+real bugs, R11 one severe, R12 one, R13 none in the automation. **The review
+cycle stops here.** Not on a calendar — resume when one of these fires:
+
+1. **Heating season starts in anger** — sustained outdoor below `heat_below`,
+   radiators running. Highest priority: *the heating paths have never run under
+   load*, and the open findings cluster there (A11/F-1.6, R8-2, the TRV
+   unmeasured default, the untested heat actuation discipline).
+2. **Before enabling the first bedroom** — not after. R7-2 and R8-2 are
+   explicitly gated on this, and the suite gives false comfort against exactly
+   the class that then goes live.
+3. **Any observed misbehaviour** — a false or missing notification, an
+   unexpected hold, a unit started in the wrong mode. §24 is the model: the
+   operator found it, and no review round would have.
+4. **A HA major-version bump or a SmartThings/Tado integration change** — P1 was
+   triggered by an auto-update, and the restart-guard and grace logic is
+   version-sensitive.
+
+The state machine has converged for the cooling and shoulder paths that have
+actually run. The remaining risk is concentrated in the unexercised heating
+paths and in the plumbing class the suite does not cover — so the next review
+budget is worth more spent on the first cold week with a bedroom enabled than on
+another round now.

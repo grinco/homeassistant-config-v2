@@ -80,12 +80,52 @@ def load_sensor_templates():
     return out
 
 
+_QUOTED = re.compile(r"^\s*('[^']*'|\"[^\"]*\")\s*$")
+_NUMERIC = re.compile(r"^\s*-?\d+(\.\d+)?\s*$")
+_BOOL = re.compile(r"^\s*(true|false)\s*$")
+
+
+def check_substitution_type(old, new, label):
+    """Reject a substitution whose literal does not match the call's return type.
+
+    Substitution is a source-to-source rewrite, so it can change an expression's
+    MEANING rather than merely inject a value -- and a type-mismatched literal
+    that still evaluates is precisely the case that passes for the wrong reason.
+
+    `states()` returns a STRING.  `states('x') | float(-999)` relies on that: if
+    a case substitutes the bare number 23.0 where the live system yields '23.0',
+    the case stops exercising the string-coercion path the automation actually
+    runs, and an entity reporting 'unavailable' would no longer be represented.
+    So a `states()` substitution must be quoted.  `is_state()` returns a bool and
+    `now().timestamp()` a float; those are checked the same way.
+    """
+    new = str(new)
+    if old.startswith("states(") and not _QUOTED.match(new) and new.strip() != "none":
+        raise ExtractionError(
+            "%s: substituting %s with %r -- states() returns a STRING, so the "
+            "literal must be quoted (e.g. \"'23.0'\") or the case stops testing "
+            "the coercion path the automation really takes" % (label, old, new))
+    if old.startswith("is_state(") and not _BOOL.match(new):
+        raise ExtractionError(
+            "%s: substituting %s with %r -- is_state() returns a BOOLEAN, "
+            "use true/false" % (label, old, new))
+    if old.endswith("timestamp()") and not _NUMERIC.match(new):
+        raise ExtractionError(
+            "%s: substituting %s with %r -- a timestamp must be numeric"
+            % (label, old, new))
+
+
 def apply_substitutions(expression, subs, label):
     """Replace impure reads with literals, asserting every rule actually fires.
 
-    A substitution that silently fails to match would leave the expression
-    reading real state, so the case would pass for the wrong reason.  Each rule
-    must match at least once or the case is an error, not a pass.
+    Two distinct hazards, both of which would make a case pass for the wrong
+    reason, and they need separate guards:
+
+    1. A rule that does not match leaves the expression reading REAL state, so
+       the case silently tests the live house instead of its inputs.  Every rule
+       must therefore match at least once or the case is an error, not a pass.
+    2. A rule that DOES match but injects the wrong type rewrites the meaning of
+       the expression rather than supplying a value.  See check_substitution_type.
     """
     for old, new in (subs or {}).items():
         if old not in expression:
@@ -93,6 +133,7 @@ def apply_substitutions(expression, subs, label):
                 "%s: substitution %r never matched -- the expression changed shape, "
                 "so this case is no longer testing what it claims" % (label, old)
             )
+        check_substitution_type(old, new, label)
         expression = expression.replace(old, str(new))
     return expression
 
