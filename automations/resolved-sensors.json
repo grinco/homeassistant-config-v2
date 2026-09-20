@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised. Every aggregate reads the RESOLVED per-room sensor, never a device probe. Since v5.6 a calibration offset inside its helper's range is ALWAYS honoured: the range is the plausibility envelope, and an extra check could only reject a correct large offset and under-correct the room. Only the TRV offset, whose range is far wider than any bias physically possible on a cold radiator, is still substituted.",
+  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised. Every aggregate reads the RESOLVED per-room sensor, never a device probe -- including the corridor, which has a resolved sensor of its own despite having a single source, so a better corridor sensor later is wired in one place. The corridor is NOT a controlled room: it feeds the household and downstairs averages only, and the control loop's room list is unchanged. Since v5.6 a calibration offset inside its helper's range is always honoured; only the TRV offset, whose range is far wider than any bias physically possible on a cold radiator, is still substituted.",
   "entries": [
     {
       "domain": "min_max",
@@ -8,6 +8,7 @@
         "entity_ids": [
           "sensor.climate_temp_living_room",
           "sensor.climate_temp_office",
+          "sensor.climate_temp_corridor",
           "sensor.climate_temp_bedroom",
           "sensor.climate_temp_kid1",
           "sensor.climate_temp_kid2"
@@ -24,6 +25,7 @@
         "entity_ids": [
           "sensor.climate_humidity_living_room",
           "sensor.climate_humidity_office",
+          "sensor.climate_humidity_corridor",
           "sensor.climate_humidity_bedroom",
           "sensor.climate_humidity_kid1",
           "sensor.climate_humidity_kid2"
@@ -39,7 +41,8 @@
       "options": {
         "entity_ids": [
           "sensor.climate_temp_living_room",
-          "sensor.climate_temp_office"
+          "sensor.climate_temp_office",
+          "sensor.climate_temp_corridor"
         ],
         "name": "Downstairs Temperature",
         "round_digits": 1.0,
@@ -52,7 +55,8 @@
       "options": {
         "entity_ids": [
           "sensor.climate_humidity_living_room",
-          "sensor.climate_humidity_office"
+          "sensor.climate_humidity_office",
+          "sensor.climate_humidity_corridor"
         ],
         "name": "Downstairs Humidity",
         "round_digits": 1.0,
@@ -248,6 +252,30 @@
         "name": "Climate health risk",
         "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
         "template_type": "binary_sensor"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Climate temp corridor",
+      "options": {
+        "device_class": "temperature",
+        "name": "Climate temp corridor",
+        "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_temperature') | float(-999) %}{% if p > -900 %}{{ p | round(2) }}{% endif %}",
+        "state_class": "measurement",
+        "template_type": "sensor",
+        "unit_of_measurement": "°C"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Climate humidity corridor",
+      "options": {
+        "device_class": "humidity",
+        "name": "Climate humidity corridor",
+        "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_humidity') | float(-1) %}{% if p >= 0 %}{{ p | round(1) }}{% endif %}",
+        "state_class": "measurement",
+        "template_type": "sensor",
+        "unit_of_measurement": "%"
       }
     }
   ]

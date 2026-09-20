@@ -185,8 +185,8 @@ AC_OFF = "states('input_number.climate_ac_sensor_offset')"
 TRV_OFF = "states('input_number.climate_trv_sensor_offset')"
 
 
-def sensor_case(name, expect, subs, finding=""):
-    return dict(name=name, sensor=BED, expect=expect, given={}, subs=subs, finding=finding)
+def sensor_case(name, expect, subs, finding="", sensor=BED):
+    return dict(name=name, sensor=sensor, expect=expect, given={}, subs=subs, finding=finding)
 
 
 A(sensor_case(
@@ -232,3 +232,28 @@ A(sensor_case(
     {AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'unavailable'",
      TRV_TEMP: "'unavailable'", PROBE: "'unavailable'", TRV_OFF: "'0'"},
     finding="R13 3c: only passes if states() is substituted as a STRING"))
+
+
+# ---------------------------------------------------------------- corridor (air purifier)
+# The corridor has ONE source and no fallback, so its resolved sensor is thinner
+# than a room's -- but it must still exist, because the floor and household
+# aggregates read RESOLVED sensors only, never raw device probes. Putting the
+# purifier's own entity into a min_max alongside resolved ones would break that
+# invariant and mean a future better corridor sensor has to be wired in twice.
+COR = "Climate temp corridor"
+COR_H = "Climate humidity corridor"
+COR_T_SRC = "states('sensor.corridor_xiaomi_air_purifier_temperature')"
+COR_H_SRC = "states('sensor.corridor_xiaomi_air_purifier_humidity')"
+
+A(sensor_case("corridor temperature resolves from the purifier", "23.3",
+              {COR_T_SRC: "'23.3'"}, sensor=COR,
+              finding="aggregates read resolved sensors, never device probes"))
+A(sensor_case("a dead corridor source yields nothing, not a fabricated number", "",
+              {COR_T_SRC: "'unavailable'"}, sensor=COR,
+              finding="min_max then drops the member instead of averaging a lie"))
+A(sensor_case("corridor humidity resolves from the purifier", "55.0",
+              {COR_H_SRC: "'55'"}, sensor=COR_H,
+              finding="aggregates read resolved sensors, never device probes"))
+A(sensor_case("a dead corridor humidity source yields nothing", "",
+              {COR_H_SRC: "'unavailable'"}, sensor=COR_H,
+              finding="same skip-sentinel discipline as the rooms"))
