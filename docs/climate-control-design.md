@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-20). Version 5.5.
+Status: **implemented and live** (2026-09-20). Version 5.6.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -28,6 +28,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.3** | **Exit-only hysteresis on the house-mode boundary; the blackout grace keyed to the sensor instead of the uptime stamp; an implausible offset now distrusts its source; family view shows the newer safety symptoms. Fixes a LIVE bug where the automation read its own successful command as a person at the wall** | Operator report plus round-9 findings — see §23 and §24 |
 | **v5.4** | **Offset distrust made symmetric (an implausible AC offset no longer poisons the fallback it falls back to); blackout grace re-keyed to a per-room persistent stamp that survives a restart and ignores sensor flapping; `human_moved` renamed `external_moved` and its notification stopped claiming the operator did it** | Round-10 findings R10-7, R10-6, R10-1 — see §26 |
 | **v5.5** | **An implausible calibration offset is now REPLACED BY THE MEASURED DEFAULT instead of discarding the source — v5.4 cost a room its safety floor to avoid a wrong number; the boot grace is restored alongside the per-room blackout clock; a unit that keeps changing itself is escalated as possibly faulty** | Round-11 findings F11-1, F11-3, F11-4 — see §27 |
+| **v5.6** | **The AC offset is no longer plausibility-checked at all — its helper range IS the envelope, and the extra check could only reject a *correct* large offset and fail cold; a calibration override now reaches the phone; the recurrence notice stopped naming a cause it cannot know and got its own notification id** | Round-12 findings F-1.1, F-1.5, F-4.2/3/4 — see §28 |
 
 ---
 
@@ -279,7 +280,7 @@ threshold at which we act and the setpoint we are able to send are different thi
 
 ## 4. Data model
 
-67 helpers plus 11 template entities, split across two pages by how often they are touched. The **Climate** view carries
+68 helpers plus 11 template entities, split across two pages by how often they are touched. The **Climate** view carries
 only the day-to-day controls: the master switch, the house-mode band, and per room its Maintain
 toggle, Air filter toggle and Day/Night targets. Everything set once — the night window, the away
 safety band, the safety master and frost/hysteresis, sensor calibration, the circuit breaker and
@@ -703,7 +704,7 @@ automation, and none may be added to that list.
   cannot express a window crossing midnight. There is no single editable night range.
 - ~~The stated day comfort target is 22 °C but every room is seeded at 20.5.~~ **Resolved by v4** —
   the two-threshold pair is gone and every room is seeded at the stated 22 °C day / 20 °C night.
-- **67 helpers and one ~115-step run.** The automation is at the size where a decide/act split — a
+- **68 helpers and one ~115-step run.** The automation is at the size where a decide/act split — a
   template entity publishing each room's verdict, with a thin automation applying it — would make
   the decision continuously inspectable instead of only visible in a trace. See §13. **Partly done
   in v5.1**: the per-room *temperature* now resolves in a template entity, so the input to the
@@ -1677,3 +1678,108 @@ diagnosis, not a policy.
 - **F11-2 residue.** With *both* master switches off nothing runs, including the stamps — the state
   config health already calls out as fully unprotected.
 - **R8-2, R8-3**, unchanged, still gated on the bedrooms being disabled.
+
+---
+
+## 28. Round-12 review, and v5.6
+
+Review artifact `review-20260920-3ff4.md`. Round 11 found my fix made things worse. Round 12 found
+the *replacement* fix had an unexamined direction — and it is the same mistake twice, which is the
+most useful thing in this document.
+
+| # | Finding | Verified | Status |
+|---|---|---|---|
+| **F-1.1** | The failure-direction analysis in §27 is one-sided. It covers the operator *over*-correcting; it never covers the operator **correctly** setting a large offset that the plausibility check then rejects and replaces with a smaller one — which under-corrects and **fails cold** | Confirmed. The rejectable-but-in-range window is `[−4.0, −3.5)` — **five reachable slider positions** silently overridden. A unit genuinely reading 4 °C high, correctly set to −4, was read 2 °C warm than truth | **Fixed** |
+| **F-1.5** | The whole F11-1 safety case rests on config health, which §27 itself says never reaches the phone | Confirmed | **Fixed** |
+| **F-4.2** | The recurrence text asserts "the unit keeps changing itself" and lists only equipment faults — the R10-1 over-claim, reintroduced one section later, in the opposite direction | Confirmed | **Fixed** |
+| **F-4.3** | A person adjusting their own AC twice in an afternoon is told their hardware may be failing | Confirmed | **Fixed** |
+| **F-4.4** | The escalation shares a notification id with the per-event message, so an ordinary later change overwrites it | Confirmed | **Fixed** |
+| F-1.7 | Independent check of my rejection of the "raw probe" proposal | **Confirms I was right**, and goes further: substitution fails warm for all three bedrooms while raw fails cold for all three, so it dominates raw regardless of which room | — |
+| F-3.1 | The ANDed two-grace is safe in both directions | **Confirms the argument** | — |
+| F-3.2 | …but `climate_ha_started` has two consumers again, so R10-8's eventual fix must touch both or the grace silently breaks | Confirmed | **Documented** in the code |
+| F-1.6, F-4.1, F-4.5, F-3.3 | Substitution leans on A11; 6 h is unvalidated; a unit cycling faster than `settle` evades the recurrence detector; "verified" claims should show their cases | Confirmed | Documented; F-4.5 **open** |
+
+### F-1.1 — I made the same mistake twice, in opposite directions
+
+Round 11 caught me trading a bounded failure for an unbounded one. The fix I wrote to correct it has
+the identical flaw, mirrored. Both times I analysed one direction of a two-directional hazard and
+declared the fix safe.
+
+- **v5.4:** analysed "what if the offset is wrong" → refuse the source → never analysed that refusing
+  destroys the reading, and the reading is what the safety floor stands on. **Fails cold.**
+- **v5.5:** analysed "what if the operator over-corrects" → substitute the default → never analysed
+  that the operator might be *right* and the check wrong. **Fails cold**, again, for the five slider
+  positions between −4.0 and −3.5.
+
+The concrete case: a unit whose return-air probe genuinely reads 4 °C high. The operator measures it
+and sets −4.0, which is inside the helper's own range. v5.5 rejected that correct value, substituted
+−2, and read the room **2 °C warmer than it is** — so heat came late, exactly the silent cold
+failure v5.5 existed to prevent.
+
+**The fix is to delete the check.** The AC helper's range is `[−4, 0]`. That range *is* the
+plausibility envelope: a wrong sign is unreachable, and a wrong magnitude is bounded at 4 °C and
+errs toward heating. The −3.5 line rejected nothing unsafe — it only created a way to override a
+legitimate value. An in-range offset is now always honoured.
+
+What replaces it is a *report*, not an override: sitting exactly at the helper minimum is what a
+never-set helper reads, so that is called out — while the value is still used, because honouring it
+fails warm.
+
+**The TRV check stays**, and the asymmetry is the point. Its range is `[−5, 5]`, `−5.0` was a real
+incident, and the offset only applies while the radiator is **cold**, where a valve bias above 3 °C
+is not physically possible. There the check tests something the range does not.
+
+> **The rule, stated so the third instance does not happen.** A plausibility check earns its place
+> only when it rejects values the helper's own bounds allow *and* physics forbids. If the bounds
+> already exclude everything unsafe, an extra check cannot improve safety — it can only override the
+> operator. And whenever a guard replaces an operator's value with the system's own, **work both
+> directions**: what if the operator is wrong, *and* what if the check is wrong.
+
+### F-1.5 — a silent override of an operator's value has to leave the building
+
+§27's safety case was "bounded-warm failure plus a loud config-health notice," and §26 had already
+recorded that config health never pushes to a phone. Bounded-warm is only bounded if somebody
+notices.
+
+A calibration offset is the one value that moves the safety band, the dashboard and every aggregate
+from a single place. When one is being overridden or sits at a never-set default, that now pushes to
+the phone, throttled to `retry_throttle` off its own stamp — a throttle measured against the thing it
+throttles, per §16.
+
+### F-4.2 / F-4.3 / F-4.4 — I re-broke R10-1 one section after writing it
+
+§26 removed a notification that told the operator they had changed a unit, on the principle that
+*a name that claims more than the code can know will eventually be repeated to a human as fact*.
+§27's escalation then said **"the unit keeps changing itself"** and listed only equipment faults.
+`external_moved` cannot tell a person from a timer — §26 says so explicitly — so the escalation
+asserted a cause from a predicate that cannot establish one. Same error, opposite direction, one
+section later.
+
+It now reports what is observable — twice within N hours — and puts the innocent explanation
+**first**: if somebody is using the remote or the app, nothing is wrong. Only then does it name the
+equipment causes, for the case where nobody is.
+
+It also has its own `notification_id`. Sharing one with the per-event message meant an ordinary later
+change overwrote the recurrence notice, so the rarest and most diagnostic signal was the one most
+easily erased.
+
+### The four grace cases, shown (F-3.3)
+
+Round 12 is right that "verified" should show its work:
+
+| `uptime` | room unusable for | `no_temp` | why |
+|---|---|---|---|
+| 120 s | 700 s | **false** | boot noise, suppressed |
+| 5000 s | 700 s | **true** | genuine, fires |
+| 5000 s | 120 s | **false** | per-room grace still holding |
+| enormous (stale stamp) | 700 s | **true** | a stale stamp cannot suppress — it only stops suppressing |
+
+### Still open after round 12
+
+- **F-4.5 (new).** A unit cycling faster than `settle` (240 s) is read as our own command, so
+  `r.ext` is never stamped and the recurrence detector cannot see it — the new visibility path
+  inherits the settle blind spot and can be evaded by exactly the fast fault it was built to surface.
+- **F-1.6 / A11.** Per-room calibration. The substitution that remains (TRV) falls back to a value
+  this document records as unmeasured.
+- **F-4.1.** 6 h is a judgement, not a measurement; now stated as such in the code.
+- **R10-2 / F11-8, R10-8** (now with F-3.2's coupling noted in the code), **R10-9**, **R8-2**, **R8-3**.
