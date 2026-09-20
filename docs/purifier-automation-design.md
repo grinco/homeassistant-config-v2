@@ -1,6 +1,7 @@
 # Corridor air purifier — design
 
-Status: **implemented and live** (2026-09-20). Version 1.0. Never run for real yet.
+Status: **implemented and live** (2026-09-20). Version 3, after round 1 of review.
+**It has now run once for real** — see §7.
 Instance: HA 2026.9.3 Supervised, Home.
 
 A Xiaomi zhimi mb3 air purifier and a MINI-C self-cleaning litter box share the corridor,
@@ -129,7 +130,9 @@ mode it runs in.
 
 ### 3.7 Timing
 
-3 (settle) + 25 (wait cap) + 2 (hold) = **30 minutes**, as asked. The litter box auto-cleans
+3 (settle) + 25 (wait cap) = **28 minutes**, about the half hour asked for. The 2-minute
+hold runs *inside* the 25-minute cap as the `for` on the clear trigger — it is a floor on
+how fast the run can end, not an addend. (Round 1 caught the arithmetic double-counting.) The litter box auto-cleans
 six minutes after a visit and the rake stirring is a second odour burst, so the window
 covers it deliberately.
 
@@ -175,13 +178,86 @@ and the device's reported state, not from an observed cycle.
 
 ## 6. Open questions
 
-1. **3 minutes** (settle), **2 minutes** (hold), **25 minutes** (cap), **below 2**
-   (threshold) and **Favorite level 9** are all judgements. None is measured.
-2. If the sensor *is* genuinely stuck at 1, every run goes to the full cap. Tolerable, and
-   the dashboard card would say so — but the automation cannot tell.
-3. If it is stuck *high*, the early stop never fires and every run hits the cap. Also
-   tolerable, also invisible to the automation.
-4. Multiple cats in quick succession: `mode: restart` restarts the window, which is right,
-   but it also re-runs the settle delay.
-5. Nothing reports that the automation ran. Deliberate — a notification per cat visit would
-   be intolerable — but it means a silent failure stays silent.
+1. **3 minutes** (settle) and **below 2** (threshold) are load-bearing and unmeasured — the
+   settle by §3.1's own admission, the threshold because the floor value *is* the failure
+   mode. **Favorite level 9**, the 2-minute hold and the 25-minute cap are comfort settings
+   in a different class. Round 1 was right that lumping them together hid which ones matter.
+2. ~~If the sensor is stuck at 1, every run goes to the full cap.~~ **Superseded by v3.** The
+   early stop is now armed only when PM2.5 rose above the floor, so a floor-stuck sensor gets
+   no vote and the full window runs by design rather than by accident. Round 1 argued this
+   case ends runs at ~5 minutes; that reading of `numeric_state` arming semantics is wrong —
+   a trigger whose condition already matches at attach is not armed and never fires — but the
+   fix was worth making anyway, because the old design's safety depended on winning that
+   argument.
+3. **Stuck high** → no early stop, full cap. Bounded and visible. Still true, still tolerable.
+4. **Multiple cats.** `mode: restart` restarts the window including the settle. Safe for
+   cleaning. The *control* half of this was F4 and is fixed: a manual stop now suppresses
+   re-starts for 30 minutes.
+5. ~~Nothing reports that the automation ran.~~ **Fixed.** `input_text.purifier_last_run`
+   holds one line per run — outcome, duration, PM before/after-settle/final, whether the
+   sensor was responsive, corridor temperature before and after. Deliberately temporary.
+
+---
+
+## 7. The first real cycle, and what it taught
+
+A cat used the box at 22:07 on 2026-09-20. **v1 ran.** Writing v2 minutes later reloaded the
+automation with that run in flight, and the fan was left on with the ownership flag set.
+
+**A reload is not a restart.** It kills an in-progress run exactly as a restart does, but it
+does not raise the `homeassistant` `start` event, so the recovery branch never fired and
+nothing existed to clean up after it. Recovery now also triggers on `automation_reloaded`.
+
+This is the P1 shape from the climate work — state that outlives the thing meant to clean it
+up — and no review round found it. It was found by changing the file while the system was
+doing its job, which is the same way the worst climate bug was found: in production, doing
+something ordinary.
+
+Recovery is gated on the **ownership flag alone**. A draft briefly used "flag on OR fan on",
+which would have switched off a purifier a person started by hand on every reload and every
+restart — taking control away from the operator, which is the thing this design exists to
+avoid. Flag-off-fan-on cannot occur anyway, because ownership is claimed only after the fan
+is confirmed running.
+
+**A second self-inflicted one.** `input_datetime.purifier_manual_stop` was created and not
+seeded, so it read *today 00:00* — which passes the `> 1e9` armed test. It happened to be
+old enough not to block anything, but had it been created within thirty minutes of a cat
+visit it would have silently suppressed a real run. That is verbatim the hazard recorded in
+this project's own notes about fresh `input_datetime` helpers, and I walked into it anyway.
+Seeded to 2000-01-01.
+
+---
+
+## 8. Round-1 review
+
+Artifact `review-20260920-2ca2.md`.
+
+| # | Finding | Verdict | Status |
+|---|---|---|---|
+| **F2** | Shutdown gated on the persistent ownership flag makes the 25-minute backstop conditional on the very state whose failure is the failure mode. Flag off + fan on → timeout skips the turn-off, boot recovery does not fire (it only acts when the flag *is* set), every later visit refuses to touch the fan → **stranded on for ever** | **Confirmed by trace** | **Fixed** — shutdown turns on `we_started`, a run-local fact from re-reading the fan after commanding it |
+| **F3/F1** | The early stop lets a sensor the operator distrusts end every run | **Mechanism disputed** (a `numeric_state` trigger already matching at attach is not armed, so a floor-stuck sensor runs to the cap, not ~5 min) — **but the concern is right** | **Fixed structurally** — the early stop is armed only if PM rose first |
+| **F4** | A person who switches the fan off *between* visits has it re-ignited by the next cat, with no signal | **Confirmed by trace** | **Fixed** — 30-minute cooldown after a manual stop |
+| F5 | Motor heat biases the corridor reading into the household mean during every run | Confirmed; display-only, control loop unaffected | **Instrumented, not corrected** — the run log records corridor temp before and after so the bias gets measured instead of guessed |
+| F6 | The `for` clock's reset behaviour is load-bearing and unstated | Correct | **Documented** (§3.2) |
+| F7 | The room with the litter box is excluded from the mould check | Correct, and **coupled to F5** | **Deliberately not actioned** — adding it before the bias is measured would feed a run-correlated temperature into a safety sensor, which is the path §2 exists to block |
+| F8 | Boot race could start a spurious run | **Guard already holds** — a restore leaves the previous value non-numeric | No change |
+| minor | §3.7 double-counts the hold | Correct | Fixed |
+
+The review's most valuable contribution was not a bug I had missed in code — it was noticing
+that **§6.2 analysed the system's headline failure mode backwards**, and that the trust
+boundary in §2 was asymmetric in a way the document did not admit. Both are now stated.
+
+---
+
+## 9. What to watch
+
+`input_text.purifier_last_run` after the next few visits:
+
+- **Did PM2.5 leave 1 during the settle?** The line shows `pm before>after-settle>final`. If
+  the middle number is always 1 and the line says `UNRESPONSIVE`, the sensor is pinned and
+  the operator's original suspicion was right after all.
+- **How did the run end?** `cleared` / `full window` / `stopped by hand`. A string of
+  `full window` with `UNRESPONSIVE` is the sensor failing, not the air being dirty.
+- **Did corridor temperature jump?** The `corridor X>Y` pair is the F5 measurement, and it
+  decides whether the corridor may ever join the mould check.
+- **Did the fan and the flag move together?** Any cycle where they disagree is F2 returning.

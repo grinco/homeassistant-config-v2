@@ -35,6 +35,15 @@ BUGS = [
   lambda t: "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"),
  ("purifier: takes over a running purifier", "expr2", "already_running",
   lambda t: "{{ false }}"),
+ # round-1 findings: each mutation restores the bug the fix removed
+ ("purifier F2: shutdown gated on the ownership flag again", "expr2", "we_may_stop",
+  lambda t: "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and is_state('input_boolean.purifier_auto_run','on') }}"),
+ ("purifier F2: trusts fan.turn_on without re-reading", "expr2", "we_started",
+  lambda t: "{{ true }}"),
+ ("purifier F3: arms the early stop on an unresponsive sensor", "expr2", "sensor_responsive",
+  lambda t: "{{ true }}"),
+ ("purifier F4: no cooldown after a manual stop", "expr2", "manual_cooldown",
+  lambda t: "{{ false }}"),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

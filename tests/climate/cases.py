@@ -294,15 +294,63 @@ A(visit("an unchanged repeat report is NOT a visit", "False", "7", "7",
 A(guard("the boot trigger is never a visit", "visit_happened", "False",
         {IS_VISIT: "false", CNT: "'8'", WAS: "'7'"},
         finding="the same automation handles restart recovery; it must not start a run"))
-A(guard("we own a purifier we started ourselves", "we_may_stop", "True",
-        {FAN_ON: "true", OWNED: "true"},
-        finding="only ever turn off what we turned on"))
-A(guard("we do not stop a purifier a person started", "we_may_stop", "False",
-        {FAN_ON: "true", OWNED: "false"},
+# we_may_stop is deliberately NOT gated on the persistent ownership flag. Round 1
+# finding F2: the flag is a second source of truth about a physical device, and in
+# the direction "flag off while fan on" the timeout's shutdown was skipped, the boot
+# recovery did not fire (it only acts when the flag IS set) and every later visit
+# refused to touch the fan -- stranded on for ever. Shutdown now turns on a RUN-LOCAL
+# fact, we_started; the flag is for cross-restart bookkeeping only.
+A(guard("we stop a fan this run actually started", "we_may_stop", "True",
+        {FAN_ON: "true", "we_started": "true", "stopped_by_human": "false"},
+        finding="F2: shutdown must not depend on the persistent flag"))
+A(guard("we never stop a fan this run did not start", "we_may_stop", "False",
+        {FAN_ON: "true", "we_started": "false", "stopped_by_human": "false"},
         finding="the climate lesson: never take control away from the operator"))
 A(guard("nothing to stop if the fan is already off", "we_may_stop", "False",
-        {FAN_ON: "false", OWNED: "true"},
+        {FAN_ON: "false", "we_started": "true", "stopped_by_human": "false"},
         finding="a person switched it off mid-run; abandon rather than re-command"))
+A(guard("a person taking over ends our claim", "we_may_stop", "False",
+        {FAN_ON: "true", "we_started": "true", "stopped_by_human": "true"},
+        finding="F2: off-then-on by hand during the wait must not be re-stopped by us"))
+
+# we_started is the run-local fact the whole shutdown path now hangs on, so it needs
+# its own cases -- binding it as an input to we_may_stop does NOT test it. Caught by
+# mutate.py, which flagged "trusts fan.turn_on without re-reading" as undetected.
+A(guard("a fan confirmed running counts as started by us", "we_started", "True",
+        {FAN_ON: "true"}, finding="F2: re-read after commanding, never assume it worked"))
+A(guard("a fan that did not come on is not ours", "we_started", "False",
+        {FAN_ON: "false"},
+        finding="F2: fan.turn_on can fail; claiming ownership anyway stranded the flag"))
+
+# Round 1 F3/F1: the early stop may only be armed once the sensor has PROVED it is
+# responsive. A sensor pinned at its floor tells us nothing, so there is nothing to
+# wait for -- run the full window instead of ending early on a reading we distrust.
+A(guard("a responsive sensor arms the early stop", "sensor_responsive", "True",
+        {"pm_after_settle": "12.0"},
+        finding="F3: PM rose after the visit, so 'back down' is meaningful"))
+A(guard("a sensor pinned at the floor does not arm it", "sensor_responsive", "False",
+        {"pm_after_settle": "1.0"},
+        finding="F1/F3: THE operator's stated worry - never leaves 1, so we learn nothing"))
+A(guard("a zero reading does not arm it either", "sensor_responsive", "False",
+        {"pm_after_settle": "0.0"}, finding="F3: 0 is still the floor"))
+
+# Round 1 F4: a person who switches the fan off BETWEEN visits had it re-ignited by
+# the next cat, with no signal. A manual stop now suppresses re-starts for a while.
+# SECOND time this exact mistake was caught by the suite: a toy timestamp where the
+# expression tests against the year-2000 sentinel (> 1e9) can never be "recent", and
+# the negative sibling then passes for the WRONG REASON. Use real epochs.
+STOP_T = 1789947000.0
+A(guard("a recent manual stop blocks a re-start", "manual_cooldown", "True",
+        {"stop_ts": repr(STOP_T), "now().timestamp()": repr(STOP_T + 600),
+         "cooldown": "1800"},
+        finding="F4: the operator wanted quiet; the litter box must not overrule them"))
+A(guard("an old manual stop does not block", "manual_cooldown", "False",
+        {"stop_ts": repr(STOP_T), "now().timestamp()": repr(STOP_T + 5000),
+         "cooldown": "1800"},
+        finding="F4: the cooldown expires"))
+A(guard("never manually stopped means no cooldown", "manual_cooldown", "False",
+        {"stop_ts": "946681200.0", "now().timestamp()": "1789947000.0", "cooldown": "1800"},
+        finding="the year-2000 sentinel means never, not long ago"))
 A(guard("a purifier already running is not ours to take", "already_running", "True",
         {FAN_ON: "true", OWNED: "false"},
         finding="if it was on before the visit, a person started it"))
