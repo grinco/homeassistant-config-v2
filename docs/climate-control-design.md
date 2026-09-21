@@ -2047,19 +2047,43 @@ failing by repeatedly switching itself off is now invisible to the push, to the 
 the recurrence detector simultaneously. **F14-3 is open and is the most important thing left
 here.**
 
-### The question that unblocks F14-3 and F14-4
+### Answered, 2026-09-21: the unit does not resume on its own
 
-Both fixes turn on one fact about the hardware that I cannot determine from the data:
+> **"The AC won't power back on automatically as it appears, so you still control the climate
+> controls."**
 
-> **When presence returns, does the unit switch itself back on, or does it only ever switch
-> off?**
+That settles both findings, and not in the direction F14-4 assumed.
 
-- If it **resumes on its own**, the right design is to stop re-commanding on hold expiry
-  entirely and resume when the unit leaves `off`. No wasted commands, no compressor cycling in
-  an empty room, and a stand-down that repeats on a *fast* cadence becomes an unambiguous fault
-  signal worth escalating — which closes F14-3 without presence detectors.
-- If it **only switches off**, resuming on the unit's own state change would leave a room cold
-  until somebody intervened, so the timer must stay, and F14-3 needs a different answer.
+**F14-4 is withdrawn.** The review proposed dropping the timer and resuming when the unit leaves
+`off`, on the assumption that presence power saving turns the unit back on. It does not. The
+hold expiry is therefore **not a wasted command — it is the only path back to comfort.** Remove
+it and a room that power-saved would stay cold until somebody intervened by hand. The one
+"wasted" command per cycle is the mechanism, not waste.
 
-Until that is known, guessing would be inventing a fact about the operator's hardware, which is
-the failure mode §28 was written about.
+**A consequence worth naming, because it will be felt in winter.** With a two-hour stand-down
+hold and no auto-resume, a room that power-saves at 14:00 and is occupied again at 14:10 does
+not start heating until 16:00. In shoulder season nobody notices. In a cold snap it is the
+difference between a warm room and a cold one, and it is the kind of thing that gets blamed on
+the automation being broken when it is behaving exactly as designed.
+
+There is no good fix without occupancy: a shorter hold means faster recovery *and* more cycles
+of heating an empty room, which is the thing the operator enabled power saving to stop. The
+trade is real and it is theirs to make — the hold duration is `climate_manual_hold_hours`.
+**When the presence detectors land this stops being a trade at all**, which is the strongest
+argument yet for finishing that work.
+
+**F14-3 remains open, but is now solvable without presence.** If the unit does not resume
+itself, then the shape of a *repeat* carries information the single event does not: after the
+hold expires we command the unit on, and the question is how long it stays on.
+
+- Presence power saving: the unit runs for its own empty-room timeout — tens of minutes — and
+  then stands down. `since_cmd` at stand-down is large.
+- A failing board, or a repeating power interruption: the unit drops out within seconds or
+  minutes of being commanded. `since_cmd` at stand-down is small.
+
+So `since_cmd` at the moment of stand-down separates the benign case from the pathological one
+using data the loop already holds, with no new sensor and no guess about the hardware. That is
+the proposed fix for F14-3 and it is **not yet implemented** — it needs a threshold, and picking
+one before seeing a few real stand-down cycles would be inventing a constant, which §28 is about.
+The instrumentation to choose it honestly is the next step: record `since_cmd` on every
+stand-down and look at the distribution.
