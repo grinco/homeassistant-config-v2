@@ -202,6 +202,21 @@ mode that guarantees airflow with no thermal intent.
 It sits *below* the room's Maintain toggle in precedence: a room that is off stays off, and it
 never overrides away or the safety band.
 
+**It is also below the comfort master, and that is the operator's explicit ruling, not an
+oversight.** `not comfort` short-circuits above the house branch, so switching
+`climate_auto` off stops the air filter as well as the heating. On 2026-09-21 a family member
+switched the master off while two rooms had the filter on; nothing moved, and nothing on the
+dashboard said why. Asked whether filtering — an air-quality function — should survive a
+*comfort* switch, the operator was unambiguous:
+
+> "I expect that the automation being off is a master switch — including the filter mode."
+
+So the coupling stands by design. **A reviewer will otherwise flag it**, because "air quality
+is not comfort" is a reasonable-sounding argument; it has been made and it has been declined.
+What *was* wrong was the silence: the family view now names the rooms whose filter is on and
+inert while the master is off, so the switch explains its own scope rather than the household
+having to remember it.
+
 > Open question for the operator: whether these units actually move air in `heat` while sitting
 > above setpoint is a property of the unit's idle-fan behaviour, not of this automation. If the
 > filtering turns out not to happen, the fix is to use `fan_only` for the in-season no-work case
