@@ -196,13 +196,20 @@ instrument left once both meter transports are gone — tiers 1 and 2 are one th
 hot-radiator gate still applies at tier 3; a third mutation checks that demoting it did not
 quietly drop the gate along the way.
 
-**First hard evidence for A11 (per-room calibration).** With a trusted reference finally in the
-room, this room's AC probe reads **22 °C raw while the meter reads 23.0** — i.e. about 1 °C
-*low*, where the global `ac_offset` of −2 assumes every probe reads *high*. Applied here, the
-fallback tier would resolve to 20.0 against a real 23.0. That is a **3 °C error in tier 4**, and
-it is the strongest argument yet that a single global offset cannot serve five rooms. It is not
-acted on here: the reading below was taken while the meter was still equilibrating, so the
-number is provisional and the measurement must be repeated once it has settled.
+**A11 (per-room calibration) finally becomes measurable — but not yet measured.** A trusted
+reference in the room means this room's AC probe can, for the first time, be calibrated against
+something rather than assumed. **No number is recorded here yet**, deliberately: every reading
+taken so far was taken while the meter was still equilibrating, and they moved a long way while
+it did — 23.0 at 18:08, 21.8 at 18:22. A calibration derived from either would have been wrong
+by more than the error it was meant to correct.
+
+The shape of the answer is already visible and is unwelcome: the probe reports **22 °C raw**
+in whole degrees, and the global `ac_offset` of −2 resolves that to **20.0**. Whatever the meter
+settles at, the tier-4 fallback for this room is likely to be **1.5–3 °C low**, where the offset
+exists on the assumption that probes read *high*. The measurement to take, once the meter has
+been undisturbed for an hour or more: `meter − probe_raw`, per room, at a moment when the AC has
+been off long enough not to be blowing on anything. That is the A11 work item, and it now has a
+method instead of an argument.
 
 **Acclimatisation, and the guard deliberately NOT added.** The meter was carried into the room
 at 17:35 and spiked to **31.0 °C** from being handled, then fell steeply — 23.7 at 18:01, 23.0
