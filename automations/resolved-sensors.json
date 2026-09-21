@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, and the climate health-risk binary sensor. Reference only; entity ids are anonymised. Every aggregate and every health check reads the RESOLVED per-room sensor, never a device probe. CO2 comes from two SwitchBot Meter Pro CO2 units exposed over a Bluetooth proxy; the SAME devices also appear via Matter for temperature and humidity, and the room mapping between the two platforms was proven by cross-checking their readings, not inferred from entity-id suffixes. Only two of the five rooms have a CO2 meter, so the health check must treat a missing reading as absence of evidence, never as safety.",
+  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the low-battery helper. Reference only; entity ids are anonymised. NOTE on 'Any battery low': its threshold is duplicated in the dashboard card that renders the list -- the helper decides whether the card is visible, the card decides what goes in it. Change both together or the card appears saying '0 low batteries'.",
   "entries": [
     {
       "domain": "min_max",
@@ -89,6 +89,16 @@
         "name": "Upstairs Humidity",
         "round_digits": 1.0,
         "type": "mean"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Any battery low",
+      "options": {
+        "device_class": "battery",
+        "name": "Any battery low",
+        "state": "{{ states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','battery') | rejectattr('entity_id','search','volvo') | rejectattr('state','in',['unknown','unavailable']) | map(attribute='state') | map('float', 101) | select('lt', 15) | list | count > 0 }}",
+        "template_type": "binary_sensor"
       }
     },
     {
