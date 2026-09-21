@@ -578,21 +578,43 @@ A(sensor_case(
     "a missing factor helper falls back to the current datasheet value", "0.332",
     {RAD_CPM: "'100'", RAD_FACTOR: "'unavailable'"},
     sensor=RAD, finding="the 2026-09-21 correction: 0.00332, not the obsolete 0.00812"))
-# Zero counts is a MEASUREMENT. A tube reporting nothing and a tube reporting no
-# events are different facts, and collapsing them would either invent a reading or
-# discard a real one.
+# REVERSED 2026-09-22. This case previously asserted that 0 CPM is a real reading of
+# zero dose, on the principle that a tube reporting no events differs from a tube
+# reporting nothing. The physics says otherwise: counts from a GM tube are Poisson,
+# and a J305 sitting in ~20 CPM background has a probability of e^-20, about 2 in a
+# BILLION, of recording exactly zero across a 60-second window. Sustained 0 CPM is
+# not a measurement of no radiation -- there is no such thing at ground level -- it
+# means the counter is not receiving pulses.
+#
+# Reporting 0.0 uSv/h for it was the worse error: it writes a confident, false zero
+# into the statistics and shows a reassuring number on the dashboard while the
+# instrument is disconnected. Which is exactly what it did from 2026-09-21 to
+# 2026-09-22, with the signal wire on the wrong header pin the whole time.
+# The gate lives in the sensor's AVAILABILITY template, not in its state. Rendering an
+# empty state was tried first and does not work: HA kept the previous numeric value,
+# so the dashboard went on showing 0.0 uSv/h from an instrument that was disconnected.
 A(sensor_case(
-    "zero counts is a real reading, not a missing one", "0.0",
-    {RAD_CPM: "'0'", RAD_FACTOR: "'0.00332'"},
-    sensor=RAD, finding="0 CPM is data; unavailable is not"))
+    "a counter recording no events at all is not measuring", "False",
+    {RAD_CPM: "'0'"},
+    sensor=RAD + "::availability",
+    finding="P(0 counts in 60s at background) = e^-20; 0 means disconnected"))
 A(sensor_case(
-    "an offline counter yields nothing, not zero", "",
-    {RAD_CPM: "'unavailable'", RAD_FACTOR: "'0.00332'"},
-    sensor=RAD, finding="R7-9 discipline: never fabricate a number for a dead source"))
+    "one count is enough to be measuring", "True",
+    {RAD_CPM: "'1'"},
+    sensor=RAD + "::availability",
+    finding="the cutoff is at 1, not at some plausibility floor"))
 A(sensor_case(
-    "a counter that has not reported yet yields nothing", "",
-    {RAD_CPM: "'unknown'", RAD_FACTOR: "'0.00332'"},
-    sensor=RAD, finding="the first 60s window reports nothing at all"))
+    "an offline counter is not measuring either", "False",
+    {RAD_CPM: "'unavailable'"},
+    sensor=RAD + "::availability", finding="the -1 sentinel is below the cutoff too"))
+A(sensor_case(
+    "one count still converts correctly", "0.003",
+    {RAD_CPM: "'1'", RAD_FACTOR: "'0.00332'"},
+    sensor=RAD, finding="state stays pure arithmetic; availability does the gating"))
+A(sensor_case(
+    "a counter that has not reported yet is not measuring", "False",
+    {RAD_CPM: "'unknown'"},
+    sensor=RAD + "::availability", finding="the first 60s window reports nothing at all"))
 
 
 # ---------------------------------------------------------------- purifier after the cat toilet

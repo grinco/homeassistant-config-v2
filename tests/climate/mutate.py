@@ -94,8 +94,16 @@ BUGS = [
   lambda t: t.replace("states('input_number.radiation_usv_per_cpm') | float(0.00332)", "0.00332")),
  ("radiation: the obsolete 18 CPS/mR/h factor comes back as the fallback", "sensor", "Radiation dose rate",
   lambda t: t.replace("| float(0.00332)", "| float(0.00812)")),
- ("radiation: a dead counter reads as zero dose", "sensor", "Radiation dose rate",
-  lambda t: t.replace("| float(-1) %}", "| float(0) %}")),
+ ("radiation: a disconnected counter reports a confident zero again", "sensor", "Radiation dose rate::availability",
+  lambda t: t.replace(">= 1 }}", ">= 0 }}")),
+ ("radiation: availability stops gating on the counter at all", "sensor", "Radiation dose rate::availability",
+  lambda t: "{{ true }}"),
+ # RETIRED 2026-09-22, not lost. This mutation moved the no-reading sentinel from -1
+ # to 0, which used to turn a dead counter into a confident 0.0 uSv/h. The cutoff is
+ # now `c >= 1`, so -1 and 0 both fall the same side of it and the mutation no longer
+ # introduces a bug -- it is equivalent to the real expression. The hazard it guarded
+ # is now guarded by "a disconnected counter reports a confident zero again", which
+ # attacks the cutoff itself rather than the sentinel feeding it.
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

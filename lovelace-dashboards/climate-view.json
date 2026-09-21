@@ -414,6 +414,39 @@
           "grid_options": {
             "columns": 6
           }
+        },
+        {
+          "type": "heading",
+          "heading": "Background radiation",
+          "heading_style": "subtitle",
+          "icon": "mdi:radioactive"
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "entity": "sensor.radiation_dose_rate",
+          "icon": "mdi:radioactive",
+          "primary": "Dose rate",
+          "secondary": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set d = states('sensor.radiation_dose_rate') %}{% if c < 1 %}No counts — counter not reporting{% else %}{{ d }} µSv/h · {{ c | round(0) | int }} CPM{% endif %}",
+          "color": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set d = states('sensor.radiation_dose_rate') | float(-1) %}{% if c < 1 %}grey{% elif d >= 1.0 %}red{% elif d >= 0.3 %}amber{% else %}green{% endif %}",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:mini-graph-card",
+          "name": "Dose rate, 24 h",
+          "entities": [
+            "sensor.radiation_dose_rate"
+          ],
+          "hours_to_show": 24,
+          "points_per_hour": 2,
+          "line_color": "var(--label-badge-green)",
+          "grid_options": {
+            "columns": "full"
+          }
         }
       ]
     },

@@ -311,6 +311,20 @@
         "template_type": "sensor",
         "unit_of_measurement": "ppm"
       }
+    },
+    {
+      "domain": "template",
+      "title": "Radiation dose rate",
+      "options": {
+        "additional_options": {
+          "availability": "{{ states('sensor.background_radiation_cpm') | float(-1) >= 1 }}"
+        },
+        "name": "Radiation dose rate",
+        "state": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set k = states('input_number.radiation_usv_per_cpm') | float(0.00332) %}{{ (c * k) | round(3) }}",
+        "state_class": "measurement",
+        "template_type": "sensor",
+        "unit_of_measurement": "µSv/h"
+      }
     }
   ]
 }

@@ -165,6 +165,49 @@ silence, and it had to be ruled out before the wiring was blamed.
 
 **Tube confirmed as J305 β/γ** (2026-09-22), so the 0.00332 factor derived above stands.
 
+## Zero counts is not a measurement of zero radiation
+
+The dose sensor reported **0.0 µSv/h** for a day while its signal wire was on the wrong header
+pin. That is worse than reporting nothing: it writes a confident, false zero into long-term
+statistics and puts a reassuring number on the dashboard, from an instrument that is
+disconnected.
+
+The original design said the opposite — *"0 CPM is data; unavailable is not"* — and that was
+wrong on the physics. Counts from a GM tube are **Poisson**. A J305 sitting in ~20 CPM
+background has a probability of **e⁻²⁰, about 2 in a billion**, of recording exactly zero
+across a 60-second window. There is no such thing as zero background at ground level, so a
+sustained 0 CPM does not mean "no radiation" — it means **no pulses are arriving**.
+
+The cutoff is therefore `>= 1`, and it deliberately sits at one count rather than at some
+plausibility floor: one count in a minute is a real, if statistically lonely, measurement.
+
+### It had to be `availability`, not an empty state
+
+The first attempt gated inside the `state` template, rendering an empty string below the
+cutoff. **It did not work.** Home Assistant kept the entity's previous numeric value — the
+dashboard went on showing `0.0 µSv/h`, `last_updated` stopped advancing, and the sensor
+stopped responding to its own inputs. Verified directly: the stored template rendered to `[]`
+while the entity still read `0.0`.
+
+`availability` is the mechanism HA provides for exactly this, and it behaves correctly — the
+entity goes `unavailable`, which is the honest state for *the instrument is not giving me a
+reading*:
+
+```jinja
+state:        {{ (cpm * factor) | round(3) }}          {# pure arithmetic #}
+availability: {{ cpm | float(-1) >= 1 }}               {# the gate #}
+```
+
+Keeping the state template as pure arithmetic and the gate entirely in `availability` also
+means the two never disagree.
+
+**The suite had a blind spot here and now does not.** `load_sensor_templates()` read only
+`state`, so an availability template was invisible to it — a sensor could be gated, or
+un-gated, with every case still green. Availability templates are now extracted as
+`"<title>::availability"` and tested like any other expression, with two mutations against
+them. Note they are stored nested under `additional_options` by the config flow, though HA
+flattens them on setup, so the extractor checks both shapes.
+
 ## A wiring check, because the scenario suite cannot see this class
 
 `tests/climate/wiring.py` pulls every entity id out of the live templates and asks Home

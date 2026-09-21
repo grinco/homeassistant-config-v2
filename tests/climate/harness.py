@@ -88,9 +88,25 @@ def load_sensor_templates():
         title = entry.get("title") or ""
         if not title.startswith(SENSOR_PREFIXES):
             continue
-        state = (entry.get("options") or {}).get("state")
+        opts = entry.get("options") or {}
+        state = opts.get("state")
         if isinstance(state, str):
             out[title] = state
+        # A flow template helper can gate itself with an `availability` template as
+        # well as its `state`. That is the HA-idiomatic way to say "this instrument
+        # is not giving me a reading", and it is invisible to a state-only oracle --
+        # so it is exposed here under "<title>::availability" and tested like any
+        # other expression. Learned the hard way: gating inside `state` by rendering
+        # an empty string does NOT reliably clear the entity; HA kept the previous
+        # numeric value instead.
+        # The config flow nests `availability` inside a collapsed `additional_options`
+        # section; HA flattens it when it sets the entry up, so it can be in either
+        # place depending on how the entry was written. Check both.
+        avail = opts.get("availability")
+        if not isinstance(avail, str):
+            avail = (opts.get("additional_options") or {}).get("availability")
+        if isinstance(avail, str):
+            out[title + "::availability"] = avail
     return out
 
 

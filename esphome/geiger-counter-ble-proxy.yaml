@@ -89,6 +89,20 @@ sensor:
       number: ${geiger_pin}
       mode:
         input: true
+        # 2026-09-22: pull-up ENABLED, and this is the current best candidate for
+        # the zero counts.
+        #
+        # These interface boards usually drive the pulse through an open-collector
+        # transistor or an optocoupler, which can only pull the line DOWN -- it
+        # needs a pull-up somewhere to have a level to be pulled down FROM. With
+        # no pull-up at either end the line has no defined idle state, and the
+        # counter sees no clean edge to count.
+        #
+        # The ESP32's internal pull-up (~45k to 3.3V) gives it one. It also makes
+        # the idle level unambiguous, so a LOOSE header pin now reads a steady
+        # HIGH and a stable zero, instead of whatever a disconnected input
+        # happened to pick up.
+        pullup: true
       inverted: false
     # TEMPORARY, while the counter reads zero: count BOTH edges and halve.
     #
