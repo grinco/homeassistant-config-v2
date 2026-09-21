@@ -131,21 +131,39 @@ signatures:
 The first 60-second window reports nothing; the counter needs a full window before it
 publishes anything real.
 
-## The signal pin, and why the counter read zero
+## The signal pin, and why the counter reads zero
 
 The firmware came up healthy and published **0 CPM with 0 total counts** — not `unknown`,
-which would have meant a flashing problem, but a live counter detecting nothing at all.
+which would have meant a flashing problem, but a live counter detecting nothing at all. It
+stayed there for hours.
 
-**On the RadiationD v1.1 / CAJOE board the silkscreen is wrong: the header pin printed `VIN`
-is the pulse output, not a power input.** ESPHome's own device page for this board says so
-outright. A board wired by reading the labels therefore runs its *signal* into the ESP32's
-5 V rail, which is harmless, permanent, and produces precisely this symptom — healthy
-firmware, live counter, zero counts forever, nothing damaged.
+**Zero is itself evidence.** With `internal_filter` at 1 µs, a floating input reads thousands
+of counts from RF pickup, not zero. Zero means the line is electrically **stable** — something
+is holding GPIO13 at a fixed level, and no pulse is reaching it.
+
+**2026-09-22: GPIO13 was confirmed wired to the pin labelled `VCC`.** That is a power input,
+not the output. The standard header on these boards is **`VCC / GND / OUT`** — power the board
+from VCC+GND, take pulses from **OUT** (labelled **INT** on some variants, and **VIN** on the
+RadiationD v1.1 / CAJOE, whose silkscreen is wrong; ESPHome's device page for that board says
+so outright). A wire from VCC to a GPIO clamps the pin and delivers nothing, forever, without
+damaging anything.
+
+### Edge polarity was ruled out rather than tried
+
+The suggestion was to switch from trailing to leading edge. **That cannot produce counts where
+there are none.** Every pulse has a rising *and* a falling edge, so counting falling edges
+already registers one per pulse whichever way round the board drives the line. Edge choice
+changes *when within the pulse* the count lands, never *whether* it lands.
+
+The config now counts **both** edges with `multiply: 0.5`, which yields the identical number
+and removes the question permanently. It reverts to single-edge once counts arrive — two edges
+per pulse is more exposed to ringing being miscounted than one is.
 
 `internal_filter` was also dropped from 13 µs to **1 µs** during bring-up. A filter can only
 ever *remove* counts, so it is the one setting capable of turning a working signal into
-silence, and it has to be ruled out before the wiring is blamed. It goes back up only if
-counts arrive and the rate looks inflated by noise.
+silence, and it had to be ruled out before the wiring was blamed.
+
+**Tube confirmed as J305 β/γ** (2026-09-22), so the 0.00332 factor derived above stands.
 
 ## A wiring check, because the scenario suite cannot see this class
 
