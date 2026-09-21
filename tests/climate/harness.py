@@ -271,6 +271,35 @@ def evaluate(template):
         return resp.read().decode("utf-8")
 
 
+CHUNK = 12
+
+
+def evaluate_cases(cases, expressions, sensors):
+    """Render every case, in batches.
+
+    One request per case would be slow; one request for all of them silently
+    broke at ~50 KB, when the suite passed 90 cases and Home Assistant started
+    returning the template instead of its result -- every case "failing" at
+    once, which reads like a catastrophic regression and is nothing of the
+    kind. Batching keeps each request small and bounds the blast radius of a
+    render error to one chunk.
+    """
+    out = []
+    i = 0
+    while i < len(cases):
+        batch = cases[i:i + CHUNK]
+        rendered = evaluate(build_template(batch, expressions, sensors))
+        res = split_results(rendered, len(batch))
+        for r in res:
+            if SENTINEL.strip("|") in r or r.startswith("{%"):
+                raise ExtractionError(
+                    "a case rendered to template source rather than a result -- "
+                    "the batch was not evaluated. Lower CHUNK.")
+        out.extend(res)
+        i = i + CHUNK
+    return out
+
+
 def split_results(rendered, count):
     parts = rendered.split(SENTINEL)
     # leading and trailing empties from the delimiters

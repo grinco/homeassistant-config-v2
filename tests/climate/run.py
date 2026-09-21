@@ -23,8 +23,7 @@ def build():
     return harness.build_template(CASES, expressions, sensors)
 
 
-def score(rendered):
-    results = harness.split_results(rendered, len(CASES))
+def score(results):
     failures = []
     for case, got in zip(CASES, results):
         want = str(case["expect"])
@@ -57,9 +56,11 @@ def main(argv):
     if "--verify" in argv:
         path = argv[argv.index("--verify") + 1]
         with io.open(path, encoding="utf-8") as fh:
-            return score(fh.read())
+            return score(harness.split_results(fh.read(), len(CASES)))
     try:
-        rendered = harness.evaluate(build())
+        expressions = harness.load_expressions()
+        sensors = harness.load_sensor_templates()
+        results = harness.evaluate_cases(CASES, expressions, sensors)
     except RuntimeError as exc:
         if str(exc) == "NO_TOKEN":
             print("No Home Assistant token.\n"
@@ -72,7 +73,7 @@ def main(argv):
     except harness.ExtractionError as exc:
         print("SUITE ERROR: %s" % exc, file=sys.stderr)
         return 2
-    return score(rendered)
+    return score(results)
 
 
 if __name__ == "__main__":

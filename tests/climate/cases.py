@@ -136,7 +136,8 @@ A(case("an external change during our settle window is not counted", "external_m
         "unit_moved": True}, finding="M1/R4-2"))
 A(case("a genuine external change is counted", "external_moved", "True",
        {"active": True, "reachable": True, "mode_ok": False, "in_flight": False,
-        "unit_moved": True}, finding="v3.2"))
+        "unit_moved": True, "now_mode": "cool"},
+       finding="v3.2 - now_mode must be an ACTIVE mode: a change to 'off' is a stand-down"))
 # NOTE: ext_ts must be a REAL timestamp. The expression first tests
 # `ext_ts > 1e9` to distinguish "never happened" (the year-2000 sentinel) from
 # a real event, so a toy value like 1000.0 can never be recurring -- and the
@@ -156,24 +157,74 @@ A(case("a room never changed from outside is not recurring", "ext_recurring", "F
 # ---------------------------------------------------------------- actuation interlocks
 A(case("we never command while our own is in flight", "may_act", "False",
        {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
-        "in_flight": True, "safety_throttled": False, "fail_count": 0, "breaker": 3,
-        "is_safety": False, "throttle_ok": False}, finding="R4-2"))
+        "standdown": False, "in_flight": True, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": False, "throttle_ok": False},
+       finding="R4-2"))
 A(case("we do not fight an external change", "may_act", "False",
        {"active": True, "reachable": True, "mode_ok": False, "external_moved": True,
-        "in_flight": False, "safety_throttled": False, "fail_count": 0, "breaker": 3,
-        "is_safety": False, "throttle_ok": False}, finding="v3.2"))
+        "standdown": False, "in_flight": False, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": False, "throttle_ok": False},
+       finding="v3.2"))
 A(case("safety bypasses the breaker", "may_act", "True",
        {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
-        "in_flight": False, "safety_throttled": False, "fail_count": 99, "breaker": 3,
-        "is_safety": True, "throttle_ok": False}, finding="A5 / v3.1"))
+        "standdown": False, "in_flight": False, "safety_throttled": False,
+        "fail_count": 99, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="A5 / v3.1"))
 A(case("a setpoint we are correcting is not a unit fault", "diverged", "False",
        {"active": True, "reachable": True, "converged": False, "in_flight": False,
-        "may_act": False, "external_moved": False, "will_set_temp": True},
+        "may_act": False, "external_moved": False, "standdown": False,
+        "will_set_temp": True},
        finding="R4-2 relocated into the setpoint path, seen live 2026-09-19"))
 A(case("wind-free is never asserted outside cool", "will_set_preset", "False",
        {"active": True, "mode_ok": True, "mode": "heat", "now_preset": "none",
         "preset": "wind_free", "in_flight": False, "tripped": False},
        finding="set_preset_mode on an OFF unit turns it ON in COOL"))
+
+# ---------------------------------------------------------------- AC power-saving stand-down
+# 2026-09-21: the operator enabled the units' own presence-based power saving, so an AC
+# now switches ITSELF off when a room has been empty a while. Nothing on the device says
+# so -- no hvac_action, and the drlc_* attributes are utility demand-response, not this --
+# and area presence is not trustworthy (magic_areas claims the bedroom has been empty 28 h).
+#
+# The one reliable discriminator is the SHAPE of the change. Power saving always ends at
+# 'off'. It never switches the unit to another mode and never moves a setpoint. So:
+#     -> off            = stand-down. Quiet. No accusation, no push, no breaker.
+#     -> any other mode = somebody used a remote or the app. Hold and say so.
+# A person who switches the unit off by hand also lands in the quiet path, and that is
+# the better error: they just pressed off, they do not need telling why we stopped.
+A(case("a unit switching ITSELF off is a stand-down, not an override", "standdown", "True",
+       {"active": True, "reachable": True, "mode_ok": False, "in_flight": False,
+        "unit_moved": True, "now_mode": "off"},
+       finding="the operator's power-saving feature must not read as a wall override"))
+A(case("a unit switching itself off is NOT an external override", "external_moved", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "in_flight": False,
+        "unit_moved": True, "now_mode": "off"},
+       finding="no 2 h hold and no push for a feature working as intended"))
+A(case("a change to another mode IS an external override", "external_moved", "True",
+       {"active": True, "reachable": True, "mode_ok": False, "in_flight": False,
+        "unit_moved": True, "now_mode": "cool"},
+       finding="power saving never selects a mode; a remote or the app did this"))
+A(case("a change to another mode is not a stand-down", "standdown", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "in_flight": False,
+        "unit_moved": True, "now_mode": "cool"}, finding="the two are mutually exclusive"))
+A(case("our own in-flight command is neither", "standdown", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "in_flight": True,
+        "unit_moved": True, "now_mode": "off"}, finding="M1/R4-2 still holds"))
+A(case("a stood-down unit is not counted as a fault", "diverged", "False",
+       {"active": True, "reachable": True, "converged": False, "in_flight": False,
+        "may_act": False, "external_moved": False, "standdown": True,
+        "will_set_temp": False},
+       finding="the breaker must not isolate a unit that is doing what it was told to do"))
+A(case("we do not fight a stood-down unit", "may_act", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": True, "in_flight": False, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": False, "throttle_ok": False},
+       finding="re-commanding would loop against the unit's own timer"))
+A(case("SAFETY still overrides a stood-down unit", "may_act", "True",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": False, "in_flight": False, "safety_throttled": False,
+        "fail_count": 99, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="frost and the cat floor outrank every back-off, including this one"))
 
 # ---------------------------------------------------------------- resolved sensors
 BED = "Climate temp bedroom"

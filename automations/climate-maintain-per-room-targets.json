@@ -368,17 +368,18 @@
           {
             "variables": {
               "converged": "{{ mode_ok and target_ok }}",
-              "external_moved": "{{ active and reachable and not mode_ok and not in_flight and unit_moved }}",
+              "external_moved": "{{ active and reachable and not mode_ok and not in_flight and unit_moved and now_mode != 'off' }}",
               "tripped": "{{ fail_count >= breaker and not is_safety }}",
               "safety_throttled": "{{ is_safety and manual_active and not throttle_ok }}",
               "no_temp": "{{ safety_on and temp <= -900 and bad_armed and (now().timestamp() - bad_ts) > boot_grace and uptime > boot_grace }}",
-              "ext_recurring": "{{ ext_ts > 1000000000 and (now().timestamp() - ext_ts) < ext_window }}"
+              "ext_recurring": "{{ ext_ts > 1000000000 and (now().timestamp() - ext_ts) < ext_window }}",
+              "standdown": "{{ active and reachable and not mode_ok and not in_flight and unit_moved and now_mode == 'off' }}"
             },
             "note": "no_temp needs BOTH 'this room has been unusable for boot_grace' AND 'HA has been up for boot_grace'. The uptime term is safe in both directions ONLY because it is an AND with the per-room clock: a stale ha_started makes uptime enormous, which stops suppressing and lets the per-room clock govern; a spurious mid-run write delays a genuine alert by at most 600 s. ext_recurring measures from the PREVIOUS external change, not the first, so it is a rolling pair test: consecutive events closer than ext_window escalate. 6 h is a judgement, not a measurement - long enough to span a typical unit eco-timer cycle (1-4 h), short enough that two unrelated adjustments on different days never pair."
           },
           {
             "variables": {
-              "may_act": "{{ active and reachable and not mode_ok and not external_moved and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
+              "may_act": "{{ active and reachable and not mode_ok and not external_moved and not standdown and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
               "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}"
@@ -386,9 +387,43 @@
           },
           {
             "variables": {
-              "diverged": "{{ active and reachable and not converged and not in_flight and not may_act and not external_moved and not will_set_temp }}"
+              "diverged": "{{ active and reachable and not converged and not in_flight and not may_act and not external_moved and not standdown and not will_set_temp }}"
             },
             "note": "Divergence is only counted once our command has had its settle window AND we are not issuing a fresh command of our own this tick."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ standdown and not manual_active }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "input_datetime.set_datetime",
+                "target": {
+                  "entity_id": "{{ r.manual }}"
+                },
+                "data": {
+                  "datetime": "{{ (now() + timedelta(hours = manual_hold | float(2))).strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              },
+              {
+                "action": "counter.reset",
+                "target": {
+                  "entity_id": "{{ r.fails }}"
+                }
+              },
+              {
+                "action": "persistent_notification.create",
+                "data": {
+                  "title": "Climate: {{ r.name }} stood itself down",
+                  "notification_id": "climate_manual_{{ r.name | lower | replace(' ','_') }}",
+                  "message": "{{ r.name }} switched itself off; the automation wanted '{{ mode }}'. The units' own power saving turns a unit off after a room has been empty for a while, and that is almost certainly what this is - it is not counted as anybody overriding the automation and nothing is wrong with the unit. Standing back for {{ manual_hold }} h rather than switching it on again, which would only fight the unit's own timer. Safety limits still apply and still override this."
+                }
+              }
+            ],
+            "note": "2026-09-21. The ACs now power themselves off when a room has been empty a while. Nothing on the device says so - there is no hvac_action, and the drlc_* attributes are utility demand-response, not this - and area presence is not trustworthy enough to use (magic_areas reports the bedroom empty for 28 h). The one reliable discriminator is the SHAPE of the change: power saving always ends at 'off' and never selects another mode or moves a setpoint. So a change to 'off' is a STAND-DOWN and anything else is a genuine outside override. A person switching the unit off by hand lands here too, and that is the better error: they just pressed off, they do not need to be told why we stopped. NO PHONE PUSH and no accusation, but a UI notification remains so a room that stops heating is explainable. The hold is the same mechanism as an outside override - back off, let safety still win, expire - because the correct response to 'something else is driving this unit' is the same either way. It does NOT stamp r.ext: a recurrence of the operator's own power saving is expected behaviour, not a fault worth escalating."
           },
           {
             "if": [

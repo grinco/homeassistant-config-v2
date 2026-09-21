@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-20). Version 5.6.
+Status: **implemented and live** (2026-09-21). Version 5.7.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -29,6 +29,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.4** | **Offset distrust made symmetric (an implausible AC offset no longer poisons the fallback it falls back to); blackout grace re-keyed to a per-room persistent stamp that survives a restart and ignores sensor flapping; `human_moved` renamed `external_moved` and its notification stopped claiming the operator did it** | Round-10 findings R10-7, R10-6, R10-1 — see §26 |
 | **v5.5** | **An implausible calibration offset is now REPLACED BY THE MEASURED DEFAULT instead of discarding the source — v5.4 cost a room its safety floor to avoid a wrong number; the boot grace is restored alongside the per-room blackout clock; a unit that keeps changing itself is escalated as possibly faulty** | Round-11 findings F11-1, F11-3, F11-4 — see §27 |
 | **v5.6** | **The AC offset is no longer plausibility-checked at all — its helper range IS the envelope, and the extra check could only reject a *correct* large offset and fail cold; a calibration override now reaches the phone; the recurrence notice stopped naming a cause it cannot know and got its own notification id** | Round-12 findings F-1.1, F-1.5, F-4.2/3/4 — see §28 |
+| **v5.7** | **A unit that switches ITSELF off is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
 
 ---
 
@@ -1890,3 +1891,69 @@ actually run. The remaining risk is concentrated in the unexercised heating
 paths and in the plumbing class the suite does not cover — so the next review
 budget is worth more spent on the first cold week with a bedroom enabled than on
 another round now.
+
+---
+
+## 30. v5.7 — the units now switch themselves off
+
+The operator enabled the ACs' own presence-based power saving: a unit powers down after its
+room has been empty for a while. Their instruction was exact — *"make sure that this wouldn't
+count towards wall overrides."*
+
+It would have. Walked against the live expressions before changing anything: unit goes `off`
+while we want `heat`, `lc` is recent, our command is older than `settle`, so `unit_moved` is
+true and `mode_ok` is false. **`external_moved` fires — a two-hour hold and a push telling the
+operator they changed a unit they had not touched.** That is the 2026-09-20 incident exactly,
+re-entered through a feature they had just switched on.
+
+And the obvious narrow fix is worse. Merely excluding it from `external_moved` makes it
+`diverged` instead: the breaker counts it, and after three ticks the unit is "isolated" with a
+notification. The automation would also keep re-commanding it, fighting the unit's own timer in
+a slow loop.
+
+### What the device tells us: nothing
+
+There is no `hvac_action`, and the `drlc_*` attributes are utility demand-response, not this.
+Area presence exists but is not trustworthy — `magic_areas` reports the bedroom empty for 28
+hours. **So presence was deliberately not wired into the control loop**; a control input that
+wrong would have been a worse bug than the one being fixed.
+
+### The discriminator is the shape of the change, not its cause
+
+Power saving **always ends at `off`**. It never selects another mode and never moves a setpoint.
+
+```
+unit changed to 'off'        →  STAND-DOWN   quiet hold, no push, no breaker, do not re-command
+unit changed to any other    →  OVERRIDE     hold + notification, exactly as before
+```
+
+A person switching the unit off by hand also lands in the quiet path. **That is the better
+error**: they just pressed off, they do not need to be told why the automation stopped. Wall
+detection still works for every change that selects a mode, which is the case it can actually
+establish.
+
+**The hold mechanism is unchanged**, deliberately — back off, let safety still win, expire. The
+right response to *"something else is driving this unit"* is the same whatever the something is.
+Only the claim and the paging differ. A UI notification remains so a room that stops heating is
+still explainable; `r.ext` is not stamped, because a recurrence of the operator's own power
+saving is expected behaviour rather than a fault worth escalating.
+
+Safety is untouched and was verified: `skip > frost > away floor > away ceiling > manual`, so a
+stood-down room that falls below 18 °C is still heated, and `is_safety` still bypasses the
+breaker.
+
+### What the tests caught, and the order I got wrong
+
+The suite went red **after** the change was deployed, which is the wrong way round and the
+operator said so. Three of the four failures were real consequences of the change:
+
+- `may_act` and `diverged` gained a new input. Cases that did not bind `standdown` rendered to
+  template source instead of passing — the harness refusing to run rather than guessing.
+- One case represented "a genuine external change" using `now_mode: off`, which is now precisely
+  the *stand-down* case. It had to be re-expressed with an active mode.
+
+The fourth was a harness limit: at 94 cases the single batched render reached ~52 KB and one
+`UndefinedError` inside it poisoned the whole batch, so the sentinel split misaligned and an
+unrelated health-risk case appeared to fail. Evaluation is now **chunked**, with a guard that
+raises when a case renders to source. The lesson is the same one this document keeps learning:
+*a test harness that fails confusingly will be misread as a code regression.*
