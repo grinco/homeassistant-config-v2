@@ -500,3 +500,64 @@ A(hr("CO2 does not mask a humidity risk", "True", "22", "70", "500",
      finding="the existing mould check must survive the addition"))
 A(hr("CO2 does not mask a cold-room risk", "True", "14", "45", "500",
      finding="the existing cold check must survive the addition"))
+
+
+# ================================================================ PROPOSED (not yet deployed)
+# docs/proposal-decide-act-split.md. Written FIRST, per the repo's TDD rule: these fail with
+# "not found in the live config" until the change ships, and that failure is the point.
+
+# ---------------------------------------------------------------- Change A: why a hold exists
+# external_moved and standdown stamp the SAME hold helper with the same value, so after the
+# fact nothing distinguishes "somebody used the remote" from "the unit power-saved an empty
+# room". v5.7 removed the phone push for stand-downs, which had been the only differentiator.
+REASON = "states('input_select.climate_hold_reason_living_room')"
+
+A(case("a hold with no reason recorded reads as none", "hold_reason", "none",
+       {}, {REASON: "'none'"},
+       finding="F14-2: 'none' is the FIRST option so a reset helper is inert, per the -5.0 incident"))
+A(case("an external override records itself as external", "hold_reason", "external",
+       {}, {REASON: "'external'"}, finding="F14-2: the remote/app case, worth knowing about"))
+A(case("a stand-down records itself as standdown", "hold_reason", "standdown",
+       {}, {REASON: "'standdown'"}, finding="F14-2: routine power saving, not a person"))
+
+# ---------------------------------------------------------------- Change B: the verdict sensor
+# The automation must READ this, never recompute it - a mirror would be two implementations
+# that drift, which is exactly what section 21 forbade for temperature.
+VERDICT = "Climate verdict living room"
+V_TEMP = "states('sensor.climate_temp_living_room')"
+V_HOUSE = "states('input_select.climate_house_mode')"
+V_ENABLE = "is_state('input_boolean.climate_room_living_room','on')"
+V_SAFETY = "is_state('input_boolean.climate_safety_always','on')"
+V_COMFORT = "is_state('input_boolean.climate_auto','on')"
+
+
+def verdict(name, expect, subs, finding=""):
+    base = {V_SAFETY: "true", V_COMFORT: "true", V_ENABLE: "true", V_HOUSE: "'heat'"}
+    base.update(subs)
+    return dict(name=name, sensor=VERDICT, expect=expect, given={}, subs=base, finding=finding)
+
+
+A(verdict("no usable reading yields skip, never off", "skip", {V_TEMP: "'unavailable'"},
+          finding="THE failure mode B introduces - absence of a verdict is not a verdict"))
+A(verdict("below the frost trigger yields heat", "heat", {V_TEMP: "'5'"},
+          finding="safety branches stay above everything"))
+A(verdict("below the away floor yields heat", "heat", {V_TEMP: "'17'"}, finding="the cat floor"))
+A(verdict("a comfortable room in heat season yields off", "off", {V_TEMP: "'23.5'"},
+          finding="above target plus hysteresis"))
+A(verdict("below target in heat season yields heat", "heat", {V_TEMP: "'20'"},
+          finding="ordinary comfort"))
+A(verdict("shoulder season yields off", "off", {V_TEMP: "'22'", V_HOUSE: "'shoulder'"},
+          finding="nothing mechanical runs between the thresholds"))
+A(verdict("a disabled room yields off", "off", {V_TEMP: "'20'", V_ENABLE: "false"},
+          finding="the three bedrooms are disabled; only the safety band applies there"))
+A(verdict("safety still acts for a disabled room", "heat",
+          {V_TEMP: "'5'", V_ENABLE: "false"},
+          finding="disabled removes comfort, never the floor"))
+A(verdict("comfort off leaves the room alone", "off",
+          {V_TEMP: "'20'", V_COMFORT: "false"}, finding="the master switch"))
+A(verdict("comfort off does NOT disable the floor", "heat",
+          {V_TEMP: "'5'", V_COMFORT: "false"},
+          finding="climate_safety_always is the only switch that stands safety down"))
+A(verdict("the safety hatch off stands the floor down", "off",
+          {V_TEMP: "'5'", V_COMFORT: "false", V_SAFETY: "false"},
+          finding="R6: that switch is a genuine master hatch"))
