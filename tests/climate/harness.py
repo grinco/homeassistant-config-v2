@@ -89,6 +89,36 @@ def load_sensor_templates():
     return out
 
 
+ROOM_MAP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rooms.local.json")
+
+
+class RoomsUnavailable(Exception):
+    """The local room-alias map is absent, so the kids'-room cases cannot run."""
+
+
+def load_rooms():
+    """Map a published room alias (kid1/kid2) to its live entity ids.
+
+    The two children's bedrooms are named after the operator's children on the
+    live instance, and this repository is PUBLIC.  Cases therefore name rooms by
+    alias only; `rooms.local.json` holds the live ids and is gitignored.  It is
+    the one file in the suite that must never be committed.
+
+    A missing map does NOT silently drop those cases -- `run.py` prints how many
+    were skipped and why.  A case that vanishes quietly is worse than one that
+    fails, because the count still looks green.
+    """
+    try:
+        with io.open(ROOM_MAP, encoding="utf-8") as fh:
+            return json.load(fh)
+    except IOError:
+        raise RoomsUnavailable(
+            "tests/climate/rooms.local.json is missing -- the kids'-room cases "
+            "name rooms by alias and need the local map to reach the live ids. "
+            "See tests/climate/README.md."
+        )
+
+
 _QUOTED = re.compile(r"^\s*('[^']*'|\"[^\"]*\")\s*$")
 _NUMERIC = re.compile(r"^\s*-?\d+(\.\d+)?\s*$")
 _BOOL = re.compile(r"^\s*(true|false)\s*$")

@@ -126,3 +126,28 @@ substitutes, and the suite errors rather than going green.
 When a review round finds something, add the case **before** shipping the fix,
 with `finding=` naming the round. Then run `mutate.py`: if re-introducing the bug
 does not turn anything red, the case is not testing what you think.
+
+## `rooms.local.json` — the one file that must never be committed
+
+Two bedrooms are named after the operator's children on the live instance, and this
+repository is public. Cases name those rooms by the aliases **`kid1`** and **`kid2`**;
+`tests/climate/rooms.local.json` maps an alias to the live entity ids and is gitignored.
+
+To run the suite on a fresh checkout, write that file first:
+
+```json
+{
+  "kid1": {
+    "title": "<live room token>",
+    "meter_temp": "sensor.…", "meter_hum": "sensor.…",
+    "matter_temp": "sensor.…", "matter_hum": "sensor.…",
+    "trv_temp": "sensor.…", "trv_hum": "sensor.…",
+    "trv_conn": "binary_sensor.…", "trv_heat": "sensor.…",
+    "ac_temp": "sensor.…", "ac_hum": "sensor.…"
+  },
+  "kid2": { … }
+}
+```
+
+Without it the suite stops with a named error rather than skipping those cases. That is
+deliberate: a case that disappears quietly still leaves the count looking green.

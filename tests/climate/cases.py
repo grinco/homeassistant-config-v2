@@ -11,6 +11,13 @@ case goes here before the fix ships, so the next round cannot quietly undo it.
 `expect` is compared as a trimmed string ("True"/"False" for booleans).
 """
 
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import harness  # noqa: E402  -- for the gitignored room-alias map, see load_rooms()
+
 # Defaults mirroring the live configuration, so a case only states what it varies.
 BASE = dict(
     temp=21.0, safety_on=True, comfort=True, frost=7.0, away_min=18.0, away_max=30.0,
@@ -441,6 +448,99 @@ A(sensor_case(
     "both office humidity paths down fall to the AC probe", "60.0",
     {OF_H_BLE: "'unavailable'", OF_H_MAT: "'unavailable'", OF_H_AC: "'60'"},
     sensor=OF_H, finding="humidity carries no calibration offset"))
+
+
+# ---------------------------------------------------------------- a real meter in a kid's room
+# 2026-09-21.  The operator moved a SwitchBot Meter Pro (Indoor/Outdoor) into Kids room 1,
+# in the far corner, away from the AC's discharge.  This is the instrument that was promised
+# when the 3 C swing was diagnosed: the AC is mounted directly above the radiator and the
+# slatted ceiling blows its own output onto the TRV's thermometer, so the TRV has been
+# reporting the unit's discharge air rather than the room.
+#
+# The room therefore gains a FOUR-tier chain.  Tier order, worst-case first:
+#   1. the meter over BLE          -- a real thermometer, correctly placed, no offset needed
+#   2. the same meter over Matter  -- second transport, same instrument (see the living room)
+#   3. the TRV, only when live AND the radiator is cold, plus the TRV offset
+#   4. the AC internal probe, plus the global AC offset
+#
+# The meter takes NO calibration offset.  That is the single most important thing these
+# cases pin: the offsets exist to correct instruments that sit in the wrong air, and
+# applying one to a correctly-placed thermometer would inject exactly the error it removes.
+#
+# Rooms are named by ALIAS.  The live names are the operator's children's, this repo is
+# public, and `rooms.local.json` (gitignored) is the only place the real ids appear.
+K1 = harness.load_rooms()["kid1"]
+K1_T = "Climate temp " + K1["title"]
+K1_H = "Climate humidity " + K1["title"]
+
+K1_B_T = "states('%s')" % K1["meter_temp"]
+K1_M_T = "states('%s')" % K1["matter_temp"]
+K1_V_T = "states('%s')" % K1["trv_temp"]
+K1_A_T = "states('%s')" % K1["ac_temp"]
+K1_CONN = "is_state('%s','on')" % K1["trv_conn"]
+K1_HEAT = "states('%s')" % K1["trv_heat"]
+
+K1_B_H = "states('%s')" % K1["meter_hum"]
+K1_M_H = "states('%s')" % K1["matter_hum"]
+K1_V_H = "states('%s')" % K1["trv_hum"]
+K1_A_H = "states('%s')" % K1["ac_hum"]
+
+# Every tier carries a DIFFERENT value, so the expected output names exactly one of them.
+# The AC offset is -2 and the TRV offset +1 throughout, so a tier that wrongly picks up a
+# correction is visible in the result rather than hidden behind a matching number.
+A(sensor_case(
+    "the room meter outranks the TRV that the AC blows on", "23.4",
+    {K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+     K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="R8-2/A11: the TRV reads the unit's discharge, not the room"))
+A(sensor_case(
+    "a correctly placed meter takes NO calibration offset", "23.4",
+    {K1_B_T: "'23.4'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'", K1_A_T: "'25.0'",
+     K1_CONN: "false", K1_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
+    sensor=K1_T, finding="offsets correct instruments in the wrong air; this one is not"))
+A(sensor_case(
+    "a dead BLE meter falls to the same meter over Matter", "23.5",
+    {K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+     K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="second transport to one instrument, as in the living room"))
+A(sensor_case(
+    "both meter paths down fall to the TRV, offset and all", "23.0",
+    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+     K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="the TRV keeps its place as the only INDEPENDENT fallback"))
+# The probe reads 24.0 here, NOT 25.0: with the AC offset at -2 a 25.0 probe resolves to
+# 23.0, which is exactly what the TRV tier above would have produced (22.0 + 1.0).  The two
+# paths would have been indistinguishable and the case would have passed either way.
+A(sensor_case(
+    "a hot radiator still disqualifies the TRV, even as third tier", "22.0",
+    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'26.0'", K1_A_T: "'24.0'",
+     K1_CONN: "true", K1_HEAT: "'65'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
+A(sensor_case(
+    "every source down yields nothing, never a fabricated number", "",
+    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
+     K1_A_T: "'unavailable'", K1_CONN: "false", K1_HEAT: "'0'",
+     AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="R7-9: the skip sentinel, never a fabricated number"))
+
+A(sensor_case(
+    "room humidity prefers the meter over the TRV", "39.0",
+    {K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
+    sensor=K1_H, finding="same instrument ranking as temperature"))
+A(sensor_case(
+    "a dead BLE humidity reading falls to Matter", "44.0",
+    {K1_B_H: "'unavailable'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
+    sensor=K1_H, finding="Matter is demoted, not removed"))
+A(sensor_case(
+    "both meter paths down fall to the TRV humidity", "46.0",
+    {K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+     K1_CONN: "true"},
+    sensor=K1_H, finding="the TRV humidity has no radiator gate -- only a liveness one"))
+A(sensor_case(
+    "an offline TRV drops humidity to the AC probe", "31.0",
+    {K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+     K1_CONN: "false"},
+    sensor=K1_H, finding="liveness gates the TRV in both resolved sensors"))
 
 # ---------------------------------------------------------------- purifier after the cat toilet
 # A second automation. Its logic is mostly SEQUENCING (turn on, settle, wait,

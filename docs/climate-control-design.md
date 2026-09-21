@@ -109,7 +109,7 @@ The cost today is that a unit the automation starts runs in its previous preset 
 | Living Room | `sensor.meter_pro_co2_b5be_temperature` | SwitchBot Meter Pro CO2 over **BLE** — good |
 | Office / Guest Room | `sensor.meter_pro_co2_5fe9_temperature` | SwitchBot Meter Pro CO2 over **BLE** — good |
 | Bedroom | `sensor.master_bedroom_bedroom_ac_temperature` | **AC internal — known ~2 °C high** |
-| Kids room 1 | `sensor.kid1_room_ac_temperature` | AC internal (room unused) |
+| Kids room 1 | `sensor.indoor_outdoor_meter_228b_temperature` | SwitchBot Meter Pro over **BLE**, far corner — good |
 | Kids room 2 | `sensor.kid2_room_ac_temperature` | AC internal (room unused) |
 
 Each room carries a `sensor` and a `fallback`; the fallback is the AC's own sensor. Where no
@@ -165,6 +165,54 @@ the template sensors in v5.1 and a grep of the live automation finds **zero** re
 key. They are dead documentation embedded in live config, which is the [two implementations drift]
 class over again, so they should be *deleted* rather than re-pointed. That deletion is folded into
 the next automation write instead of reloading a heating automation to correct a comment.
+
+#### A real instrument in Kids room 1 (v5.11, 2026-09-21)
+
+The 3 °C swing measured in this room on 2026-09-21 was never a control problem. The operator
+diagnosed the geometry: the AC is mounted **directly above the radiator**, and the slatted
+ceiling directs its discharge air straight onto the TRV's thermometer. The valve was reporting
+*the unit's own output*, so the loop was chasing a number the loop itself was producing —
+which is why the room overshot to 24.9 against a 22 °C target and then undershot to 21.8.
+
+The promised far-corner sensor is now in place: a SwitchBot Meter Pro (Indoor/Outdoor), the
+same model as the living room and office, reachable over **both** BLE and the Hub Mini's
+Matter bridge. The room's chain is now four tiers:
+
+| # | Source | Correction |
+|---|---|---|
+| 1 | the meter over **BLE** | **none** |
+| 2 | the same meter over **Matter** | **none** |
+| 3 | the TRV, only while live **and** the radiator is cold | `+ trv_offset` |
+| 4 | the AC internal probe | `+ ac_offset` |
+
+**The meter takes no calibration offset, and that is the load-bearing part.** The offsets
+exist to correct instruments sitting in the wrong air — a valve on a radiator, a probe inside
+the unit. Applying one to a correctly-placed thermometer would inject precisely the error the
+offset was invented to remove. Two mutations guard it: *"the room meter gets the AC offset
+applied to it"* and *"the TRV outranks the room meter again"*.
+
+**The TRV keeps tier 3 rather than being dropped**, because it is the only *independent*
+instrument left once both meter transports are gone — tiers 1 and 2 are one thermometer. Its
+hot-radiator gate still applies at tier 3; a third mutation checks that demoting it did not
+quietly drop the gate along the way.
+
+**First hard evidence for A11 (per-room calibration).** With a trusted reference finally in the
+room, this room's AC probe reads **22 °C raw while the meter reads 23.0** — i.e. about 1 °C
+*low*, where the global `ac_offset` of −2 assumes every probe reads *high*. Applied here, the
+fallback tier would resolve to 20.0 against a real 23.0. That is a **3 °C error in tier 4**, and
+it is the strongest argument yet that a single global offset cannot serve five rooms. It is not
+acted on here: the reading below was taken while the meter was still equilibrating, so the
+number is provisional and the measurement must be repeated once it has settled.
+
+**Acclimatisation, and the guard deliberately NOT added.** The meter was carried into the room
+at 17:35 and spiked to **31.0 °C** from being handled, then fell steeply — 23.7 at 18:01, 23.0
+at 18:08 — converging on the TRV's 22.37. A tempting guard would reject a meter reading that
+disagrees with the other sources by more than some margin. **That guard must not be written.**
+The TRV is the source we already know to be wrong in this room; a disagreement test would
+reject the *correct* reading and keep the bad one, which is [[guard-both-directions]] and the
+v5.5 mistake exactly. The transient is bounded, self-correcting within the hour, and fails in
+the suppress-heating direction against a target well below the room, so it is ridden out rather
+than guarded.
 
 **Bias correction (v3).** The three AC-internal rooms are flagged `biased: true` and have
 `input_number.climate_ac_sensor_offset` (default −2.0 °C) applied **before every comparison,

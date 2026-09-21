@@ -14,6 +14,7 @@ from cases import CASES, AC_OFF as AC_OFF_G
 
 REAL_EXPR = harness.load_expressions()
 REAL_SENS = harness.load_sensor_templates()
+KID1_T = "Climate temp " + harness.load_rooms()["kid1"]["title"]
 
 BUGS = [
  ("the 2026-09-20 unit_moved bug (drop '- settle')", "expr", "unit_moved",
@@ -78,6 +79,15 @@ BUGS = [
                       "{% if m > -900 %}{{ m | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
  ("source order: the Matter tier is dropped, not demoted", "sensor", "Climate humidity office",
   lambda t: t.replace("{% elif m >= 0 %}{{ m | round(1) }}", "")),
+ # A real meter in a kid's room. The offset traps are the point: the meter is correctly
+ # placed, so a correction applied to it injects the very error the correction removes.
+ ("kid1: the TRV outranks the room meter again", "sensor", KID1_T,
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif p > -900 %}",
+                      "{% if p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}")),
+ ("kid1: the room meter gets the AC offset applied to it", "sensor", KID1_T,
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}", "{% if b > -900 %}{{ (b + ac) | round(2) }}")),
+ ("kid1: a hot radiator no longer disqualifies the TRV", "sensor", KID1_T,
+  lambda t: t.replace("if (live and cold) else -999", "if live else -999")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
