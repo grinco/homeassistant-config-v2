@@ -191,6 +191,14 @@ directly.
 The operator goes out with the dog inside that window, so night must not be inferred from
 presence, and it is not: it is a schedule.
 
+> **Measured consequence of hysteresis, 2026-09-21.** With hysteresis raised to 2.0, lowering a
+> room's target does not stop a unit that is already heating until the room reaches
+> `target + hysteresis`. Observed: the target was lowered from 22 to 20 while the room was
+> mid-heat; the unit ran on and stopped at 22, sixteen minutes later. A room in steady state
+> therefore settles roughly `hysteresis / 2` above its target. At 1.0 that was half a degree and
+> nobody noticed; at 2.0 it is a degree, and a target change takes visibly longer to bite. This
+> is the cost of the R8-2 mitigation and it is the trade round 16 is being asked to weigh.
+
 ### Air filter
 
 Per room, optional, default off. When the house has a season but the room has no thermal work
@@ -201,6 +209,26 @@ mode that guarantees airflow with no thermal intent.
 
 It sits *below* the room's Maintain toggle in precedence: a room that is off stays off, and it
 never overrides away or the safety band.
+
+**The unit's own thermostat decides when it heats and when it idles, and that is deliberate.**
+Air filter mode puts the unit into the season's mode at the room's target; whether the fan then
+runs is left to the unit. Measured on 2026-09-21 with the filter on in the office: the unit
+cycled between 1 W and 20–90 W, heated the room from 22.9 to 24.6 °C, and then sat at 1 W for
+half an hour once its own probe was satisfied. So filtering is **duty-cycled by a thermostat
+that does not know filtering is the point**, and airflow is not continuous.
+
+Running `fan_only` whenever filtering is the only job would guarantee continuous airflow, and
+that was proposed. The operator declined:
+
+> "I'd leave it to the unit's internal thermostat the decision when to heat and when to run on
+> idle."
+
+So the coupling stands. **A reviewer will otherwise flag it**, because "the air filter does not
+reliably move air" reads like a defect and the design's own prose once claimed "the point is
+that the fan and the filter run", which is not what the hardware does. It has been measured,
+raised, and declined. Note the second-order effect: the unit's internal probe and this system's
+resolved temperature disagree by the AC-offset amount, so the unit keeps heating past our target
+until *its* probe is satisfied — which is why the office reached 24.6 against a target of 22.
 
 **It is also below the comfort master, and that is the operator's explicit ruling, not an
 oversight.** `not comfort` short-circuits above the house branch, so switching
