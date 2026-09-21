@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-21). Version 5.8.
+Status: **implemented and live** (2026-09-21). Version 5.9.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -31,6 +31,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.6** | **The AC offset is no longer plausibility-checked at all — its helper range IS the envelope, and the extra check could only reject a *correct* large offset and fail cold; a calibration override now reaches the phone; the recurrence notice stopped naming a cause it cannot know and got its own notification id** | Round-12 findings F-1.1, F-1.5, F-4.2/3/4 — see §28 |
 | **v5.7** | **A unit that goes to `off` for a reason we cannot identify is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
 | **v5.8** | **Safety dispatch hoisted above the back-offs.** A freezing room that was stood down or overridden resolved to `heat` and then never sent the command, for up to 20 minutes | Round-14 F14-5 — see §31 |
+| **v5.9** | **A hold now records WHY it exists** — `external` or `standdown` — and the label is cleared when the hold ends. The hold mechanism is untouched | Round-14 F14-2, round-15 A3; `docs/proposal-decide-act-split.md` |
 
 ---
 

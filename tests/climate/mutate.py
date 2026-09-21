@@ -38,6 +38,10 @@ BUGS = [
                       "and not external_moved and not standdown")),
  ("F14-5: safety allowed to double-command in flight", "expr", "may_act",
   lambda t: t.replace("not in_flight and ", "")),
+ ("R15 A3: stale hold label never cleared", "expr", "reason_stale",
+  lambda t: "{{ false }}"),
+ ("R15 A3: label cleared while the hold is still live", "expr", "reason_stale",
+  lambda t: "{{ states(r.reason) != 'none' }}"),
  ("boot grace dropped again (v5.4)", "expr", "no_temp",
   lambda t: t.replace(" and uptime > boot_grace", "")),
  # purifier automation -- bugs it would be natural to write

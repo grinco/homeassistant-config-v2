@@ -1,6 +1,7 @@
 # Proposal — hold reasons, and moving the decision out of the loop
 
-Status: **proposed, not implemented** (2026-09-21). Written for review *before* deployment.
+Status: **reviewed 2026-09-21** (`review-20260921-a472`). **Change A shipped** as v5.9.
+**Change B stopped** and folded into the presence work — see "Outcome" at the end.
 Companion to `climate-control-design.md` v5.8.
 
 Two changes, independent, presented together because the second is only safe if the first lands
@@ -154,3 +155,68 @@ design record transfers; the paranoia does not.
 **Revisit when the presence detectors arrive.** That is a real behaviour change, and
 re-architecting while adding wanted behaviour is a better trade than re-architecting for its own
 sake.
+
+---
+
+## Outcome — the review, and what changed
+
+`review-20260921-a472`, taken **before** anything was deployed. This was the first round in the
+project's history to review a design rather than a running system, and it stopped half of it.
+
+### Change A — approved, shipped as v5.9, with one addition
+
+The two rejections held: deriving the reason from `r.ext` arithmetic is the "inferred rather
+than recorded" shape that produced §24 and §31, and separate hold stamps would put two sources
+into the mode law for a labelling problem.
+
+**A3 was a genuine catch.** The proposal left the label in place behind an expired hold, gated
+only by every consumer remembering to check `hold_active`. That is the same *"state asserts more
+than it can know"* defect A exists to close, re-entered through a missed gate — and somebody
+would eventually miss it. The label is now **cleared when the hold is no longer live**.
+
+The clear **re-reads `r.manual`** rather than using `manual_active`, which is sampled at the top
+of the room's iteration and therefore predates any hold stamped on this tick; using it would
+clear the label a moment after setting it. Same discipline as the `is_state()` re-reads on the
+actuating steps. The `and != 'none'` term keeps it idempotent — verified at zero writes in
+steady state, not five per tick.
+
+The review also corrected a loose citation: the §20 incident was a *number* helper coming up at
+its `min`, whereas an `input_select` takes its first option on **creation and on a manual
+reset**. Different mechanism, same conclusion — `none` first — and the reset path is the more
+likely one in production, which is what A3's clear now also covers.
+
+### Change B — stopped, and the reason is a contradiction in this document
+
+The review found four hazards B did not list:
+
+| | |
+|---|---|
+| **The decision stops being atomic with the dispatch.** A template renders asynchronously, so the automation would read *"the decision as of the last render"*, not the decision | Not listed |
+| **The trigger question is unanswered, and both answers regress something.** Trigger on the verdict and a source flap wakes the loop (R7-7 amplification, now on the decision itself); don't, and a real verdict change waits up to ten minutes (R10-9, re-introduced by design) | Not listed |
+| **Partial attribute availability.** State can render `heat` while the `target` attribute fails — a verdict that says *act* with no setpoint to act with. The current atomic computation cannot produce that state | Not listed |
+| **Recorder amplification, and attributes aren't recorded by default** — so the "and why" half of the history benefit needs *more* entities, not the one B proposed | Not listed |
+
+And the finding that settles it: **this document contradicts itself.** It lists *"the presence
+work gets easier — occupancy enters the decision in one template"* as a benefit of B, then leans
+toward doing B *after* presence. If presence ships into the 115-step automation first, that
+benefit is never realised. B's strongest justification is destroyed by the sequencing B was
+drifting toward, and I did not notice.
+
+The review's resolution, which is right: **fold B into the presence design so the decision
+template is born with occupancy in it.** One refactor instead of two, the benefit actually
+realised — and the four hazards above must be answered *in that proposal*, on day one, because
+three of them are trigger and sequencing defects that `tests/climate/` is structurally blind to.
+
+### The custom component — reframed
+
+Two corrections worth carrying:
+
+- *"The design record transfers; the paranoia does not"* is only true **after** the record is
+  brought current. Fourteen rounds have repeatedly found it stale — §2/§4 counts, the offset
+  left out of the range-check set, "safety is untouched" asserted without showing the dispatch.
+  Confidence in the record as a transfer medium should be lower than this document claimed.
+- *"Revisit when presence lands"* is the right **trigger** but the wrong **disposition**.
+  Presence is the first feature to touch *both* the decision and the dispatch, and it lands
+  squarely in the 20 dispatch/timing names where all three worst bugs lived. So the question is
+  not "ship presence, then maybe rewrite" but **"is a component the right vehicle *for*
+  presence"** — because that is exactly when unit-testable sequencing is worth most.

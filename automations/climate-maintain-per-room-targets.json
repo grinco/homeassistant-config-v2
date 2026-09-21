@@ -116,7 +116,8 @@
             "bad": "input_datetime.climate_sensor_bad_since_living_room",
             "ext": "input_datetime.climate_external_last_living_room",
             "trv_watch": "",
-            "resolved": "sensor.climate_temp_living_room"
+            "resolved": "sensor.climate_temp_living_room",
+            "reason": "input_select.climate_hold_reason_living_room"
           },
           {
             "name": "Office",
@@ -134,7 +135,8 @@
             "bad": "input_datetime.climate_sensor_bad_since_office",
             "ext": "input_datetime.climate_external_last_office",
             "trv_watch": "",
-            "resolved": "sensor.climate_temp_office"
+            "resolved": "sensor.climate_temp_office",
+            "reason": "input_select.climate_hold_reason_office"
           },
           {
             "name": "Bedroom",
@@ -152,7 +154,8 @@
             "bad": "input_datetime.climate_sensor_bad_since_bedroom",
             "ext": "input_datetime.climate_external_last_bedroom",
             "trv_watch": "climate.bedroom_trv_bedroom_trv",
-            "resolved": "sensor.climate_temp_bedroom"
+            "resolved": "sensor.climate_temp_bedroom",
+            "reason": "input_select.climate_hold_reason_bedroom"
           },
           {
             "name": "Kids room 1",
@@ -170,7 +173,8 @@
             "bad": "input_datetime.climate_sensor_bad_since_kid1",
             "ext": "input_datetime.climate_external_last_kid1",
             "trv_watch": "climate.kid1_room_trv_kid1_room_trv",
-            "resolved": "sensor.climate_temp_kid1"
+            "resolved": "sensor.climate_temp_kid1",
+            "reason": "input_select.climate_hold_reason_kid1"
           },
           {
             "name": "Kids room 2",
@@ -188,7 +192,8 @@
             "bad": "input_datetime.climate_sensor_bad_since_kid2",
             "ext": "input_datetime.climate_external_last_kid2",
             "trv_watch": "climate.kid2_room_trv_kid2_room_trv",
-            "resolved": "sensor.climate_temp_kid2"
+            "resolved": "sensor.climate_temp_kid2",
+            "reason": "input_select.climate_hold_reason_kid2"
           }
         ],
         "human_window": 1200,
@@ -330,7 +335,8 @@
               "alert_ts": "{{ state_attr(r.alert, 'timestamp') | float(0) }}",
               "bad_ts": "{{ state_attr(r.bad, 'timestamp') | float(0) }}",
               "bad_armed": "{{ (state_attr(r.bad, 'timestamp') | float(0)) > 1000000000 }}",
-              "ext_ts": "{{ state_attr(r.ext, 'timestamp') | float(0) }}"
+              "ext_ts": "{{ state_attr(r.ext, 'timestamp') | float(0) }}",
+              "hold_reason": "{{ states(r.reason) }}"
             },
             "note": "All stamps are READ HERE, before any write later in this iteration."
           },
@@ -373,7 +379,8 @@
               "safety_throttled": "{{ is_safety and manual_active and not throttle_ok }}",
               "no_temp": "{{ safety_on and temp <= -900 and bad_armed and (now().timestamp() - bad_ts) > boot_grace and uptime > boot_grace }}",
               "ext_recurring": "{{ ext_ts > 1000000000 and (now().timestamp() - ext_ts) < ext_window }}",
-              "standdown": "{{ active and reachable and not mode_ok and not in_flight and unit_moved and now_mode == 'off' }}"
+              "standdown": "{{ active and reachable and not mode_ok and not in_flight and unit_moved and now_mode == 'off' }}",
+              "reason_stale": "{{ now().timestamp() >= (state_attr(r.manual,'timestamp') | float(0)) and states(r.reason) != 'none' }}"
             },
             "note": "no_temp needs BOTH 'this room has been unusable for boot_grace' AND 'HA has been up for boot_grace'. The uptime term is safe in both directions ONLY because it is an AND with the per-room clock: a stale ha_started makes uptime enormous, which stops suppressing and lets the per-room clock govern; a spurious mid-run write delays a genuine alert by at most 600 s. ext_recurring measures from the PREVIOUS external change, not the first, so it is a rolling pair test: consecutive events closer than ext_window escalate. 6 h is a judgement, not a measurement - long enough to span a typical unit eco-timer cycle (1-4 h), short enough that two unrelated adjustments on different days never pair."
           },
@@ -410,6 +417,15 @@
                 }
               },
               {
+                "action": "input_select.select_option",
+                "target": {
+                  "entity_id": "{{ r.reason }}"
+                },
+                "data": {
+                  "option": "standdown"
+                }
+              },
+              {
                 "action": "counter.reset",
                 "target": {
                   "entity_id": "{{ r.fails }}"
@@ -441,6 +457,15 @@
                 },
                 "data": {
                   "datetime": "{{ (now() + timedelta(hours = manual_hold | float(2))).strftime('%Y-%m-%d %H:%M:%S') }}"
+                }
+              },
+              {
+                "action": "input_select.select_option",
+                "target": {
+                  "entity_id": "{{ r.reason }}"
+                },
+                "data": {
+                  "option": "external"
                 }
               },
               {
@@ -732,6 +757,26 @@
               }
             ],
             "note": "The cleared sentinel is the year 2000 and 'armed' is tested as timestamp > 1e9, because a freshly created input_datetime reports TODAY 00:00 and is never none."
+          },
+          {
+            "if": [
+              {
+                "condition": "template",
+                "value_template": "{{ reason_stale }}"
+              }
+            ],
+            "then": [
+              {
+                "action": "input_select.select_option",
+                "target": {
+                  "entity_id": "{{ r.reason }}"
+                },
+                "data": {
+                  "option": "none"
+                }
+              }
+            ],
+            "note": "ROUND 15, A3. The label is cleared when the hold is no longer live, rather than left behind an expired hold for every consumer to remember to gate on hold_active. A confident-looking reason attached to a hold that ended hours ago is the same 'state asserts more than it can know' defect this change exists to close, re-entered through a missed gate - and the review was right that somebody would eventually miss it. The test RE-READS r.manual rather than using manual_active, which was sampled at the top of this iteration and therefore predates any hold stamped THIS tick; using it would clear the label a moment after setting it. Same discipline as the is_state() re-reads on the actuating steps. The 'and != none' term keeps it idempotent, so this is not five writes every ten minutes."
           }
         ]
       }
