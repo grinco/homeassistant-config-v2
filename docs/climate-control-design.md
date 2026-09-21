@@ -106,8 +106,8 @@ The cost today is that a unit the automation starts runs in its previous preset 
 
 | Room | Control sensor | Quality |
 |---|---|---|
-| Living Room | `sensor.living_room_meter_pro_co2_be_temperature` | SwitchBot meter — good |
-| Office / Guest Room | `sensor.meter_pro_co2_e9_temperature` | SwitchBot meter — good |
+| Living Room | `sensor.meter_pro_co2_b5be_temperature` | SwitchBot Meter Pro CO2 over **BLE** — good |
+| Office / Guest Room | `sensor.meter_pro_co2_5fe9_temperature` | SwitchBot Meter Pro CO2 over **BLE** — good |
 | Bedroom | `sensor.master_bedroom_bedroom_ac_temperature` | **AC internal — known ~2 °C high** |
 | Kids room 1 | `sensor.kid1_room_ac_temperature` | AC internal (room unused) |
 | Kids room 2 | `sensor.kid2_room_ac_temperature` | AC internal (room unused) |
@@ -121,6 +121,50 @@ dedicated meter exists the two are the same entity. Resolution:
 
 `-999` is a sentinel meaning *no usable reading*, which resolves to mode `skip` — the room is
 left alone rather than actuated on a default.
+
+#### Two transports to one instrument — BLE first, Matter second (v5.10, 2026-09-21)
+
+The living room and the office each hold a **SwitchBot Meter Pro CO2**, and that one physical
+instrument reaches HA over **two independent transports**: directly over **BLE** through the
+Bluetooth proxy, and over the **SwitchBot Hub Mini's Matter bridge**. They are not two sensors —
+they are two paths to the same thermometer, and they disagree only by staleness.
+
+The operator asked whether the Matter bridge still earns its place now that BLE carries the same
+data. Measured before the change: living room **7.4 min** since the BLE update against **17.6 min**
+over Matter; office **4.8** against **9.1**. BLE is consistently the fresher path, it is already
+the source the CO2 sensors read, and Matter carries no CO2 at all. So BLE becomes the primary.
+
+**Matter is demoted, not removed.** The resolved sensors now run a three-tier chain:
+
+```jinja
+{% set b = states('<ble>')    | float(-999) %}   {# 1. BLE — freshest #}
+{% set m = states('<matter>') | float(-999) %}   {# 2. Matter bridge — same instrument, other transport #}
+{% set f = states('<ac probe>') | float(-999) %} {# 3. AC internal probe + calibration offset #}
+{% if b > -900 %}{{ b | round(2) }}
+{% elif m > -900 %}{{ m | round(2) }}
+{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}
+```
+
+The reasoning for keeping the middle tier is the **cost of the tier below it**. Drop Matter and a
+BLE-proxy or Bluetooth-stack failure takes the room straight down to its AC probe — which needs the
+global calibration offset, reports in whole degrees, and sits in the air the unit itself is blowing.
+That is the A11 problem, and it is a materially worse reading than the *same meter arriving ten
+minutes late over another radio*. A second transport to the same instrument is the cheapest
+redundancy in the system; the only thing it costs is one `elif`.
+
+**Why the tier order is tested rather than asserted.** Three tiers where the top two report the
+same number is a chain that can silently collapse to two and still look correct in every
+observation. `tests/climate/cases.py` therefore gives **every tier a different value**, so the
+expected output names exactly one of them, and `mutate.py` carries two mutations — *"the Matter
+bridge outranks BLE again"* and *"the Matter tier is dropped, not demoted"* — each caught by
+exactly one case.
+
+**Known stale, deliberately not fixed in this change:** the `sensor` and `fallback` keys in the
+automation's room dicts still name the Matter entities. Nothing reads them — resolution moved into
+the template sensors in v5.1 and a grep of the live automation finds **zero** references to either
+key. They are dead documentation embedded in live config, which is the [two implementations drift]
+class over again, so they should be *deleted* rather than re-pointed. That deletion is folded into
+the next automation write instead of reloading a heating automation to correct a comment.
 
 **Bias correction (v3).** The three AC-internal rooms are flagged `biased: true` and have
 `input_number.climate_ac_sensor_offset` (default −2.0 °C) applied **before every comparison,

@@ -71,6 +71,13 @@ BUGS = [
   lambda t: t.replace("{% if c >= 1400 %}", "{% if c < 1400 %}")),
  ("health risk: CO2 check swallows the humidity check", "sensor", "Climate health risk",
   lambda t: t.replace("{% if h >= 65 or h < 30 or t < 16 %}", "{% if false %}")),
+ # BLE over the Matter bridge -- the tier ORDER is the whole point, and a chain
+ # that quietly collapses back to two tiers still satisfies the happy path.
+ ("source order: the Matter bridge outranks BLE again", "sensor", "Climate temp living room",
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}",
+                      "{% if m > -900 %}{{ m | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
+ ("source order: the Matter tier is dropped, not demoted", "sensor", "Climate humidity office",
+  lambda t: t.replace("{% elif m >= 0 %}{{ m | round(1) }}", "")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

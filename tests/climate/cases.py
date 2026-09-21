@@ -342,6 +342,106 @@ A(sensor_case("a dead corridor humidity source yields nothing", "",
               finding="same skip-sentinel discipline as the rooms"))
 
 
+
+# ---------------------------------------------------------------- BLE over the Matter bridge
+# 2026-09-21.  The living room and the office each have a SwitchBot Meter Pro CO2
+# that reaches HA twice: over the SwitchBot Hub Mini's Matter bridge, and directly
+# over BLE through the Bluetooth proxy.  Same physical sensor, two paths.  BLE is
+# measurably the fresher of the two (living room 7.4 min vs 17.6, office 4.8 vs
+# 9.1) and is already the source the CO2 sensors read, so the resolved temperature
+# and humidity now prefer it.
+#
+# Matter is DEMOTED, not removed: it stays as the middle tier so that a proxy or
+# BLE stack failure lands on the same physical instrument over another transport
+# instead of dropping the room to its AC probe.  The probe is the last tier for a
+# reason -- it needs the calibration offset and reports in whole degrees, which is
+# the A11 problem.  Tier order is the whole point of these cases; a chain that
+# quietly collapses to two tiers still passes case 1.
+LR_T = "Climate temp living room"
+LR_H = "Climate humidity living room"
+OF_T = "Climate temp office"
+OF_H = "Climate humidity office"
+
+LR_T_BLE = "states('sensor.meter_pro_co2_b5be_temperature')"
+LR_T_MAT = "states('sensor.living_room_meter_pro_co2_be_temperature')"
+LR_T_AC = "states('sensor.living_room_livingroom_ac_temperature')"
+LR_H_BLE = "states('sensor.meter_pro_co2_b5be_humidity')"
+LR_H_MAT = "states('sensor.living_room_meter_pro_co2_be_humidity')"
+LR_H_AC = "states('sensor.living_room_livingroom_ac_humidity')"
+
+OF_T_BLE = "states('sensor.meter_pro_co2_5fe9_temperature')"
+OF_T_MAT = "states('sensor.meter_pro_co2_e9_temperature')"
+OF_T_AC = "states('sensor.office_guest_room_office_ac_temperature')"
+OF_H_BLE = "states('sensor.meter_pro_co2_5fe9_humidity')"
+OF_H_MAT = "states('sensor.meter_pro_co2_e9_humidity')"
+OF_H_AC = "states('sensor.office_guest_room_office_ac_humidity')"
+
+# Every tier carries a DIFFERENT value in these cases, so the expected output
+# names exactly one tier.  Giving two tiers the same reading would let a wrong
+# precedence pass.
+A(sensor_case(
+    "living room temperature prefers BLE over the Matter bridge", "23.4",
+    {LR_T_BLE: "'23.4'", LR_T_MAT: "'22.1'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="BLE is the fresher path to the same instrument"))
+A(sensor_case(
+    "a dead BLE meter falls to Matter, not to the AC probe", "22.1",
+    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'22.1'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="Matter is demoted to the middle tier, not removed"))
+A(sensor_case(
+    "both meter paths down fall to the corrected AC probe", "23.0",
+    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'unavailable'", LR_T_AC: "'25.0'",
+     AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="the probe still needs its offset applied"))
+A(sensor_case(
+    "every living room temperature source down yields nothing", "",
+    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'unavailable'", LR_T_AC: "'unavailable'",
+     AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="R7-9: the skip sentinel, never a fabricated number"))
+
+A(sensor_case(
+    "office temperature prefers BLE over the Matter bridge", "21.7",
+    {OF_T_BLE: "'21.7'", OF_T_MAT: "'20.4'", OF_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=OF_T, finding="BLE is the fresher path to the same instrument"))
+A(sensor_case(
+    "a dead office BLE meter falls to Matter, not to the AC probe", "20.4",
+    {OF_T_BLE: "'unavailable'", OF_T_MAT: "'20.4'", OF_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=OF_T, finding="Matter is demoted to the middle tier, not removed"))
+A(sensor_case(
+    "both office meter paths down fall to the corrected AC probe", "23.0",
+    {OF_T_BLE: "'unavailable'", OF_T_MAT: "'unavailable'", OF_T_AC: "'25.0'",
+     AC_OFF: "'-2.0'"},
+    sensor=OF_T, finding="the probe still needs its offset applied"))
+
+A(sensor_case(
+    "living room humidity prefers BLE over the Matter bridge", "47.0",
+    {LR_H_BLE: "'47'", LR_H_MAT: "'52'", LR_H_AC: "'60'"},
+    sensor=LR_H, finding="BLE is the fresher path to the same instrument"))
+A(sensor_case(
+    "a dead BLE humidity reading falls to Matter", "52.0",
+    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'52'", LR_H_AC: "'60'"},
+    sensor=LR_H, finding="Matter is demoted to the middle tier, not removed"))
+A(sensor_case(
+    "both humidity meter paths down fall to the AC probe", "60.0",
+    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'unavailable'", LR_H_AC: "'60'"},
+    sensor=LR_H, finding="humidity carries no calibration offset"))
+A(sensor_case(
+    "every living room humidity source down yields nothing", "",
+    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'unavailable'", LR_H_AC: "'unavailable'"},
+    sensor=LR_H, finding="R7-9: the skip sentinel, never a fabricated number"))
+
+A(sensor_case(
+    "office humidity prefers BLE over the Matter bridge", "44.0",
+    {OF_H_BLE: "'44'", OF_H_MAT: "'49'", OF_H_AC: "'60'"},
+    sensor=OF_H, finding="BLE is the fresher path to the same instrument"))
+A(sensor_case(
+    "a dead office BLE humidity reading falls to Matter", "49.0",
+    {OF_H_BLE: "'unavailable'", OF_H_MAT: "'49'", OF_H_AC: "'60'"},
+    sensor=OF_H, finding="Matter is demoted to the middle tier, not removed"))
+A(sensor_case(
+    "both office humidity paths down fall to the AC probe", "60.0",
+    {OF_H_BLE: "'unavailable'", OF_H_MAT: "'unavailable'", OF_H_AC: "'60'"},
+    sensor=OF_H, finding="humidity carries no calibration offset"))
+
 # ---------------------------------------------------------------- purifier after the cat toilet
 # A second automation. Its logic is mostly SEQUENCING (turn on, settle, wait,
 # turn off), which is precisely the class tests/climate cannot reach -- see the
