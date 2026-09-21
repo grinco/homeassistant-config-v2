@@ -62,6 +62,19 @@ notification titles, area names, and the *options* of `min_max` / `group` helper
 
 ## 3. Before you commit
 
+```bash
+python3 tests/leakcheck.py --commits
+```
+
+It reads the terms from `tests/climate/rooms.local.json` (gitignored) and scans every tracked
+file plus every unpushed commit and commit message. Run it before any push.
+
+**Word boundaries are not enough, and this is not theoretical.** `\b` does not fire between
+`_` and a letter, because `_` is a word character — so `\bNAME\b`-style patterns silently fail
+to match `..._NAME_room_area_state`. On 2026-09-21 a dashboard export carrying a Magic Areas
+presence entity passed a `\b`-anchored scan and went into a commit. It was caught before the
+push, by a scan that used lookarounds excluding only letters and digits. Use those.
+
 - Scan the **committed blobs**, not the working tree: `git grep -i <term> HEAD`.
 - Scan the commit message.
 - If a name has already been pushed, say so plainly and immediately — it is a public repo and a
