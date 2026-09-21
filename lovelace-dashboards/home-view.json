@@ -460,16 +460,17 @@
           "primary": "Living room",
           "icon": "mdi:sofa-outline",
           "secondary": "{% if is_state('light.living_room_lights','on') %}On{% set b = state_attr('light.living_room_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.living_room_livingroom_ac_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.living_room_livingroom_ac_temperature') }}",
-          "color": "{{ 'amber' if is_state('light.living_room_lights','on') else 'grey' }}",
+          "color": "{% set ls = expand(area_entities('living_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.living_room_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "toggle"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "living_room"
+            }
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/living-room"
-          },
-          "double_tap_action": {
-            "action": "more-info"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -489,16 +490,17 @@
           "primary": "Kitchen",
           "icon": "mdi:countertop-outline",
           "secondary": "{% if is_state('light.gallery','on') %}On{% set b = state_attr('light.gallery','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · cooktop on' if is_state('sensor.house_cooktop_operation_state','run') }}{{ ' · oven on' if states('sensor.house_oven_operation_state') in ['run','delayedstart'] }}",
-          "color": "{{ 'amber' if is_state('light.gallery','on') else 'grey' }}",
+          "color": "{% set ls = expand(area_entities('kitchen')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.gallery','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "toggle"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "kitchen"
+            }
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/kitchen"
-          },
-          "double_tap_action": {
-            "action": "more-info"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -518,16 +520,17 @@
           "primary": "Office",
           "icon": "mdi:desk",
           "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.janka_s_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.janka_s_desk_temperature') }}",
-          "color": "{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}",
+          "color": "{% set ls = expand(area_entities('bedroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "toggle"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "bedroom"
+            }
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/guest-room"
-          },
-          "double_tap_action": {
-            "action": "more-info"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -547,16 +550,17 @@
           "primary": "Corridor",
           "icon": "mdi:stairs",
           "secondary": "{% if is_state('light.corridor_lights','on') %}On{% set b = state_attr('light.corridor_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}",
-          "color": "{{ 'amber' if is_state('light.corridor_lights','on') else 'grey' }}",
+          "color": "{% set ls = expand(area_entities('corridor')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.corridor_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "toggle"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "corridor"
+            }
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/corridor"
-          },
-          "double_tap_action": {
-            "action": "more-info"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -574,18 +578,25 @@
           "area": "laundry_room",
           "primary": "Laundry",
           "icon": "mdi:washing-machine",
-          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
-          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else 'grey' }}",
+          "secondary": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
+          "color": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/laundry-room"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "laundry_room"
+            }
           },
           "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/laundry-room"
           },
           "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
-          "badge_color": "green"
+          "badge_color": "green",
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/laundry-room"
+          }
         },
         {
           "type": "custom:mushroom-template-card",
@@ -596,18 +607,25 @@
           "area": "shower",
           "primary": "Shower",
           "icon": "mdi:shower-head",
-          "secondary": "{{ 'LEAK' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'Dry' }} · {{ states('sensor.shower_sink_leak_battery') }}% batt",
-          "color": "{{ 'red' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'light-blue' }}",
+          "secondary": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'LEAK' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'Dry' }} · {{ states('sensor.shower_sink_leak_battery') }}% batt",
+          "color": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'red' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'light-blue' }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/shower"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "shower"
+            }
           },
           "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/shower"
           },
           "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_shower_area_state','on') else '' }}",
-          "badge_color": "green"
+          "badge_color": "green",
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/shower"
+          }
         },
         {
           "type": "heading",
@@ -625,14 +643,18 @@
           "area": "bedroom_2",
           "primary": "Bedroom",
           "icon": "mdi:bed-king-outline",
-          "secondary": "{% set s = states('climate.master_bedroom_bedroom_ac') %}{{ state_attr('climate.master_bedroom_bedroom_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.master_bedroom_bedroom_ac','temperature') ~ '°' }}",
-          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.master_bedroom_bedroom_ac'), 'grey') }}",
+          "secondary": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.master_bedroom_bedroom_ac') %}{{ state_attr('climate.master_bedroom_bedroom_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.master_bedroom_bedroom_ac','temperature') ~ '°' }}",
+          "color": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.master_bedroom_bedroom_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/bedroom"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "bedroom_2"
+            }
           },
           "hold_action": {
-            "action": "more-info"
+            "action": "navigate",
+            "navigation_path": "/lovelace/bedroom"
           },
           "icon_tap_action": {
             "action": "more-info"
@@ -650,14 +672,18 @@
           "area": "kid1_room",
           "primary": "Kids room 1",
           "icon": "mdi:bed-single-outline",
-          "secondary": "{% set s = states('climate.kid1_room_ac') %}{{ state_attr('climate.kid1_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid1_room_ac','temperature') ~ '°' }}",
-          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid1_room_ac'), 'grey') }}",
+          "secondary": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.kid1_room_ac') %}{{ state_attr('climate.kid1_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid1_room_ac','temperature') ~ '°' }}",
+          "color": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid1_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/kid1"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "kid1_room"
+            }
           },
           "hold_action": {
-            "action": "more-info"
+            "action": "navigate",
+            "navigation_path": "/lovelace/kid1"
           },
           "icon_tap_action": {
             "action": "more-info"
@@ -675,14 +701,18 @@
           "area": "kid2_room",
           "primary": "Kids room 2",
           "icon": "mdi:teddy-bear",
-          "secondary": "{% set s = states('climate.kid2_room_ac') %}{{ state_attr('climate.kid2_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid2_room_ac','temperature') ~ '°' }}",
-          "color": "{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid2_room_ac'), 'grey') }}",
+          "secondary": "{% set ls = expand(area_entities('kid2_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.kid2_room_ac') %}{{ state_attr('climate.kid2_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid2_room_ac','temperature') ~ '°' }}",
+          "color": "{% set ls = expand(area_entities('kid2_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid2_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/kid2"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "kid2_room"
+            }
           },
           "hold_action": {
-            "action": "more-info"
+            "action": "navigate",
+            "navigation_path": "/lovelace/kid2"
           },
           "icon_tap_action": {
             "action": "more-info"
@@ -699,18 +729,25 @@
           "area": "hallway",
           "primary": "Hallway",
           "icon": "mdi:stairs-up",
-          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
-          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else 'grey' }}",
+          "secondary": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
+          "color": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/hallway"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "hallway"
+            }
           },
           "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/hallway"
           },
           "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
-          "badge_color": "green"
+          "badge_color": "green",
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/hallway"
+          }
         },
         {
           "type": "custom:mushroom-template-card",
@@ -721,18 +758,25 @@
           "area": "bathroom",
           "primary": "Bathroom",
           "icon": "mdi:bathtub-outline",
-          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
-          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else 'grey' }}",
+          "secondary": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
+          "color": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/bathroom"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "bathroom"
+            }
           },
           "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/bathroom"
           },
           "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
-          "badge_color": "green"
+          "badge_color": "green",
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/bathroom"
+          }
         },
         {
           "type": "custom:mushroom-template-card",
@@ -743,18 +787,25 @@
           "area": "closet",
           "primary": "Closet",
           "icon": "mdi:hanger",
-          "secondary": "{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
-          "color": "{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else 'grey' }}",
+          "secondary": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
+          "color": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/closet"
+            "action": "perform-action",
+            "perform_action": "script.toggle_area_lights",
+            "data": {
+              "area_id": "closet"
+            }
           },
           "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/closet"
           },
           "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
-          "badge_color": "green"
+          "badge_color": "green",
+          "hold_action": {
+            "action": "navigate",
+            "navigation_path": "/lovelace/closet"
+          }
         }
       ]
     },
