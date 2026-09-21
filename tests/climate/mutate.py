@@ -32,6 +32,12 @@ BUGS = [
   lambda t: t.replace(" and not standdown", "")),
  ("standdown: the breaker isolates a power-saving unit", "expr", "diverged",
   lambda t: t.replace(" and not standdown", "")),
+ # F14-5: the safety dispatch bug, restored
+ ("F14-5: safety dispatch gated on the back-offs again", "expr", "may_act",
+  lambda t: t.replace("and (is_safety or (not external_moved and not standdown))",
+                      "and not external_moved and not standdown")),
+ ("F14-5: safety allowed to double-command in flight", "expr", "may_act",
+  lambda t: t.replace("not in_flight and ", "")),
  ("boot grace dropped again (v5.4)", "expr", "no_temp",
   lambda t: t.replace(" and uptime > boot_grace", "")),
  # purifier automation -- bugs it would be natural to write

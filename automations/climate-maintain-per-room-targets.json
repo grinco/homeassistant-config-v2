@@ -379,11 +379,12 @@
           },
           {
             "variables": {
-              "may_act": "{{ active and reachable and not mode_ok and not external_moved and not standdown and not in_flight and not safety_throttled and (fail_count < breaker or is_safety or throttle_ok) }}",
+              "may_act": "{{ active and reachable and not mode_ok and not in_flight and not safety_throttled and (is_safety or (not external_moved and not standdown)) and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
               "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}"
-            }
+            },
+            "note": "ROUND 14, F14-5 - A SAFETY DISPATCH BUG I INTRODUCED AND THEN ASSERTED AWAY. The mode law puts the safety branches ABOVE the manual branch, so a freezing room that is stood down or overridden still RESOLVES to 'heat'. That is what v5.7 verified and it is only half the question: resolving the mode decides what we want, may_act decides what we SEND. 'not external_moved' and 'not standdown' sat as top-level ANDs here while the is_safety bypass was buried inside the breaker clause, so the frost command was computed and never dispatched for as long as unit_moved stayed true - up to human_window, about 20 minutes. Pre-existing for an external override since v3.2; v5.7 widened it to stand-down, which fires far more often now that the units power-save themselves. The fix hoists the bypass: is_safety OR (not external_moved and not standdown). Safety still respects in_flight, because double-commanding is never right, and still respects safety_throttled, which is a rate limit rather than a suppression. The lesson is the one this document keeps relearning: a precedence order is a claim about the DECISION, and it says nothing about the DISPATCH unless you check the dispatch too."
           },
           {
             "variables": {

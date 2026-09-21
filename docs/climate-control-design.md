@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-21). Version 5.7.
+Status: **implemented and live** (2026-09-21). Version 5.8.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -29,7 +29,8 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.4** | **Offset distrust made symmetric (an implausible AC offset no longer poisons the fallback it falls back to); blackout grace re-keyed to a per-room persistent stamp that survives a restart and ignores sensor flapping; `human_moved` renamed `external_moved` and its notification stopped claiming the operator did it** | Round-10 findings R10-7, R10-6, R10-1 — see §26 |
 | **v5.5** | **An implausible calibration offset is now REPLACED BY THE MEASURED DEFAULT instead of discarding the source — v5.4 cost a room its safety floor to avoid a wrong number; the boot grace is restored alongside the per-room blackout clock; a unit that keeps changing itself is escalated as possibly faulty** | Round-11 findings F11-1, F11-3, F11-4 — see §27 |
 | **v5.6** | **The AC offset is no longer plausibility-checked at all — its helper range IS the envelope, and the extra check could only reject a *correct* large offset and fail cold; a calibration override now reaches the phone; the recurrence notice stopped naming a cause it cannot know and got its own notification id** | Round-12 findings F-1.1, F-1.5, F-4.2/3/4 — see §28 |
-| **v5.7** | **A unit that switches ITSELF off is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
+| **v5.7** | **A unit that goes to `off` for a reason we cannot identify is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
+| **v5.8** | **Safety dispatch hoisted above the back-offs.** A freezing room that was stood down or overridden resolved to `heat` and then never sent the command, for up to 20 minutes | Round-14 F14-5 — see §31 |
 
 ---
 
@@ -1894,7 +1895,7 @@ another round now.
 
 ---
 
-## 30. v5.7 — the units now switch themselves off
+## 30. v5.7 — the units now switch themselves off, and v5.8 — the safety dispatch hole it exposed
 
 The operator enabled the ACs' own presence-based power saving: a unit powers down after its
 room has been empty for a while. Their instruction was exact — *"make sure that this wouldn't
@@ -1950,9 +1951,8 @@ Only the claim and the paging differ. A UI notification remains so a room that s
 still explainable; `r.ext` is not stamped, because a recurrence of the operator's own power
 saving is expected behaviour rather than a fault worth escalating.
 
-Safety is untouched and was verified: `skip > frost > away floor > away ceiling > manual`, so a
-stood-down room that falls below 18 °C is still heated, and `is_safety` still bypasses the
-breaker.
+~~Safety is untouched and was verified: `skip > frost > away floor > away ceiling > manual`.~~
+**That claim was half right, and the wrong half was the one that mattered — see §31.**
 
 **The known limitation.** Comfort control resumes when the hold expires, not when somebody walks
 back in. With no presence input there is nothing to resume *on*, so a room re-heats on a timer
@@ -1975,3 +1975,91 @@ The fourth was a harness limit: at 94 cases the single batched render reached ~5
 unrelated health-risk case appeared to fail. Evaluation is now **chunked**, with a guard that
 raises when a case renders to source. The lesson is the same one this document keeps learning:
 *a test harness that fails confusingly will be misread as a code regression.*
+
+---
+
+## 31. v5.8 — a precedence order is a claim about the decision, not the dispatch
+
+Round 14 asked whether a stood-down unit can reach a state the safety band cannot recover. It
+can, it could before v5.7 as well, and §30's reassurance was the kind of claim this document
+has spent fourteen rounds learning to distrust.
+
+**What I checked, and what I skipped.** The mode law puts the safety branches *above* the manual
+branch, so a freezing room that is stood down or overridden resolves to `heat`, not `manual`. I
+verified that, wrote "safety is untouched", and moved on. But resolving the mode decides **what
+we want**. `may_act` decides **what we send** — and there, `not external_moved` and `not
+standdown` sat as top-level `AND`s while the `is_safety` bypass was buried inside the breaker
+clause:
+
+```
+may_act := … and not external_moved and not standdown
+           and (fail_count < breaker OR is_safety OR throttle_ok)
+                                        ↑ the only safety bypass, in the wrong clause
+```
+
+So the frost command was **computed and never dispatched**, for as long as `unit_moved` stayed
+true — bounded by `human_window`, about **20 minutes**. Verified against the live expressions:
+room at 5 °C, unit stood down 5 minutes ago → `mode = heat`, `may_act = False`.
+
+**This was pre-existing for `external_moved`, since v3.2.** v5.7 did not create it; it widened
+it to a second trigger that now fires routinely, because the units power-save themselves several
+times a day. A rare 20-minute hole became a frequent one, which is how a latent defect becomes a
+live one.
+
+The fix hoists the bypass:
+
+```
+may_act := … and not in_flight and not safety_throttled
+           and (is_safety OR (not external_moved and not standdown))
+           and (fail_count < breaker OR is_safety OR throttle_ok)
+```
+
+Safety still respects `in_flight`, because double-commanding is never right, and still respects
+`safety_throttled`, which is a rate limit rather than a suppression. Both are locked by cases.
+
+> **The rule, stated so it is not relearned a fifteenth time.** A precedence order is a claim
+> about **the decision**. It says nothing about **the dispatch**. Every guard that sits between
+> deciding and sending must be checked for whether safety passes through it — and "safety is
+> untouched" is not a finding, it is a hypothesis, until a case proves the command is actually
+> sent.
+
+### Round 14's other findings
+
+| # | Finding | Status |
+|---|---|---|
+| **F14-5** | Safety resolved but never dispatched under a stand-down or an override | **Fixed** — §31, with four cases and two mutations |
+| **F14-1** | The rule is really *"any → `off` is silent"*, not *"power saving is silent"*. A power blip, a cloud push to off, or a failing board all take the quiet path | **Valid.** Named as accepted blindness below rather than implied away |
+| **F14-3** | Not stamping `r.ext` means a unit cycling itself off pathologically is invisible to *every* detector — F11-4 re-opened for the non-power-saving causes | **Valid and open** — see below; the fix depends on a fact about the hardware I do not have |
+| F14-2 | Stand-down reuses the manual-hold stamp, so the two are indistinguishable afterwards | **Valid**, deferred with F14-3 |
+| F14-4 | Resume-on-expiry wastes a command per cycle; resuming on *the unit leaving `off`* would not | **Valid**, and blocked on the same hardware question |
+| F14-6 | §30's title repeated the R10-1 over-claim at heading level | **Fixed** — the rule cannot know it was "itself" |
+| F14-7 | Chunking is correct containment; the guard has its own failure modes | Partly actioned; see `tests/climate/README.md` |
+
+### Accepted blindness, stated plainly
+
+The stand-down path catches **every** cause that drives a unit to `off`: presence power saving,
+a person pressing off, a power blip and restore, a cloud or SmartThings routine, a failing
+control board. The rule cannot tell them apart, and it treats them all quietly.
+
+That is a deliberate trade — optimise for the common case at the cost of visibility into the
+rare one — and §30 presented it as no trade at all. It is a trade. The cost is that a unit
+failing by repeatedly switching itself off is now invisible to the push, to the breaker, and to
+the recurrence detector simultaneously. **F14-3 is open and is the most important thing left
+here.**
+
+### The question that unblocks F14-3 and F14-4
+
+Both fixes turn on one fact about the hardware that I cannot determine from the data:
+
+> **When presence returns, does the unit switch itself back on, or does it only ever switch
+> off?**
+
+- If it **resumes on its own**, the right design is to stop re-commanding on hold expiry
+  entirely and resume when the unit leaves `off`. No wasted commands, no compressor cycling in
+  an empty room, and a stand-down that repeats on a *fast* cadence becomes an unambiguous fault
+  signal worth escalating — which closes F14-3 without presence detectors.
+- If it **only switches off**, resuming on the unit's own state change would leave a room cold
+  until somebody intervened, so the timer must stay, and F14-3 needs a different answer.
+
+Until that is known, guessing would be inventing a fact about the operator's hardware, which is
+the failure mode §28 was written about.

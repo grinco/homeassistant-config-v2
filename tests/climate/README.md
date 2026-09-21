@@ -108,6 +108,19 @@ substitutes, and the suite errors rather than going green.
    whose input crosses it. Verifying a 2 °C error at a room temperature where both
    the right and wrong answer are "don't heat" proves direction, not consequence.
 
+## Known failure modes of the harness itself
+
+- **The "rendered to source" guard can misfire both ways.** A case that legitimately renders to
+  an empty string is hard to distinguish from one that failed to evaluate. If you add a case
+  whose expected value is `""`, confirm it fails when you break the expression.
+- **Chunking shrank the sentinel-split blast radius; it did not remove it.** One bad case now
+  poisons its own chunk of 12 rather than all 99, but within a chunk the same misalignment is
+  possible. If a chunk reports several odd failures at once, suspect one bad case in it rather
+  than a real regression.
+- **Run the expression check BEFORE deploying, not after.** v5.7 went live and *then* the suite
+  went red. A more robust harness is not a substitute for `ha_eval_template` against the change
+  first. That discipline caught nothing on v5.7 because it was not run.
+
 ## Adding a case
 
 When a review round finds something, add the case **before** shipping the fix,

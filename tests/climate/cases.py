@@ -220,11 +220,43 @@ A(case("we do not fight a stood-down unit", "may_act", "False",
         "standdown": True, "in_flight": False, "safety_throttled": False,
         "fail_count": 0, "breaker": 3, "is_safety": False, "throttle_ok": False},
        finding="re-commanding would loop against the unit's own timer"))
-A(case("SAFETY still overrides a stood-down unit", "may_act", "True",
+A(case("safety outranks the breaker", "may_act", "True",
        {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
         "standdown": False, "in_flight": False, "safety_throttled": False,
         "fail_count": 99, "breaker": 3, "is_safety": True, "throttle_ok": False},
-       finding="frost and the cat floor outrank every back-off, including this one"))
+       finding="A5 / v3.1"))
+
+# R14 F14-5. The mode law puts safety ABOVE manual, so a freezing stood-down room resolves
+# to 'heat' rather than 'manual' -- but that only decides WHAT we want. Dispatch is may_act,
+# and 'not standdown' / 'not external_moved' sat as TOP-LEVEL ands there while the is_safety
+# bypass was buried inside the breaker clause. So the frost command was computed and never
+# sent, for as long as unit_moved stayed true: up to human_window, ~20 minutes.
+# I verified the PRECEDENCE and asserted the DISPATCH. These cases make it verify itself.
+A(case("SAFETY DISPATCHES through a stand-down", "may_act", "True",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": True, "in_flight": False, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="F14-5: a freezing room must be heated even while the unit is stood down"))
+A(case("SAFETY DISPATCHES through an external override", "may_act", "True",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": True,
+        "standdown": False, "in_flight": False, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="F14-5: PRE-EXISTING - a wall override suppressed safety dispatch too"))
+A(case("comfort still yields to a stand-down", "may_act", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": True, "in_flight": False, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": False, "throttle_ok": False},
+       finding="the back-off must still hold for ordinary comfort"))
+A(case("safety still respects the in-flight window", "may_act", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": True, "in_flight": True, "safety_throttled": False,
+        "fail_count": 0, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="M1/R4-2: never double-command, not even for safety"))
+A(case("safety still respects its own throttle", "may_act", "False",
+       {"active": True, "reachable": True, "mode_ok": False, "external_moved": False,
+        "standdown": True, "in_flight": False, "safety_throttled": True,
+        "fail_count": 0, "breaker": 3, "is_safety": True, "throttle_ok": False},
+       finding="the safety retry throttle is a rate limit, not a suppression"))
 
 # ---------------------------------------------------------------- resolved sensors
 BED = "Climate temp bedroom"
