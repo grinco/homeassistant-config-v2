@@ -14,6 +14,40 @@ a decision here exists because of a bug there, the section says so.
 
 ---
 
+
+## The PM2.5 sensor is trusted again (2026-09-21, evening)
+
+`input_boolean.purifier_pm25_trusted` is **on**. The "assumed broken" verdict is withdrawn.
+
+It was set after the sensor failed to move across 46 minutes of full airflow following a cat
+visit (incident 7.2). That observation was real, but the conclusion drawn from it was too
+strong. History for the same afternoon shows the reading cycling **1 → 2 → 3 → 4 → 6 → 4 → 2
+→ 1** repeatedly between 14:03 and 14:33. It responds; it simply spends most of its life at
+the floor because the corridor air is clean.
+
+**Why flipping the toggle is a small change, not a risky one.** The early stop was never
+gated on the toggle alone:
+
+```jinja
+pm_usable: {{ is_state('input_boolean.purifier_pm25_trusted','on') and pm_after_settle >= 2 }}
+```
+
+The second clause is a **per-run** responsiveness proof: the reading must actually have risen
+above the floor after the settle delay before it is allowed any vote in *that run*. So a run
+where the sensor sits at 1 throughout still goes the full 30 minutes, exactly as it does
+today. Trusting the sensor restores the originally requested behaviour — *"half an hour or
+until the PM reading drops back to 1"* — without removing the guard that made distrusting it
+survivable.
+
+**The dashboard banner is gone** along with the `(not trusted)` label on the PM2.5 tile. The
+toggle itself stays on the Climate — advanced view, because it is a control rather than
+prose, and one switch is still the whole cost of reversing this.
+
+**What the earlier verdict got right, and should be kept:** the assumption lived in a
+*toggle*, not in the automation's shape. Withdrawing it cost one service call and two
+dashboard edits, and no logic changed. That is the property worth preserving next time a
+piece of hardware looks dead.
+
 ## 1. The operator's request, and why it could not be implemented literally
 
 > "start the purifier for half an hour or until the pm reading drops back to 1 after the

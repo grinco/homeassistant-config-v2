@@ -221,6 +221,37 @@ v5.5 mistake exactly. The transient is bounded, self-correcting within the hour,
 the suppress-heating direction against a target well below the room, so it is ridden out rather
 than guarded.
 
+#### "3 AC running" with every AC off — the header card counted the radiator valves
+
+Reported 2026-09-21: the Home view's header said **3 AC running** while all five air
+conditioners were off. It was counting the **Tado TRVs**.
+
+```jinja
+{# was #}  states.climate | rejectattr('state','eq','off') | list | count
+{# now #}  states.climate | rejectattr('state','eq','off')
+             | map(attribute='entity_id') | select('search','_ac$') | list | count
+```
+
+There are **eight** `climate.*` entities in this house: five ACs and three radiator valves.
+The valves sit in `auto` permanently — that is their resting state, not an active one — so
+"not off" counted exactly the three of them, forever, and the number was wrong in both
+directions at once: three phantom ACs, and a genuinely running AC would have been buried in
+the same total.
+
+**The fix matches positively rather than negatively.** `_ac$` counts things that *are* air
+conditioners, instead of counting everything that is not a known valve. A negative filter
+fails the wrong way: the next `climate.*` entity added to the house — another TRV, a
+thermostat, a water heater — would silently become an air conditioner on the front page. The
+same card already does this correctly one line above, where it excludes light *groups* from
+the light count.
+
+**The class, again.** This is the third instance of a dashboard asserting something about the
+system that the system itself does not assert: the card had its own idea of what an air
+conditioner is, and the automation's room list — which names each room's `climate` entity
+explicitly and has never once confused a valve for a unit — was right there. The rule stands:
+*a card should read what the automation decided, not re-derive it.* Where no such value
+exists, the card's own derivation has to be as narrow as the automation's would be.
+
 **Bias correction (v3).** The three AC-internal rooms are flagged `biased: true` and have
 `input_number.climate_ac_sensor_offset` (default −2.0 °C) applied **before every comparison,
 including the safety band**. v2 applied no correction, which meant the Bedroom reading 18 °C —

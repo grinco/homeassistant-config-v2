@@ -11,7 +11,7 @@
     "card": {
       "type": "markdown",
       "text_only": true,
-      "content": "{% set h = now().hour %}## {% if h < 5 %}Good night{% elif h < 12 %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good evening{% endif %}\n{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ n }} light{{ 's' if n != 1 }} on{% set ac = states.climate | rejectattr('state','eq','off') | list | count %}{% if ac %} · {{ ac }} AC running{% endif %}{% set nr = as_timestamp(states('sensor.sun_next_rising'), 0) %}{% set nd = as_timestamp(states('sensor.sun_next_setting'), 0) %}{% if nr and nd %} · {% if nr < nd %}sunrise {{ nr | timestamp_custom('%H:%M', true) }}{% else %}sunset {{ nd | timestamp_custom('%H:%M', true) }}{% endif %}{% endif %}"
+      "content": "{% set h = now().hour %}## {% if h < 5 %}Good night{% elif h < 12 %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good evening{% endif %}\n{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ n }} light{{ 's' if n != 1 }} on{% set ac = states.climate | rejectattr('state','eq','off') | map(attribute='entity_id') | select('search','_ac$') | list | count %}{% if ac %} · {{ ac }} AC running{% endif %}{% set nr = as_timestamp(states('sensor.sun_next_rising'), 0) %}{% set nd = as_timestamp(states('sensor.sun_next_setting'), 0) %}{% if nr and nd %} · {% if nr < nd %}sunrise {{ nr | timestamp_custom('%H:%M', true) }}{% else %}sunset {{ nd | timestamp_custom('%H:%M', true) }}{% endif %}{% endif %}"
     }
   },
   "badges": [
@@ -40,8 +40,8 @@
     },
     {
       "type": "entity",
-      "entity": "person.adult1",
-      "name": "Adult 1",
+      "entity": "person.vadim_grinco",
+      "name": "Vadim",
       "show_name": true,
       "show_state": false,
       "show_entity_picture": true,
@@ -49,8 +49,8 @@
     },
     {
       "type": "entity",
-      "entity": "person.adult2",
-      "name": "Adult 2",
+      "entity": "person.janka_grinco",
+      "name": "Janka",
       "show_name": true,
       "show_state": false,
       "show_entity_picture": true,
@@ -58,7 +58,7 @@
     },
     {
       "type": "entity",
-      "entity": "person.kid1",
+      "entity": "person.kid1_grinco",
       "name": "Kids room 1",
       "show_name": true,
       "show_state": false,
@@ -517,7 +517,7 @@
           "area": "bedroom",
           "primary": "Office",
           "icon": "mdi:desk",
-          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.desk_socket_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.desk_socket_temperature') }}",
+          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.janka_s_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.janka_s_desk_temperature') }}",
           "color": "{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}",
           "tap_action": {
             "action": "toggle"
