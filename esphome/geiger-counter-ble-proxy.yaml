@@ -11,25 +11,32 @@ substitutions:
   geiger_pin: GPIO13
 
 # ---------------------------------------------------------------------------
-# WIRING -- the pulse output is 5 V and ESP32 GPIOs are NOT 5 V tolerant.
+# WIRING -- as built: the board's pulse output goes STRAIGHT to ${geiger_pin},
+# and it is powered from the VIN/GND pins next to D13. It has run that way for
+# years without damaging the board, so nothing here asks for it to be changed.
 #
-# Do not connect the board's VOUT straight to ${geiger_pin}. Put a divider in
-# the signal line:
+# Why that works, even though ESP32 GPIOs are not 5 V tolerant: these interface
+# boards almost always put a series resistor on the output, or drive it through
+# an open-collector transistor. With a series resistor in the path, the ESP32's
+# internal clamp diode conducts and holds the pin near 3.6 V at a current the
+# resistor limits. Out of spec on paper, benign in practice, and consistent with
+# the observed lifetime.
 #
-#     Geiger VOUT --[ 10k ]--+-- GPIO13
-#                            |
-#                          [ 15k ]
-#                            |
-#     Geiger GND ------------+-- ESP32 GND      (grounds MUST be common)
-#
-#   5 V x 15/(10+15) = 3.0 V at the pin. Any ratio landing in 2.6-3.3 V works.
+# The open question is only worth one measurement, whenever convenient: DC volts
+# between the signal line and GND with the tube powered. The line IDLES at the
+# pull-up rail and is pulsed low, so the idle reading is what the pin sits at
+# essentially all the time.
+#   - idles at ~3.3 V  -> nothing to do, the board references 3V3
+#   - idles at ~5 V    -> it has been clamping for years. Still fine as-is; a
+#                         10k/15k divider (5 x 15/25 = 3.0 V) would make it
+#                         nominal if that is ever worth the soldering.
+# Either way this config counts FALLING edges, which is the idle-high, pulse-low
+# behaviour both cases produce.
 #
 # Two failure signatures once it is running:
-#   - exactly 0 CPM, always  -> the divider is on the wrong net, or the board's
-#     output is not where it was assumed to be
-#   - hundreds/thousands CPM -> the input is floating, because the board's output
-#     is open-collector with no pull-up. Add a 10k from VOUT to the board's 3V3
-#     (NOT to 5 V), or raise the divider's lower leg.
+#   - exactly 0 CPM, always  -> wrong pin, or the output is not on the net assumed
+#   - hundreds/thousands CPM -> the input is floating, because the output is
+#     open-collector with no pull-up. Add a 10k from the signal line to 3V3.
 #
 # Background is roughly 10-30 CPM for a J305. A reading in that band after a few
 # minutes means it works; the first minute is meaningless, the counter needs a

@@ -50,20 +50,29 @@ or not-yet-reported counter resolves to nothing at all. These are different fact
 reporting no events in a minute is data, a tube that is not reporting is not. Collapsing
 them would either invent a reading or discard a real one, and both are tested.
 
-## Wiring — the part that can destroy the ESP32
+## Wiring — as built, and why it survives
 
-**The interface board's pulse output is 5 V. ESP32 GPIOs are not 5 V tolerant.** The output
-must not reach GPIO13 directly:
+The board's pulse output goes **straight to GPIO13**, powered from the VIN/GND pins beside
+D13. It has been wired that way for years with no damage, so this is documented as-built and
+nothing below asks for it to be changed.
 
-```
-    Geiger VOUT ──[ 10k ]──┬── GPIO13
-                           │
-                         [ 15k ]
-                           │
-    Geiger GND ────────────┴── ESP32 GND     (grounds must be common)
-```
+That is worth an explanation, because ESP32 GPIOs are not 5 V tolerant and the output is
+nominally 5 V. These interface boards almost always put a **series resistor** on the output,
+or drive it through an **open-collector transistor**. With resistance in the path, the ESP32's
+internal clamp diode conducts and holds the pin near 3.6 V at a current the resistor limits.
+Out of spec on paper, benign in practice, and consistent with the observed lifetime.
 
-5 × 15/(10+15) = 3.0 V at the pin. Any ratio landing between 2.6 V and 3.3 V is fine.
+**One measurement would settle it**, whenever convenient: DC volts between the signal line and
+GND with the tube powered. The line idles at the pull-up rail and is pulsed low, so the *idle*
+reading is what the pin sits at essentially all of the time.
+
+| idle reading | meaning |
+|---|---|
+| ~3.3 V | the board references 3V3 — nothing to do |
+| ~5 V | it has been clamping for years. Still fine as-is; a 10k/15k divider (5 × 15/25 = 3.0 V) would make it nominal if that is ever worth the soldering |
+
+Either way the config counts **falling edges**, which is the idle-high/pulse-low behaviour
+both cases produce.
 
 **High voltage:** the board steps up to roughly 400 V for the tube, and that side stays
 energised briefly after power is removed.
