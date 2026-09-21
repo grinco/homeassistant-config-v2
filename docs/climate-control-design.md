@@ -1914,9 +1914,21 @@ a slow loop.
 ### What the device tells us: nothing
 
 There is no `hvac_action`, and the `drlc_*` attributes are utility demand-response, not this.
-Area presence exists but is not trustworthy — `magic_areas` reports the bedroom empty for 28
-hours. **So presence was deliberately not wired into the control loop**; a control input that
-wrong would have been a worse bug than the one being fixed.
+
+Area presence exists, and would be the *honest* discriminator — a unit that switches off while
+its room is empty is power saving, full stop. But the `magic_areas` sensors have **no physical
+detectors behind them yet**; they are set by hand, which is why the bedroom reads empty for 28
+hours. The operator intends to fit real detectors in the coming weeks.
+
+**So presence was deliberately not wired into the control loop** — not because the setup is
+wrong, but because it is not finished. Building a safety-adjacent classifier on an input that
+is currently a manual placeholder would have been a worse bug than the one being fixed, and the
+shape-based rule below needs nothing that does not already exist.
+
+**Revisit this when the detectors land.** Presence would let the automation distinguish a
+power-save from a person directly rather than inferring it from the shape of the change, and
+would also make "resume when the room is occupied again" possible — which the current design
+cannot do, and which is its main limitation (see below).
 
 ### The discriminator is the shape of the change, not its cause
 
@@ -1941,6 +1953,12 @@ saving is expected behaviour rather than a fault worth escalating.
 Safety is untouched and was verified: `skip > frost > away floor > away ceiling > manual`, so a
 stood-down room that falls below 18 °C is still heated, and `is_safety` still bypasses the
 breaker.
+
+**The known limitation.** Comfort control resumes when the hold expires, not when somebody walks
+back in. With no presence input there is nothing to resume *on*, so a room re-heats on a timer
+rather than on demand — and if it is still empty the unit will simply stand down again, which is
+the correct outcome at the cost of one command. This is the part that gets better when the
+detectors arrive.
 
 ### What the tests caught, and the order I got wrong
 
