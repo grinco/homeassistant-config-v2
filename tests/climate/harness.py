@@ -72,8 +72,13 @@ def load_expressions(automation_id=AUTOMATION_ID):
     return found
 
 
+# Template sensors the suite is allowed to reach. The prefix filter is what keeps
+# an unrelated template helper elsewhere in the instance from being swept in.
+SENSOR_PREFIXES = ("Climate ", "Radiation ")
+
+
 def load_sensor_templates():
-    """Pull the `state:` template of every Climate template sensor."""
+    """Pull the `state:` template of every template sensor the suite covers."""
     with io.open(ENTRIES, encoding="utf-8") as fh:
         data = json.load(fh)
     out = {}
@@ -81,7 +86,7 @@ def load_sensor_templates():
         if entry.get("domain") != "template":
             continue
         title = entry.get("title") or ""
-        if not title.startswith("Climate "):
+        if not title.startswith(SENSOR_PREFIXES):
             continue
         state = (entry.get("options") or {}).get("state")
         if isinstance(state, str):

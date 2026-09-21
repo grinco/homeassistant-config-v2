@@ -88,6 +88,12 @@ BUGS = [
   lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}", "{% if b > -900 %}{{ (b + ac) | round(2) }}")),
  ("kid1: a hot radiator no longer disqualifies the TRV", "sensor", KID1_T,
   lambda t: t.replace("if (live and cold) else -999", "if live else -999")),
+ # Background radiation. The tube marking is unconfirmed, so the two failures that
+ # matter are a hard-coded factor and a dead counter reported as a real zero.
+ ("radiation: the tube factor is hard-coded again", "sensor", "Radiation dose rate",
+  lambda t: t.replace("states('input_number.radiation_usv_per_cpm') | float(0.00812)", "0.00812")),
+ ("radiation: a dead counter reads as zero dose", "sensor", "Radiation dose rate",
+  lambda t: t.replace("| float(-1) %}", "| float(0) %}")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

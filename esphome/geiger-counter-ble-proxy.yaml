@@ -1,0 +1,90 @@
+# Sanitised reference copy. The live file lives in the ESPHome app's config
+# directory; the API encryption key is redacted here because this repo is public.
+
+substitutions:
+  name: geiger-counter-ble-proxy
+  friendly_name: Geiger-counter-ble-proxy
+
+  # 30-pin ESP32 DevKit: the silk numbers ARE the GPIO numbers, so "D13" is GPIO13.
+  # (On an Uno-shaped ESP32 D1 R32 the pin marked D13 would be GPIO18 instead --
+  # not this board.)
+  geiger_pin: GPIO13
+
+# ---------------------------------------------------------------------------
+# WIRING -- the pulse output is 5 V and ESP32 GPIOs are NOT 5 V tolerant.
+#
+# Do not connect the board's VOUT straight to ${geiger_pin}. Put a divider in
+# the signal line:
+#
+#     Geiger VOUT --[ 10k ]--+-- GPIO13
+#                            |
+#                          [ 15k ]
+#                            |
+#     Geiger GND ------------+-- ESP32 GND      (grounds MUST be common)
+#
+#   5 V x 15/(10+15) = 3.0 V at the pin. Any ratio landing in 2.6-3.3 V works.
+#
+# Two failure signatures once it is running:
+#   - exactly 0 CPM, always  -> the divider is on the wrong net, or the board's
+#     output is not where it was assumed to be
+#   - hundreds/thousands CPM -> the input is floating, because the board's output
+#     is open-collector with no pull-up. Add a 10k from VOUT to the board's 3V3
+#     (NOT to 5 V), or raise the divider's lower leg.
+#
+# Background is roughly 10-30 CPM for a J305. A reading in that band after a few
+# minutes means it works; the first minute is meaningless, the counter needs a
+# full window before it reports anything real.
+#
+# HIGH VOLTAGE: the board steps up to ~400 V for the tube, and that side stays
+# energised briefly after power is removed. Do not probe it.
+# ---------------------------------------------------------------------------
+
+packages:
+  esphome.bluetooth-proxy: "github://esphome/bluetooth-proxies/esp32-generic/esp32-generic.yaml@main"
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+
+api:
+  encryption:
+    key: !secret api_encryption_key   # redacted for the public repo
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+sensor:
+  # Counts per minute is the tube-INDEPENDENT measurement, so it is what this
+  # device publishes. Converting counts to a dose rate depends on which tube is
+  # actually fitted, and that conversion lives in Home Assistant behind a helper
+  # rather than being compiled in here: confirming the tube marking must not
+  # mean reflashing the board, and it must not lose the count history either.
+  - platform: pulse_counter
+    pin:
+      number: ${geiger_pin}
+      mode:
+        input: true
+      inverted: false
+    # The interface board pulls the line low once per detected event.
+    count_mode:
+      rising_edge: DISABLE
+      falling_edge: INCREMENT
+    # A GM pulse through an optocoupler is tens to hundreds of microseconds;
+    # 50 us rejects RF pickup without swallowing real counts.
+    internal_filter: 50us
+    update_interval: 60s
+    name: "Background radiation CPM"
+    id: geiger_cpm
+    unit_of_measurement: "CPM"
+    icon: "mdi:radioactive"
+    accuracy_decimals: 0
+    state_class: measurement
+    total:
+      name: "Background radiation total counts"
+      id: geiger_total
+      unit_of_measurement: "counts"
+      icon: "mdi:radioactive"
+      accuracy_decimals: 0
+      state_class: total_increasing

@@ -542,6 +542,46 @@ A(sensor_case(
      K1_CONN: "false"},
     sensor=K1_H, finding="liveness gates the TRV in both resolved sensors"))
 
+
+# ---------------------------------------------------------------- background radiation
+# 2026-09-21. A Geiger-Muller tube on the ESPHome bluetooth proxy (GPIO13) publishes
+# COUNTS PER MINUTE, which is the tube-independent measurement. Turning counts into a
+# dose rate needs a per-tube conversion factor, and the tube's marking is not confirmed
+# yet -- the photo says J305 but the operator has not read the glass.
+#
+# So the factor is a HELPER, not a constant in the template. Confirming the tube must
+# be a slider move, not an edit to a sensor, and must not disturb the count history.
+RAD = "Radiation dose rate"
+RAD_CPM = "states('sensor.background_radiation_cpm')"
+RAD_FACTOR = "states('input_number.radiation_usv_per_cpm')"
+
+A(sensor_case(
+    "counts convert at the configured factor", "0.195",
+    {RAD_CPM: "'24'", RAD_FACTOR: "'0.00812'"},
+    sensor=RAD, finding="J305: 0.00812 uSv/h per CPM"))
+# The factor must actually reach the arithmetic. With one factor only, a template that
+# ignored the helper and hard-coded J305 would pass the case above and nothing else
+# would notice until the tube turned out to be something different.
+A(sensor_case(
+    "a different tube gives a different dose for the same counts", "0.156",
+    {RAD_CPM: "'24'", RAD_FACTOR: "'0.0065'"},
+    sensor=RAD, finding="M4011 is 0.0065; the helper must reach the arithmetic"))
+# Zero counts is a MEASUREMENT. A tube reporting nothing and a tube reporting no
+# events are different facts, and collapsing them would either invent a reading or
+# discard a real one.
+A(sensor_case(
+    "zero counts is a real reading, not a missing one", "0.0",
+    {RAD_CPM: "'0'", RAD_FACTOR: "'0.00812'"},
+    sensor=RAD, finding="0 CPM is data; unavailable is not"))
+A(sensor_case(
+    "an offline counter yields nothing, not zero", "",
+    {RAD_CPM: "'unavailable'", RAD_FACTOR: "'0.00812'"},
+    sensor=RAD, finding="R7-9 discipline: never fabricate a number for a dead source"))
+A(sensor_case(
+    "a counter that has not reported yet yields nothing", "",
+    {RAD_CPM: "'unknown'", RAD_FACTOR: "'0.00812'"},
+    sensor=RAD, finding="the first 60s window reports nothing at all"))
+
 # ---------------------------------------------------------------- purifier after the cat toilet
 # A second automation. Its logic is mostly SEQUENCING (turn on, settle, wait,
 # turn off), which is precisely the class tests/climate cannot reach -- see the
