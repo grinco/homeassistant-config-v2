@@ -180,34 +180,6 @@
               "below": 15
             }
           ]
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.meter_pro_co2_5fe9_battery",
-          "name": "Office CO₂ meter battery",
-          "icon": "mdi:battery-alert",
-          "color": "orange",
-          "visibility": [
-            {
-              "condition": "numeric_state",
-              "entity": "sensor.meter_pro_co2_5fe9_battery",
-              "below": 25
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.meter_pro_co2_b5be_battery",
-          "name": "Living room CO₂ meter battery",
-          "icon": "mdi:battery-alert",
-          "color": "orange",
-          "visibility": [
-            {
-              "condition": "numeric_state",
-              "entity": "sensor.meter_pro_co2_b5be_battery",
-              "below": 25
-            }
-          ]
         }
       ]
     },
