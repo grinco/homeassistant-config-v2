@@ -91,7 +91,9 @@ BUGS = [
  # Background radiation. The tube marking is unconfirmed, so the two failures that
  # matter are a hard-coded factor and a dead counter reported as a real zero.
  ("radiation: the tube factor is hard-coded again", "sensor", "Radiation dose rate",
-  lambda t: t.replace("states('input_number.radiation_usv_per_cpm') | float(0.00812)", "0.00812")),
+  lambda t: t.replace("states('input_number.radiation_usv_per_cpm') | float(0.00332)", "0.00332")),
+ ("radiation: the obsolete 18 CPS/mR/h factor comes back as the fallback", "sensor", "Radiation dose rate",
+  lambda t: t.replace("| float(0.00332)", "| float(0.00812)")),
  ("radiation: a dead counter reads as zero dose", "sensor", "Radiation dose rate",
   lambda t: t.replace("| float(-1) %}", "| float(0) %}")),
 ]

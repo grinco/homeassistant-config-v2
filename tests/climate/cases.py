@@ -546,41 +546,54 @@ A(sensor_case(
 # ---------------------------------------------------------------- background radiation
 # 2026-09-21. A Geiger-Muller tube on the ESPHome bluetooth proxy (GPIO13) publishes
 # COUNTS PER MINUTE, which is the tube-independent measurement. Turning counts into a
-# dose rate needs a per-tube conversion factor, and the tube's marking is not confirmed
-# yet -- the photo says J305 but the operator has not read the glass.
+# dose rate needs a per-tube sensitivity, and the tube's marking is still unconfirmed.
 #
-# So the factor is a HELPER, not a constant in the template. Confirming the tube must
-# be a slider move, not an edit to a sensor, and must not disturb the count history.
+# The factor is a HELPER, not a constant, and the first day already justified that:
+# the constant seeded from memory (0.00812) turned out to be derived from an OBSOLETE
+# J305 datasheet declaring 18 CPS/mR/h. Tubes sold now declare 44, so
+#     1 / (44 x 60 / 8.77) = 0.00332 uSv/h per CPM
+# against the old
+#     1 / (18 x 60 / 8.77) = 0.00812
+# -- the same arithmetic, a 2.45x different answer. Getting that wrong overstates
+# background by a factor of two and a half. See docs/radiation-monitoring-design.md.
 RAD = "Radiation dose rate"
 RAD_CPM = "states('sensor.background_radiation_cpm')"
 RAD_FACTOR = "states('input_number.radiation_usv_per_cpm')"
 
 A(sensor_case(
-    "counts convert at the configured factor", "0.195",
-    {RAD_CPM: "'24'", RAD_FACTOR: "'0.00812'"},
-    sensor=RAD, finding="J305: 0.00812 uSv/h per CPM"))
+    "counts convert at the configured factor", "0.332",
+    {RAD_CPM: "'100'", RAD_FACTOR: "'0.00332'"},
+    sensor=RAD, finding="J305 at the current datasheet: 44 CPS/mR/h"))
 # The factor must actually reach the arithmetic. With one factor only, a template that
-# ignored the helper and hard-coded J305 would pass the case above and nothing else
-# would notice until the tube turned out to be something different.
+# ignored the helper and inlined a constant would pass the case above, and nothing would
+# notice until the tube turned out to be something else.
 A(sensor_case(
-    "a different tube gives a different dose for the same counts", "0.156",
-    {RAD_CPM: "'24'", RAD_FACTOR: "'0.0065'"},
-    sensor=RAD, finding="M4011 is 0.0065; the helper must reach the arithmetic"))
+    "a different tube gives a different dose for the same counts", "0.57",
+    {RAD_CPM: "'100'", RAD_FACTOR: "'0.0057'"},
+    sensor=RAD, finding="SBM-20 is 0.0057; the helper must reach the arithmetic"))
+# The helper can be missing or unavailable -- during a restart, or if it is ever
+# deleted. The fallback must be the CURRENT datasheet value, not the obsolete one,
+# because a fallback nobody notices is exactly where a stale constant survives.
+A(sensor_case(
+    "a missing factor helper falls back to the current datasheet value", "0.332",
+    {RAD_CPM: "'100'", RAD_FACTOR: "'unavailable'"},
+    sensor=RAD, finding="the 2026-09-21 correction: 0.00332, not the obsolete 0.00812"))
 # Zero counts is a MEASUREMENT. A tube reporting nothing and a tube reporting no
 # events are different facts, and collapsing them would either invent a reading or
 # discard a real one.
 A(sensor_case(
     "zero counts is a real reading, not a missing one", "0.0",
-    {RAD_CPM: "'0'", RAD_FACTOR: "'0.00812'"},
+    {RAD_CPM: "'0'", RAD_FACTOR: "'0.00332'"},
     sensor=RAD, finding="0 CPM is data; unavailable is not"))
 A(sensor_case(
     "an offline counter yields nothing, not zero", "",
-    {RAD_CPM: "'unavailable'", RAD_FACTOR: "'0.00812'"},
+    {RAD_CPM: "'unavailable'", RAD_FACTOR: "'0.00332'"},
     sensor=RAD, finding="R7-9 discipline: never fabricate a number for a dead source"))
 A(sensor_case(
     "a counter that has not reported yet yields nothing", "",
-    {RAD_CPM: "'unknown'", RAD_FACTOR: "'0.00812'"},
+    {RAD_CPM: "'unknown'", RAD_FACTOR: "'0.00332'"},
     sensor=RAD, finding="the first 60s window reports nothing at all"))
+
 
 # ---------------------------------------------------------------- purifier after the cat toilet
 # A second automation. Its logic is mostly SEQUENCING (turn on, settle, wait,

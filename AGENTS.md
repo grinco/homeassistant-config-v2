@@ -135,9 +135,16 @@ to `automation.climate_maintain_per_room_targets` or the `Climate temp *` templa
 sensors:
 
 ```bash
-python3 tests/climate/run.py        # 52 scenarios against the LIVE expressions
+python3 tests/climate/run.py        # scenarios against the LIVE expressions
 python3 tests/climate/mutate.py     # confirms the scenarios actually detect bugs
+python3 tests/climate/wiring.py     # do the entity ids the templates NAME exist?
 ```
+
+`run.py` substitutes every entity read with a literal before evaluating — that is what
+makes it a decision oracle, and it is also why it **cannot** see a template naming an
+entity that does not exist. That shipped once: a sensor read `unknown` in the house with
+every case green. `wiring.py` is the other half; run it after any change that introduces
+or renames an entity reference.
 
 It reads the expressions out of the running configuration at run time, so it
 tests what is deployed, not a copy. **Never put the logic in the test.** A case

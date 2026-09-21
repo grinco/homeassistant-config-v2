@@ -34,13 +34,29 @@ substitutions:
 # behaviour both cases produce.
 #
 # Two failure signatures once it is running:
-#   - exactly 0 CPM, always  -> wrong pin, or the output is not on the net assumed
+#   - exactly 0 CPM, always  -> see THE SIGNAL PIN below; this is where it lands
 #   - hundreds/thousands CPM -> the input is floating, because the output is
 #     open-collector with no pull-up. Add a 10k from the signal line to 3V3.
 #
 # Background is roughly 10-30 CPM for a J305. A reading in that band after a few
 # minutes means it works; the first minute is meaningless, the counter needs a
 # full window before it reports anything real.
+#
+# THE SIGNAL PIN -- the single most common wiring error on these boards.
+#
+#   On the RadiationD v1.1 / CAJOE board, THE SILKSCREEN IS WRONG. The header pin
+#   printed "VIN" is the PULSE OUTPUT, not a power input. ESPHome's own device
+#   page for this board states it outright: "The print on the PCB is wrong, VIN
+#   is the signal."
+#
+#   So a board wired by reading the labels ends up with its signal pin connected
+#   to the ESP32's VIN rail -- which is 5 V power. That is harmless, permanent,
+#   and produces exactly this symptom: firmware healthy, counter alive, zero
+#   counts forever, no damage to anything.
+#
+#   Check which physical header pin runs to GPIO13. It must be the one marked
+#   VIN on the Geiger board, and the Geiger board's power must come from a
+#   DIFFERENT pair of pins.
 #
 # HIGH VOLTAGE: the board steps up to ~400 V for the tube, and that side stays
 # energised briefly after power is removed. Do not probe it.
@@ -78,21 +94,18 @@ sensor:
     count_mode:
       rising_edge: DISABLE
       falling_edge: INCREMENT
-    # 13 us is the CEILING, not a choice: the ESP32 counts pulses in hardware
-    # (PCNT), whose glitch filter is 1023 APB clock cycles = 12.8 us at 80 MHz.
-    # ESPHome rejects anything larger at compile time.
+    # PCNT's glitch filter is 1023 APB clock cycles = 12.8 us at 80 MHz, so 13us is
+    # the ceiling and ESPHome rejects more at compile time. Software counting
+    # (use_pcnt: false) would allow a longer filter and is the wrong trade here:
+    # this board is also a bluetooth proxy, so an ISR counting pulses competes
+    # with radio interrupts and drops events exactly when the proxy is busy.
     #
-    # Leaving PCNT for software counting (use_pcnt: false) would allow a longer
-    # filter, and would be the wrong trade here: this board is also a bluetooth
-    # proxy, so it is already busy with radio interrupts, and counting in an ISR
-    # that competes with them loses events exactly when the proxy is working.
-    # Hardware counting cannot miss a pulse for that reason.
-    #
-    # 13 us is ample anyway. A GM pulse through the interface board is tens to
-    # hundreds of microseconds wide, so it passes; what gets rejected is the
-    # sub-microsecond RF pickup the filter exists for. Background events are
-    # milliseconds apart, so there is no rate at which this matters.
-    internal_filter: 13us
+    # Set to 1us, not 13us, while the counter reads zero. A filter only ever
+    # REMOVES counts, so during bring-up it is the one setting that can turn a
+    # working signal into silence -- and it must be ruled out before anything is
+    # concluded about the wiring. Raise it to 13us once counts are arriving AND
+    # only if the rate looks inflated by noise.
+    internal_filter: 1us
     update_interval: 60s
     name: "Background radiation CPM"
     id: geiger_cpm

@@ -17,20 +17,45 @@ very much.
 ESPHome publishes **counts per minute** and nothing else.
 
 Counts per minute is a property of *the tube and the radiation field*. Microsieverts per
-hour is counts multiplied by a **per-tube sensitivity factor** — 0.00812 µSv/h per CPM for a
-J305, 0.0065 for an M4011, 0.0057 for an SBM-20. Those differ by 40 %.
+hour is counts multiplied by a **per-tube sensitivity factor**, and that factor is derived
+from the tube's declared gamma sensitivity rather than looked up:
+
+```
+factor (µSv/h per CPM) = 1 / (S × 60 / 8.77)
+
+    S     declared gamma sensitivity, CPS per mR/h, from the datasheet
+    60    seconds per minute
+    8.77  mSv per R — the absorbed-dose coefficient for a human phantom,
+          photon energies 100 keV – 3 MeV
+```
+
+| tube | S (CPS/mR/h) | factor |
+|---|---|---|
+| **J305, current datasheet** | 44 | **0.00332** |
+| J305, obsolete datasheet | 18 | 0.00812 |
+| SBM-20 | — | 0.0057 |
+
+**The obsolete figure is the one everybody copies.** 0.00812 is all over DIY Geiger code and
+was what this project was first seeded with, from memory. It comes from a J305 datasheet
+declaring **18 CPS/mR/h**; tubes sold now declare **44**. Same arithmetic, **2.45× apart** —
+using the old constant overstates background by a factor of two and a half. A mutation
+(*"the obsolete 18 CPS/mR/h factor comes back as the fallback"*) now fails the suite if it
+creeps back in.
+
+Dropping the 8.77 coefficient gives 0.00378 instead, which is *exposure* rather than absorbed
+dose. Dose equivalent is the health-relevant quantity, so 0.00332 is what is configured.
 
 So the factor is an `input_number`, not a constant:
 
 | | |
 |---|---|
 | `sensor.background_radiation_cpm` | ESPHome, 60 s window, tube-independent |
-| `input_number.radiation_usv_per_cpm` | the tube's sensitivity — range 0.001–0.02, seeded 0.00812 |
+| `input_number.radiation_usv_per_cpm` | the tube's sensitivity — range 0.001–0.02, set **0.00332** |
 | `sensor.radiation_dose_rate` | `cpm × factor`, µSv/h |
 
 ```jinja
 {% set c = states('sensor.background_radiation_cpm') | float(-1) %}
-{% set k = states('input_number.radiation_usv_per_cpm') | float(0.00812) %}
+{% set k = states('input_number.radiation_usv_per_cpm') | float(0.00332) %}
 {% if c >= 0 %}{{ (c * k) | round(3) }}{% endif %}
 ```
 
@@ -95,7 +120,7 @@ Background events are milliseconds apart, so no realistic rate makes this bite.
 
 ## Reading it once it runs
 
-Background for a J305 is roughly **10–30 CPM**, i.e. **0.08–0.24 µSv/h**. Two failure
+Background for a J305 is roughly **10–30 CPM**, i.e. **0.03–0.10 µSv/h** at 0.00332. Two failure
 signatures:
 
 - **exactly 0 CPM, always** — the divider is on the wrong net, or the output is not where
@@ -105,6 +130,45 @@ signatures:
 
 The first 60-second window reports nothing; the counter needs a full window before it
 publishes anything real.
+
+## The signal pin, and why the counter read zero
+
+The firmware came up healthy and published **0 CPM with 0 total counts** — not `unknown`,
+which would have meant a flashing problem, but a live counter detecting nothing at all.
+
+**On the RadiationD v1.1 / CAJOE board the silkscreen is wrong: the header pin printed `VIN`
+is the pulse output, not a power input.** ESPHome's own device page for this board says so
+outright. A board wired by reading the labels therefore runs its *signal* into the ESP32's
+5 V rail, which is harmless, permanent, and produces precisely this symptom — healthy
+firmware, live counter, zero counts forever, nothing damaged.
+
+`internal_filter` was also dropped from 13 µs to **1 µs** during bring-up. A filter can only
+ever *remove* counts, so it is the one setting capable of turning a working signal into
+silence, and it has to be ruled out before the wiring is blamed. It goes back up only if
+counts arrive and the rate looks inflated by noise.
+
+## A wiring check, because the scenario suite cannot see this class
+
+`tests/climate/wiring.py` pulls every entity id out of the live templates and asks Home
+Assistant whether it resolves.
+
+It exists because of a bug shipped the same day: `Radiation dose rate` read
+`sensor.background_radiation_cpm`, while the device actually published
+`sensor.hallway_geiger_counter_ble_proxy_background_radiation_cpm` — ESPHome had prefixed the
+entity with the device's area. **All five scenario cases passed**, because the suite
+substitutes each entity read with a literal before evaluating; that is exactly what makes it
+a decision oracle, and exactly why it cannot notice that a name resolves to nothing. The
+sensor read `unknown` in the house while the tests were green.
+
+The ESPHome entities were renamed to the short stable ids rather than pointing the template at
+the long one, because the long form embeds the *area* — moving the device would have broken it
+again, silently, in the same way.
+
+The check itself had to be fixed before it was worth anything: the first version batched all
+46 references into one template, the render failed, `evaluate` handed back the unrendered
+source, and every reference scored "ok". It reported 46/46 clean while one was genuinely
+missing. It now chunks like the scenario suite and **rejects any result that is neither `ok`
+nor `MISSING`**, on the principle that a probe which cannot fail is worse than no probe.
 
 ## What is not covered
 
