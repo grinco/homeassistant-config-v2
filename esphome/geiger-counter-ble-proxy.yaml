@@ -78,9 +78,21 @@ sensor:
     count_mode:
       rising_edge: DISABLE
       falling_edge: INCREMENT
-    # A GM pulse through an optocoupler is tens to hundreds of microseconds;
-    # 50 us rejects RF pickup without swallowing real counts.
-    internal_filter: 50us
+    # 13 us is the CEILING, not a choice: the ESP32 counts pulses in hardware
+    # (PCNT), whose glitch filter is 1023 APB clock cycles = 12.8 us at 80 MHz.
+    # ESPHome rejects anything larger at compile time.
+    #
+    # Leaving PCNT for software counting (use_pcnt: false) would allow a longer
+    # filter, and would be the wrong trade here: this board is also a bluetooth
+    # proxy, so it is already busy with radio interrupts, and counting in an ISR
+    # that competes with them loses events exactly when the proxy is working.
+    # Hardware counting cannot miss a pulse for that reason.
+    #
+    # 13 us is ample anyway. A GM pulse through the interface board is tens to
+    # hundreds of microseconds wide, so it passes; what gets rejected is the
+    # sub-microsecond RF pickup the filter exists for. Background events are
+    # milliseconds apart, so there is no rate at which this matters.
+    internal_filter: 13us
     update_interval: 60s
     name: "Background radiation CPM"
     id: geiger_cpm

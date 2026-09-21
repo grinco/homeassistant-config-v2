@@ -77,6 +77,22 @@ both cases produce.
 **High voltage:** the board steps up to roughly 400 V for the tube, and that side stays
 energised briefly after power is removed.
 
+## Counting in hardware, and the 13 µs ceiling
+
+The ESP32 counts pulses in **hardware** (PCNT), whose glitch filter is 1023 APB clock
+cycles — **12.8 µs** at 80 MHz. ESPHome rejects a larger `internal_filter` at compile time,
+which is how the first attempt at 50 µs was caught.
+
+Software counting (`use_pcnt: false`) would allow a longer filter and is the wrong trade
+here. This board is also a bluetooth proxy, so it is already busy servicing radio
+interrupts; counting in an ISR that competes with them would drop events precisely when the
+proxy is working — and three rooms now read their SwitchBot meters through it. Hardware
+counting cannot miss a pulse for that reason.
+
+13 µs is ample regardless. A GM pulse through the interface board is tens to hundreds of
+microseconds wide, so it passes; what the filter rejects is sub-microsecond RF pickup.
+Background events are milliseconds apart, so no realistic rate makes this bite.
+
 ## Reading it once it runs
 
 Background for a J305 is roughly **10–30 CPM**, i.e. **0.08–0.24 µSv/h**. Two failure
@@ -92,7 +108,7 @@ publishes anything real.
 
 ## What is not covered
 
-The suite tests the **conversion**, not the counting. Pulse capture, the divider, the
-`50us` filter value and whether GPIO13 is the right pin are all hardware facts that only
-the running device can settle. A green suite says the arithmetic is right; it says nothing
+The suite tests the **conversion**, not the counting. Pulse capture, the input level and
+whether GPIO13 is the right pin are all hardware facts that only the running device can
+settle. A green suite says the arithmetic is right; it says nothing
 about whether a single count ever arrives.
