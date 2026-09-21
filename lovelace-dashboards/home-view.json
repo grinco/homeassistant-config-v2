@@ -455,18 +455,14 @@
           "grid_options": {
             "columns": 4
           },
-          "entity": "light.living_room_lights",
+          "entity": "light.magic_areas_light_groups_living_room_all_lights",
           "area": "living_room",
           "primary": "Living room",
           "icon": "mdi:sofa-outline",
-          "secondary": "{% if is_state('light.living_room_lights','on') %}On{% set b = state_attr('light.living_room_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.living_room_livingroom_ac_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.living_room_livingroom_ac_temperature') }}",
-          "color": "{% set ls = expand(area_entities('living_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.living_room_lights','on') else 'grey' }}{% endif %}",
+          "secondary": "{% if is_state('light.magic_areas_light_groups_living_room_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_living_room_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.living_room_livingroom_ac_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.living_room_livingroom_ac_temperature') }}",
+          "color": "{% set ls = expand(area_entities('living_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_living_room_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "living_room"
-            }
+            "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
@@ -485,18 +481,14 @@
           "grid_options": {
             "columns": 4
           },
-          "entity": "light.gallery",
+          "entity": "light.magic_areas_light_groups_kitchen_all_lights",
           "area": "kitchen",
           "primary": "Kitchen",
           "icon": "mdi:countertop-outline",
-          "secondary": "{% if is_state('light.gallery','on') %}On{% set b = state_attr('light.gallery','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · cooktop on' if is_state('sensor.house_cooktop_operation_state','run') }}{{ ' · oven on' if states('sensor.house_oven_operation_state') in ['run','delayedstart'] }}",
-          "color": "{% set ls = expand(area_entities('kitchen')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.gallery','on') else 'grey' }}{% endif %}",
+          "secondary": "{% if is_state('light.magic_areas_light_groups_kitchen_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_kitchen_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · cooktop on' if is_state('sensor.house_cooktop_operation_state','run') }}{{ ' · oven on' if states('sensor.house_oven_operation_state') in ['run','delayedstart'] }}",
+          "color": "{% set ls = expand(area_entities('kitchen')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_kitchen_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "kitchen"
-            }
+            "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
@@ -515,18 +507,14 @@
           "grid_options": {
             "columns": 4
           },
-          "entity": "light.office_lights",
+          "entity": "light.magic_areas_light_groups_guest_room_all_lights",
           "area": "bedroom",
           "primary": "Office",
           "icon": "mdi:desk",
-          "secondary": "{% if is_state('light.office_lights','on') %}On{% set b = state_attr('light.office_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.janka_s_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.janka_s_desk_temperature') }}",
-          "color": "{% set ls = expand(area_entities('bedroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.office_lights','on') else 'grey' }}{% endif %}",
+          "secondary": "{% if is_state('light.magic_areas_light_groups_guest_room_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_guest_room_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.janka_s_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.janka_s_desk_temperature') }}",
+          "color": "{% set ls = expand(area_entities('bedroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_guest_room_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "bedroom"
-            }
+            "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
@@ -545,18 +533,14 @@
           "grid_options": {
             "columns": 4
           },
-          "entity": "light.corridor_lights",
+          "entity": "light.magic_areas_light_groups_corridor_all_lights",
           "area": "corridor",
           "primary": "Corridor",
           "icon": "mdi:stairs",
-          "secondary": "{% if is_state('light.corridor_lights','on') %}On{% set b = state_attr('light.corridor_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}",
-          "color": "{% set ls = expand(area_entities('corridor')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.corridor_lights','on') else 'grey' }}{% endif %}",
+          "secondary": "{% if is_state('light.magic_areas_light_groups_corridor_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_corridor_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}",
+          "color": "{% set ls = expand(area_entities('corridor')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_corridor_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "corridor"
-            }
+            "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
@@ -581,11 +565,7 @@
           "secondary": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
           "color": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "laundry_room"
-            }
+            "action": "none"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -610,11 +590,7 @@
           "secondary": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'LEAK' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'Dry' }} · {{ states('sensor.shower_sink_leak_battery') }}% batt",
           "color": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'red' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'light-blue' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "shower"
-            }
+            "action": "none"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -646,11 +622,7 @@
           "secondary": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.master_bedroom_bedroom_ac') %}{{ state_attr('climate.master_bedroom_bedroom_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.master_bedroom_bedroom_ac','temperature') ~ '°' }}",
           "color": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.master_bedroom_bedroom_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "bedroom_2"
-            }
+            "action": "none"
           },
           "hold_action": {
             "action": "navigate",
@@ -675,11 +647,7 @@
           "secondary": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.kid1_room_ac') %}{{ state_attr('climate.kid1_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid1_room_ac','temperature') ~ '°' }}",
           "color": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid1_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "kid1_room"
-            }
+            "action": "none"
           },
           "hold_action": {
             "action": "navigate",
@@ -704,11 +672,7 @@
           "secondary": "{% set ls = expand(area_entities('kid2_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.kid2_room_ac') %}{{ state_attr('climate.kid2_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid2_room_ac','temperature') ~ '°' }}",
           "color": "{% set ls = expand(area_entities('kid2_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid2_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "kid2_room"
-            }
+            "action": "none"
           },
           "hold_action": {
             "action": "navigate",
@@ -732,11 +696,7 @@
           "secondary": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
           "color": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "hallway"
-            }
+            "action": "none"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -761,11 +721,7 @@
           "secondary": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
           "color": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "bathroom"
-            }
+            "action": "none"
           },
           "icon_tap_action": {
             "action": "navigate",
@@ -790,11 +746,7 @@
           "secondary": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
           "color": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else 'grey' }}{% endif %}",
           "tap_action": {
-            "action": "perform-action",
-            "perform_action": "script.toggle_area_lights",
-            "data": {
-              "area_id": "closet"
-            }
+            "action": "none"
           },
           "icon_tap_action": {
             "action": "navigate",

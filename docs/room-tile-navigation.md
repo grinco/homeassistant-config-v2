@@ -32,47 +32,70 @@ exists only in some rooms.
 **A room with no lights does nothing on tap.** That is the consistent answer rather than a
 special case, and it starts working by itself the moment a light is added to the area.
 
-## Why a script and not `target: {area_id: …}`
+## Magic Areas owns the light groups (revised 2026-09-22)
 
-The obvious implementation — `light.toggle` aimed at the area — is wrong here, and quietly so.
+The first implementation used a script that computed each area's lights at call time. It was
+replaced at the operator's direction: **lights are managed by Magic Areas.**
 
-Several rooms hold a light **group** alongside that group's own members in the same area:
-`light.gallery` *is* the two gallery bulbs; `light.living_room_lights` *is* `h60b0` and
-`the_moon`. A service call targeting the area resolves to the group **and** each member, so
-every bulb gets toggled twice — once directly, once through the group — and lands back where
-it started.
+Three group helpers were deleted — *Living Room Lights*, *Office Lights*, *Corridor Lights* —
+and Magic Areas' `light_groups` feature was enabled on all twelve areas, which recreates them
+as `light.magic_areas_light_groups_<area>_all_lights`. **Gallery was kept**: it unifies two
+bulbs in a single physical fixture, so it is a fixture abstraction rather than a room grouping.
 
-`script.toggle_area_lights` takes an `area_id` and builds its own list:
+**Kitchen needed an exclusion.** With Gallery kept, the kitchen area held the fixture *and*
+both of its bulbs, so Magic Areas' room group would have contained all three — the group and
+its own members. `exclude_entities: [light.gallery_left, light.gallery_right]` on the kitchen
+area leaves the room group as exactly `['light.gallery']`.
 
-```jinja
-{{ expand(area_entities(area_id)) | selectattr('domain','eq','light')
-   | rejectattr('state','in',['unavailable','unknown']) | map(attribute='entity_id') | list }}
-```
+That same nesting is why the helpers had to go rather than be left alongside: before deletion,
+the living-room group read `['light.the_moon', 'light.h60b0', 'light.living_room_lights']` —
+two bulbs and a group containing those same two bulbs. Toggling it would have commanded each
+bulb twice.
 
-`expand()` flattens a group into its members, so each bulb appears exactly once.
+**Deleting a member needs a config-entry reload, not just a registry delete.** After the
+helpers were removed, Magic Areas kept the dead entity in its group membership; the integration
+had to be disabled and re-enabled before it rebuilt the list. Reloading the entry alone was not
+enough.
 
-**Any-on means all-off.** Toggling each light individually would turn a room with one lamp lit
-into a room with the other two lit. A room switch is expected to mean "everything off" when
-anything is on.
+**The `light_control` switches Magic Areas also creates are off** — twelve
+`switch.magic_areas_light_groups_<area>_light_control` entities that would let the integration
+drive lights from area presence. They default to off and were left off: presence is still
+triggered by hand until real sensors are fitted, so automatic lighting would fire on a signal
+that does not yet mean anything.
 
-## Why this replaced the Magic Areas light groups that were asked for
+## What tapping does now
 
-The request was for empty Magic Areas light groups, so that lights added later would be picked
-up automatically. The automatic part is the point, and it is satisfied — **`area_entities()`
-resolves at call time**, so a light added to an area is picked up by the script with no edit
-here and none to the dashboard.
+| rooms | tap | hold |
+|---|---|---|
+| Living room, Kitchen, Office, Corridor — a Magic Areas light group exists | `toggle` that group | open the room |
+| the other eight — no lights in the area, so no group | nothing | open the room |
 
-Magic Areas was not used for it because the feature is not enabled on any of the twelve areas
-(`features: {}` on every config entry) and the integration exposes **no reconfigure flow**, so
-turning it on means twelve manual passes through its options UI. That buys a group entity per
-room — which would be useful — but it is not what makes future lights work, and the tiles work
-today without it. If those group entities are wanted later for their own sake, nothing here
-conflicts with adding them.
+**`tap_action: none`, not a reference to a group that does not exist yet.** Magic Areas only
+creates a room's light group once the area actually contains a light, and toggling a
+non-existent entity raises a visible error rather than failing quietly — verified. So the eight
+light-less rooms do nothing on tap, which is the same thing they did before, without the error.
 
-**Presence sensors needed nothing.** All twelve areas already have
-`binary_sensor.magic_areas_presence_tracking_<area>_area_state`, live and reporting; the
-kitchen was reading `occupied`/`extended` at the time of writing. The dummies that were asked
-for already exist.
+When lights are added to one of those areas, Magic Areas creates its group automatically; the
+tile then needs its `entity` set and `tap_action` changed to `toggle` — one line per room. That
+is the one manual step this design keeps, and it is the price of not shipping a tile that
+throws an error every time it is pressed.
+
+## An unresolved report
+
+The operator reported that tapping the Kids room 1 / Kids room 2 tiles opened the **AC
+more-info dialog** rather than toggling, while those tiles were configured with
+`tap_action: perform-action` calling the script.
+
+That is exactly what a `perform-action` that fails to dispatch would look like: the card falls
+back to its default action, `more-info`, on whatever `entity` it carries — an AC in those two
+rooms. It fits the evidence, since the four rooms whose `entity` was a light would have opened
+a light dialog and been easy to misread as working, and the four rooms with no `entity` at all
+would have appeared to do nothing.
+
+It was **not** proven. Mushroom's bundled schema accepts `perform-action` and its runtime
+delegates to Home Assistant's own `hass-action` event, so it should work. The rewrite removes
+the question rather than answering it: every tap is now either `toggle` or `none`, the two
+most basic action types, neither of which involves service dispatch from a card.
 
 ## What the tile shows
 
