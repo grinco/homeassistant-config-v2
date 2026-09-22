@@ -89,48 +89,33 @@ sensor:
       number: ${geiger_pin}
       mode:
         input: true
-        # 2026-09-22: pull-up ENABLED, and this is the current best candidate for
-        # the zero counts.
-        #
-        # These interface boards usually drive the pulse through an open-collector
-        # transistor or an optocoupler, which can only pull the line DOWN -- it
-        # needs a pull-up somewhere to have a level to be pulled down FROM. With
-        # no pull-up at either end the line has no defined idle state, and the
-        # counter sees no clean edge to count.
-        #
-        # The ESP32's internal pull-up (~45k to 3.3V) gives it one. It also makes
-        # the idle level unambiguous, so a LOOSE header pin now reads a steady
-        # HIGH and a stable zero, instead of whatever a disconnected input
-        # happened to pick up.
-        pullup: true
       inverted: false
-    # TEMPORARY, while the counter reads zero: count BOTH edges and halve.
-    #
-    # Edge polarity cannot be the cause of zero counts -- every pulse has a
-    # rising AND a falling edge, so counting falling edges already registers one
-    # per pulse whichever way round the board drives the line. Counting both and
-    # multiplying by 0.5 gives the same number, and removes the question for good.
-    #
-    # Revert to `rising_edge: DISABLE` / `falling_edge: INCREMENT` with no
-    # multiply once counts are arriving: two edges per pulse is more exposed to
-    # ringing being miscounted than one is.
+    # These four settings are copied from a configuration the operator had working
+    # on this same hardware. They are not reasoned choices; they are the known-good
+    # reference, and the reasoning below lost to it.
     count_mode:
-      rising_edge: INCREMENT
+      rising_edge: DISABLE
       falling_edge: INCREMENT
-    filters:
-      - multiply: 0.5
-    # PCNT's glitch filter is 1023 APB clock cycles = 12.8 us at 80 MHz, so 13us is
-    # the ceiling and ESPHome rejects more at compile time. Software counting
-    # (use_pcnt: false) would allow a longer filter and is the wrong trade here:
-    # this board is also a bluetooth proxy, so an ISR counting pulses competes
-    # with radio interrupts and drops events exactly when the proxy is busy.
+
+    # SOFTWARE counting, not the ESP32's hardware pulse counter.
     #
-    # Set to 1us, not 13us, while the counter reads zero. A filter only ever
-    # REMOVES counts, so during bring-up it is the one setting that can turn a
-    # working signal into silence -- and it must be ruled out before anything is
-    # concluded about the wiring. Raise it to 13us once counts are arriving AND
-    # only if the rate looks inflated by noise.
-    internal_filter: 1us
+    # The earlier config used PCNT, on the argument that this board is also a
+    # bluetooth proxy: counting in an ISR competes with radio interrupts, while
+    # hardware counting cannot miss a pulse. That argument is still true and it is
+    # still beside the point -- the working config used software counting, and the
+    # PCNT version counted nothing for two days.
+    #
+    # The cost is bounded anyway. Background is about 0.3 pulses per SECOND, so the
+    # ISR fires rarely enough that competing with the radio is not a real risk at
+    # these rates.
+    use_pcnt: false
+
+    # 180 us, which PCNT could not have done: its glitch filter tops out at 1023 APB
+    # cycles, 12.8 us. That ceiling is the one hard thing PCNT cost here, and the
+    # working config's value sits an order of magnitude above it -- so a J305 pulse
+    # through this board is WIDE, and the filter is there to reject ringing on it
+    # rather than to reject RF pickup.
+    internal_filter: 180us
     update_interval: 60s
     name: "Background radiation CPM"
     id: geiger_cpm

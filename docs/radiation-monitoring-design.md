@@ -165,6 +165,54 @@ silence, and it had to be ruled out before the wiring was blamed.
 
 **Tube confirmed as J305 β/γ** (2026-09-22), so the 0.00332 factor derived above stands.
 
+## The operator's previously-working config, and what it settled
+
+After two days of zero counts the operator produced a configuration that had worked on this
+same hardware. Four things in it differ from what reasoning had produced here, and the
+reasoning lost.
+
+```yaml
+pin: 13                    # no mode block, no pull-up
+count_mode: {rising_edge: DISABLE, falling_edge: INCREMENT}
+use_pcnt: False            # SOFTWARE counting
+internal_filter: 180us     # ten times PCNT's hard ceiling
+```
+
+**`use_pcnt: False` is the headline.** This design used the ESP32's hardware pulse counter, on
+the argument that the board is also a bluetooth proxy — counting in an ISR competes with radio
+interrupts, while hardware counting cannot miss a pulse. That argument is still true and it was
+still beside the point: the working config counted in software, and the PCNT version counted
+nothing at all. The cost is bounded anyway — background is roughly **0.3 pulses per second**,
+so the interrupt fires far too rarely for radio contention to matter.
+
+**`internal_filter: 180us` is the evidence that made it make sense.** PCNT's glitch filter tops
+out at 1023 APB cycles — **12.8 µs** — which is why this config had been sitting at 13 µs and
+then 1 µs. A known-good value an order of magnitude above that ceiling says the pulse from this
+board is **wide**, and that the filter exists to reject *ringing on a long pulse* rather than RF
+pickup. That combination is simply not expressible with PCNT.
+
+**The pull-up was removed.** It had been added the same day as the leading hypothesis — these
+boards often drive the pulse open-collector, which needs a pull-up to have a level to pull down
+from. The working config has no pull-up, which means this board drives the line itself. The
+hypothesis was reasonable and is now retired.
+
+**Edge polarity was a red herring, correctly.** The working config also counts falling edges
+only, confirming the earlier conclusion that polarity could not explain zero counts.
+
+### Two things in it deliberately NOT adopted
+
+**`offset: -12.0`** subtracts 12 CPM before scaling, described in the upstream example as
+"background noise". It is not noise — it *is* the background, and this instrument exists to
+measure background. Subtracting it would park a healthy house at roughly zero and hide exactly
+the drift worth seeing. (It also comes from the same upstream example as the obsolete factor
+below, which is not a reassuring provenance.)
+
+**`multiply: 0.0081203703703704` with `unit_of_measurement: 'μSv/h'`** converts on the device,
+using the **obsolete 18 CPS/mR/h** factor. Current J305 datasheets declare 44, giving 0.00332 —
+a 2.45× difference, derived earlier in this document. The conversion stays in Home Assistant
+behind a helper so that confirming a tube is a slider move rather than a reflash, and so the
+count history survives changing it.
+
 ## Zero counts is not a measurement of zero radiation
 
 The dose sensor reported **0.0 µSv/h** for a day while its signal wire was on the wrong header
