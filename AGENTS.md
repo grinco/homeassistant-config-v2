@@ -1,7 +1,13 @@
 # Working in this repository
 
-This repo is a **public reference** for a private Home Assistant instance. Nothing here is
-deployable: it holds design records and sanitised snapshots of a live configuration.
+This repo is a **public reference** for a private Home Assistant instance. Almost nothing here
+is deployable: it holds design records and sanitised snapshots of a live configuration.
+
+**The one exception is `esphome/`.** Those files are verbatim copies of what runs on the
+devices and can be flashed as-is, because every secret in them is a `!secret` reference and
+`secrets.yaml` is not committed. Keep it that way: if a key ever has to go inline to debug
+something, move it back out before committing, and check `esphome/secrets.yaml.example` still
+lists every key the configs reference.
 
 If you are an AI agent working on this repo, read this before you write, export, or commit
 anything.

@@ -1,6 +1,3 @@
-# Sanitised reference copy. The live file lives in the ESPHome app's config
-# directory; the API encryption key is redacted here because this repo is public.
-
 substitutions:
   name: geiger-counter-ble-proxy
   friendly_name: Geiger-counter-ble-proxy
@@ -72,7 +69,7 @@ esphome:
 
 api:
   encryption:
-    key: !secret api_encryption_key   # redacted for the public repo
+    key: !secret geiger_api_key
 
 wifi:
   ssid: !secret wifi_ssid
