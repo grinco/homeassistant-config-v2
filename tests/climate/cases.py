@@ -182,10 +182,69 @@ A(case("a setpoint we are correcting is not a unit fault", "diverged", "False",
         "may_act": False, "external_moved": False, "standdown": False,
         "will_set_temp": True},
        finding="R4-2 relocated into the setpoint path, seen live 2026-09-19"))
-A(case("wind-free is never asserted outside cool", "will_set_preset", "False",
-       {"active": True, "mode_ok": True, "mode": "heat", "now_preset": "none",
-        "preset": "wind_free", "in_flight": False, "tripped": False},
+# ---------------------------------------------------------------- preset per mode
+# 2026-09-23, operator: "make sure that the ac will start in quiet preset at night when
+# heating, and windfree at any time when cooling."
+#
+# Cooling ALREADY asked for wind-free at every hour -- wind_free by day, wind_free_sleep at
+# night -- so that half is a confirmation, not a change. The heating half is new.
+#
+# The decision MOVES INTO the room loop. It could not live where it was: the house-level
+# block runs before `mode` and `now_preset` exist, and a preset that depends on the mode
+# cannot be decided before the mode is.
+#
+# Where we have no opinion, `want_preset` returns `now_preset`. That is what makes silence
+# free: will_set_preset compares the two, so "no opinion" and "already correct" are the same
+# thing and neither issues a command.
+A(case("cooling by day asks for wind-free", "want_preset", "wind_free",
+       {"mode": "cool", "night": False, "now_preset": "none"},
+       finding="2026-09-23 operator: wind-free at any time when cooling"))
+A(case("cooling at night still asks for wind-free", "want_preset", "wind_free_sleep",
+       {"mode": "cool", "night": True, "now_preset": "none"},
+       finding="2026-09-23: 'at any time' includes the night"))
+A(case("heating at night asks for quiet", "want_preset", "quiet",
+       {"mode": "heat", "night": True, "now_preset": "none"},
+       finding="2026-09-23 operator: quiet at night when heating"))
+A(case("heating by day asserts nothing", "want_preset", "none",
+       {"mode": "heat", "night": False, "now_preset": "none"},
+       finding="2026-09-23: the request is night-only"))
+A(case("heating by day leaves an existing preset alone", "want_preset", "quiet",
+       {"mode": "heat", "night": False, "now_preset": "quiet"},
+       finding="no opinion is 'whatever is already set', so it costs no command"))
+A(case("a wind-free preset is never asked for outside cool", "want_preset", "quiet",
+       {"mode": "heat", "night": True, "now_preset": "wind_free"},
        finding="set_preset_mode on an OFF unit turns it ON in COOL"))
+A(case("dry asserts no preset", "want_preset", "none",
+       {"mode": "dry", "night": True, "now_preset": "none"},
+       finding="only heat and cool carry a preset opinion"))
+A(case("a unit we are switching off is asked for no preset", "want_preset", "none",
+       {"mode": "off", "night": True, "now_preset": "none"},
+       finding="set_preset_mode on an OFF unit turns it ON in COOL"))
+
+A(case("night heat commands quiet", "will_set_preset", "True",
+       {"active": True, "mode_ok": True, "mode": "heat", "night": True,
+        "now_preset": "none", "want_preset": "quiet", "in_flight": False, "tripped": False},
+       finding="2026-09-23 operator: quiet at night when heating"))
+A(case("no command once the preset already matches", "will_set_preset", "False",
+       {"active": True, "mode_ok": True, "mode": "heat", "night": True,
+        "now_preset": "quiet", "want_preset": "quiet", "in_flight": False, "tripped": False},
+       finding="idempotence: this must not re-command every ten minutes"))
+A(case("day heat issues no preset command", "will_set_preset", "False",
+       {"active": True, "mode_ok": True, "mode": "heat", "night": False,
+        "now_preset": "none", "want_preset": "none", "in_flight": False, "tripped": False},
+       finding="2026-09-23: night-only"))
+A(case("no preset before the mode has converged", "will_set_preset", "False",
+       {"active": True, "mode_ok": False, "mode": "cool", "night": False,
+        "now_preset": "none", "want_preset": "wind_free", "in_flight": False, "tripped": False},
+       finding="the setpoint and the preset both wait for the mode"))
+A(case("no preset while our own command is in flight", "will_set_preset", "False",
+       {"active": True, "mode_ok": True, "mode": "cool", "night": False,
+        "now_preset": "none", "want_preset": "wind_free", "in_flight": True, "tripped": False},
+       finding="the settle window applies to presets too"))
+A(case("a tripped breaker blocks the preset as well", "will_set_preset", "False",
+       {"active": True, "mode_ok": True, "mode": "cool", "night": False,
+        "now_preset": "none", "want_preset": "wind_free", "in_flight": False, "tripped": True},
+       finding="v4 breaker throttles comfort, presets included"))
 
 # ---------------------------------------------------------------- AC power-saving stand-down
 # 2026-09-21: the operator enabled the units' own presence-based power saving, so an AC

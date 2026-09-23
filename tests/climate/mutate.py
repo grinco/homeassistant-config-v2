@@ -104,6 +104,19 @@ BUGS = [
  # introduces a bug -- it is equivalent to the real expression. The hazard it guarded
  # is now guarded by "a disconnected counter reports a confident zero again", which
  # attacks the cutoff itself rather than the sentinel feeding it.
+ # Presets per mode, 2026-09-23. The rule is cheap to state and cheap to break:
+ # "wind-free whenever cooling, quiet when heating at night, silence otherwise."
+ # Each mutation below breaks exactly one clause of that sentence.
+ ("presets: wind-free asserted outside cool again", "expr", "want_preset",
+  lambda t: "{{ 'wind_free_sleep' if night else 'wind_free' }}"),
+ ("presets: the night quiet rule dropped", "expr", "want_preset",
+  lambda t: t.replace("{% elif mode == 'heat' and night %}quiet", "")),
+ ("presets: quiet asserted all day, not just at night", "expr", "want_preset",
+  lambda t: t.replace("mode == 'heat' and night", "mode == 'heat'")),
+ ("presets: re-commands a preset that already matches", "expr", "will_set_preset",
+  lambda t: t.replace(" and want_preset != now_preset", "")),
+ ("presets: commanded before the mode converges", "expr", "will_set_preset",
+  lambda t: t.replace("active and mode_ok and", "active and")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

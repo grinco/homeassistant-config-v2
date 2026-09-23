@@ -417,6 +417,54 @@ Exit-only, and it applies to the single target: a room enters heating below the 
 leaves it at target + hysteresis. A room sitting exactly on its target therefore does not flap.
 The same logic mirrored for cooling.
 
+### Presets are per-mode (2026-09-23)
+
+Operator request: *"make sure that the ac will start in quiet preset at night when heating, and
+windfree at any time when cooling."*
+
+Cooling already asked for wind-free at every hour — `wind_free` by day, `wind_free_sleep` at
+night — so that half was a confirmation. The heating half is new.
+
+```
+want_preset := cool                 -> wind_free_sleep if night else wind_free
+               heat AND night       -> quiet
+               anything else        -> now_preset          (i.e. no opinion)
+```
+
+**Expressing "no opinion" as `now_preset` is what makes silence free.** `will_set_preset`
+compares want against now, so *no opinion* and *already correct* are the same condition and
+neither issues a command. Without that, a "none" default would fight whatever the unit was set
+to, every ten minutes.
+
+**The decision had to move into the room loop.** It used to be a house-level variable depending
+only on `night`. A preset that depends on the mode cannot be decided before the mode is, and
+`mode` and `now_preset` are per-room.
+
+**The safety interlock generalised rather than widened.** It was
+`{{ will_set_preset and is_state(r.climate, 'cool') }}`; it is now
+`is_state(r.climate, mode)`. The hazard it guards is unchanged and still the reason it exists:
+`set_preset_mode` on a unit that is **OFF turns it ON, in COOL** (verified 2026-09-19). Sending a
+preset only to a unit already sitting in the mode we believe it is in preserves that protection
+for heat exactly as it did for cool.
+
+**What is NOT verified.** Whether `set_preset_mode` issued while *heating* can itself flip a unit
+to cool. The evidence that it does not is circumstantial but real: two of these units were sitting
+in `heat` with `preset: quiet` when this was written, so the combination is valid on this
+hardware. The transition is untested and cannot be tested from here — the standing rule forbids
+`automation.trigger`, which skips conditions and actuates real hardware. The interlock bounds the
+damage to one tick, since the next pass sees `mode_ok` false and corrects, but **if the units are
+ever seen flapping between heat and cool overnight, this is the first place to look.**
+
+**Deliberately not done: clearing the preset at daybreak.** The request was night-only. A unit
+left on `quiet` keeps it through the day until something else moves it, which means a room heats
+more slowly on a quiet fan than it otherwise would. Wiring a `heat AND NOT night -> none` branch
+is a one-line change if that turns out to matter; it was not done because it was not asked for and
+it would assert a preset the operator never requested.
+
+Fifteen cases cover it, and five mutations in `tests/climate/mutate.py` break one clause of the
+rule each — wind-free outside cool, the night rule dropped, quiet asserted all day, a preset
+re-commanded when it already matches, and a preset commanded before the mode converges.
+
 ### Setpoint clamping
 
 The units advertise `min_temp: 16`, `max_temp: 30`, `target_temp_step: 1`. Two consequences that

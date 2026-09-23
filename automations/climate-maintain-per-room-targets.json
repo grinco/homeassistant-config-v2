@@ -1,7 +1,7 @@
 {
   "id": "1789725511503",
   "alias": "Climate — maintain per-room targets",
-  "description": "v5.6. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating. A calibration offset INSIDE ITS HELPER'S RANGE IS ALWAYS HONOURED - the range is the plausibility envelope, and overriding an in-range value can under-correct a correctly-configured room and fail cold. Only the TRV offset, whose helper range is far wider than any physically plausible bias on a cold radiator, is still substituted. The HOUSE decides heat vs cool from the outdoor temperature with exit-only hysteresis. Each ROOM has a day target and a night target plus an optional air-filter mode. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, gated by input_boolean.climate_safety_always. Changes made outside this automation are detected from a per-room command timestamp versus the unit's own last_changed, and repeated ones are surfaced without asserting a cause the automation cannot know. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Wind-free presets are COOLING ONLY.",
+  "description": "v5.6. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating. A calibration offset INSIDE ITS HELPER'S RANGE IS ALWAYS HONOURED - the range is the plausibility envelope, and overriding an in-range value can under-correct a correctly-configured room and fail cold. Only the TRV offset, whose helper range is far wider than any physically plausible bias on a cold radiator, is still substituted. The HOUSE decides heat vs cool from the outdoor temperature with exit-only hysteresis. Each ROOM has a day target and a night target plus an optional air-filter mode. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, gated by input_boolean.climate_safety_always. Changes made outside this automation are detected from a per-room command timestamp versus the unit's own last_changed, and repeated ones are surfaced without asserting a cause the automation cannot know. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Presets are per-mode: wind-free whenever cooling, quiet when heating at night, nothing asserted otherwise.",
   "triggers": [
     {
       "trigger": "time_pattern",
@@ -210,8 +210,7 @@
     {
       "variables": {
         "away": "{{ is_state('alarm_control_panel.home','armed_away') and ( (now().timestamp() - (away_stamp | float(0))) > 1800 if away_stamp else (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 ) }}",
-        "house": "{% set prev = states('input_select.climate_house_mode') %}{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif prev == 'heat' %}{% if outdoor > heat_below_out + hyst %}{% if outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% else %}heat{% endif %}{% elif prev == 'cool' %}{% if outdoor < cool_above_out - hyst %}{% if outdoor <= heat_below_out %}heat{% else %}shoulder{% endif %}{% else %}cool{% endif %}{% else %}{% if outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% endif %}",
-        "preset": "{{ 'wind_free_sleep' if night else 'wind_free' }}"
+        "house": "{% set prev = states('input_select.climate_house_mode') %}{% if outdoor <= -900 %}shoulder{% elif heat_below_out >= cool_above_out %}shoulder{% elif prev == 'heat' %}{% if outdoor > heat_below_out + hyst %}{% if outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% else %}heat{% endif %}{% elif prev == 'cool' %}{% if outdoor < cool_above_out - hyst %}{% if outdoor <= heat_below_out %}heat{% else %}shoulder{% endif %}{% else %}cool{% endif %}{% else %}{% if outdoor <= heat_below_out %}heat{% elif outdoor >= cool_above_out %}cool{% else %}shoulder{% endif %}{% endif %}"
       },
       "note": "HOUSE MODE is a property of the weather, and it is STICKY with EXIT-ONLY HYSTERESIS. The branch ORDER is what stops the memory pinning a season it should have left: dead sensor and inverted band are both tested BEFORE prev is consulted, so each falls to shoulder unconditionally and the write-back then clears the remembered season."
     },
@@ -270,7 +269,7 @@
             {
               "action": "notify.send_message",
               "target": {
-                "entity_id": "notify.operator_phone"
+                "entity_id": "notify.vadims_iphone_17"
               },
               "data": {
                 "title": "Climate: a calibration offset needs attention",
@@ -362,7 +361,8 @@
               "active": "{{ mode not in ['skip','manual'] }}",
               "reachable": "{{ now_mode not in ['unavailable','unknown'] }}",
               "mode_ok": "{{ now_mode == mode }}",
-              "needs_temp": "{{ mode in ['heat','cool'] }}"
+              "needs_temp": "{{ mode in ['heat','cool'] }}",
+              "want_preset": "{% if mode == 'cool' %}{{ 'wind_free_sleep' if night else 'wind_free' }}{% elif mode == 'heat' and night %}quiet{% else %}{{ now_preset }}{% endif %}"
             },
             "note": "Every commanded setpoint is rounded to a whole degree and clamped into the unit's advertised range (min 16 / max 30 / step 1). The frost TRIGGER stays at 7 C; only the commanded setpoint is lifted to the unit's floor."
           },
@@ -388,7 +388,7 @@
             "variables": {
               "may_act": "{{ active and reachable and not mode_ok and not in_flight and not safety_throttled and (is_safety or (not external_moved and not standdown)) and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
-              "will_set_preset": "{{ active and mode_ok and mode == 'cool' and now_preset != preset and not in_flight and not tripped }}",
+              "will_set_preset": "{{ active and mode_ok and mode in ['cool','heat'] and want_preset != now_preset and not in_flight and not tripped }}",
               "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}"
             },
             "note": "ROUND 14, F14-5 - A SAFETY DISPATCH BUG I INTRODUCED AND THEN ASSERTED AWAY. The mode law puts the safety branches ABOVE the manual branch, so a freezing room that is stood down or overridden still RESOLVES to 'heat'. That is what v5.7 verified and it is only half the question: resolving the mode decides what we want, may_act decides what we SEND. 'not external_moved' and 'not standdown' sat as top-level ANDs here while the is_safety bypass was buried inside the breaker clause, so the frost command was computed and never dispatched for as long as unit_moved stayed true - up to human_window, about 20 minutes. Pre-existing for an external override since v3.2; v5.7 widened it to stand-down, which fires far more often now that the units power-save themselves. The fix hoists the bypass: is_safety OR (not external_moved and not standdown). Safety still respects in_flight, because double-commanding is never right, and still respects safety_throttled, which is a rate limit rather than a suppression. The lesson is the one this document keeps relearning: a precedence order is a claim about the DECISION, and it says nothing about the DISPATCH unless you check the dispatch too."
@@ -494,7 +494,7 @@
               {
                 "action": "notify.send_message",
                 "target": {
-                  "entity_id": "notify.operator_phone"
+                  "entity_id": "notify.vadims_iphone_17"
                 },
                 "data": {
                   "title": "Climate: {{ r.name }} changed outside the automation",
@@ -571,7 +571,7 @@
               {
                 "action": "notify.send_message",
                 "target": {
-                  "entity_id": "notify.operator_phone"
+                  "entity_id": "notify.vadims_iphone_17"
                 },
                 "data": {
                   "title": "{% if no_temp %}Climate: {{ r.name }} sensor blackout{% else %}Climate: {{ r.name }} at {{ temp | round(1) }} C{% endif %}",
@@ -624,7 +624,7 @@
                   {
                     "action": "notify.send_message",
                     "target": {
-                      "entity_id": "notify.operator_phone"
+                      "entity_id": "notify.vadims_iphone_17"
                     },
                     "data": {
                       "title": "Climate: {{ r.name }} isolated",
@@ -693,7 +693,7 @@
             "if": [
               {
                 "condition": "template",
-                "value_template": "{{ will_set_preset and is_state(r.climate, 'cool') }}"
+                "value_template": "{{ will_set_preset and is_state(r.climate, mode) }}"
               }
             ],
             "then": [
@@ -703,7 +703,7 @@
                   "entity_id": "{{ r.climate }}"
                 },
                 "data": {
-                  "preset_mode": "{{ preset }}"
+                  "preset_mode": "{{ want_preset }}"
                 }
               },
               {
@@ -716,7 +716,7 @@
                 }
               }
             ],
-            "note": "WIND-FREE IS COOLING-ONLY. THE RE-READ IS A SAFETY INTERLOCK: set_preset_mode on a unit that is OFF turns it ON, IN COOL (verified 2026-09-19)."
+            "note": "PRESETS ARE PER-MODE (2026-09-23, operator request). Wind-free whenever COOLING - wind_free by day, wind_free_sleep at night, which is what it already did. QUIET when HEATING AT NIGHT, which is the new half. Nothing asserted otherwise, expressed as want_preset == now_preset, so having no opinion costs no command and this does not re-send every ten minutes. THE RE-READ IS STILL THE SAFETY INTERLOCK and now generalises: is_state(r.climate, mode) instead of a hardcoded 'cool'. set_preset_mode on a unit that is OFF turns it ON, IN COOL (verified 2026-09-19), so a preset only ever goes to a unit already sitting in the mode we believe it is in. NOT VERIFIED ON THIS HARDWARE: whether set_preset_mode issued while HEATING can itself flip the unit to cool. The interlock bounds that to a single tick - the next pass sees mode_ok false and corrects - but if the units are ever seen flapping between heat and cool overnight, this is the first place to look. DELIBERATELY NOT DONE: clearing the preset when day breaks. The request was night-only, so a unit left on quiet stays quiet through the day until something else moves it."
           },
           {
             "if": [
