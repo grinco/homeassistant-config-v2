@@ -67,18 +67,34 @@ that does not yet mean anything.
 
 | rooms | tap | hold |
 |---|---|---|
-| Living room, Kitchen, Office, Corridor — a Magic Areas light group exists | `toggle` that group | open the room |
-| the other eight — no lights in the area, so no group | nothing | open the room |
+| Living room, Kitchen, Office, Corridor, Kids room 2 — a Magic Areas light group exists | `toggle` that group | open the room |
+| the other seven — no lights in the area, so no group | nothing | open the room |
 
 **`tap_action: none`, not a reference to a group that does not exist yet.** Magic Areas only
 creates a room's light group once the area actually contains a light, and toggling a
-non-existent entity raises a visible error rather than failing quietly — verified. So the eight
+non-existent entity raises a visible error rather than failing quietly — verified. So the
 light-less rooms do nothing on tap, which is the same thing they did before, without the error.
 
 When lights are added to one of those areas, Magic Areas creates its group automatically; the
 tile then needs its `entity` set and `tap_action` changed to `toggle` — one line per room. That
 is the one manual step this design keeps, and it is the price of not shipping a tile that
 throws an error every time it is pressed.
+
+### That manual step came due (2026-09-23)
+
+A light was added to **Kids room 2** (`light.bunny`), Magic Areas created
+`light.magic_areas_light_groups_kid2_room_all_lights` by itself, and the tile was switched over:
+`entity` now names the group, `tap_action` is `toggle`, and `icon_tap_action` opens the room
+instead of the AC's more-info dialog. The tile is now identical in behaviour to the four
+lower-floor ones.
+
+The secondary line changed with it — it used to count `n/m on` across `area_entities`, which
+would have read *2/2* once the area held both the group **and** its member. It now reads the
+group's own state and brightness, the same expression the living-room tile uses, and keeps the
+AC temperature and mode after it.
+
+`color` needed no change: it already preferred the area's lights over the AC and switched over
+on its own the moment lights existed.
 
 ## An unresolved report
 

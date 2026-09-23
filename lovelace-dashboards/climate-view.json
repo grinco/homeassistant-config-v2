@@ -375,11 +375,23 @@
         {
           "type": "tile",
           "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
-          "name": "PM2.5",
+          "name": "PM2.5 · corridor",
           "icon": "mdi:blur",
+          "color": "purple",
           "grid_options": {
-            "columns": 6
-          }
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "trend-graph",
+              "hours_to_show": 24
+            },
+            {
+              "type": "bar-gauge",
+              "min": 0,
+              "max": 75
+            }
+          ]
         },
         {
           "type": "tile",
@@ -399,7 +411,7 @@
         },
         {
           "type": "tile",
-          "entity": "sensor.corridor_xiaomi_air_purifier_temperature",
+          "entity": "sensor.climate_temp_corridor",
           "name": "Corridor",
           "icon": "mdi:thermometer",
           "grid_options": {
@@ -408,7 +420,7 @@
         },
         {
           "type": "tile",
-          "entity": "sensor.corridor_xiaomi_air_purifier_humidity",
+          "entity": "sensor.climate_humidity_corridor",
           "name": "Corridor",
           "icon": "mdi:water-percent",
           "grid_options": {
@@ -598,6 +610,33 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
+              "entity": "sensor.climate_temp_corridor",
+              "name": "Corridor",
+              "color": "#8bc34a"
+            }
+          ],
+          "icon": "mdi:thermometer",
+          "hours_to_show": 24,
+          "points_per_hour": 2,
+          "line_width": 2,
+          "font_size": 75,
+          "show": {
+            "name": true,
+            "icon": true,
+            "state": true,
+            "labels": false,
+            "legend": false,
+            "fill": "fade"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 3
+          }
+        },
+        {
+          "type": "custom:mini-graph-card",
+          "entities": [
+            {
               "entity": "sensor.house_temperature",
               "name": "Outside",
               "color": "#4caf50"
@@ -651,9 +690,9 @@
               "color": "#00bcd4"
             },
             {
-              "entity": "sensor.house_temperature",
-              "name": "Outside",
-              "color": "#4caf50"
+              "entity": "sensor.climate_temp_corridor",
+              "name": "Corridor",
+              "color": "#8bc34a"
             }
           ],
           "hours_to_show": 24,
@@ -824,6 +863,33 @@
           "type": "custom:mini-graph-card",
           "entities": [
             {
+              "entity": "sensor.climate_humidity_corridor",
+              "name": "Corridor",
+              "color": "#8bc34a"
+            }
+          ],
+          "icon": "mdi:water-percent",
+          "hours_to_show": 24,
+          "points_per_hour": 2,
+          "line_width": 2,
+          "font_size": 75,
+          "show": {
+            "name": true,
+            "icon": true,
+            "state": true,
+            "labels": false,
+            "legend": false,
+            "fill": "fade"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 3
+          }
+        },
+        {
+          "type": "custom:mini-graph-card",
+          "entities": [
+            {
               "entity": "sensor.house_humidity",
               "name": "Outside",
               "color": "#4caf50"
@@ -877,9 +943,9 @@
               "color": "#00bcd4"
             },
             {
-              "entity": "sensor.house_humidity",
-              "name": "Outside",
-              "color": "#4caf50"
+              "entity": "sensor.climate_humidity_corridor",
+              "name": "Corridor",
+              "color": "#8bc34a"
             }
           ],
           "hours_to_show": 24,
