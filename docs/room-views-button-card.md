@@ -342,6 +342,22 @@ Each restored label was then verified by replicating it against live state — *
 *22.9° · 45%*, *Armed home*, *17° · 0% rain*, *Fair · PM2.5 2*, *Charging · 100%*,
 *13:00–14:00 · now* — rather than by inspecting the JS and declaring it correct.
 
+### Background radiation moved to the heading
+
+The dose-rate card is gone; CPM now rides the *Background radiation* heading as an entity badge,
+the same pattern the *Outside* heading already used for temperature. The 24 h dose-rate graph
+stays.
+
+**One thing that move costs, and what replaced it.** The old card coloured itself by dose — grey
+when the counter was silent, green, amber at 0.3 µSv/h, red at 1.0. A heading badge cannot do
+that: `color` on a badge takes a token or hex and **not** a template. Dropping the card would
+therefore have quietly dropped the only visual warning this instance has for radiation.
+
+So the card is not deleted, it is made conditional: it reappears, red, only when
+`sensor.radiation_dose_rate` is **above 0.3 µSv/h**. Zero space at background levels, and the
+warning survives. That is the same rule the rest of these dashboards follow — only live state
+earns space — applied to a threshold rather than to a reading.
+
 ### Prose off the dashboards
 
 The CO₂ card's closing sentence — *"The purifier does not reduce CO₂ — it filters particulates.
