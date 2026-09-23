@@ -36,6 +36,12 @@ Checks, each one written because something it catches actually shipped:
                          renders an error box and no entity check would notice.
   C6 no-debug-keys       no `_`-prefixed scratch key left on a view by a
                          transform.
+  C8 variables-defined   a card's OWN js templates only reference `variables.x`
+                         that the card, or a template it uses, actually defines.
+                         Clobbering a card's label with one written for a
+                         different card leaves every lookup undefined and the
+                         card renders a fallback dash - which is what happened
+                         to six Home tiles.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -291,6 +297,31 @@ def main():
                                 "column_span=%d" % (label, i, v.get("title"), mc, span))
         if dead:
             fail("C7", "%s: %d view(s) leave a dead section column" % (label, len(dead)), dead)
+
+        # C8 - a card's own JS may only use variables something defines.
+        # Scoped to CARD-level strings on purpose: a template's own JS may
+        # reference an optional variable it null-checks (upstream's
+        # `custom_s2` does exactly that), and flagging those would be a check
+        # failing for a wrong reason.
+        undef = []
+        for path, card in found:
+            if card.get("type") != "custom:button-card":
+                continue
+            have = set((card.get("variables") or {}).keys())
+            for name in template_names(card):
+                have |= set((resolve(name, lib).get("variables") or {}).keys())
+            own = []
+            for k, v in card.items():
+                if k in ("variables", "template", "type"):
+                    continue
+                own.append(json.dumps(v, ensure_ascii=False))
+            used = set(re.findall(r"variables\.([A-Za-z_][A-Za-z0-9_]*)", " ".join(own)))
+            missing_vars = sorted(used - have)
+            if missing_vars:
+                undef.append("%s  uses %s  (%s)" % (path, ", ".join(missing_vars), card.get("entity")))
+        if undef:
+            fail("C8", "%s: %d card(s) reference a variable nothing defines - they "
+                       "will render a fallback, not a value" % (label, len(undef)), undef)
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

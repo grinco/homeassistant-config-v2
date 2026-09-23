@@ -348,7 +348,7 @@
             "sensor.climate_co2_living_room",
             "sensor.climate_co2_office"
           ],
-          "content": "{% set ns = namespace(worst = -1, room = '') %}{% for r, n in [('living_room','Living room'), ('office','Office')] %}{% set v = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if v > ns.worst %}{% set ns.worst = v %}{% set ns.room = n %}{% endif %}{% endfor %}{% if ns.worst < 0 %}No CO₂ reading.{% elif ns.worst >= 1400 %}**{{ ns.room }} {{ ns.worst | int }} ppm — open a window.** Above about 1400 ppm concentration and alertness measurably suffer.{% elif ns.worst >= 1000 %}**{{ ns.room }} {{ ns.worst | int }} ppm** — stuffy. Worth airing; this is the usual sign a room has been shut too long.{% else %}Highest {{ ns.room }} at {{ ns.worst | int }} ppm — well ventilated. Outdoor air is about 420.{% endif %}\n\nThe purifier does **not** reduce CO₂ — it filters particulates. Only fresh air does."
+          "content": "{% set ns = namespace(worst = -1, room = '') %}{% for r, n in [('living_room','Living room'), ('office','Office')] %}{% set v = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if v > ns.worst %}{% set ns.worst = v %}{% set ns.room = n %}{% endif %}{% endfor %}{% if ns.worst < 0 %}No CO₂ reading.{% elif ns.worst >= 1400 %}**{{ ns.room }} {{ ns.worst | int }} ppm — open a window.** Above about 1400 ppm concentration and alertness measurably suffer.{% elif ns.worst >= 1000 %}**{{ ns.room }} {{ ns.worst | int }} ppm** — stuffy. Worth airing; this is the usual sign a room has been shut too long.{% else %}Highest {{ ns.room }} at {{ ns.worst | int }} ppm — well ventilated. Outdoor air is about 420.{% endif %}"
         },
         {
           "type": "custom:mini-graph-card",

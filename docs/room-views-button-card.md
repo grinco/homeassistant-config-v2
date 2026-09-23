@@ -310,6 +310,44 @@ Check **C7** encodes all three rules — `rows: 1` for the `vg_stat` family, col
 and `max_columns` a multiple of `column_span` — and three of the eleven mutations exist to prove
 it still fails when any of them is undone.
 
+## Seven cards rendering a dash — C8
+
+The compaction pass folded the room tiles' presence line into their label, which meant rewriting
+that label. The rewrite was applied by template name:
+
+```python
+if "vg_room" in names:
+    c["label"] = LBL          # the ROOM label
+```
+
+`vg_room` is "name plus label, no value" — and the six Home quick tiles (Lights, Indoors, Alarm,
+Outside, Air quality, Žorik) and Energy's *Cheapest block* are also name-plus-label cards, so they
+were on `vg_room` too. All seven had their bespoke label overwritten with one that reads
+`variables.grp`, `variables.ac`, `variables.pres` — variables only a real room tile defines. Every
+lookup came back undefined, the parts list stayed empty, and each card fell through to its `'—'`
+fallback.
+
+Nothing errored. The cards rendered, sized correctly, passed C1 through C7, and said nothing.
+
+**C8** closes that class: *a card's own JS may only reference `variables.x` that the card, or a
+template it uses, actually defines.* It is deliberately scoped to **card-level** strings — a
+template's own JS may reference an optional variable it null-checks, which upstream's
+`view_sensor_layout` does with `custom_s2`, and flagging those would be a check failing for the
+wrong reason.
+
+It found **seven**, not the six that were reported: Energy's *Cheapest block* had the same
+clobbering and had not been noticed. That is the argument for the check over a careful re-read.
+
+Each restored label was then verified by replicating it against live state — *All off*,
+*22.9° · 45%*, *Armed home*, *17° · 0% rain*, *Fair · PM2.5 2*, *Charging · 100%*,
+*13:00–14:00 · now* — rather than by inspecting the JS and declaring it correct.
+
+### Prose off the dashboards
+
+The CO₂ card's closing sentence — *"The purifier does not reduce CO₂ — it filters particulates.
+Only fresh air does."* — is gone at the operator's instruction. It was explanation, not state, and
+explanation belongs here rather than on a wall the household reads daily.
+
 ## Still unused, and available
 
 Loading the whole library rather than the subset the room views need means these are ready

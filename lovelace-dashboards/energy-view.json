@@ -637,7 +637,7 @@
           "entity": "binary_sensor.spot_electricity_is_cheapest",
           "name": "Cheapest block",
           "icon": "mdi:clock-check-outline",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return 'not published yet'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
           "tap_action": {
             "action": "more-info"
           },

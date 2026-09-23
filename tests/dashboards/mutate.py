@@ -149,7 +149,21 @@ def m_dead_column(d):
     return "C7"
 
 
+def m_clobbered_label(d):
+    """A label written for a different card: every variables.x undefined, so the
+    card renders its fallback instead of a value. Six Home tiles and one Energy
+    tile shipped like this."""
+    doc = _cfg(d, LOV)
+    vi, si, ci = _first_button(doc)
+    card = doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]
+    card.pop("variables", None)
+    card["label"] = "[[[ return variables.grp ? states[variables.grp].state : '-'; ]]]"
+    _save(d, LOV, doc)
+    return "C8"
+
+
 MUTATIONS = [
+    ("a label using variables nothing defines", m_clobbered_label),
     ("a card taller than its content", m_tall_cards),
     ("a card off the column ladder", m_off_ladder_columns),
     ("max_columns leaves a dead column", m_dead_column),

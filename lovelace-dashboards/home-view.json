@@ -255,7 +255,8 @@
           "grid_options": {
             "columns": 6,
             "rows": 1
-          }
+          },
+          "label": "[[[ var t = entity.attributes.temperature; var r = states['sensor.house_precipitation_probability']; return (t === undefined ? '-' : Math.round(t)) + '° · ' + (r ? r.state : '-') + '% rain'; ]]]"
         }
       ]
     },
@@ -267,7 +268,7 @@
           "type": "custom:button-card",
           "name": "Lights",
           "icon": "mdi:lightbulb-group",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led']; var n = 0; var k = Object.keys(states); for (var i = 0; i < k.length; i++) { var e = k[i]; if (e.indexOf('light.') !== 0) continue; if (aps.indexOf(e) >= 0) continue; var s = states[e]; if (s.attributes.entity_id) continue; if (s.state === 'on') n++; } return n ? n + ' on' : 'All off'; ]]]",
           "tap_action": {
             "action": "perform-action",
             "perform_action": "light.turn_off",
@@ -309,7 +310,7 @@
           "entity": "sensor.indoor_temperature",
           "name": "Indoors",
           "icon": "mdi:home-thermometer",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var t = parseFloat(entity.state); var h = states['sensor.indoor_humidity']; var hs = h ? Math.round(parseFloat(h.state)) : '-'; return (isNaN(t) ? '-' : (Math.round(t * 10) / 10)) + '° · ' + hs + '%'; ]]]",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
@@ -332,7 +333,7 @@
           "entity": "alarm_control_panel.home",
           "name": "Alarm",
           "icon": "[[[ var m = {disarmed: 'mdi:shield-outline', armed_home: 'mdi:shield-home', armed_night: 'mdi:shield-moon', armed_away: 'mdi:shield-lock', arming: 'mdi:shield-sync', pending: 'mdi:shield-sync', triggered: 'mdi:shield-alert'}; return m[entity.state] || 'mdi:shield-off-outline'; ]]]",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var m = {disarmed: 'Disarmed', armed_home: 'Armed home', armed_night: 'Armed night', armed_away: 'Armed away', arming: 'Arming…', pending: 'Pending…', triggered: 'TRIGGERED'}; return m[entity.state] || 'Unavailable'; ]]]",
           "tap_action": {
             "action": "more-info"
           },
@@ -358,7 +359,7 @@
           "entity": "weather.house",
           "name": "Outside",
           "icon": "[[[ var m = {'clear-night': 'mdi:weather-night', cloudy: 'mdi:weather-cloudy', fog: 'mdi:weather-fog', hail: 'mdi:weather-hail', lightning: 'mdi:weather-lightning', 'lightning-rainy': 'mdi:weather-lightning-rainy', partlycloudy: 'mdi:weather-partly-cloudy', pouring: 'mdi:weather-pouring', rainy: 'mdi:weather-rainy', snowy: 'mdi:weather-snowy', 'snowy-rainy': 'mdi:weather-snowy-rainy', sunny: 'mdi:weather-sunny', windy: 'mdi:weather-windy', 'windy-variant': 'mdi:weather-windy-variant'}; return m[entity.state] || 'mdi:weather-cloudy'; ]]]",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var t = entity.attributes.temperature; var r = states['sensor.house_precipitation_probability']; return (t === undefined ? '-' : Math.round(t)) + '° · ' + (r ? r.state : '-') + '% rain'; ]]]",
           "tap_action": {
             "action": "more-info"
           },
@@ -384,7 +385,7 @@
           "entity": "sensor.outside_openweathermap_air_quality_index",
           "name": "Air quality",
           "icon": "mdi:air-filter",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var m = {'1': 'Good', '2': 'Fair', '3': 'Moderate', '4': 'Poor', '5': 'Very poor'}; var p = states['sensor.outside_openweathermap_pm2_5']; var pv = p ? Math.round(parseFloat(p.state)) : '-'; return (m[entity.state] || '—') + ' · PM2.5 ' + pv; ]]]",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
@@ -407,7 +408,7 @@
           "entity": "vacuum.zorik",
           "name": "Žorik",
           "icon": "mdi:robot-vacuum",
-          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavail' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); if (a.state !== 'off') p.push(String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') p.push('LEAK'); } var pr = variables.pres ? states[variables.pres] : null; if (pr && pr.state === 'on') p.push('● here'); return p.join(' · ') || '—'; ]]]",
+          "label": "[[[ var s = states['sensor.zorik_status']; var b = states['sensor.zorik_battery']; var t = s ? String(s.state).replace(/_/g, ' ') : '-'; t = t.charAt(0).toUpperCase() + t.slice(1); return t + ' · ' + (b ? b.state : '-') + '%'; ]]]",
           "tap_action": {
             "action": "more-info"
           },
