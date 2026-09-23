@@ -256,150 +256,227 @@
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
-          "grid_options": {
-            "columns": 6
-          },
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.living_room_tv_socket_power",
-          "primary": "TV",
+          "name": "TV",
           "icon": "mdi:television-classic",
-          "secondary": "{% if is_state('switch.living_room_tv_socket','on') %}{{ states('sensor.living_room_tv_socket_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.living_room_tv_socket','on') %}grey{% else %}{% set w = states('sensor.living_room_tv_socket_power') | float(0) %}{{ 'amber' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.living_room_tv_socket",
+            "base": "#ffc107"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.media_corner_power",
-          "primary": "Media corner",
+          "name": "Media corner",
           "icon": "mdi:audio-video",
-          "secondary": "{% if is_state('switch.media_corner','on') %}{{ states('sensor.media_corner_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.media_corner','on') %}grey{% else %}{% set w = states('sensor.media_corner_power') | float(0) %}{{ 'pink' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.media_corner",
+            "base": "#e91e63"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.living_room_vacuum_socket_power",
-          "primary": "Vacuum dock",
+          "name": "Vacuum dock",
           "icon": "mdi:robot-vacuum",
-          "secondary": "{% if is_state('switch.living_room_vacuum_socket','on') %}{{ states('sensor.living_room_vacuum_socket_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.living_room_vacuum_socket','on') %}grey{% else %}{% set w = states('sensor.living_room_vacuum_socket_power') | float(0) %}{{ 'teal' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.living_room_vacuum_socket",
+            "base": "#009688"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.downstairs_toilet_power",
-          "primary": "Toilet down",
+          "name": "Toilet down",
           "icon": "mdi:toilet",
-          "secondary": "{% if is_state('switch.downstairs_toilet','on') %}{{ states('sensor.downstairs_toilet_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.downstairs_toilet','on') %}grey{% else %}{% set w = states('sensor.downstairs_toilet_power') | float(0) %}{{ 'light-blue' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.downstairs_toilet",
+            "base": "#03a9f4"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.upstairs_toilet_power",
-          "primary": "Toilet up",
+          "name": "Toilet up",
           "icon": "mdi:toilet",
-          "secondary": "{% if is_state('switch.upstairs_toilet','on') %}{{ states('sensor.upstairs_toilet_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.upstairs_toilet','on') %}grey{% else %}{% set w = states('sensor.upstairs_toilet_power') | float(0) %}{{ 'light-blue' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.upstairs_toilet",
+            "base": "#00bcd4"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.poe_network_power",
-          "primary": "PoE network",
+          "name": "PoE network",
           "icon": "mdi:server-network",
-          "secondary": "{% if is_state('switch.poe_network','on') %}{{ states('sensor.poe_network_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.poe_network','on') %}grey{% else %}{% set w = states('sensor.poe_network_power') | float(0) %}{{ 'blue-grey' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "hold_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
           "grid_options": {
             "columns": 6
           },
+          "variables": {
+            "sw": "switch.poe_network",
+            "base": "#607d8b"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.lr_powerline_power",
-          "primary": "LR powerline",
+          "name": "LR powerline",
           "icon": "mdi:transmission-tower",
-          "secondary": "{% if is_state('switch.lr_powerline','on') %}{{ states('sensor.lr_powerline_power') | float(0) | round(0) | int }} W{% else %}Off{% endif %}",
-          "color": "{% if not is_state('switch.lr_powerline','on') %}grey{% else %}{% set w = states('sensor.lr_powerline_power') | float(0) %}{{ 'blue-grey' if w < 1 else 'green' if w < 50 else 'amber' if w < 300 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
+          "grid_options": {
+            "columns": 6
           },
-          "hold_action": {
-            "action": "more-info"
+          "variables": {
+            "sw": "switch.lr_powerline",
+            "base": "#795548"
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
           }
         },
         {
@@ -409,45 +486,63 @@
           "icon": "mdi:power-plug-outline"
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
-          "grid_options": {
-            "columns": 6
-          },
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "switch.living_room_tv_socket_switchbot_bridge",
-          "primary": "Switchbot bridge",
+          "name": "Switchbot bridge",
           "icon": "mdi:bridge",
-          "secondary": "{{ 'On' if is_state('switch.living_room_tv_socket_switchbot_bridge','on') else 'Off' }}",
-          "color": "{{ 'blue' if is_state('switch.living_room_tv_socket_switchbot_bridge','on') else 'grey' }}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
+          "grid_options": {
+            "columns": 6
           },
-          "hold_action": {
-            "action": "more-info"
+          "variables": {
+            "base": "#2196f3"
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
+              }
+            ]
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
-          "grid_options": {
-            "columns": 6
-          },
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "switch.living_room_vacuum_socket_magsafe_charger",
-          "primary": "MagSafe charger",
+          "name": "MagSafe charger",
           "icon": "mdi:cellphone-charging",
-          "secondary": "{{ 'On' if is_state('switch.living_room_vacuum_socket_magsafe_charger','on') else 'Off' }}",
-          "color": "{{ 'blue' if is_state('switch.living_room_vacuum_socket_magsafe_charger','on') else 'grey' }}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": false,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
+          "grid_options": {
+            "columns": 6
           },
-          "hold_action": {
-            "action": "more-info"
+          "variables": {
+            "base": "#2196f3"
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
+              }
+            ]
           }
         }
       ]
@@ -462,20 +557,31 @@
           "icon": "mdi:cash-clock"
         },
         {
-          "type": "custom:mushroom-template-card",
-          "grid_options": {
-            "columns": 12
-          },
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.current_spot_electricity_price",
-          "primary": "Electricity now",
+          "name": "Electricity now",
           "icon": "mdi:transmission-tower",
-          "secondary": "{{ states('sensor.current_spot_electricity_price') | float(0) | round(2) }} Kč/kWh · {{ states('sensor.current_spot_electricity_hour_order') }}{{ 'st' if states('sensor.current_spot_electricity_hour_order') == '1' else 'nd' if states('sensor.current_spot_electricity_hour_order') == '2' else 'rd' if states('sensor.current_spot_electricity_hour_order') == '3' else 'th' }} cheapest hour today",
-          "color": "{% set p = states('sensor.current_spot_electricity_price') | float(-1) %}{% set lo = states('sensor.spot_cheapest_electricity_today') | float(-1) %}{% set hi = states('sensor.spot_most_expensive_electricity_today') | float(-1) %}{% if p < 0 or hi <= lo %}grey{% else %}{% set f = (p - lo) / (hi - lo) %}{{ 'green' if f < 0.25 else 'light-green' if f < 0.5 else 'amber' if f < 0.75 else 'deep-orange' }}{% endif %}",
+          "show_name": true,
+          "show_state": true,
+          "show_label": true,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
+          "grid_options": {
+            "columns": 12
+          },
+          "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var p = parseFloat(entity.state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
           }
         },
         {
@@ -509,40 +615,67 @@
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.spot_cheapest_electricity_today",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Cheapest today",
           "icon": "mdi:arrow-down-bold",
-          "color": "green",
+          "color": "#4caf50",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.spot_most_expensive_electricity_today",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Dearest today",
           "icon": "mdi:arrow-up-bold",
-          "color": "deep-orange",
+          "color": "#ff5722",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "grid_options": {
-            "columns": 12
-          },
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.spot_electricity_is_cheapest",
-          "primary": "Cheapest block",
+          "name": "Cheapest block",
           "icon": "mdi:clock-check-outline",
-          "secondary": "{% set s = state_attr('binary_sensor.spot_electricity_is_cheapest','Start hour') %}{% set e = state_attr('binary_sensor.spot_electricity_is_cheapest','End hour') %}{% if s is none %}—{% else %}{{ s }}:00–{{ e }}:00{{ ' · now' if is_state('binary_sensor.spot_electricity_is_cheapest','on') else '' }}{% endif %}",
-          "color": "{{ 'green' if is_state('binary_sensor.spot_electricity_is_cheapest','on') else 'grey' }}",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "icon_tap_action": {
-            "action": "more-info"
+          "grid_options": {
+            "columns": 12
+          },
+          "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return '—'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ return entity.state === 'on' ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
           }
         },
         {
@@ -559,38 +692,54 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.spot_cheapest_electricity_tomorrow",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Cheapest",
           "icon": "mdi:arrow-down-bold",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
+          "color": "#4caf50",
           "visibility": [
             {
               "condition": "state",
               "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
               "state": "on"
             }
-          ]
+          ],
+          "grid_options": {
+            "columns": 6
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.spot_most_expensive_electricity_tomorrow",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Dearest",
           "icon": "mdi:arrow-up-bold",
-          "color": "deep-orange",
-          "grid_options": {
-            "columns": 6
-          },
+          "color": "#ff5722",
           "visibility": [
             {
               "condition": "state",
               "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
               "state": "on"
             }
-          ]
+          ],
+          "grid_options": {
+            "columns": 6
+          }
         },
         {
           "type": "heading",
@@ -599,31 +748,47 @@
           "icon": "mdi:fire"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.current_spot_gas_price",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Today",
           "icon": "mdi:fire",
-          "color": "orange",
+          "color": "#ff9800",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.tomorrow_spot_gas_price",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Tomorrow",
           "icon": "mdi:fire",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
+          "color": "#ffc107",
           "visibility": [
             {
               "condition": "state",
               "entity": "binary_sensor.spot_gas_has_tomorrow_data",
               "state": "on"
             }
-          ]
+          ],
+          "grid_options": {
+            "columns": 6
+          }
         }
       ]
     },
@@ -883,11 +1048,19 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.volvo_xc40_charging_status",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Charging",
           "icon": "mdi:ev-station",
-          "color": "blue",
+          "color": "#2196f3",
           "grid_options": {
             "columns": 6
           }

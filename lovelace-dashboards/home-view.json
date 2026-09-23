@@ -129,21 +129,29 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.shower_sink_leak_water_leak",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Water leak — shower sink",
           "icon": "mdi:water-alert",
-          "color": "red",
-          "grid_options": {
-            "columns": 12
-          },
+          "color": "#f44336",
           "visibility": [
             {
               "condition": "state",
               "entity": "binary_sensor.shower_sink_leak_water_leak",
               "state": "on"
             }
-          ]
+          ],
+          "grid_options": {
+            "columns": 12
+          }
         },
         {
           "type": "markdown",
@@ -168,11 +176,19 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Air purifier filter",
           "icon": "mdi:air-filter",
-          "color": "orange",
+          "color": "#ff9800",
           "visibility": [
             {
               "condition": "numeric_state",
@@ -193,63 +209,91 @@
           "icon": "mdi:eye-outline"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.downstairs_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Downstairs",
           "icon": "mdi:home-floor-l",
-          "color": "orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
+          "color": "#ff9800",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
+          },
+          "grid_options": {
+            "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.upstairs_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Upstairs",
           "icon": "mdi:home-roof",
-          "color": "orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
+          "color": "#ff9800",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
+          },
+          "grid_options": {
+            "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.ac_power_total",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "AC load",
           "icon": "mdi:lightning-bolt",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "vertical": true,
+          "color": "#4caf50",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/energy"
+          },
+          "grid_options": {
+            "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.house_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Outside",
           "icon": "mdi:sun-thermometer-outline",
-          "color": "light-blue",
-          "vertical": true,
-          "grid_options": {
-            "columns": 6
-          },
+          "color": "#03a9f4",
           "tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
+          },
+          "grid_options": {
+            "columns": 6
           }
         }
       ]
@@ -259,15 +303,27 @@
       "column_span": 2,
       "cards": [
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout"
+          ],
+          "name": "Lights",
+          "icon": "mdi:lightbulb-group",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led']; var n = 0; var k = Object.keys(states); for (var i = 0; i < k.length; i++) { var e = k[i]; if (e.indexOf('light.') !== 0) continue; if (aps.indexOf(e) >= 0) continue; var s = states[e]; if (s.attributes.entity_id) continue; if (s.state === 'on') n++; } return n ? n + ' on' : 'All off'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led']; var n = 0; var k = Object.keys(states); for (var i = 0; i < k.length; i++) { var e = k[i]; if (e.indexOf('light.') !== 0) continue; if (aps.indexOf(e) >= 0) continue; var s = states[e]; if (s.attributes.entity_id) continue; if (s.state === 'on') n++; } return n ? '#ffc107' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
-          "primary": "Lights",
-          "icon": "mdi:lightbulb-group",
-          "secondary": "{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ n ~ ' on' if n else 'All off' }}",
-          "color": "{% set aps = ['light.lower_floor_led','light.closet_switch_led','light.garden_led','light.upper_floor_led'] %}{% set n = states.light | rejectattr('attributes.entity_id','defined') | rejectattr('entity_id','in',aps) | selectattr('state','eq','on') | list | count %}{{ 'amber' if n else 'grey' }}",
           "tap_action": {
             "action": "perform-action",
             "perform_action": "light.turn_off",
@@ -290,116 +346,160 @@
             "confirmation": {
               "text": "Turn off every light in the house?"
             }
-          },
-          "icon_tap_action": {
-            "action": "none"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Indoors",
+          "icon": "mdi:home-thermometer",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var t = parseFloat(entity.state); var h = states['sensor.indoor_humidity']; var hs = h ? Math.round(parseFloat(h.state)) : '-'; return (Math.round(t * 10) / 10) + '° · ' + hs + '%'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var t = parseFloat(entity.state); if (isNaN(t)) return '#9e9e9e'; if (t < 20) return '#2196f3'; if (t <= 24) return '#4caf50'; if (t <= 26) return '#ffc107'; return '#ff5722'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "sensor.indoor_temperature",
-          "primary": "Indoors",
-          "icon": "mdi:home-thermometer",
-          "secondary": "{{ states('sensor.indoor_temperature') | float(0) | round(1) }}° · {{ states('sensor.indoor_humidity') | float(0) | round(0) | int }}%",
-          "color": "{% set t = states('sensor.indoor_temperature') | float(0) %}{{ 'blue' if t < 20 else 'green' if t <= 24 else 'amber' if t <= 26 else 'deep-orange' }}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
-          },
-          "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Alarm",
+          "icon": "[[[ var m = {disarmed: 'mdi:shield-outline', armed_home: 'mdi:shield-home', armed_night: 'mdi:shield-moon', armed_away: 'mdi:shield-lock', arming: 'mdi:shield-sync', pending: 'mdi:shield-sync', triggered: 'mdi:shield-alert'}; return m[entity.state] || 'mdi:shield-off-outline'; ]]]",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var m = {disarmed: 'Disarmed', armed_home: 'Armed home', armed_night: 'Armed night', armed_away: 'Armed away', arming: 'Arming…', pending: 'Pending…', triggered: 'TRIGGERED'}; return m[entity.state] || 'Unavailable'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var m = {disarmed: '#4caf50', armed_home: '#2196f3', armed_night: '#3f51b5', armed_away: '#f44336', arming: '#ffc107', pending: '#ffc107', triggered: '#f44336'}; return m[entity.state] || '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "alarm_control_panel.home",
-          "primary": "Alarm",
-          "icon": "{{ {'disarmed':'mdi:shield-outline','armed_home':'mdi:shield-home','armed_night':'mdi:shield-moon','armed_away':'mdi:shield-lock','arming':'mdi:shield-sync','pending':'mdi:shield-sync','triggered':'mdi:shield-alert'}.get(states('alarm_control_panel.home'), 'mdi:shield-off-outline') }}",
-          "secondary": "{{ {'disarmed':'Disarmed','armed_home':'Armed home','armed_night':'Armed night','armed_away':'Armed away','arming':'Arming…','pending':'Pending…','triggered':'TRIGGERED'}.get(states('alarm_control_panel.home'), 'Unavailable') }}",
-          "color": "{{ {'disarmed':'green','armed_home':'blue','armed_night':'indigo','armed_away':'red','arming':'amber','pending':'amber','triggered':'red'}.get(states('alarm_control_panel.home'), 'grey') }}",
           "tap_action": {
             "action": "more-info"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/security"
-          },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "features_position": "bottom"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Outside",
+          "icon": "[[[ var m = {'clear-night': 'mdi:weather-night', cloudy: 'mdi:weather-cloudy', fog: 'mdi:weather-fog', hail: 'mdi:weather-hail', lightning: 'mdi:weather-lightning', 'lightning-rainy': 'mdi:weather-lightning-rainy', partlycloudy: 'mdi:weather-partly-cloudy', pouring: 'mdi:weather-pouring', rainy: 'mdi:weather-rainy', snowy: 'mdi:weather-snowy', 'snowy-rainy': 'mdi:weather-snowy-rainy', sunny: 'mdi:weather-sunny', windy: 'mdi:weather-windy', 'windy-variant': 'mdi:weather-windy-variant'}; return m[entity.state] || 'mdi:weather-cloudy'; ]]]",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var t = entity.attributes.temperature; var r = states['sensor.house_precipitation_probability']; return Math.round(t) + '° · ' + (r ? r.state : '-') + '% rain'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var s = states['sun.sun']; return (s && s.state === 'below_horizon') ? '#3f51b5' : '#03a9f4'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "weather.house",
-          "primary": "Outside",
-          "icon": "{% set m = {'clear-night':'mdi:weather-night','cloudy':'mdi:weather-cloudy','fog':'mdi:weather-fog','hail':'mdi:weather-hail','lightning':'mdi:weather-lightning','lightning-rainy':'mdi:weather-lightning-rainy','partlycloudy':'mdi:weather-partly-cloudy','pouring':'mdi:weather-pouring','rainy':'mdi:weather-rainy','snowy':'mdi:weather-snowy','snowy-rainy':'mdi:weather-snowy-rainy','sunny':'mdi:weather-sunny','windy':'mdi:weather-windy','windy-variant':'mdi:weather-windy-variant'} %}{{ m.get(states('weather.house'), 'mdi:weather-cloudy') }}",
-          "secondary": "{{ state_attr('weather.house','temperature') | float(0) | round(0) | int }}° · {{ states('sensor.house_precipitation_probability') }}% rain",
-          "color": "{{ 'indigo' if is_state('sun.sun','below_horizon') else 'light-blue' }}",
           "tap_action": {
             "action": "more-info"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
-          },
-          "icon_tap_action": {
-            "action": "more-info"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Air quality",
+          "icon": "mdi:air-filter",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var m = {'1': 'Good', '2': 'Fair', '3': 'Moderate', '4': 'Poor', '5': 'Very poor'}; var p = states['sensor.outside_openweathermap_pm2_5']; var pv = p ? Math.round(parseFloat(p.state)) : '-'; return (m[entity.state] || '—') + ' · PM2.5 ' + pv; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var m = {'1': '#4caf50', '2': '#8bc34a', '3': '#ffc107', '4': '#ff9800', '5': '#f44336'}; return m[entity.state] || '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "sensor.outside_openweathermap_air_quality_index",
-          "primary": "Air quality",
-          "icon": "mdi:air-filter",
-          "secondary": "{{ {'1':'Good','2':'Fair','3':'Moderate','4':'Poor','5':'Very poor'}.get(states('sensor.outside_openweathermap_air_quality_index'), '—') }} · PM2.5 {{ states('sensor.outside_openweathermap_pm2_5') | float(0) | round(0) | int }}",
-          "color": "{{ {'1':'green','2':'light-green','3':'amber','4':'orange','5':'red'}.get(states('sensor.outside_openweathermap_air_quality_index'), 'grey') }}",
           "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/climate"
-          },
-          "icon_tap_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/climate"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Žorik",
+          "icon": "mdi:robot-vacuum",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var s = states['sensor.zorik_status']; var b = states['sensor.zorik_battery']; var t = s ? String(s.state).replace(/_/g, ' ') : '-'; t = t.charAt(0).toUpperCase() + t.slice(1); return t + ' · ' + (b ? b.state : '-') + '%'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var c = states['binary_sensor.zorik_cleaning']; if (c && c.state === 'on') return '#009688'; var e = states['sensor.zorik_vacuum_error']; if (e && ['none', 'unknown', 'unavailable'].indexOf(e.state) < 0) return '#f44336'; return '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "vacuum.zorik",
-          "primary": "Žorik",
-          "icon": "mdi:robot-vacuum",
-          "secondary": "{{ states('sensor.zorik_status') | replace('_',' ') | capitalize }} · {{ states('sensor.zorik_battery') }}%",
-          "color": "{{ 'teal' if is_state('binary_sensor.zorik_cleaning','on') else 'red' if states('sensor.zorik_vacuum_error') not in ['none','unknown','unavailable'] else 'grey' }}",
           "tap_action": {
             "action": "more-info"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/appliances"
-          },
-          "icon_tap_action": {
-            "action": "more-info"
           }
         }
       ]
@@ -450,154 +550,246 @@
           "icon": "mdi:home-floor-l"
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Living room",
+          "icon": "mdi:sofa-outline",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "light.magic_areas_light_groups_living_room_all_lights",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_living_room_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "light.magic_areas_light_groups_living_room_all_lights",
-          "area": "living_room",
-          "primary": "Living room",
-          "icon": "mdi:sofa-outline",
-          "secondary": "{% if is_state('light.magic_areas_light_groups_living_room_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_living_room_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.living_room_livingroom_ac_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.living_room_livingroom_ac_temperature') }}",
-          "color": "{% set ls = expand(area_entities('living_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_living_room_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
             "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/living-room"
-          },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/living-room"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_living_room_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Kitchen",
+          "icon": "mdi:countertop-outline",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "light.magic_areas_light_groups_kitchen_all_lights",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_kitchen_area_state",
+            "special": "kitchen"
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "light.magic_areas_light_groups_kitchen_all_lights",
-          "area": "kitchen",
-          "primary": "Kitchen",
-          "icon": "mdi:countertop-outline",
-          "secondary": "{% if is_state('light.magic_areas_light_groups_kitchen_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_kitchen_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · cooktop on' if is_state('sensor.house_cooktop_operation_state','run') }}{{ ' · oven on' if states('sensor.house_oven_operation_state') in ['run','delayedstart'] }}",
-          "color": "{% set ls = expand(area_entities('kitchen')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_kitchen_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
             "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/kitchen"
-          },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/kitchen"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kitchen_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Office",
+          "icon": "mdi:desk",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "light.magic_areas_light_groups_guest_room_all_lights",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_guest_room_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "light.magic_areas_light_groups_guest_room_all_lights",
-          "area": "bedroom",
-          "primary": "Office",
-          "icon": "mdi:desk",
-          "secondary": "{% if is_state('light.magic_areas_light_groups_guest_room_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_guest_room_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{{ ' · ' ~ states('sensor.janka_s_desk_temperature') | float(0) | round(0) | int ~ '°' if has_value('sensor.janka_s_desk_temperature') }}",
-          "color": "{% set ls = expand(area_entities('bedroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_guest_room_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
             "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/guest-room"
-          },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/guest-room"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_guest_room_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Corridor",
+          "icon": "mdi:stairs",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "light.magic_areas_light_groups_corridor_all_lights",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_corridor_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "light.magic_areas_light_groups_corridor_all_lights",
-          "area": "corridor",
-          "primary": "Corridor",
-          "icon": "mdi:stairs",
-          "secondary": "{% if is_state('light.magic_areas_light_groups_corridor_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_corridor_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}",
-          "color": "{% set ls = expand(area_entities('corridor')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'amber' if is_state('light.magic_areas_light_groups_corridor_all_lights','on') else 'grey' }}{% endif %}",
           "tap_action": {
             "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/corridor"
-          },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/corridor"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_corridor_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Laundry",
+          "icon": "mdi:washing-machine",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_laundry_room_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
-          "area": "laundry_room",
-          "primary": "Laundry",
-          "icon": "mdi:washing-machine",
-          "secondary": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
-          "color": "{% set ls = expand(area_entities('laundry_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else 'grey' }}{% endif %}",
+          "entity": "binary_sensor.magic_areas_presence_tracking_laundry_room_area_state",
           "tap_action": {
             "action": "none"
           },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/laundry-room"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_laundry_room_area_state','on') else '' }}",
-          "badge_color": "green",
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/laundry-room"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Shower",
+          "icon": "mdi:shower-head",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_shower_area_state",
+            "special": "shower"
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
-          "area": "shower",
-          "primary": "Shower",
-          "icon": "mdi:shower-head",
-          "secondary": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'LEAK' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'Dry' }} · {{ states('sensor.shower_sink_leak_battery') }}% batt",
-          "color": "{% set ls = expand(area_entities('shower')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'red' if is_state('binary_sensor.shower_sink_leak_water_leak','on') else 'light-blue' }}{% endif %}",
+          "entity": "binary_sensor.magic_areas_presence_tracking_shower_area_state",
           "tap_action": {
             "action": "none"
           },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/shower"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_shower_area_state','on') else '' }}",
-          "badge_color": "green",
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/shower"
@@ -610,151 +802,246 @@
           "icon": "mdi:home-roof"
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Bedroom",
+          "icon": "mdi:bed-king-outline",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "climate.master_bedroom_bedroom_ac",
+            "pres": "binary_sensor.magic_areas_presence_tracking_bedroom_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "climate.master_bedroom_bedroom_ac",
-          "area": "bedroom_2",
-          "primary": "Bedroom",
-          "icon": "mdi:bed-king-outline",
-          "secondary": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.master_bedroom_bedroom_ac') %}{{ state_attr('climate.master_bedroom_bedroom_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.master_bedroom_bedroom_ac','temperature') ~ '°' }}",
-          "color": "{% set ls = expand(area_entities('bedroom_2')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.master_bedroom_bedroom_ac'), 'grey') }}{% endif %}",
           "tap_action": {
             "action": "none"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/bedroom"
-          },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_bedroom_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Kids room 1",
+          "icon": "mdi:bed-single-outline",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "climate.kid1_room_ac",
+            "pres": "binary_sensor.magic_areas_presence_tracking_kid1_room_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "climate.kid1_room_ac",
-          "area": "kid1_room",
-          "primary": "Kids room 1",
-          "icon": "mdi:bed-single-outline",
-          "secondary": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{% set s = states('climate.kid1_room_ac') %}{{ state_attr('climate.kid1_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid1_room_ac','temperature') ~ '°' }}",
-          "color": "{% set ls = expand(area_entities('kid1_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid1_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
             "action": "none"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/kid1"
-          },
-          "icon_tap_action": {
-            "action": "more-info"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kid1_room_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Kids room 2",
+          "icon": "mdi:teddy-bear",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "light.magic_areas_light_groups_kid2_room_all_lights",
+            "ac": "climate.kid2_room_ac",
+            "pres": "binary_sensor.magic_areas_presence_tracking_kid2_room_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
           "entity": "light.magic_areas_light_groups_kid2_room_all_lights",
-          "area": "kid2_room",
-          "primary": "Kids room 2",
-          "icon": "mdi:teddy-bear",
-          "secondary": "{% if is_state('light.magic_areas_light_groups_kid2_room_all_lights','on') %}On{% set b = state_attr('light.magic_areas_light_groups_kid2_room_all_lights','brightness') %}{{ ' · ' ~ (b / 2.55) | round(0) | int ~ '%' if b }}{% else %}Off{% endif %}{% set s = states('climate.kid2_room_ac') %} · {{ state_attr('climate.kid2_room_ac','current_temperature') | float(0) | round(0) | int }}°{{ ' · AC off' if s == 'off' else ' · ' ~ s | replace('_',' ') ~ ' → ' ~ state_attr('climate.kid2_room_ac','temperature') ~ '°' }}",
-          "color": "{% set ls = expand(area_entities('kid2_room')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ {'cool':'blue','heat':'deep-orange','dry':'amber','fan_only':'teal','auto':'green','heat_cool':'green'}.get(states('climate.kid2_room_ac'), 'grey') }}{% endif %}",
           "tap_action": {
             "action": "toggle"
           },
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/kid2"
-          },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/kid2"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_kid2_room_area_state','on') else '' }}",
-          "badge_color": "green"
+          }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
-          "grid_options": {
-            "columns": 4
-          },
-          "area": "hallway",
-          "primary": "Hallway",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Hallway",
           "icon": "mdi:stairs-up",
-          "secondary": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
-          "color": "{% set ls = expand(area_entities('hallway')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else 'grey' }}{% endif %}",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_hallway_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "binary_sensor.magic_areas_presence_tracking_hallway_area_state",
           "tap_action": {
             "action": "none"
           },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/hallway"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_hallway_area_state','on') else '' }}",
-          "badge_color": "green",
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/hallway"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
-          "grid_options": {
-            "columns": 4
-          },
-          "area": "bathroom",
-          "primary": "Bathroom",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Bathroom",
           "icon": "mdi:bathtub-outline",
-          "secondary": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
-          "color": "{% set ls = expand(area_entities('bathroom')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else 'grey' }}{% endif %}",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_bathroom_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
+          "grid_options": {
+            "columns": 4
+          },
+          "entity": "binary_sensor.magic_areas_presence_tracking_bathroom_area_state",
           "tap_action": {
             "action": "none"
           },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/bathroom"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_bathroom_area_state','on') else '' }}",
-          "badge_color": "green",
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/bathroom"
           }
         },
         {
-          "type": "custom:mushroom-template-card",
-          "vertical": true,
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "name": "Closet",
+          "icon": "mdi:hanger",
+          "show_name": true,
+          "show_state": false,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var p = []; var g = variables.grp ? states[variables.grp] : null; if (g) { var s = g.state === 'on' ? 'On' : (g.state === 'unavailable' ? 'Unavailable' : 'Off'); if (g.state === 'on' && g.attributes.brightness) s += ' ' + Math.round(g.attributes.brightness / 2.55) + '%'; p.push(s); } var a = variables.ac ? states[variables.ac] : null; if (a) { var t = a.attributes.current_temperature; if (t !== undefined && t !== null) p.push(Math.round(t) + '°'); p.push(a.state === 'off' ? 'AC off' : String(a.state).replace('_', ' ')); } if (variables.special === 'kitchen') { var ck = states['sensor.house_cooktop_operation_state']; var ov = states['sensor.house_oven_operation_state']; if (ck && ck.state === 'run') p.push('cooktop on'); if (ov && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('oven on'); } if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; p.push(lk && lk.state === 'on' ? 'LEAK' : 'Dry'); } return p.join(' · '); ]]]",
+          "custom_fields": {
+            "s2": "[[[ var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? 'Occupied' : ''; ]]]"
+          },
+          "variables": {
+            "grp": "",
+            "ac": "",
+            "pres": "binary_sensor.magic_areas_presence_tracking_closet_area_state",
+            "special": ""
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ if (variables.special === 'shower') { var lk = states['binary_sensor.shower_sink_leak_water_leak']; if (lk && lk.state === 'on') return '#f44336'; } var g = variables.grp ? states[variables.grp] : null; if (g) return g.state === 'on' ? '#ffc107' : '#9e9e9e'; var a = variables.ac ? states[variables.ac] : null; if (a) { var m = {cool: '#2196f3', heat: '#ff5722', dry: '#ffc107', fan_only: '#009688', auto: '#4caf50', heat_cool: '#4caf50'}; return m[a.state] || '#9e9e9e'; } var pr = variables.pres ? states[variables.pres] : null; return (pr && pr.state === 'on') ? '#4caf50' : '#9e9e9e'; ]]]"
+              }
+            ]
+          },
           "grid_options": {
             "columns": 4
           },
-          "area": "closet",
-          "primary": "Closet",
-          "icon": "mdi:hanger",
-          "secondary": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% set on = ls | selectattr('state','eq','on') | list | count %}{% if ls %}{{ on }}/{{ ls | count }} on · {% endif %}{{ 'Occupied' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
-          "color": "{% set ls = expand(area_entities('closet')) | selectattr('domain','eq','light') | list %}{% if ls %}{{ 'amber' if ls | selectattr('state','eq','on') | list | count else 'grey' }}{% else %}{{ 'green' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else 'grey' }}{% endif %}",
+          "entity": "binary_sensor.magic_areas_presence_tracking_closet_area_state",
           "tap_action": {
             "action": "none"
           },
-          "icon_tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/closet"
-          },
-          "badge_icon": "{{ 'mdi:motion-sensor' if is_state('binary_sensor.magic_areas_presence_tracking_closet_area_state','on') else '' }}",
-          "badge_color": "green",
           "hold_action": {
             "action": "navigate",
             "navigation_path": "/lovelace/closet"
@@ -1135,23 +1422,37 @@
           }
         },
         {
-          "type": "custom:mushroom-entity-card",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.cat_toilet_excretion_times_day",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Cat visits today",
           "icon": "mdi:cat",
-          "icon_color": "brown",
-          "fill_container": true,
+          "color": "#795548",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "custom:mushroom-entity-card",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "switch.cat_toilet_auto_clean",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Auto clean",
           "icon": "mdi:autorenew",
-          "icon_color": "brown",
-          "fill_container": true,
+          "color": "#795548",
           "tap_action": {
             "action": "toggle"
           },

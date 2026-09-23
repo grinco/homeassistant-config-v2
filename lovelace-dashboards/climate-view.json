@@ -164,37 +164,69 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.house_apparent_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Feels like",
-          "color": "orange",
+          "color": "#ff9800",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.house_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Humidity",
-          "color": "cyan",
+          "color": "#00bcd4",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.house_wind_speed",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Wind",
-          "color": "blue-grey",
+          "color": "#607d8b",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.house_uv_index",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "UV index",
-          "color": "amber",
+          "color": "#ffc107",
           "grid_options": {
             "columns": 6
           }
@@ -252,19 +284,35 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.outside_openweathermap_nitrogen_dioxide",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "NO₂",
-          "color": "blue-grey",
+          "color": "#607d8b",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.outside_openweathermap_ozone",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "O₃",
-          "color": "blue-grey",
+          "color": "#607d8b",
           "grid_options": {
             "columns": 6
           }
@@ -410,8 +458,16 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.climate_temp_corridor",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Corridor",
           "icon": "mdi:thermometer",
           "grid_options": {
@@ -419,8 +475,16 @@
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.climate_humidity_corridor",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Corridor",
           "icon": "mdi:water-percent",
           "grid_options": {
@@ -434,14 +498,25 @@
           "icon": "mdi:radioactive"
         },
         {
-          "type": "custom:mushroom-template-card",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.radiation_dose_rate",
+          "name": "Dose rate",
           "icon": "mdi:radioactive",
-          "primary": "Dose rate",
-          "secondary": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set d = states('sensor.radiation_dose_rate') %}{% if c < 1 %}No counts — counter not reporting{% else %}{{ d }} µSv/h · {{ c | round(0) | int }} CPM{% endif %}",
-          "color": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set d = states('sensor.radiation_dose_rate') | float(-1) %}{% if c < 1 %}grey{% elif d >= 1.0 %}red{% elif d >= 0.3 %}amber{% else %}green{% endif %}",
-          "tap_action": {
-            "action": "more-info"
+          "show_state": true,
+          "show_name": true,
+          "show_label": true,
+          "show_last_changed": false,
+          "label": "[[[ var c = states['sensor.background_radiation_cpm'] ? parseFloat(states['sensor.background_radiation_cpm'].state) : NaN; if (!(c >= 1)) return 'No counts — counter not reporting'; return Math.round(c) + ' CPM'; ]]]",
+          "styles": {
+            "icon": [
+              {
+                "color": "[[[ var c = states['sensor.background_radiation_cpm'] ? parseFloat(states['sensor.background_radiation_cpm'].state) : NaN; var d = parseFloat(entity.state); if (!(c >= 1)) return '#9e9e9e'; if (d >= 1.0) return '#f44336'; if (d >= 0.3) return '#ffc107'; return '#4caf50'; ]]]"
+              }
+            ]
           },
           "grid_options": {
             "columns": 12
@@ -978,41 +1053,73 @@
           "icon": "mdi:home-floor-l"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.downstairs_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Downstairs",
           "icon": "mdi:thermometer",
-          "color": "orange",
+          "color": "#ff9800",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.upstairs_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Upstairs",
           "icon": "mdi:thermometer",
-          "color": "deep-orange",
+          "color": "#ff5722",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.downstairs_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Downstairs",
           "icon": "mdi:water-percent",
-          "color": "cyan",
+          "color": "#00bcd4",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.upstairs_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Upstairs",
           "icon": "mdi:water-percent",
-          "color": "teal",
+          "color": "#009688",
           "grid_options": {
             "columns": 6
           }

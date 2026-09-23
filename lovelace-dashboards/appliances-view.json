@@ -1,0 +1,988 @@
+{
+  "title": "Appliances",
+  "path": "appliances",
+  "type": "sections",
+  "icon": "mdi:stove",
+  "max_columns": 3,
+  "badges": [
+    {
+      "type": "entity",
+      "entity": "sensor.house_oven_operation_state",
+      "name": "Oven",
+      "show_state": true,
+      "color": "deep-orange"
+    },
+    {
+      "type": "entity",
+      "entity": "sensor.house_dishwasher_operation_state",
+      "name": "Dishwasher",
+      "show_state": true,
+      "color": "cyan"
+    },
+    {
+      "type": "entity",
+      "entity": "vacuum.zorik",
+      "name": "Žorik",
+      "show_state": true,
+      "color": "teal"
+    },
+    {
+      "type": "entity",
+      "entity": "lock.volvo_xc40_lock",
+      "name": "Car",
+      "show_state": true,
+      "color": "indigo"
+    }
+  ],
+  "sections": [
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Oven",
+          "icon": "mdi:toaster-oven"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_oven_operation_state",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "State",
+          "color": "#ff5722",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "sensor.house_oven_current_oven_cavity_temperature",
+          "name": "Cavity",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "trend-graph",
+              "hours_to_show": 12
+            }
+          ]
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_oven_door",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Door",
+          "icon": "mdi:door",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "binary_sensor.house_oven_interior_illumination_active",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Light",
+          "icon": "mdi:lightbulb",
+          "color": "#ffc107",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "select.house_oven_selected_program",
+          "name": "Program",
+          "color": "deep-orange",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "select-options"
+            }
+          ]
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_oven_program_progress",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Progress",
+          "color": "#ff5722",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_oven_program_finish_time",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Finishes",
+          "color": "#ff5722",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Oven controls",
+          "heading_style": "subtitle",
+          "icon": "mdi:tune"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_oven_power",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Power",
+          "color": "#f44336",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_oven_child_lock",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Child lock",
+          "color": "#3f51b5",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "number.house_oven_alarm_clock",
+          "name": "Alarm clock",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "button",
+              "name": "Pause",
+              "icon": "mdi:pause",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.house_oven_pause_program"
+                }
+              }
+            },
+            {
+              "type": "button",
+              "name": "Resume",
+              "icon": "mdi:play",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.house_oven_resume_program"
+                }
+              }
+            },
+            {
+              "type": "button",
+              "name": "Stop",
+              "icon": "mdi:stop",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.house_oven_stop_program"
+                },
+                "confirmation": {
+                  "text": "Stop the oven program?"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "background": {
+        "color": "deep-orange",
+        "opacity": 10
+      }
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Dishwasher",
+          "icon": "mdi:dishwasher"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_dishwasher_operation_state",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "State",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_dishwasher_door",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Door",
+          "icon": "mdi:door",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "select.house_dishwasher_selected_program",
+          "name": "Program",
+          "color": "cyan",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "select-options"
+            }
+          ]
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_dishwasher_program_progress",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Progress",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_dishwasher_program_finish_time",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Finishes",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "number.house_dishwasher_start_in_relative",
+          "name": "Delay start",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Dishwasher options — feature toggles",
+          "heading_style": "subtitle",
+          "icon": "mdi:tune"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_dishwasher_power",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Power",
+          "color": "#f44336",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_dishwasher_intensive_zone",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Intensive",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_dishwasher_vario_speed",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Vario speed",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_dishwasher_hygiene",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Hygiene+",
+          "color": "#00bcd4",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_dishwasher_silence_on_demand",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Silence on demand",
+          "color": "#3f51b5",
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "button.house_dishwasher_stop_program",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Stop program",
+          "icon": "mdi:stop",
+          "color": "#f44336",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "button.press",
+            "target": {
+              "entity_id": "button.house_dishwasher_stop_program"
+            },
+            "confirmation": {
+              "text": "Stop the dishwasher program?"
+            }
+          },
+          "grid_options": {
+            "columns": 12
+          }
+        }
+      ],
+      "background": {
+        "color": "cyan",
+        "opacity": 10
+      }
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Cooktop",
+          "icon": "mdi:stove"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.house_cooktop_operation_state",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "State",
+          "color": "#ff5722",
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_cooktop_power",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Power",
+          "color": "#f44336",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.house_cooktop_child_lock",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Child lock",
+          "color": "#3f51b5",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "number.house_cooktop_alarm_clock",
+          "name": "Alarm clock",
+          "color": "blue-grey",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "numeric-input",
+              "style": "buttons"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Connectivity",
+          "heading_style": "subtitle",
+          "icon": "mdi:wifi"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "binary_sensor.house_oven_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Oven",
+          "color": "#4caf50",
+          "grid_options": {
+            "columns": 4
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "binary_sensor.house_cooktop_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Cooktop",
+          "color": "#4caf50",
+          "grid_options": {
+            "columns": 4
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "binary_sensor.house_dishwasher_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Dishwasher",
+          "color": "#4caf50",
+          "grid_options": {
+            "columns": 4
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Vacuum",
+          "icon": "mdi:robot-vacuum"
+        },
+        {
+          "type": "tile",
+          "entity": "vacuum.zorik",
+          "name": "Žorik",
+          "color": "teal",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "vacuum-commands",
+              "commands": [
+                "start_pause",
+                "stop",
+                "return_home",
+                "locate"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.zorik_status",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Status",
+          "color": "#009688",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.zorik_battery",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Battery",
+          "color": "#009688",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.zorik_current_room",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "In room",
+          "color": "#009688",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "tile",
+          "entity": "select.zorik_cleaning_mode",
+          "name": "Suction",
+          "color": "teal",
+          "grid_options": {
+            "columns": 6
+          },
+          "features": [
+            {
+              "type": "select-options"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "heading": "Dock & options — feature toggles",
+          "heading_style": "subtitle",
+          "icon": "mdi:tune"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.zorik_do_not_disturb",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Do not disturb",
+          "color": "#3f51b5",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.zorik_dock_child_lock",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Dock child lock",
+          "color": "#3f51b5",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.zorik_dock_mop_washing",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Mop washing",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "switch.zorik_dock_mop_drying",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Mop drying",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "picture-entity",
+          "entity": "image.zorik_house",
+          "name": "Last clean map",
+          "show_state": false,
+          "show_name": true,
+          "fit_mode": "contain",
+          "grid_options": {
+            "columns": "full",
+            "rows": 6
+          }
+        }
+      ],
+      "background": {
+        "color": "teal",
+        "opacity": 10
+      }
+    },
+    {
+      "type": "grid",
+      "cards": [
+        {
+          "type": "heading",
+          "heading": "Car — Volvo XC40",
+          "icon": "mdi:car"
+        },
+        {
+          "type": "tile",
+          "entity": "lock.volvo_xc40_lock",
+          "name": "Lock",
+          "color": "indigo",
+          "grid_options": {
+            "columns": 12
+          },
+          "features": [
+            {
+              "type": "lock-commands"
+            }
+          ]
+        },
+        {
+          "type": "markdown",
+          "content": "{% set ns = namespace(o=[]) %}{%- for s in states.binary_sensor | selectattr('entity_id','search','volvo_xc40') | selectattr('state','eq','on') %}{%- if s.attributes.get('device_class') in ['door','window','opening'] %}{%- set ns.o = ns.o + [s.name | replace('Volvo XC40 ','')] %}{%- endif %}{%- endfor %}{% if ns.o %}**Open:** {{ ns.o | join(', ') }}{% else %}All doors and windows closed{% endif %}"
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "device_tracker.volvo_xc40_location",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Location",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 12
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.volvo_xc40_distance_to_empty_tank",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Range",
+          "color": "#4caf50",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.volvo_xc40_fuel_amount",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Fuel",
+          "color": "#4caf50",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.volvo_xc40_odometer",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Odometer",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
+          "entity": "sensor.volvo_xc40_time_to_service",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
+          "name": "Service in",
+          "color": "#607d8b",
+          "grid_options": {
+            "columns": 6
+          }
+        },
+        {
+          "type": "heading",
+          "heading": "Remote",
+          "heading_style": "subtitle",
+          "icon": "mdi:remote"
+        },
+        {
+          "type": "grid",
+          "columns": 3,
+          "square": false,
+          "cards": [
+            {
+              "type": "button",
+              "name": "Climate on",
+              "icon": "mdi:air-conditioner",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.volvo_xc40_start_climatization"
+                }
+              }
+            },
+            {
+              "type": "button",
+              "name": "Climate off",
+              "icon": "mdi:air-conditioner",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.volvo_xc40_stop_climatization"
+                }
+              }
+            },
+            {
+              "type": "button",
+              "name": "Honk & flash",
+              "icon": "mdi:bullhorn",
+              "tap_action": {
+                "action": "perform-action",
+                "perform_action": "button.press",
+                "target": {
+                  "entity_id": "button.volvo_xc40_honk_flash"
+                },
+                "confirmation": {
+                  "text": "Honk and flash the car?"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "background": {
+        "color": "indigo",
+        "opacity": 10
+      }
+    }
+  ]
+}

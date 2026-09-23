@@ -1,4 +1,4 @@
-# The room views, rebuilt on the fork's own button cards
+# The dashboards, rebuilt on the fork's own button cards
 
 *2026-09-23.*
 
@@ -113,22 +113,76 @@ a white bulb's icon should not track a colour it cannot produce.
 
 ## Verified
 
-- **41/41 upstream templates byte-identical** to the repo files after loading.
-- **Every `template:` a card names exists** — 11 referenced across the room views and the
-  library's own internal references, none undefined.
-- **Every `custom:` card type has a registered resource** — `button-card`,
-  `slider-entity-row`, `mini-media-player`, `simple-thermostat`. This check is the analogue
-  of the entity wiring check: a card type with no resource renders as an error box, and
-  nothing else would have caught it.
-- **Every entity the twelve views name exists** — 60 referenced, zero missing, checked last,
-  after every edit.
-- The anonymised export round-trips: `room-views.json`, canaries unmoved, zero hits for any
+Re-run after the propagation, not just after the pilot:
+
+- **41/41 upstream templates byte-identical** to the repo files — checked again at the end, so
+  none of the nine transforms disturbed the library.
+- **Every `template:` a card names is defined** — 9 distinct across both dashboards, none
+  undefined.
+- **Every `custom:` card type has a registered resource** — all 11 in use resolve. This is the
+  analogue of the entity wiring check and it is the only thing that catches a card type with no
+  JavaScript behind it; such a card renders an error box and no entity check would notice.
+- **Every entity named anywhere exists** — 361 referenced across both dashboards *including
+  inside the button-card JS templates*, which are plain strings in the config and so fall inside
+  the same scan. One hit: `light.office`, which lives only inside upstream's dormant
+  `view_light_button_style`. Confirmed unreachable from any real card by expanding the template
+  graph transitively from the cards actually in use.
+- **No debug keys left behind.** The transforms carried counters on the view objects; the final
+  sweep confirms none survive.
+- The anonymised export round-trips across all seven files, canaries unmoved, zero hits for any
   scrubbed term.
+
+**Deliberately not exported:** the admin panel. It carries Wi-Fi network names, firewall rules
+and VPN route names, which is the kind of detail a public reference repo has no business
+holding — a different reason from the anonymisation rule, and a standing one.
 
 **Not verified: how any of it looks.** No view was rendered. Card geometry — upstream's
 150px card heights against Home Assistant's 12-column section grid, and the `grid-template-areas`
 each template sets — is the most likely thing to need adjustment, and it is exactly what a
 screenshot would show and reasoning will not.
+
+## Propagated to every other view — same day
+
+The room views were the pilot; the operator asked for the rest. **197 button cards** now, across
+both dashboards. The rule that decided each card is one sentence:
+
+> Convert anything that is just *icon + name + state*. Keep every graph card, every tile carrying
+> a `trend-graph` or `bar-gauge` sparkline, and every slider, dropdown, stepper, command row or
+> mode selector.
+
+That boundary is not taste, it is capability. **button-card cannot draw a graph and cannot move a
+slider.** Converting a tile that carries one would have cost function to buy consistency, and the
+operator's instruction was explicitly *"just don't kill the graphs — I like them"* (the outside,
+CO₂, temperature and humidity ones by name). So:
+
+| view | converted | kept as-is | why they were kept |
+|---|---:|---:|---|
+| Home | 26 | 7 | media players, vacuum card, alarm mode row |
+| Climate | 13 | 16 | **20 mini-graphs**, weather forecasts, purifier speed, AC mode+temp |
+| Climate — advanced | 26 | 38 | 21 sliders, 12 toggles, 5 counter steppers |
+| Energy | 18 | 23 | statistics graphs, bar gauges, energy cards |
+| Appliances | 35 | 9 | program selectors, vacuum and lock command rows |
+| Security | 7 | 3 | alarmo card, camera picture |
+| admin: System / Network / Water | 72 | 11 | health markdowns, trend sparklines, selectors |
+
+`Home (classic)` was left alone entirely — it is the rollback view, and a rollback that has been
+restyled is not a rollback.
+
+Two classes of card needed real translation rather than a mechanical swap, because their logic
+lived in Jinja and button-card speaks JavaScript:
+
+- **the twelve Home room tiles**, whose documented tap-toggles / hold-opens gesture model had to
+  survive intact (see [room-tile-navigation.md](room-tile-navigation.md)). They now take
+  `grp` / `ac` / `pres` / `special` as button-card `variables`, so one label expression and one
+  colour expression serve all twelve rather than twelve hand-written pairs;
+- **the Energy socket cards**, which had to keep the property that *no gesture toggles a socket* —
+  every one is still `tap_action: more-info`, and the wattage-or-`Off` line and load colouring are
+  the same logic re-expressed.
+
+One upstream quirk surfaced during the propagation and is worth recording: the HomeKit-style
+`standard_btn_states` keys its styling off `entity.state`, so the one card with **no entity** —
+Home's *all lights off* button — uses `standard_btn_layout` alone. Composing the two templates is
+otherwise the standard pairing across all 197 cards.
 
 ## Still unused, and available
 

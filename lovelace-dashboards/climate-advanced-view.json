@@ -383,10 +383,18 @@
           "icon": "mdi:weather-night"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "schedule.climate_night",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Night schedule",
-          "color": "indigo",
+          "color": "#3f51b5",
           "grid_options": {
             "columns": 12
           }
@@ -514,10 +522,18 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_away_since",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Away since",
-          "color": "blue-grey",
+          "color": "#607d8b",
           "grid_options": {
             "columns": 6
           }
@@ -666,46 +682,86 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_manual_until_living_room",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Living room",
-          "color": "purple",
+          "color": "#9c27b0",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_manual_until_office",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Office",
-          "color": "purple",
+          "color": "#9c27b0",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_manual_until_bedroom",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Bedroom",
-          "color": "purple",
+          "color": "#9c27b0",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_manual_until_kid1",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Kids room 1",
-          "color": "purple",
+          "color": "#9c27b0",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_datetime.climate_manual_until_kid2",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Kids room 2",
-          "color": "purple",
+          "color": "#9c27b0",
           "grid_options": {
             "columns": 6
           }
@@ -723,55 +779,103 @@
           "icon": "mdi:thermometer"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "climate.bedroom_trv_bedroom_trv",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Valve",
-          "color": "deep-orange",
+          "color": "#ff5722",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_heating",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Heating %",
-          "color": "red",
+          "color": "#f44336",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Temp",
-          "color": "amber",
+          "color": "#ffc107",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "RH",
-          "color": "cyan",
+          "color": "#00bcd4",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.bedroom_trv_bedroom_trv_window",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Window",
-          "color": "blue",
+          "color": "#2196f3",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.bedroom_trv_bedroom_trv_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Online",
-          "color": "green",
+          "color": "#4caf50",
           "grid_options": {
             "columns": 6
           }
@@ -783,55 +887,103 @@
           "icon": "mdi:thermometer"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "climate.kid1_room_trv_kid1_room_trv",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Valve",
-          "color": "deep-orange",
+          "color": "#ff5722",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_heating",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Heating %",
-          "color": "red",
+          "color": "#f44336",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Temp",
-          "color": "amber",
+          "color": "#ffc107",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "RH",
-          "color": "cyan",
+          "color": "#00bcd4",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Window",
-          "color": "blue",
+          "color": "#2196f3",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Online",
-          "color": "green",
+          "color": "#4caf50",
           "grid_options": {
             "columns": 6
           }
@@ -843,55 +995,103 @@
           "icon": "mdi:thermometer"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "climate.kid2_room_trv_kid2_room_trv",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Valve",
-          "color": "deep-orange",
+          "color": "#ff5722",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_heating",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Heating %",
-          "color": "red",
+          "color": "#f44336",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_temperature",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Temp",
-          "color": "amber",
+          "color": "#ffc107",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_humidity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "RH",
-          "color": "cyan",
+          "color": "#00bcd4",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Window",
-          "color": "blue",
+          "color": "#2196f3",
           "grid_options": {
             "columns": 6
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_connectivity",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Online",
-          "color": "green",
+          "color": "#4caf50",
           "grid_options": {
             "columns": 6
           }
@@ -911,8 +1111,16 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "template": [
+            "standard_btn_layout",
+            "standard_btn_states"
+          ],
           "entity": "input_text.purifier_last_run",
+          "show_state": true,
+          "show_name": true,
+          "show_label": false,
+          "show_last_changed": false,
           "name": "Purifier last run",
           "icon": "mdi:history",
           "grid_options": {
