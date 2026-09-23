@@ -276,6 +276,40 @@ mutations are caught, including the two that shipped and the JS-only dead entity
 Written in the order AGENTS.md requires: the lint first, run against the broken config, where it
 failed on exactly the three complaints plus one latent issue. Only then the fix.
 
+## Compaction — the third pass
+
+*"Looks much better now, however there is some weird placement on laptop, and spaces on both
+mobile and laptop views — make it more compact, don't waste real estate."*
+
+Two causes, both measurable rather than matters of taste.
+
+**Every card was half empty.** They were all `grid_options.rows: 2` — 120px in Home Assistant's
+section grid (56px cells, 8px gaps) — carrying about 64px of content, with `align-content: center`
+splitting the surplus top and bottom. `vg_stat` is now explicitly two lines and sized for
+`rows: 1`:
+
+    6px padding + 14px name + 22px value + 6px padding = 48px of 56px
+
+`vg_meter` gains a 3px track and still fits, so a socket and an air conditioner are the same
+height as a temperature reading. Across both dashboards that is **a 53% cut in stacked card
+height on every view** — Home's readings drop from 3000px to 1400px, the admin Network view from
+4080px to 1904px.
+
+**The laptop had a dead column.** Home and Energy set `max_columns: 3` while *every* section was
+`column_span: 2`. Two span-2 sections cannot share a 3-column cap, so the third column was empty
+on every row. Raising the cap to 4 lets two sections sit side by side; because `max_columns` is a
+*cap* and Home Assistant reflows on available width, this cannot make a narrow screen worse.
+
+**And the room tiles were six-up.** They sat at `columns: 4`, which in a `column_span: 2` section
+is 6-up on a laptop and 3-up on a phone — too narrow for *Living room / On 60% · 22° · here*, so
+every label truncated. Everything is now on a **6 / 12 / full** ladder: 4-up laptop, 2-up phone.
+The room tiles' presence indicator moved from a third line into the label, which is what let them
+become two-line cards like everything else.
+
+Check **C7** encodes all three rules — `rows: 1` for the `vg_stat` family, columns on the ladder,
+and `max_columns` a multiple of `column_span` — and three of the eleven mutations exist to prove
+it still fails when any of them is undone.
+
 ## Still unused, and available
 
 Loading the whole library rather than the subset the room views need means these are ready

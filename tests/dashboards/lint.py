@@ -36,6 +36,12 @@ Checks, each one written because something it catches actually shipped:
                          renders an error box and no entity check would notice.
   C6 no-debug-keys       no `_`-prefixed scratch key left on a view by a
                          transform.
+  C7 compact-layout      the vg_stat family is two lines tall, so it gets
+                         `rows: 1` (56px), not `rows: 2` (120px) with half the
+                         card empty; `columns` stays on the 6/12/full ladder so
+                         rows are even; and a view's `max_columns` is a multiple
+                         of its sections' `column_span`, or the leftover column
+                         is dead space on every row.
 """
 
 import io
@@ -240,6 +246,51 @@ def main():
         if unbacked:
             fail("C5", "%s: %d custom card type(s) have no registered resource"
                  % (label, len(unbacked)), unbacked)
+
+        # C7 - compact layout. Written after the operator reported dead space
+        # on both mobile and laptop: every converted card was rows:2 (120px)
+        # carrying ~64px of content, and Home's span-2 sections under a
+        # 3-column cap left the third column empty on every row.
+        tall, odd = [], []
+        for path, card in found:
+            if card.get("type") != "custom:button-card" or "/custom_fields/" in path:
+                continue
+            chain = set()
+            queue = list(template_names(card))
+            for _ in range(len(lib) + 1):
+                nxt = []
+                for n in queue:
+                    if n in chain or n not in lib:
+                        continue
+                    chain.add(n)
+                    nxt.extend(template_names(lib[n]))
+                queue = nxt
+            go = card.get("grid_options") or {}
+            if "vg_stat" in chain and go.get("rows") != 1:
+                tall.append("%s  rows=%r  (%s)" % (path, go.get("rows"), card.get("entity")))
+            if go.get("columns") not in (6, 12, "full"):
+                odd.append("%s  columns=%r  (%s)" % (path, go.get("columns"), card.get("entity")))
+        if tall:
+            fail("C7", "%s: %d vg_stat-family card(s) are taller than their content"
+                 % (label, len(tall)), tall)
+        if odd:
+            fail("C7", "%s: %d card(s) sit off the 6/12/full column ladder, so rows "
+                       "do not line up" % (label, len(odd)), odd)
+
+        dead = []
+        for i, v in enumerate(views):
+            secs = v.get("sections") or []
+            if not secs:
+                continue
+            spans = {s.get("column_span", 1) for s in secs}
+            mc = v.get("max_columns") or 4
+            if len(spans) == 1:
+                span = spans.pop()
+                if mc % span:
+                    dead.append("%s/views/%d %r: max_columns=%d is not a multiple of "
+                                "column_span=%d" % (label, i, v.get("title"), mc, span))
+        if dead:
+            fail("C7", "%s: %d view(s) leave a dead section column" % (label, len(dead)), dead)
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

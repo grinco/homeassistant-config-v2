@@ -119,7 +119,40 @@ def m_scratch_key(d):
     return "C6"
 
 
+def m_tall_cards(d):
+    """rows:2 under two lines of content - the dead space the operator saw."""
+    doc = _cfg(d, LOV)
+    vi, si, ci = _first_button(doc)
+    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["grid_options"]["rows"] = 2
+    _save(d, LOV, doc)
+    return "C7"
+
+
+def m_off_ladder_columns(d):
+    """columns:4 gives 6-up on a laptop and ragged rows beside columns:6."""
+    doc = _cfg(d, LOV)
+    vi, si, ci = _first_button(doc)
+    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["grid_options"]["columns"] = 4
+    _save(d, LOV, doc)
+    return "C7"
+
+
+def m_dead_column(d):
+    """max_columns not a multiple of column_span - a column empty on every row."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        secs = v.get("sections") or []
+        if secs and {s.get("column_span", 1) for s in secs} == {2}:
+            v["max_columns"] = 3
+            break
+    _save(d, LOV, doc)
+    return "C7"
+
+
 MUTATIONS = [
+    ("a card taller than its content", m_tall_cards),
+    ("a card off the column ladder", m_off_ladder_columns),
+    ("max_columns leaves a dead column", m_dead_column),
     ("templates defined on the other dashboard", m_templates_elsewhere),
     ("tile option copied onto a button-card", m_foreign_option),
     ("aspect_ratio back on the stat template", m_aspect_ratio),

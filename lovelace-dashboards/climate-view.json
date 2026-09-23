@@ -170,7 +170,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -180,7 +180,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -190,7 +190,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -200,7 +200,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -230,7 +230,7 @@
           },
           "grid_options": {
             "columns": 12,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -270,7 +270,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -280,7 +280,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -311,7 +311,7 @@
           },
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -336,7 +336,7 @@
           },
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -424,7 +424,7 @@
           },
           "grid_options": {
             "columns": 12,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -449,7 +449,7 @@
           },
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -460,7 +460,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -471,7 +471,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -498,7 +498,7 @@
           "show_state": false,
           "grid_options": {
             "columns": 12,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -1039,7 +1039,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -1050,7 +1050,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -1061,7 +1061,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {
@@ -1072,7 +1072,7 @@
           "template": "vg_stat",
           "grid_options": {
             "columns": 6,
-            "rows": 2
+            "rows": 1
           }
         },
         {

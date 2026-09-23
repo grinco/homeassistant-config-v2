@@ -6,32 +6,39 @@
 # namespaces can never collide and upstream's templates can be re-pulled without
 # a merge.
 #
-#   vg_stat   a stat tile: small muted label, large value, optional third line.
-#             Height comes from `grid_options.rows`, NOT from an aspect ratio -
-#             see below.
-#   vg_room   vg_stat with the value line replaced by a label and a presence
-#             slot; used by the Home room tiles.
-#   vg_meter  vg_stat plus a meter track, for a value against a limit
-#             (socket draw, AC draw, host temperature).
+#   vg_stat   a stat tile: small muted label above a large value. TWO LINES, so
+#             it fits `grid_options.rows: 1` (56px) exactly.
+#   vg_room   vg_stat with the value line replaced by a label; Home's room tiles.
+#   vg_meter  vg_stat plus a 3px meter track, for a value against a limit.
 #   vg_room_master  a room's Magic Areas light group, on upstream's
 #             `view_switch_layout`.
 #   vg_nav    a link out to a consolidated view. No entity.
 #
-# WHY NOT `standard_btn_layout` DIRECTLY, 2026-09-23
-# --------------------------------------------------
-# The first propagation used upstream's `standard_btn_layout` for every converted
-# card. It sets `aspect_ratio: 1/1`, so a card's HEIGHT FOLLOWS ITS WIDTH: the same
-# template rendered a small square at `columns: 4` and a giant one at `columns: 12`
-# - the radiation card was the worst of it. Sizes were inconsistent across every
-# view as a direct result.
+# SIZING IS THE WHOLE POINT OF THESE, 2026-09-23
+# ----------------------------------------------
+# First attempt used upstream's `standard_btn_layout`, which sets
+# `aspect_ratio: 1/1`: height follows WIDTH, so one template rendered a small
+# square at `columns: 4` and a giant one at `columns: 12`.
 #
-# `vg_stat` therefore sets no aspect ratio and `height: 100%`, so the section grid
-# decides the height and `grid_options.rows` makes it uniform by construction.
-# `tests/dashboards/lint.py` check C3 enforces both halves of that.
+# Second attempt fixed that with `height: 100%` but left every card at
+# `rows: 2` (120px) carrying ~64px of content, so more than half of each card
+# was empty - on phone and laptop alike.
 #
-# `vg_stat` is duplicated into the admin-panel dashboard's own
+# These are two lines tall and sized for `rows: 1`:
+#     6px padding + 14px name + 22px value + 6px padding = 48px  (of 56px)
+# `vg_meter` adds a 3px track and still fits. Keep it that way: if a third line
+# is ever needed, it needs `rows: 2` and a reason, not a silent overflow.
+#
+# Columns stay on the 6 / 12 / full ladder. In a `column_span: 2` section that
+# is 4-up on a laptop and 2-up on a phone; `columns: 4` gave SIX across a laptop
+# and truncated every label.
+#
+# `tests/dashboards/lint.py` C3 and C7 enforce all of the above, and
+# `mutate.py` proves they still fail when it is undone.
+#
+# These three are duplicated into the admin-panel dashboard's own
 # `button_card_templates`. button-card resolves templates per dashboard, and
-# defining them on only one is what broke all three admin views on 2026-09-23.
+# defining them on only one is what broke all three admin views.
 button_card_templates:
   vg_room_master:
     template: view_switch_layout
@@ -77,50 +84,50 @@ button_card_templates:
     styles:
       card:
       - height: 100%
-      - padding: 12px 14px
+      - padding: 6px 12px
+      - overflow: hidden
       grid:
-      - grid-template-areas: '"i n" "i s" "i l"'
-      - grid-template-columns: 32px 1fr
-      - grid-template-rows: auto auto auto
+      - grid-template-areas: '"i n" "i s"'
+      - grid-template-columns: 26px minmax(0, 1fr)
+      - grid-template-rows: auto auto
       - align-content: center
-      - gap: 0px 12px
+      - gap: 0px 10px
       img_cell:
       - justify-self: start
       - align-self: center
       icon:
-      - width: 26px
-      - height: 26px
+      - width: 22px
+      - height: 22px
       name:
       - justify-self: start
-      - font-size: 12px
+      - font-size: 11px
       - font-weight: '400'
+      - line-height: '1.25'
       - color: var(--secondary-text-color)
       - white-space: nowrap
       - overflow: hidden
       - text-overflow: ellipsis
+      - max-width: 100%
       state:
       - justify-self: start
-      - font-size: 20px
+      - font-size: 18px
       - font-weight: '500'
+      - line-height: '1.25'
       - color: var(--primary-text-color)
-      - line-height: '1.2'
-      label:
-      - justify-self: start
-      - font-size: 11px
-      - color: var(--secondary-text-color)
       - white-space: nowrap
       - overflow: hidden
       - text-overflow: ellipsis
+      - max-width: 100%
     state:
     - value: unavailable
       styles:
         state:
-        - font-size: 14px
+        - font-size: 13px
         - color: var(--error-color)
     - value: unknown
       styles:
         state:
-        - font-size: 14px
+        - font-size: 13px
         - color: var(--secondary-text-color)
   vg_room:
     template: vg_stat
@@ -128,45 +135,47 @@ button_card_templates:
     show_label: true
     styles:
       grid:
-      - grid-template-areas: '"i n" "i l" "i s2"'
-      - grid-template-columns: 32px 1fr
-      - grid-template-rows: auto auto auto
+      - grid-template-areas: '"i n" "i l"'
+      - grid-template-columns: 26px minmax(0, 1fr)
+      - grid-template-rows: auto auto
       - align-content: center
-      - gap: 0px 12px
+      - gap: 0px 10px
       name:
       - justify-self: start
-      - font-size: 14px
+      - font-size: 13px
       - font-weight: '500'
+      - line-height: '1.25'
       - color: var(--primary-text-color)
+      - white-space: nowrap
+      - overflow: hidden
+      - text-overflow: ellipsis
+      - max-width: 100%
       label:
       - justify-self: start
-      - font-size: 12px
+      - font-size: 11px
+      - line-height: '1.25'
       - color: var(--secondary-text-color)
       - white-space: nowrap
       - overflow: hidden
       - text-overflow: ellipsis
-      custom_fields:
-        s2:
-        - justify-self: start
-        - font-size: 11px
-        - color: var(--primary-color)
+      - max-width: 100%
   vg_meter:
     template: vg_stat
     custom_fields:
       bar: '[[[ var v = parseFloat(entity.state); var mx = parseFloat(variables.max) || 100; if (isNaN(v))
         return ''''; var p = Math.max(0, Math.min(100, (v / mx) * 100)); var c = variables.tint || ''var(--primary-color)'';
-        return ''<div style="width:100%;height:6px;border-radius:3px;background:var(--divider-color);overflow:hidden"><div
-        style="width:'' + p + ''%;height:6px;border-radius:3px;background:'' + c + ''"></div></div>'';
+        return ''<div style="width:100%;height:3px;border-radius:2px;background:var(--divider-color);overflow:hidden"><div
+        style="width:'' + p + ''%;height:3px;border-radius:2px;background:'' + c + ''"></div></div>'';
         ]]]'
     styles:
       grid:
       - grid-template-areas: '"i n" "i s" "bar bar"'
-      - grid-template-columns: 32px 1fr
-      - grid-template-rows: auto auto auto
+      - grid-template-columns: 26px minmax(0, 1fr)
+      - grid-template-rows: auto auto 3px
       - align-content: center
-      - gap: 0px 12px
+      - gap: 0px 10px
       custom_fields:
         bar:
         - justify-self: stretch
         - align-self: end
-        - padding-top: 10px
+        - margin-top: 3px
