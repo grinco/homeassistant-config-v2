@@ -1612,6 +1612,11 @@ window is evaluated but not acted on, so it waits for the next tick — up to te
 under the in-flight rule, but the operator experiences it as the switch not working. Recorded, not
 changed.
 
+*Experienced in practice on 2026-09-23, and reported as "the toggles do not trigger the
+automation".* The office air-filter toggle fired its run 1.4 s after it was pressed and the run
+declined to act, because our own command to that unit was 84 s old against a 240 s settle. The unit
+moved 4 m 32 s after the press. See the re-open note below.
+
 **The gap the fix opens, accepted 2026-09-20.** Subtracting `settle` buys correctness at the edge of
 the window: a person who presses a button at the wall *inside* the settle window, immediately after
 we commanded that same unit, now falls outside the test and is not detected as a manual override —
@@ -1622,6 +1627,62 @@ The operator's call: **not worth guarding.** It requires someone to be standing 
 in the ~120 s after the automation happened to command that same unit, which is a coincidence rather
 than a pattern of use, and the cost of being wrong is one corrected setting rather than an unsafe
 one. Re-open it if a hold is ever missed in practice.
+
+### The re-open condition fired — 2026-09-23 — and the acceptance was re-affirmed
+
+**A hold was missed in practice.** The operator meant to switch the living room off by hand and hit
+the office instead. Evidence, all from live history:
+
+| local time | event |
+|---|---|
+| 11:59:44 | office air filter **on** → automation commands office `heat`, `cmd` stamped 11:59:46 |
+| 12:00:23 | office unit **off**, by hand — 37 s after our command |
+| 12:05:43 | automation commands office `heat` again |
+
+`input_datetime.climate_manual_until_office` still read 2026-09-19 and
+`input_select.climate_hold_reason_office` still read `none`. No stand-down, no hold, no
+notification — the press was invisible, and the room was put back exactly as this section predicted.
+
+**Two things the 2026-09-20 acceptance got wrong, both making the gap larger than priced.**
+
+**1. It is permanent, not delayed.** The phrasing "is not detected" reads as *not detected yet*. It
+is not. Write `p` for the press, `c` for our command, `t` for the moment of evaluation. The test is
+
+```
+lc < since_cmd - settle   ⟺   (t − p) < (t − c) − settle   ⟺   p > c + settle
+```
+
+`t` cancels. Whether the press is visible depends only on `p` and `c`, so a press inside the window
+is invisible at 12:05, at 12:15, and at every evaluation thereafter — `lc` and `since_cmd` grow
+together and the inequality never turns over. Waiting does not rescue it; nothing does.
+
+**2. The coincidence argument does not hold for a toggle.** The acceptance priced "someone standing
+at a specific unit in the ~120 s after the automation happened to command that same unit" — two
+independent events meeting by chance. On the dashboard they are not independent. **Flipping an
+air-filter toggle is itself what makes the automation command that unit**, which opens the blind
+window on precisely the unit the operator is about to touch next. The chain is causal, and it is
+therefore *most* likely to fire exactly when someone is actively working the climate controls —
+which is when a missed hold is least excusable. The window is also **240 s** today, not the ~120 s
+the acceptance was reasoned against, so the exposure is twice what was priced.
+
+**The operator re-affirmed the acceptance on 2026-09-23**, with both corrections on the table and
+two closing options offered (shorten `settle`; or make the detector compare *what* the unit changed
+to rather than only *when*, test-first). The cost is still one corrected setting, never an unsafe
+one, and safety limits are unaffected in every case. **This is a priced, re-confirmed risk, not an
+oversight — do not re-derive it.** The one thing that would change the answer is a missed hold whose
+consequence is not merely "the automation put it back": a hold missed while somebody is airing a
+room in winter, say, where the correction fights a person with the window open.
+
+**What is NOT the explanation, and was checked.** The report that arrived with this incident was
+that the automation needed triggering on every change of the *automatic climate*, *maintain* and
+*air filter* toggles. It already is: trigger block 2 names `input_boolean.climate_auto`,
+`climate_safety_always`, all five `climate_room_*` and all five `climate_air_filter_*`. Both office
+air-filter presses produced their own trace — runs at 12:01:10.686 and 12:01:11.351, ~100 ms each.
+The toggles fire; what the operator experiences as a dead switch is the `in_flight` suppression
+described two paragraphs above, and the exit hysteresis described in §4: switching the living-room
+filter off at 12:00:11 did **not** stop the room, because at 22.9 °C against a 22.0 target it was
+still inside `target + hyst` (24.0 °C) and a room already heating stays heating to the top of its
+band. Both behaviours are correct and both read, from the outside, as the switch doing nothing.
 
 This is the shape of every trade in this document worth restating: the fix is not free, the price is
 named, and the decision to pay it is recorded next to it rather than discovered later by whoever
