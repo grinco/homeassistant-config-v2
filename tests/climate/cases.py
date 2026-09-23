@@ -221,6 +221,43 @@ A(case("a unit we are switching off is asked for no preset", "want_preset", "non
        {"mode": "off", "night": True, "now_preset": "none"},
        finding="set_preset_mode on an OFF unit turns it ON in COOL"))
 
+# 2026-09-23, MEASURED on the office unit with the operator watching it:
+#   - set_preset_mode on a HEATING unit does NOT flip it to cool. The hazard is specific
+#     to a unit that is OFF, so the generalised is_state(r.climate, mode) interlock holds.
+#   - the preset does NOT survive a power cycle. Switching the unit off reverts preset to
+#     'none' and fan to 'auto', so it must be re-applied on EVERY start.
+#   - applied ~30 s after the mode, the unit ramps to full fan first and then quiets --
+#     "this would have woken us up at night". Applied ~2 s after, it "started in silent
+#     immediately".
+# The old shape sent the preset on a LATER tick, which cannot happen sooner than one
+# settle window (240 s) after the mode. That is minutes of full fan in a bedroom at night:
+# the exact opposite of "start in quiet". The preset now rides along with the command that
+# turns the unit on, and the standalone step below keeps the correction case.
+A(case("turning a unit on carries its preset with it", "preset_with_start", "True",
+       {"may_act": True, "mode": "heat", "night": True, "want_preset": "quiet",
+        "now_preset": "none"},
+       finding="2026-09-23 measured: a preset a tick later is minutes of full fan"))
+A(case("cooling carries wind-free with the start too", "preset_with_start", "True",
+       {"may_act": True, "mode": "cool", "night": False, "want_preset": "wind_free",
+        "now_preset": "none"},
+       finding="2026-09-23: the ride-along is not heating-only"))
+A(case("no ride-along when we are not commanding the mode", "preset_with_start", "False",
+       {"may_act": False, "mode": "heat", "night": True, "want_preset": "quiet",
+        "now_preset": "none"},
+       finding="the standalone step owns the already-converged case"))
+A(case("no ride-along when the preset already matches", "preset_with_start", "False",
+       {"may_act": True, "mode": "heat", "night": True, "want_preset": "quiet",
+        "now_preset": "quiet"},
+       finding="idempotence: a start must not re-send a preset already in place"))
+A(case("no ride-along into a mode with no preset opinion", "preset_with_start", "False",
+       {"may_act": True, "mode": "dry", "night": True, "want_preset": "none",
+        "now_preset": "none"},
+       finding="only heat and cool carry a preset opinion"))
+A(case("a unit being switched off is never sent a preset", "preset_with_start", "False",
+       {"may_act": True, "mode": "off", "night": True, "want_preset": "none",
+        "now_preset": "quiet"},
+       finding="set_preset_mode on an OFF unit turns it ON in COOL"))
+
 A(case("night heat commands quiet", "will_set_preset", "True",
        {"active": True, "mode_ok": True, "mode": "heat", "night": True,
         "now_preset": "none", "want_preset": "quiet", "in_flight": False, "tripped": False},

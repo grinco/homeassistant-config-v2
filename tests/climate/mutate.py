@@ -104,6 +104,16 @@ BUGS = [
  # introduces a bug -- it is equivalent to the real expression. The hazard it guarded
  # is now guarded by "a disconnected counter reports a confident zero again", which
  # attacks the cutoff itself rather than the sentinel feeding it.
+ # The preset ride-along, 2026-09-23. Each of these is a way to lose the silent
+ # start the operator asked for, or to reintroduce the OFF-turns-on-in-COOL hazard.
+ ("ride-along: fires when we are not commanding the mode", "expr", "preset_with_start",
+  lambda t: t.replace("may_act and ", "")),
+ ("ride-along: loses the mode guard, so an OFF unit gets a preset", "expr", "preset_with_start",
+  lambda t: t.replace(" and mode in ['cool','heat']", "")),
+ ("ride-along: re-sends a preset that already matches", "expr", "preset_with_start",
+  lambda t: t.replace(" and want_preset != now_preset", "")),
+ ("ride-along: removed entirely, back to a 240 s loud start", "expr", "preset_with_start",
+  lambda t: "{{ false }}"),
  # Presets per mode, 2026-09-23. The rule is cheap to state and cheap to break:
  # "wind-free whenever cooling, quiet when heating at night, silence otherwise."
  # Each mutation below breaks exactly one clause of that sentence.

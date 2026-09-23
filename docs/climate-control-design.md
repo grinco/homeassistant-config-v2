@@ -447,23 +447,59 @@ only on `night`. A preset that depends on the mode cannot be decided before the 
 preset only to a unit already sitting in the mode we believe it is in preserves that protection
 for heat exactly as it did for cool.
 
-**What is NOT verified.** Whether `set_preset_mode` issued while *heating* can itself flip a unit
-to cool. The evidence that it does not is circumstantial but real: two of these units were sitting
-in `heat` with `preset: quiet` when this was written, so the combination is valid on this
-hardware. The transition is untested and cannot be tested from here — the standing rule forbids
-`automation.trigger`, which skips conditions and actuates real hardware. The interlock bounds the
-damage to one tick, since the next pass sees `mode_ok` false and corrects, but **if the units are
-ever seen flapping between heat and cool overnight, this is the first place to look.**
+**Measured on the office unit, 2026-09-23, with the operator watching it.** Three things, none of
+them reasoned about:
 
-**Deliberately not done: clearing the preset at daybreak.** The request was night-only. A unit
-left on `quiet` keeps it through the day until something else moves it, which means a room heats
-more slowly on a quiet fan than it otherwise would. Wiring a `heat AND NOT night -> none` branch
-is a one-line change if that turns out to matter; it was not done because it was not asked for and
-it would assert a preset the operator never requested.
+1. **`set_preset_mode` on a HEATING unit does not flip it to cool.** The state stayed `heat`, the
+   preset became `quiet`, and `last_changed` did not move — only the attribute changed. The
+   OFF-turns-on-in-COOL hazard really is specific to OFF, so one interlock
+   (`is_state(r.climate, mode)`) covering both modes is sound rather than assumed.
+2. **The preset does not survive a power cycle.** Switching the unit off reverted `preset_mode` to
+   `none` and `fan_mode` to `auto`. It therefore has to be re-sent on *every* start, not once.
+3. **Timing is the whole thing.** Sent ~30 s after the mode, the operator's words were *"unit
+   started in heating mode with fan setting to auto, then the fan was set to quiet — this would
+   have woken us up at night."* Sent ~2 s after: *"now it looks like it started in silent
+   immediately."*
 
-Fifteen cases cover it, and five mutations in `tests/climate/mutate.py` break one clause of the
-rule each — wind-free outside cool, the night rule dropped, quiet asserted all day, a preset
-re-commanded when it already matches, and a preset commanded before the mode converges.
+### The preset rides along with the start
+
+Points 2 and 3 together broke the first design. The standalone preset step waits for `mode_ok`
+*and* for `in_flight` to clear, so the earliest it can fire after a unit is switched on is **one
+settle window — 240 s**. In a bedroom at night that is four minutes of full fan before it quiets,
+which is precisely the opposite of "start in quiet".
+
+So the preset now goes out **in the same run that turns the unit on**:
+
+```
+may_act -> set_hvac_mode
+        -> if preset_with_start:
+               wait for the unit to report the mode   (max 10 s)
+               if it did: set_preset_mode
+```
+
+`preset_with_start := may_act and mode in ['cool','heat'] and want_preset != now_preset`.
+
+**The wait is not politeness, it is the interlock.** Right after `set_hvac_mode` the unit has not
+caught up — it reports about 1.5 s later — and sending a preset to a unit still reading `off`
+turns it on in cool. `wait_template` rather than `wait_for_trigger` for two reasons: the entity is
+a loop variable and a trigger's `entity_id` is not reliably templated, and `wait_template` is
+documented to return immediately when already true, which is the harmless case. On timeout the
+guard simply declines and the standalone step corrects it on the next tick — degrading to "no
+preset this time, the room still heats" is the right failure.
+
+The standalone step is now **the correction path only**: a unit already in the right mode whose
+preset is wrong.
+
+**Still not covered by any test:** the step *ordering* itself. `tests/climate/` is an expression
+oracle with no step order, no restart and no triggers, and the standing rule forbids
+`automation.trigger`. What is covered is the decision (`preset_with_start`, six cases, four
+mutations) and the physical behaviour (measured above). The two meet only when a real turn-on
+happens.
+
+**Clearing the preset at daybreak is still deliberately not done.** It matters less than it looked:
+a unit that switches off loses its preset anyway. It only applies to a unit that heats through the
+night and keeps running into the day, which then stays on a quiet fan and warms more slowly. A
+`heat AND NOT night -> none` branch is one line if that turns out to matter.
 
 ### Setpoint clamping
 

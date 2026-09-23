@@ -389,7 +389,8 @@
               "may_act": "{{ active and reachable and not mode_ok and not in_flight and not safety_throttled and (is_safety or (not external_moved and not standdown)) and (fail_count < breaker or is_safety or throttle_ok) }}",
               "will_set_temp": "{{ active and mode_ok and needs_temp and not target_ok and not in_flight and not tripped and not safety_throttled }}",
               "will_set_preset": "{{ active and mode_ok and mode in ['cool','heat'] and want_preset != now_preset and not in_flight and not tripped }}",
-              "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}"
+              "alert_due": "{{ (is_safety or no_temp) and (now().timestamp() - alert_ts) > retry_throttle }}",
+              "preset_with_start": "{{ may_act and mode in ['cool','heat'] and want_preset != now_preset }}"
             },
             "note": "ROUND 14, F14-5 - A SAFETY DISPATCH BUG I INTRODUCED AND THEN ASSERTED AWAY. The mode law puts the safety branches ABOVE the manual branch, so a freezing room that is stood down or overridden still RESOLVES to 'heat'. That is what v5.7 verified and it is only half the question: resolving the mode decides what we want, may_act decides what we SEND. 'not external_moved' and 'not standdown' sat as top-level ANDs here while the is_safety bypass was buried inside the breaker clause, so the frost command was computed and never dispatched for as long as unit_moved stayed true - up to human_window, about 20 minutes. Pre-existing for an external override since v3.2; v5.7 widened it to stand-down, which fires far more often now that the units power-save themselves. The fix hoists the bypass: is_safety OR (not external_moved and not standdown). Safety still respects in_flight, because double-commanding is never right, and still respects safety_throttled, which is a rate limit rather than a suppression. The lesson is the one this document keeps relearning: a precedence order is a claim about the DECISION, and it says nothing about the DISPATCH unless you check the dispatch too."
           },
@@ -549,8 +550,53 @@
                 "data": {
                   "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
                 }
+              },
+              {
+                "if": [
+                  {
+                    "condition": "template",
+                    "value_template": "{{ preset_with_start }}"
+                  }
+                ],
+                "then": [
+                  {
+                    "wait_template": "{{ is_state(r.climate, mode) }}",
+                    "timeout": "00:00:10",
+                    "continue_on_timeout": true
+                  },
+                  {
+                    "if": [
+                      {
+                        "condition": "template",
+                        "value_template": "{{ is_state(r.climate, mode) }}"
+                      }
+                    ],
+                    "then": [
+                      {
+                        "action": "climate.set_preset_mode",
+                        "target": {
+                          "entity_id": "{{ r.climate }}"
+                        },
+                        "data": {
+                          "preset_mode": "{{ want_preset }}"
+                        }
+                      },
+                      {
+                        "action": "input_datetime.set_datetime",
+                        "target": {
+                          "entity_id": "{{ r.cmd }}"
+                        },
+                        "data": {
+                          "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "note": "Wait for the unit to actually REPORT the mode before sending the preset, because set_preset_mode on a unit that is still OFF turns it ON IN COOL (verified 2026-09-19) and the unit does not catch up for about 1.5 s after set_hvac_mode. wait_template rather than wait_for_trigger for two reasons: the entity is a loop variable, and wait_template is documented to render its template and to return immediately when already true, whereas a trigger waits for a CHANGE and its entity_id is not reliably templated. continue_on_timeout then lets the is_state guard decline, and the standalone preset step corrects it on the next tick. Degrading to 'no preset this time' is the right failure - the room still heats."
               }
-            ]
+            ],
+            "note": "THE PRESET RIDES ALONG WITH THE START (2026-09-23). All three reasons were MEASURED on the office unit with the operator watching it, not reasoned about. One: the preset does NOT survive a power cycle - switching a unit off reverts preset to 'none' and fan to 'auto' - so it must be re-sent every time we turn a unit on, not once. Two: leaving it to the standalone step cannot happen sooner than one settle window, 240 s, because that step waits for mode_ok and for in_flight to clear; in a bedroom at night that is minutes of full fan before it quiets, and the operator's words were 'this would have woken us up at night'. Three: sent about 2 s after the mode instead, the unit 'started in silent immediately'. So the preset goes out in the same run that turns the unit on."
           },
           {
             "if": [
@@ -716,7 +762,7 @@
                 }
               }
             ],
-            "note": "PRESETS ARE PER-MODE (2026-09-23, operator request). Wind-free whenever COOLING - wind_free by day, wind_free_sleep at night, which is what it already did. QUIET when HEATING AT NIGHT, which is the new half. Nothing asserted otherwise, expressed as want_preset == now_preset, so having no opinion costs no command and this does not re-send every ten minutes. THE RE-READ IS STILL THE SAFETY INTERLOCK and now generalises: is_state(r.climate, mode) instead of a hardcoded 'cool'. set_preset_mode on a unit that is OFF turns it ON, IN COOL (verified 2026-09-19), so a preset only ever goes to a unit already sitting in the mode we believe it is in. NOT VERIFIED ON THIS HARDWARE: whether set_preset_mode issued while HEATING can itself flip the unit to cool. The interlock bounds that to a single tick - the next pass sees mode_ok false and corrects - but if the units are ever seen flapping between heat and cool overnight, this is the first place to look. DELIBERATELY NOT DONE: clearing the preset when day breaks. The request was night-only, so a unit left on quiet stays quiet through the day until something else moves it."
+            "note": "PRESETS ARE PER-MODE (2026-09-23, operator request). Wind-free whenever COOLING - wind_free by day, wind_free_sleep at night, which is what it already did. QUIET when HEATING AT NIGHT, which is the new half. Nothing asserted otherwise, expressed as want_preset == now_preset, so having no opinion costs no command and this does not re-send every ten minutes. THIS STEP IS THE CORRECTION PATH ONLY - a unit already in the right mode whose preset is wrong. The common case, a preset arriving with the command that turns the unit on, is handled in the may_act branch above, because the preset does not survive a power cycle and waiting for this step would mean 240 s of full fan. THE RE-READ IS STILL THE SAFETY INTERLOCK, generalised from a hardcoded 'cool' to is_state(r.climate, mode). VERIFIED 2026-09-23 on the office unit: set_preset_mode on a unit already HEATING does NOT flip it to cool, so the hazard really is specific to OFF and one interlock covering both modes is sound rather than assumed."
           },
           {
             "if": [
