@@ -57,9 +57,15 @@ operator's own sentence: *they're there for energy monitoring.*
 **Every gesture on a socket card opens more-info.** `tap_action`, `icon_tap_action` and
 `hold_action` are all `more-info`. Nothing on the card toggles anything.
 
-This is not the same as removing control. The more-info dialog still has the toggle, and the
-room subviews still list the switches. What changed is that switching now takes a deliberate
-second step instead of being the default consequence of touching the card.
+This is not the same as removing control. The more-info dialog still has the toggle. What
+changed is that switching now takes a deliberate second step instead of being the default
+consequence of touching the card.
+
+*Corrected 2026-09-23:* this paragraph originally also claimed "the room subviews still list
+the switches", which was true of the generated views and stopped being true when the room
+views were rebuilt on button-card — see [room-views-button-card.md](room-views-button-card.md).
+The sockets are now on the Energy tab and in the more-info dialog, and the two rooms whose
+only device is a socket link out to the Energy tab instead of carrying a switch.
 
 That matters most for the two cards where a misfire is expensive. The PoE card feeds the
 switches and access points; the previous design guarded it with a confirmation dialog on

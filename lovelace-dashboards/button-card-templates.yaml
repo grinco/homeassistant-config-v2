@@ -1,0 +1,58 @@
+# Extensions to the upstream button-card library
+#
+# This repository is a fork of eximo84/homeassistant-config-v2, and the files
+# beside this one are that upstream's, unmodified. Anything this household needs
+# that upstream does not provide goes HERE, under a `vg_` prefix, so the two
+# namespaces can never collide and upstream's templates can be re-pulled without
+# a merge.
+#
+# Load order does not matter: both files are merged into the dashboard's
+# top-level `button_card_templates` key.
+#
+# vg_room_master  - a room's Magic Areas light group, laid out with upstream's
+#                   `view_switch_layout` and a shorter card. Its state line counts
+#                   how many member lights are on.
+# vg_nav          - a link out to one of the consolidated views (Energy,
+#                   Appliances, Security). No entity; name + label + tap action.
+#
+# NOT extended, deliberately: upstream's `view_light_button_style` carries a
+# hardcoded `states['light.office']` in its label template, which does not exist
+# on this instance. Rather than edit it, the room views build on
+# `view_light_layout` instead - the same SVG bulbs via `hue_color_bulb`,
+# `hue_white_bulb` and `hue_led_strip`, with no hardcoded entity.
+button_card_templates:
+  vg_room_master:
+    template: view_switch_layout
+    icon: mdi:lightbulb-group
+    show_last_changed: false
+    styles:
+      card:
+      - height: 110px
+      icon:
+      - width: 60%
+      grid:
+      - grid-template-areas: '"i n n" "i s power_icon" '
+      - grid-template-columns: 25% 50% 25%
+      - grid-template-rows: 55% 45%
+  vg_nav:
+    show_name: true
+    show_state: false
+    show_icon: true
+    show_label: true
+    styles:
+      card:
+      - height: 90px
+      grid:
+      - grid-template-areas: '"i n" "i l"'
+      - grid-template-columns: 30% 70%
+      - grid-template-rows: 55% 45%
+      icon:
+      - width: 55%
+      - color: var(--state-icon-color)
+      name:
+      - justify-self: start
+      - font-weight: bold
+      label:
+      - justify-self: start
+      - font-size: 12px
+      - color: var(--disabled-text-color)

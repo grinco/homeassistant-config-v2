@@ -1,0 +1,1354 @@
+[
+  {
+    "title": "Living Room",
+    "path": "living-room",
+    "icon": "mdi:sofa-outline",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Lights",
+            "icon": "mdi:lightbulb-group"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_room_master",
+            "entity": "light.magic_areas_light_groups_living_room_all_lights",
+            "name": "All lights",
+            "label": "Magic Areas group",
+            "variables": {
+              "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.magic_areas_light_groups_living_room_all_lights"
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_color_bulb",
+            "entity": "light.the_moon",
+            "name": "The Moon",
+            "label": "Hue Flourish",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.the_moon"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.the_moon",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_led_strip",
+            "entity": "light.h60b0",
+            "name": "Aurora",
+            "label": "Govee strip",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.h60b0"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.h60b0",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Climate",
+            "icon": "mdi:thermostat"
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.living_room_livingroom_ac",
+            "header": {
+              "name": "Living room AC"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Media",
+            "icon": "mdi:television-play"
+          },
+          {
+            "type": "custom:mini-media-player",
+            "entity": "media_player.living_room_living_room_tv",
+            "name": "Living room TV",
+            "icon": "mdi:television",
+            "artwork": "cover",
+            "info": "short",
+            "toggle_power": true,
+            "volume_stateless": false,
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:mini-media-player",
+            "entity": "media_player.home_theater_2",
+            "name": "Home Theater",
+            "icon": "mdi:audio-video",
+            "artwork": "cover",
+            "info": "short",
+            "toggle_power": true,
+            "volume_stateless": false,
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:mini-media-player",
+            "entity": "media_player.shield_3",
+            "name": "SHIELD",
+            "icon": "mdi:television-box",
+            "artwork": "cover",
+            "info": "short",
+            "toggle_power": true,
+            "volume_stateless": false,
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_living_room",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_living_room",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_co2_living_room",
+            "name": "CO2",
+            "icon": "mdi:molecule-co2",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_living_room_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Elsewhere",
+            "heading_style": "subtitle",
+            "icon": "mdi:arrow-right-circle-outline"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Sockets",
+            "label": "on the Energy tab",
+            "icon": "mdi:power-socket-de",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/energy"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Vacuum",
+            "label": "on Appliances",
+            "icon": "mdi:robot-vacuum",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/appliances"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Kitchen",
+    "path": "kitchen",
+    "icon": "mdi:countertop-outline",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Lights",
+            "icon": "mdi:lightbulb-group"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_white_bulb",
+            "entity": "light.gallery",
+            "name": "Gallery",
+            "label": "Two bulbs, one fixture",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.gallery"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.gallery",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Media",
+            "icon": "mdi:television-play"
+          },
+          {
+            "type": "custom:mini-media-player",
+            "entity": "media_player.echo_dot",
+            "name": "Echo Dot",
+            "icon": "mdi:speaker",
+            "artwork": "cover",
+            "info": "short",
+            "toggle_power": true,
+            "volume_stateless": false,
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.house_oven_operation_state",
+            "name": "Oven",
+            "icon": "mdi:stove",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.house_dishwasher_operation_state",
+            "name": "Dishwasher",
+            "icon": "mdi:dishwasher",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.house_cooktop_operation_state",
+            "name": "Cooktop",
+            "icon": "mdi:pot-steam",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_kitchen_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Elsewhere",
+            "heading_style": "subtitle",
+            "icon": "mdi:arrow-right-circle-outline"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Appliances",
+            "label": "oven, dishwasher, cooktop",
+            "icon": "mdi:silverware-fork-knife",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/appliances"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Office / Guest Room",
+    "path": "guest-room",
+    "icon": "mdi:desk",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Lights",
+            "icon": "mdi:lightbulb-group"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_room_master",
+            "entity": "light.magic_areas_light_groups_guest_room_all_lights",
+            "name": "All lights",
+            "label": "Magic Areas group",
+            "variables": {
+              "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.magic_areas_light_groups_guest_room_all_lights"
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_color_bulb",
+            "entity": "light.hugo",
+            "name": "Hugo",
+            "label": "Hue Go",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.hugo"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.hugo",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_color_bulb",
+            "entity": "light.torchere",
+            "name": "Torchere",
+            "label": "Hue colour",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.torchere"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.torchere",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_white_bulb",
+            "entity": "light.office_main",
+            "name": "Office Main",
+            "label": "Hue filament",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.office_main"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.office_main",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Climate",
+            "icon": "mdi:thermostat"
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.office_guest_room_office_ac",
+            "header": {
+              "name": "Office AC"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Media",
+            "icon": "mdi:television-play"
+          },
+          {
+            "type": "custom:mini-media-player",
+            "entity": "media_player.echo_plus",
+            "name": "Echo Plus",
+            "icon": "mdi:speaker",
+            "artwork": "cover",
+            "info": "short",
+            "toggle_power": true,
+            "volume_stateless": false,
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_office",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_office",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_co2_office",
+            "name": "CO2",
+            "icon": "mdi:molecule-co2",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_guest_room_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Corridor",
+    "path": "corridor",
+    "icon": "mdi:stairs",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Lights",
+            "icon": "mdi:lightbulb-group"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_room_master",
+            "entity": "light.magic_areas_light_groups_corridor_all_lights",
+            "name": "All lights",
+            "label": "Magic Areas group",
+            "variables": {
+              "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.magic_areas_light_groups_corridor_all_lights"
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_white_bulb",
+            "entity": "light.entrance_light",
+            "name": "Entrance",
+            "label": "OSRAM A60",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.entrance_light"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.entrance_light",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_color_bulb",
+            "entity": "light.livingroom_stairs",
+            "name": "Stairs",
+            "label": "Hue colour",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.livingroom_stairs"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.livingroom_stairs",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Air",
+            "icon": "mdi:air-purifier"
+          },
+          {
+            "type": "tile",
+            "entity": "fan.corridor_xiaomi_air_purifier",
+            "name": "Air purifier",
+            "grid_options": {
+              "columns": 12
+            },
+            "features_position": "bottom",
+            "features": [
+              {
+                "type": "fan-preset-modes",
+                "style": "dropdown"
+              },
+              {
+                "type": "fan-speed"
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_corridor",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_corridor",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
+            "name": "PM2.5",
+            "icon": "mdi:blur",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_corridor_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Elsewhere",
+            "heading_style": "subtitle",
+            "icon": "mdi:arrow-right-circle-outline"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Front door",
+            "label": "on the Security tab",
+            "icon": "mdi:doorbell-video",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/security"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Bedroom",
+    "path": "bedroom",
+    "icon": "mdi:bed-king-outline",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Climate",
+            "icon": "mdi:thermostat"
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.master_bedroom_bedroom_ac",
+            "header": {
+              "name": "Bedroom AC"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.bedroom_trv_bedroom_trv",
+            "header": {
+              "name": "Radiator valve"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_bedroom",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_bedroom",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_bedroom_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Kids room 1",
+    "path": "kid1",
+    "icon": "mdi:bed-single-outline",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Climate",
+            "icon": "mdi:thermostat"
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.kid1_room_ac",
+            "header": {
+              "name": "AC"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.kid1_room_trv_kid1_room_trv",
+            "header": {
+              "name": "Radiator valve"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_kid1",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_kid1",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_kid1_room_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Kids room 2",
+    "path": "kid2",
+    "icon": "mdi:teddy-bear",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Lights",
+            "icon": "mdi:lightbulb-group"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "hue_color_bulb",
+            "entity": "light.bunny",
+            "name": "Bunny",
+            "label": "Night light",
+            "variables": {
+              "custom_state_display": "[[[ if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On · ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+            },
+            "custom_fields": {
+              "power_icon": {
+                "card": {
+                  "type": "custom:button-card",
+                  "template": "view_power_icon_layout",
+                  "entity": "light.bunny"
+                }
+              },
+              "slider": {
+                "card": {
+                  "type": "custom:slider-entity-row",
+                  "entity": "light.bunny",
+                  "full_row": true,
+                  "toggle": false
+                }
+              }
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Climate",
+            "icon": "mdi:thermostat"
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.kid2_room_ac",
+            "header": {
+              "name": "AC"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:simple-thermostat",
+            "entity": "climate.kid2_room_trv_kid2_room_trv",
+            "header": {
+              "name": "Radiator valve"
+            },
+            "grid_options": {
+              "columns": 12,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_temp_kid2",
+            "name": "Temperature",
+            "icon": "mdi:thermometer",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.climate_humidity_kid2",
+            "name": "Humidity",
+            "icon": "mdi:water-percent",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_kid2_room_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Hallway",
+    "path": "hallway",
+    "icon": "mdi:stairs-up",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.radiation_dose_rate",
+            "name": "Dose rate",
+            "icon": "mdi:radioactive",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.background_radiation_cpm",
+            "name": "Counts",
+            "icon": "mdi:radioactive",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_hallway_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Bathroom",
+    "path": "bathroom",
+    "icon": "mdi:bathtub-outline",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_bathroom_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Elsewhere",
+            "heading_style": "subtitle",
+            "icon": "mdi:arrow-right-circle-outline"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Toilet socket",
+            "label": "on the Energy tab",
+            "icon": "mdi:power-socket-de",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/energy"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Shower",
+    "path": "shower",
+    "icon": "mdi:shower-head",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.shower_sink_leak_water_leak",
+            "name": "Leak",
+            "icon": "mdi:water-alert",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "sensor.shower_sink_leak_battery",
+            "name": "Leak battery",
+            "icon": "mdi:battery",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_shower_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          },
+          {
+            "type": "heading",
+            "heading": "Elsewhere",
+            "heading_style": "subtitle",
+            "icon": "mdi:arrow-right-circle-outline"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "vg_nav",
+            "name": "Toilet socket",
+            "label": "on the Energy tab",
+            "icon": "mdi:power-socket-de",
+            "tap_action": {
+              "action": "navigate",
+              "navigation_path": "/lovelace/energy"
+            },
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Laundry",
+    "path": "laundry-room",
+    "icon": "mdi:washing-machine",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_laundry_room_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Closet",
+    "path": "closet",
+    "icon": "mdi:hanger",
+    "subview": true,
+    "back_path": "/lovelace/home",
+    "type": "sections",
+    "max_columns": 2,
+    "sections": [
+      {
+        "type": "grid",
+        "column_span": 1,
+        "cards": [
+          {
+            "type": "heading",
+            "heading": "Conditions",
+            "icon": "mdi:gauge"
+          },
+          {
+            "type": "custom:button-card",
+            "template": "view_sensor_layout",
+            "entity": "binary_sensor.magic_areas_presence_tracking_closet_area_state",
+            "name": "Presence",
+            "icon": "mdi:motion-sensor",
+            "grid_options": {
+              "columns": 6,
+              "rows": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
