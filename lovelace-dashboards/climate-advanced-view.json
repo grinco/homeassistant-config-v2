@@ -384,19 +384,12 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "schedule.climate_night",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Night schedule",
-          "color": "#3f51b5",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 12
+            "columns": 12,
+            "rows": 2
           }
         },
         {
@@ -523,19 +516,12 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_away_since",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Away since",
-          "color": "#607d8b",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         }
       ]
@@ -683,87 +669,52 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_manual_until_living_room",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Living room",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_manual_until_office",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Office",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_manual_until_bedroom",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Bedroom",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_manual_until_kid1",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Kids room 1",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_datetime.climate_manual_until_kid2",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Kids room 2",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -780,104 +731,62 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "climate.bedroom_trv_bedroom_trv",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Valve",
-          "color": "#ff5722",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_heating",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Heating %",
-          "color": "#f44336",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Temp",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.bedroom_trv_bedroom_trv_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "RH",
-          "color": "#00bcd4",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.bedroom_trv_bedroom_trv_window",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Window",
-          "color": "#2196f3",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.bedroom_trv_bedroom_trv_connectivity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Online",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -888,104 +797,62 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "climate.kid1_room_trv_kid1_room_trv",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Valve",
-          "color": "#ff5722",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_heating",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Heating %",
-          "color": "#f44336",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Temp",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid1_room_trv_kid1_room_trv_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "RH",
-          "color": "#00bcd4",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Window",
-          "color": "#2196f3",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_connectivity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Online",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -996,104 +863,62 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "climate.kid2_room_trv_kid2_room_trv",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Valve",
-          "color": "#ff5722",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_heating",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Heating %",
-          "color": "#f44336",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Temp",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.kid2_room_trv_kid2_room_trv_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "RH",
-          "color": "#00bcd4",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Window",
-          "color": "#2196f3",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_connectivity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Online",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -1112,19 +937,13 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "input_text.purifier_last_run",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Purifier last run",
           "icon": "mdi:history",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 12
+            "columns": 12,
+            "rows": 2
           }
         }
       ]

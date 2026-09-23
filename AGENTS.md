@@ -72,6 +72,13 @@ notification titles, area names, and the *options* of `min_max` / `group` helper
 python3 tests/leakcheck.py --commits
 ```
 
+If the change touched a dashboard, also:
+
+```bash
+python3 tests/dashboards/lint.py     # do the cards actually render?
+python3 tests/dashboards/mutate.py   # can that lint still fail?
+```
+
 It reads the terms from `tests/climate/rooms.local.json` (gitignored) and scans every tracked
 file plus every unpushed commit and commit message. Run it before any push.
 

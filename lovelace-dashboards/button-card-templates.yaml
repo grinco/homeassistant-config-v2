@@ -6,20 +6,32 @@
 # namespaces can never collide and upstream's templates can be re-pulled without
 # a merge.
 #
-# Load order does not matter: both files are merged into the dashboard's
-# top-level `button_card_templates` key.
+#   vg_stat   a stat tile: small muted label, large value, optional third line.
+#             Height comes from `grid_options.rows`, NOT from an aspect ratio -
+#             see below.
+#   vg_room   vg_stat with the value line replaced by a label and a presence
+#             slot; used by the Home room tiles.
+#   vg_meter  vg_stat plus a meter track, for a value against a limit
+#             (socket draw, AC draw, host temperature).
+#   vg_room_master  a room's Magic Areas light group, on upstream's
+#             `view_switch_layout`.
+#   vg_nav    a link out to a consolidated view. No entity.
 #
-# vg_room_master  - a room's Magic Areas light group, laid out with upstream's
-#                   `view_switch_layout` and a shorter card. Its state line counts
-#                   how many member lights are on.
-# vg_nav          - a link out to one of the consolidated views (Energy,
-#                   Appliances, Security). No entity; name + label + tap action.
+# WHY NOT `standard_btn_layout` DIRECTLY, 2026-09-23
+# --------------------------------------------------
+# The first propagation used upstream's `standard_btn_layout` for every converted
+# card. It sets `aspect_ratio: 1/1`, so a card's HEIGHT FOLLOWS ITS WIDTH: the same
+# template rendered a small square at `columns: 4` and a giant one at `columns: 12`
+# - the radiation card was the worst of it. Sizes were inconsistent across every
+# view as a direct result.
 #
-# NOT extended, deliberately: upstream's `view_light_button_style` carries a
-# hardcoded `states['light.office']` in its label template, which does not exist
-# on this instance. Rather than edit it, the room views build on
-# `view_light_layout` instead - the same SVG bulbs via `hue_color_bulb`,
-# `hue_white_bulb` and `hue_led_strip`, with no hardcoded entity.
+# `vg_stat` therefore sets no aspect ratio and `height: 100%`, so the section grid
+# decides the height and `grid_options.rows` makes it uniform by construction.
+# `tests/dashboards/lint.py` check C3 enforces both halves of that.
+#
+# `vg_stat` is duplicated into the admin-panel dashboard's own
+# `button_card_templates`. button-card resolves templates per dashboard, and
+# defining them on only one is what broke all three admin views on 2026-09-23.
 button_card_templates:
   vg_room_master:
     template: view_switch_layout
@@ -56,3 +68,105 @@ button_card_templates:
       - justify-self: start
       - font-size: 12px
       - color: var(--disabled-text-color)
+  vg_stat:
+    show_icon: true
+    show_name: true
+    show_state: true
+    show_label: false
+    show_last_changed: false
+    styles:
+      card:
+      - height: 100%
+      - padding: 12px 14px
+      grid:
+      - grid-template-areas: '"i n" "i s" "i l"'
+      - grid-template-columns: 32px 1fr
+      - grid-template-rows: auto auto auto
+      - align-content: center
+      - gap: 0px 12px
+      img_cell:
+      - justify-self: start
+      - align-self: center
+      icon:
+      - width: 26px
+      - height: 26px
+      name:
+      - justify-self: start
+      - font-size: 12px
+      - font-weight: '400'
+      - color: var(--secondary-text-color)
+      - white-space: nowrap
+      - overflow: hidden
+      - text-overflow: ellipsis
+      state:
+      - justify-self: start
+      - font-size: 20px
+      - font-weight: '500'
+      - color: var(--primary-text-color)
+      - line-height: '1.2'
+      label:
+      - justify-self: start
+      - font-size: 11px
+      - color: var(--secondary-text-color)
+      - white-space: nowrap
+      - overflow: hidden
+      - text-overflow: ellipsis
+    state:
+    - value: unavailable
+      styles:
+        state:
+        - font-size: 14px
+        - color: var(--error-color)
+    - value: unknown
+      styles:
+        state:
+        - font-size: 14px
+        - color: var(--secondary-text-color)
+  vg_room:
+    template: vg_stat
+    show_state: false
+    show_label: true
+    styles:
+      grid:
+      - grid-template-areas: '"i n" "i l" "i s2"'
+      - grid-template-columns: 32px 1fr
+      - grid-template-rows: auto auto auto
+      - align-content: center
+      - gap: 0px 12px
+      name:
+      - justify-self: start
+      - font-size: 14px
+      - font-weight: '500'
+      - color: var(--primary-text-color)
+      label:
+      - justify-self: start
+      - font-size: 12px
+      - color: var(--secondary-text-color)
+      - white-space: nowrap
+      - overflow: hidden
+      - text-overflow: ellipsis
+      custom_fields:
+        s2:
+        - justify-self: start
+        - font-size: 11px
+        - color: var(--primary-color)
+  vg_meter:
+    template: vg_stat
+    custom_fields:
+      bar: '[[[ var v = parseFloat(entity.state); var mx = parseFloat(variables.max) || 100; if (isNaN(v))
+        return ''''; var p = Math.max(0, Math.min(100, (v / mx) * 100)); var c = variables.tint || ''var(--primary-color)'';
+        return ''<div style="width:100%;height:6px;border-radius:3px;background:var(--divider-color);overflow:hidden"><div
+        style="width:'' + p + ''%;height:6px;border-radius:3px;background:'' + c + ''"></div></div>'';
+        ]]]'
+    styles:
+      grid:
+      - grid-template-areas: '"i n" "i s" "bar bar"'
+      - grid-template-columns: 32px 1fr
+      - grid-template-rows: auto auto auto
+      - align-content: center
+      - gap: 0px 12px
+      custom_fields:
+        bar:
+        - justify-self: stretch
+        - align-self: end
+        - padding-top: 10px

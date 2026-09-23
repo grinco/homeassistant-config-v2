@@ -45,38 +45,24 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.0x0017880106495a81_occupancy",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Front door motion",
           "icon": "mdi:motion-sensor",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 12
+            "columns": 12,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.shower_sink_leak_water_leak",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Shower sink leak",
           "icon": "mdi:water-alert",
-          "color": "#f44336",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 12
+            "columns": 12,
+            "rows": 2
           }
         },
         {
@@ -87,53 +73,32 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "person.vadim_grinco",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Vadim",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 4
+            "columns": 4,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "person.janka_grinco",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Janka",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 4
+            "columns": 4,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "person.kid1_grinco",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Kids room 1",
-          "color": "#9c27b0",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 4
+            "columns": 4,
+            "rows": 2
           }
         }
       ]
@@ -184,41 +149,27 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "camera.home_door",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Live view",
           "icon": "mdi:cctv",
-          "color": "#2196f3",
           "tap_action": {
             "action": "more-info"
           },
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.home_door_motion",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Camera PIR",
           "icon": "mdi:motion-sensor",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         }
       ],

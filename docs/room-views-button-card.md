@@ -184,6 +184,98 @@ One upstream quirk surfaced during the propagation and is worth recording: the H
 Home's *all lights off* button — uses `standard_btn_layout` alone. Composing the two templates is
 otherwise the standard pairing across all 197 cards.
 
+## The propagation was a regression, and what it cost
+
+The operator's verdict on the pass above: *"the admin panels don't render correctly (all three
+of them) … the buttons are of inconsistent sizes, and they don't look aesthetically pleasing -
+the radiation dose rate for example - is giant … the switch buttons no longer show load in a
+graph (like the ACs do)."* All three were real, and all three were mine.
+
+**The admin panel did not render at all.** button-card resolves `template:` names against *the
+dashboard the card lives on*. Every admin card named `standard_btn_layout` and
+`standard_btn_states`, which existed only in the `lovelace` config, so 72 cards across three
+views could not resolve a template.
+
+The worse part is the check. It walked **both** dashboards' cards and compared them against
+**one** dashboard's library, so it reported "every template a card names is defined" while being
+structurally incapable of seeing the failure. That is the exact defect this repo keeps
+relearning — *a check that cannot fail is worse than no check* — arriving this time in the
+verification rather than in the code.
+
+**The giant card was one inherited property.** `standard_btn_layout` sets `aspect_ratio: 1/1`, so
+height follows width: the same template is a small square at `columns: 4` and a full-width square
+at `columns: 12`. The radiation card was at 12. Nothing was wrong with any individual card; the
+inconsistency was emergent, and every converted card had it.
+
+**The sockets lost their meter** because the rule "keep anything with a graph feature" was written
+when button-card could not draw one. It kept the AC tiles as tiles with their `bar-gauge` and
+converted the sockets to plain numbers — so two things that should read alike stopped matching.
+
+### What replaced it
+
+A small vocabulary, `vg_stat` / `vg_room` / `vg_meter`, informed by the form guidance the operator
+asked for: *a single current value is a stat tile; a single ratio against a limit is a meter.*
+
+- **`vg_stat`** sets no aspect ratio and `height: 100%`, so the section grid owns the height and
+  `grid_options.rows: 2` makes every card the same size by construction rather than by care.
+- **Text wears text tokens.** Name is `--secondary-text-color`, value is `--primary-text-color`;
+  only the icon carries the status colour. The first pass let `standard_btn_states` recolour the
+  text, which is the anti-pattern of identity-by-colour-alone.
+- **`vg_meter`** draws the track button-card lacks, as a custom field. Sockets and ACs now read
+  identically, which is what was asked for.
+- The three shared templates are **defined in both dashboards**, which is what makes the admin
+  panel resolve.
+
+### The ceilings are measured, not guessed
+
+A meter is only honest if its limit means something. The first ceilings were invented; they are
+now read from two weeks of recorder statistics:
+
+| socket | observed peak | ceiling |
+|---|---:|---:|
+| TV | 246 W | 300 |
+| Media corner | 88 W | 150 |
+| Vacuum dock | 1430 W | 1600 |
+| Toilet down | 1410 W | 1600 |
+| Toilet up | 793 W | 1000 |
+| PoE network | 37 W | 60 |
+| LR powerline | 34 W | 50 |
+
+**The air conditioners deliberately keep 1500 W, their equipment rating, not their observed peak.**
+Two weeks of shoulder-season data shows them under 120 W; the moment heating season starts they
+will draw ten times that, and a ceiling fitted to today's data would peg every bar at full. That
+is the distinction the form guidance forces: for a socket the limit is the device's own peak, for
+an AC it is its capacity. The socket ceilings should be revisited if a device is replaced.
+
+## A test suite for dashboards
+
+`tests/climate/` is an expression oracle for the climate loop and says nothing about dashboards.
+That gap is what let three broken views ship, so it now has a sibling:
+
+**`tests/dashboards/lint.py`** reads the live `.storage` configs and checks six things, each one
+written because something it catches actually shipped:
+
+| | check |
+|---|---|
+| C1 | every `template:` resolves **in its own dashboard** |
+| C2 | no card carries an option belonging to a different card type |
+| C3 | no button-card resolves to an `aspect_ratio`, and every grid-positioned one declares `grid_options.rows` |
+| C4 | every entity named anywhere exists — **including inside button-card JS**, which a structural walk over `entity:` keys would miss |
+| C5 | every `custom:` card type has a registered resource |
+| C6 | no scratch key left on a view by a transform |
+
+C4 scans only the **reachable** surface — views plus the templates cards actually reach — so
+upstream's dormant `view_light_button_style` and its hardcoded `light.office` do not fail the
+build today, but *will* the moment a card uses it.
+
+**`tests/dashboards/mutate.py`** is the half that matters. It copies the live storage to a temp
+directory, reintroduces each bug, and runs `lint.py` **unmodified** against it via an `HA_STORAGE`
+override — so what is proven is the real script, not a re-implementation of its logic. All eight
+mutations are caught, including the two that shipped and the JS-only dead entity.
+
+Written in the order AGENTS.md requires: the lint first, run against the broken config, where it
+failed on exactly the three complaints plus one latent issue. Only then the fix.
+
 ## Still unused, and available
 
 Loading the whole library rather than the subset the room views need means these are ready

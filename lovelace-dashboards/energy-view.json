@@ -92,89 +92,129 @@
           "icon": "mdi:air-conditioner"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.living_room_livingroom_ac_power",
           "name": "Living room",
           "icon": "mdi:air-conditioner",
-          "color": "orange",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 1500,
+            "tint": "orange"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 1500
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.office_guest_room_office_ac_power",
           "name": "Office",
           "icon": "mdi:air-conditioner",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 1500,
+            "tint": "indigo"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 1500
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "indigo"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.master_bedroom_bedroom_ac_power",
           "name": "Bedroom",
           "icon": "mdi:air-conditioner",
-          "color": "purple",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 1500,
+            "tint": "purple"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 1500
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "purple"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.kid1_room_ac_power",
           "name": "Kids room 1",
           "icon": "mdi:air-conditioner",
-          "color": "pink",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 1500,
+            "tint": "pink"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 1500
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "pink"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.kid2_room_ac_power",
           "name": "Kids room 2",
           "icon": "mdi:air-conditioner",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 1500,
+            "tint": "cyan"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 1500
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "cyan"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         }
       ]
     },
@@ -257,226 +297,198 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.living_room_tv_socket_power",
           "name": "TV",
           "icon": "mdi:television-classic",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "sw": "switch.living_room_tv_socket",
-            "base": "#ffc107"
+            "base": "#ffc107",
+            "max": 300,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.media_corner_power",
           "name": "Media corner",
           "icon": "mdi:audio-video",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "sw": "switch.media_corner",
-            "base": "#e91e63"
+            "base": "#e91e63",
+            "max": 150,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.living_room_vacuum_socket_power",
           "name": "Vacuum dock",
           "icon": "mdi:robot-vacuum",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "sw": "switch.living_room_vacuum_socket",
-            "base": "#009688"
+            "base": "#009688",
+            "max": 1600,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.downstairs_toilet_power",
           "name": "Toilet down",
           "icon": "mdi:toilet",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "sw": "switch.downstairs_toilet",
-            "base": "#03a9f4"
+            "base": "#03a9f4",
+            "max": 1600,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.upstairs_toilet_power",
           "name": "Toilet up",
           "icon": "mdi:toilet",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "sw": "switch.upstairs_toilet",
-            "base": "#00bcd4"
+            "base": "#00bcd4",
+            "max": 1000,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.poe_network_power",
           "name": "PoE network",
           "icon": "mdi:server-network",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "grid_options": {
-            "columns": 6
-          },
           "variables": {
             "sw": "switch.poe_network",
-            "base": "#607d8b"
+            "base": "#607d8b",
+            "max": 60,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.lr_powerline_power",
           "name": "LR powerline",
           "icon": "mdi:transmission-tower",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
           },
-          "grid_options": {
-            "columns": 6
-          },
           "variables": {
             "sw": "switch.lr_powerline",
-            "base": "#795548"
+            "base": "#795548",
+            "max": 50,
+            "tint": "var(--primary-color)"
           },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+          "template": "vg_meter",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -487,22 +499,11 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "switch.living_room_tv_socket_switchbot_bridge",
           "name": "Switchbot bridge",
           "icon": "mdi:bridge",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "base": "#2196f3"
@@ -513,26 +514,20 @@
                 "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
               }
             ]
+          },
+          "template": "vg_stat",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "switch.living_room_vacuum_socket_magsafe_charger",
           "name": "MagSafe charger",
           "icon": "mdi:cellphone-charging",
-          "show_name": true,
-          "show_state": true,
-          "show_label": false,
-          "show_last_changed": false,
           "tap_action": {
             "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6
           },
           "variables": {
             "base": "#2196f3"
@@ -543,6 +538,11 @@
                 "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
               }
             ]
+          },
+          "template": "vg_stat",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
           }
         }
       ]
@@ -558,30 +558,26 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.current_spot_electricity_price",
           "name": "Electricity now",
           "icon": "mdi:transmission-tower",
-          "show_name": true,
-          "show_state": true,
-          "show_label": true,
-          "show_last_changed": false,
+          "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
           "tap_action": {
             "action": "more-info"
           },
-          "grid_options": {
-            "columns": 12
-          },
-          "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ var p = parseFloat(entity.state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
               }
             ]
+          },
+          "template": "vg_stat",
+          "show_label": true,
+          "show_state": false,
+          "grid_options": {
+            "columns": 12,
+            "rows": 2
           }
         },
         {
@@ -616,66 +612,46 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.spot_cheapest_electricity_today",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Cheapest today",
           "icon": "mdi:arrow-down-bold",
-          "color": "#4caf50",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.spot_most_expensive_electricity_today",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Dearest today",
           "icon": "mdi:arrow-up-bold",
-          "color": "#ff5722",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "binary_sensor.spot_electricity_is_cheapest",
           "name": "Cheapest block",
           "icon": "mdi:clock-check-outline",
-          "show_name": true,
-          "show_state": false,
-          "show_label": true,
-          "show_last_changed": false,
+          "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return '—'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
           "tap_action": {
             "action": "more-info"
           },
-          "grid_options": {
-            "columns": 12
-          },
-          "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return '—'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
           "styles": {
             "icon": [
               {
                 "color": "[[[ return entity.state === 'on' ? '#4caf50' : '#9e9e9e'; ]]]"
               }
             ]
+          },
+          "template": "vg_room",
+          "grid_options": {
+            "columns": 12,
+            "rows": 2
           }
         },
         {
@@ -693,18 +669,9 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.spot_cheapest_electricity_tomorrow",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Cheapest",
           "icon": "mdi:arrow-down-bold",
-          "color": "#4caf50",
           "visibility": [
             {
               "condition": "state",
@@ -712,24 +679,17 @@
               "state": "on"
             }
           ],
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.spot_most_expensive_electricity_tomorrow",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Dearest",
           "icon": "mdi:arrow-up-bold",
-          "color": "#ff5722",
           "visibility": [
             {
               "condition": "state",
@@ -737,8 +697,10 @@
               "state": "on"
             }
           ],
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -749,36 +711,20 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.current_spot_gas_price",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Today",
           "icon": "mdi:fire",
-          "color": "#ff9800",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.tomorrow_spot_gas_price",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Tomorrow",
           "icon": "mdi:fire",
-          "color": "#ffc107",
           "visibility": [
             {
               "condition": "state",
@@ -786,8 +732,10 @@
               "state": "on"
             }
           ],
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         }
       ]
@@ -1031,60 +979,65 @@
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.volvo_xc40_battery",
           "name": "Battery",
           "icon": "mdi:battery-charging",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 100,
+            "tint": "green"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 100
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
-          "entity": "sensor.volvo_xc40_charging_status",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
-          "name": "Charging",
-          "icon": "mdi:ev-station",
-          "color": "#2196f3",
+          "styles": {
+            "icon": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
+          "entity": "sensor.volvo_xc40_charging_status",
+          "name": "Charging",
+          "icon": "mdi:ev-station",
+          "template": "vg_stat",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
+        },
+        {
+          "type": "custom:button-card",
           "entity": "sensor.volvo_xc40_charging_power",
           "name": "Charging now",
           "icon": "mdi:ev-station",
-          "color": "amber",
-          "grid_options": {
-            "columns": 12
+          "template": "vg_meter",
+          "variables": {
+            "max": 3700,
+            "tint": "amber"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 3700
-            },
-            {
-              "type": "trend-graph",
-              "hours_to_show": 24
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "amber"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12,
+            "rows": 2
+          }
         }
       ]
     }

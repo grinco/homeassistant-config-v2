@@ -165,70 +165,42 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.house_apparent_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Feels like",
-          "color": "#ff9800",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.house_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Humidity",
-          "color": "#00bcd4",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.house_wind_speed",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Wind",
-          "color": "#607d8b",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.house_uv_index",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "UV index",
-          "color": "#ffc107",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -238,20 +210,28 @@
           "icon": "mdi:air-filter"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.outside_openweathermap_air_quality_index",
           "name": "AQI (1 good – 5 very poor)",
-          "color": "green",
-          "grid_options": {
-            "columns": 12
+          "template": "vg_meter",
+          "variables": {
+            "max": 5,
+            "tint": "green"
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 1,
-              "max": 5
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 12,
+            "rows": 2
+          }
         },
         {
           "type": "tile",
@@ -285,36 +265,22 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.outside_openweathermap_nitrogen_dioxide",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "NO₂",
-          "color": "#607d8b",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.outside_openweathermap_ozone",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "O₃",
-          "color": "#607d8b",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -324,38 +290,54 @@
           "icon": "mdi:air-purifier"
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.climate_co2_living_room",
           "name": "CO₂ living room",
           "icon": "mdi:molecule-co2",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 2000,
+            "tint": "green"
           },
-          "color": "green",
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 400,
-              "max": 2000
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.climate_co2_office",
           "name": "CO₂ office",
           "icon": "mdi:molecule-co2",
-          "grid_options": {
-            "columns": 6
+          "template": "vg_meter",
+          "variables": {
+            "max": 2000,
+            "tint": "green"
           },
-          "color": "green",
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 400,
-              "max": 2000
-            }
-          ]
+          "styles": {
+            "icon": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
         },
         {
           "type": "markdown",
@@ -421,74 +403,75 @@
           ]
         },
         {
-          "type": "tile",
+          "type": "custom:button-card",
           "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
           "name": "PM2.5 · corridor",
           "icon": "mdi:blur",
-          "color": "purple",
-          "grid_options": {
-            "columns": 12
+          "template": "vg_meter",
+          "variables": {
+            "max": 75,
+            "tint": "purple"
           },
-          "features": [
-            {
-              "type": "trend-graph",
-              "hours_to_show": 24
-            },
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 75
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
-          "name": "Filter life",
-          "icon": "mdi:air-filter",
-          "grid_options": {
-            "columns": 6
+          "styles": {
+            "icon": [
+              {
+                "color": "purple"
+              }
+            ]
           },
-          "features": [
-            {
-              "type": "bar-gauge",
-              "min": 0,
-              "max": 100
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
-          "entity": "sensor.climate_temp_corridor",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
-          "name": "Corridor",
-          "icon": "mdi:thermometer",
+          "tap_action": {
+            "action": "more-info"
+          },
           "grid_options": {
-            "columns": 6
+            "columns": 12,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
+          "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+          "name": "Filter life",
+          "icon": "mdi:air-filter",
+          "template": "vg_meter",
+          "variables": {
+            "max": 100,
+            "tint": "var(--primary-color)"
+          },
+          "styles": {
+            "icon": [
+              {
+                "color": "var(--primary-color)"
+              }
+            ]
+          },
+          "tap_action": {
+            "action": "more-info"
+          },
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
+        },
+        {
+          "type": "custom:button-card",
+          "entity": "sensor.climate_temp_corridor",
+          "name": "Corridor",
+          "icon": "mdi:thermometer",
+          "template": "vg_stat",
+          "grid_options": {
+            "columns": 6,
+            "rows": 2
+          }
+        },
+        {
+          "type": "custom:button-card",
           "entity": "sensor.climate_humidity_corridor",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Corridor",
           "icon": "mdi:water-percent",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
@@ -499,17 +482,9 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.radiation_dose_rate",
           "name": "Dose rate",
           "icon": "mdi:radioactive",
-          "show_state": true,
-          "show_name": true,
-          "show_label": true,
-          "show_last_changed": false,
           "label": "[[[ var c = states['sensor.background_radiation_cpm'] ? parseFloat(states['sensor.background_radiation_cpm'].state) : NaN; if (!(c >= 1)) return 'No counts — counter not reporting'; return Math.round(c) + ' CPM'; ]]]",
           "styles": {
             "icon": [
@@ -518,8 +493,12 @@
               }
             ]
           },
+          "template": "vg_stat",
+          "show_label": true,
+          "show_state": false,
           "grid_options": {
-            "columns": 12
+            "columns": 12,
+            "rows": 2
           }
         },
         {
@@ -1054,74 +1033,46 @@
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.downstairs_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Downstairs",
           "icon": "mdi:thermometer",
-          "color": "#ff9800",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.upstairs_temperature",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Upstairs",
           "icon": "mdi:thermometer",
-          "color": "#ff5722",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.downstairs_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Downstairs",
           "icon": "mdi:water-percent",
-          "color": "#00bcd4",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
           "type": "custom:button-card",
-          "template": [
-            "standard_btn_layout",
-            "standard_btn_states"
-          ],
           "entity": "sensor.upstairs_humidity",
-          "show_state": true,
-          "show_name": true,
-          "show_label": false,
-          "show_last_changed": false,
           "name": "Upstairs",
           "icon": "mdi:water-percent",
-          "color": "#009688",
+          "template": "vg_stat",
           "grid_options": {
-            "columns": 6
+            "columns": 6,
+            "rows": 2
           }
         },
         {
