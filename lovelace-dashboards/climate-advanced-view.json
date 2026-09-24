@@ -1,952 +1,967 @@
 {
-  "title": "Climate — advanced",
-  "path": "climate-advanced",
-  "icon": "mdi:tune-variant",
-  "type": "sections",
-  "subview": true,
-  "max_columns": 2,
-  "sections": [
+ "icon": "mdi:tune-variant",
+ "max_columns": 2,
+ "path": "climate-advanced",
+ "sections": [
+  {
+   "background": {
+    "color": "green",
+    "opacity": 8
+   },
+   "cards": [
     {
-      "type": "grid",
-      "column_span": 1,
-      "background": {
-        "color": "green",
-        "opacity": 8
-      },
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "House mode — decided by the weather",
-          "heading_style": "subtitle",
-          "icon": "mdi:home-thermometer-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_heat_below_outdoor",
-          "name": "Heat below",
-          "color": "deep-orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_cool_above_outdoor",
-          "name": "Cool above",
-          "color": "light-blue",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Room targets",
-          "heading_style": "subtitle",
-          "icon": "mdi:home-thermometer"
-        },
-        {
-          "type": "heading",
-          "heading": "Living room",
-          "heading_style": "subtitle",
-          "icon": "mdi:sofa-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_living_room",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_living_room",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_living_room",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_living_room",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Office",
-          "heading_style": "subtitle",
-          "icon": "mdi:desk"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_office",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_office",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_office",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_office",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Bedroom",
-          "heading_style": "subtitle",
-          "icon": "mdi:bed-king-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_bedroom",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_bedroom",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_bedroom",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_bedroom",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 1",
-          "heading_style": "subtitle",
-          "icon": "mdi:bed-single-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_kid1",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_kid1",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_kid1",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_kid1",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 2",
-          "heading_style": "subtitle",
-          "icon": "mdi:teddy-bear"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_room_kid2",
-          "name": "Maintain",
-          "color": "green",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_air_filter_kid2",
-          "name": "Air filter",
-          "color": "cyan",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_day_kid2",
-          "name": "Day",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_target_night_kid2",
-          "name": "Night",
-          "color": "indigo",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Night window",
-          "heading_style": "subtitle",
-          "icon": "mdi:weather-night"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "schedule.climate_night",
-          "name": "Night schedule",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Away safety band — armed away 30+ min",
-          "heading_style": "subtitle",
-          "icon": "mdi:shield-home-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_away_min",
-          "name": "Never below",
-          "color": "blue",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_away_max",
-          "name": "Never above",
-          "color": "red",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Safety — runs even with the master switch off",
-          "heading_style": "subtitle",
-          "icon": "mdi:shield-check"
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.climate_safety_always",
-          "name": "Safety limits always",
-          "color": "green",
-          "grid_options": {
-            "columns": 12
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_frost_override",
-          "name": "Frost override",
-          "color": "blue",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_hysteresis",
-          "name": "Hysteresis",
-          "color": "purple",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Sensor calibration",
-          "heading_style": "subtitle",
-          "icon": "mdi:tune-vertical"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_ac_sensor_offset",
-          "name": "AC sensor offset",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_trv_sensor_offset",
-          "name": "TRV offset",
-          "color": "deep-orange",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_away_since",
-          "name": "Away since",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ]
+     "heading": "House mode — decided by the weather",
+     "heading_style": "subtitle",
+     "icon": "mdi:home-thermometer-outline",
+     "type": "heading"
     },
     {
-      "type": "grid",
-      "column_span": 1,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Circuit breaker — isolates a unit that stops responding",
-          "heading_style": "subtitle",
-          "icon": "mdi:electric-switch"
-        },
-        {
-          "type": "markdown",
-          "text_only": true,
-          "content": "{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room'),('Office','counter.climate_fail_office'),('Bedroom','counter.climate_fail_bedroom'),('Kids room 1','counter.climate_fail_kid1'),('Kids room 2','counter.climate_fail_kid2')] %}{% set ns = namespace(bad=[]) %}{% for n, c in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% endfor %}{% if ns.bad %}🔌 **Isolated: {{ ns.bad | join(', ') }}** — comfort commands throttled to hourly retries; safety still runs at full rate. Clears itself the moment the unit obeys.{% else %}All five units responding to commands.{% endif %}"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_breaker_threshold",
-          "name": "Trip after",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_command_settle",
-          "name": "Settle",
-          "color": "amber",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "counter.climate_fail_living_room",
-          "name": "Living room",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "counter-actions"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "counter.climate_fail_office",
-          "name": "Office",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "counter-actions"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "counter.climate_fail_bedroom",
-          "name": "Bedroom",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "counter-actions"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "counter.climate_fail_kid1",
-          "name": "Kids room 1",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "counter-actions"
-            }
-          ]
-        },
-        {
-          "type": "tile",
-          "entity": "counter.climate_fail_kid2",
-          "name": "Kids room 2",
-          "color": "blue-grey",
-          "grid_options": {
-            "columns": 12
-          },
-          "features": [
-            {
-              "type": "counter-actions"
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "heading": "Manual control wins",
-          "heading_style": "subtitle",
-          "icon": "mdi:hand-back-right"
-        },
-        {
-          "type": "markdown",
-          "text_only": true,
-          "content": "{% set rooms = [('Living room','input_datetime.climate_manual_until_living_room'),('Office','input_datetime.climate_manual_until_office'),('Bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','input_datetime.climate_manual_until_kid1'),('Kids room 2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(held=[]) %}{% for n, e in rooms %}{% set t = state_attr(e,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n ~ ' (until ' ~ (t | timestamp_custom('%H:%M')) ~ ')'] %}{% endif %}{% endfor %}{% if ns.held %}✋ **Manual control: {{ ns.held | join(', ') }}** — the automation is keeping its hands off {{ 'that room' if ns.held | count == 1 else 'those rooms' }} until the hold expires.{% else %}No manual holds — the automation has control of all five rooms.{% endif %}"
-        },
-        {
-          "type": "tile",
-          "entity": "input_number.climate_manual_hold_hours",
-          "name": "Hold for",
-          "color": "purple",
-          "grid_options": {
-            "columns": 12
-          },
-          "features": [
-            {
-              "type": "numeric-input",
-              "style": "buttons"
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_manual_until_living_room",
-          "name": "Living room",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_manual_until_office",
-          "name": "Office",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_manual_until_bedroom",
-          "name": "Bedroom",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_manual_until_kid1",
-          "name": "Kids room 1",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_datetime.climate_manual_until_kid2",
-          "name": "Kids room 2",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Radiator valves — read only",
-          "heading_style": "subtitle",
-          "icon": "mdi:radiator"
-        },
-        {
-          "type": "heading",
-          "heading": "Bedroom",
-          "heading_style": "subtitle",
-          "icon": "mdi:thermometer"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "climate.bedroom_trv_bedroom_trv",
-          "name": "Valve",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.bedroom_trv_bedroom_trv_heating",
-          "name": "Heating %",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.bedroom_trv_bedroom_trv_temperature",
-          "name": "Temp",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.bedroom_trv_bedroom_trv_humidity",
-          "name": "RH",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.bedroom_trv_bedroom_trv_window",
-          "name": "Window",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.bedroom_trv_bedroom_trv_connectivity",
-          "name": "Online",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 1",
-          "heading_style": "subtitle",
-          "icon": "mdi:thermometer"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "climate.kid1_room_trv_kid1_room_trv",
-          "name": "Valve",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid1_room_trv_kid1_room_trv_heating",
-          "name": "Heating %",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid1_room_trv_kid1_room_trv_temperature",
-          "name": "Temp",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid1_room_trv_kid1_room_trv_humidity",
-          "name": "RH",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
-          "name": "Window",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_connectivity",
-          "name": "Online",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Kids room 2",
-          "heading_style": "subtitle",
-          "icon": "mdi:thermometer"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "climate.kid2_room_trv_kid2_room_trv",
-          "name": "Valve",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid2_room_trv_kid2_room_trv_heating",
-          "name": "Heating %",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid2_room_trv_kid2_room_trv_temperature",
-          "name": "Temp",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid2_room_trv_kid2_room_trv_humidity",
-          "name": "RH",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
-          "name": "Window",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_connectivity",
-          "name": "Online",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "tile",
-          "entity": "input_boolean.purifier_pm25_trusted",
-          "name": "Trust the purifier PM2.5",
-          "icon": "mdi:blur",
-          "grid_options": {
-            "columns": 6
-          },
-          "features": [
-            {
-              "type": "toggle"
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "input_text.purifier_last_run",
-          "name": "Purifier last run",
-          "icon": "mdi:history",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        }
-      ]
+     "color": "deep-orange",
+     "entity": "input_number.climate_heat_below_outdoor",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Heat below",
+     "type": "tile"
+    },
+    {
+     "color": "light-blue",
+     "entity": "input_number.climate_cool_above_outdoor",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Cool above",
+     "type": "tile"
+    },
+    {
+     "heading": "Room targets",
+     "heading_style": "subtitle",
+     "icon": "mdi:home-thermometer",
+     "type": "heading"
+    },
+    {
+     "heading": "Living room",
+     "heading_style": "subtitle",
+     "icon": "mdi:sofa-outline",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_room_living_room",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Maintain",
+     "type": "tile"
+    },
+    {
+     "color": "cyan",
+     "entity": "input_boolean.climate_air_filter_living_room",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_target_day_living_room",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Day",
+     "type": "tile"
+    },
+    {
+     "color": "indigo",
+     "entity": "input_number.climate_target_night_living_room",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Night",
+     "type": "tile"
+    },
+    {
+     "heading": "Office",
+     "heading_style": "subtitle",
+     "icon": "mdi:desk",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_room_office",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Maintain",
+     "type": "tile"
+    },
+    {
+     "color": "cyan",
+     "entity": "input_boolean.climate_air_filter_office",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_target_day_office",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Day",
+     "type": "tile"
+    },
+    {
+     "color": "indigo",
+     "entity": "input_number.climate_target_night_office",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Night",
+     "type": "tile"
+    },
+    {
+     "heading": "Bedroom",
+     "heading_style": "subtitle",
+     "icon": "mdi:bed-king-outline",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_room_bedroom",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Maintain",
+     "type": "tile"
+    },
+    {
+     "color": "cyan",
+     "entity": "input_boolean.climate_air_filter_bedroom",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_target_day_bedroom",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Day",
+     "type": "tile"
+    },
+    {
+     "color": "indigo",
+     "entity": "input_number.climate_target_night_bedroom",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Night",
+     "type": "tile"
+    },
+    {
+     "heading": "Kids room 1",
+     "heading_style": "subtitle",
+     "icon": "mdi:bed-single-outline",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_room_kid1",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Maintain",
+     "type": "tile"
+    },
+    {
+     "color": "cyan",
+     "entity": "input_boolean.climate_air_filter_kid1",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_target_day_kid1",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Day",
+     "type": "tile"
+    },
+    {
+     "color": "indigo",
+     "entity": "input_number.climate_target_night_kid1",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Night",
+     "type": "tile"
+    },
+    {
+     "heading": "Kids room 2",
+     "heading_style": "subtitle",
+     "icon": "mdi:teddy-bear",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_room_kid2",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Maintain",
+     "type": "tile"
+    },
+    {
+     "color": "cyan",
+     "entity": "input_boolean.climate_air_filter_kid2",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_target_day_kid2",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Day",
+     "type": "tile"
+    },
+    {
+     "color": "indigo",
+     "entity": "input_number.climate_target_night_kid2",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Night",
+     "type": "tile"
+    },
+    {
+     "heading": "Night window",
+     "heading_style": "subtitle",
+     "icon": "mdi:weather-night",
+     "type": "heading"
+    },
+    {
+     "entity": "schedule.climate_night",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "name": "Night schedule",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Away safety band — armed away 30+ min",
+     "heading_style": "subtitle",
+     "icon": "mdi:shield-home-outline",
+     "type": "heading"
+    },
+    {
+     "color": "blue",
+     "entity": "input_number.climate_away_min",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Never below",
+     "type": "tile"
+    },
+    {
+     "color": "red",
+     "entity": "input_number.climate_away_max",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Never above",
+     "type": "tile"
+    },
+    {
+     "heading": "Safety — runs even with the master switch off",
+     "heading_style": "subtitle",
+     "icon": "mdi:shield-check",
+     "type": "heading"
+    },
+    {
+     "color": "green",
+     "entity": "input_boolean.climate_safety_always",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 12
+     },
+     "name": "Safety limits always",
+     "type": "tile"
+    },
+    {
+     "color": "blue",
+     "entity": "input_number.climate_frost_override",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Frost override",
+     "type": "tile"
+    },
+    {
+     "color": "purple",
+     "entity": "input_number.climate_hysteresis",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "House hysteresis",
+     "type": "tile"
+    },
+    {
+     "color": "purple",
+     "entity": "input_number.climate_room_hysteresis",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Room deadband",
+     "type": "tile"
+    },
+    {
+     "heading": "Sensor calibration",
+     "heading_style": "subtitle",
+     "icon": "mdi:tune-vertical",
+     "type": "heading"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "input_number.climate_ac_sensor_offset",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "AC sensor offset",
+     "type": "tile"
+    },
+    {
+     "color": "deep-orange",
+     "entity": "input_number.climate_trv_sensor_offset",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "TRV offset",
+     "type": "tile"
+    },
+    {
+     "entity": "input_datetime.climate_away_since",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Away since",
+     "template": "vg_stat",
+     "type": "custom:button-card"
     }
-  ]
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Circuit breaker — isolates a unit that stops responding",
+     "heading_style": "subtitle",
+     "icon": "mdi:electric-switch",
+     "type": "heading"
+    },
+    {
+     "content": "{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room'),('Office','counter.climate_fail_office'),('Bedroom','counter.climate_fail_bedroom'),('Kids room 1','counter.climate_fail_kid1'),('Kids room 2','counter.climate_fail_kid2')] %}{% set ns = namespace(bad=[]) %}{% for n, c in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% endfor %}{% if ns.bad %}🔌 **Isolated: {{ ns.bad | join(', ') }}** — comfort commands throttled to hourly retries; safety still runs at full rate. Clears itself the moment the unit obeys.{% else %}All five units responding to commands.{% endif %}",
+     "text_only": true,
+     "type": "markdown"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_breaker_threshold",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Trip after",
+     "type": "tile"
+    },
+    {
+     "color": "amber",
+     "entity": "input_number.climate_command_settle",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Settle",
+     "type": "tile"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "counter.climate_fail_living_room",
+     "features": [
+      {
+       "type": "counter-actions"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Living room",
+     "type": "tile"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "counter.climate_fail_office",
+     "features": [
+      {
+       "type": "counter-actions"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Office",
+     "type": "tile"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "counter.climate_fail_bedroom",
+     "features": [
+      {
+       "type": "counter-actions"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Bedroom",
+     "type": "tile"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "counter.climate_fail_kid1",
+     "features": [
+      {
+       "type": "counter-actions"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Kids room 1",
+     "type": "tile"
+    },
+    {
+     "color": "blue-grey",
+     "entity": "counter.climate_fail_kid2",
+     "features": [
+      {
+       "type": "counter-actions"
+      }
+     ],
+     "grid_options": {
+      "columns": 12
+     },
+     "name": "Kids room 2",
+     "type": "tile"
+    },
+    {
+     "heading": "Manual control wins",
+     "heading_style": "subtitle",
+     "icon": "mdi:hand-back-right",
+     "type": "heading"
+    },
+    {
+     "content": "{% set rooms = [('Living room','input_datetime.climate_manual_until_living_room'),('Office','input_datetime.climate_manual_until_office'),('Bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','input_datetime.climate_manual_until_kid1'),('Kids room 2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(held=[]) %}{% for n, e in rooms %}{% set t = state_attr(e,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n ~ ' (until ' ~ (t | timestamp_custom('%H:%M')) ~ ')'] %}{% endif %}{% endfor %}{% if ns.held %}✋ **Manual control: {{ ns.held | join(', ') }}** — the automation is keeping its hands off {{ 'that room' if ns.held | count == 1 else 'those rooms' }} until the hold expires.{% else %}No manual holds — the automation has control of all five rooms.{% endif %}",
+     "text_only": true,
+     "type": "markdown"
+    },
+    {
+     "color": "purple",
+     "entity": "input_number.climate_manual_hold_hours",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "grid_options": {
+      "columns": 12
+     },
+     "name": "Hold for",
+     "type": "tile"
+    },
+    {
+     "entity": "input_datetime.climate_manual_until_living_room",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Living room",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "input_datetime.climate_manual_until_office",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Office",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "input_datetime.climate_manual_until_bedroom",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Bedroom",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "input_datetime.climate_manual_until_kid1",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Kids room 1",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "input_datetime.climate_manual_until_kid2",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Kids room 2",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Radiator valves — read only",
+     "heading_style": "subtitle",
+     "icon": "mdi:radiator",
+     "type": "heading"
+    },
+    {
+     "heading": "Bedroom",
+     "heading_style": "subtitle",
+     "icon": "mdi:thermometer",
+     "type": "heading"
+    },
+    {
+     "entity": "climate.bedroom_trv_bedroom_trv",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Valve",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.bedroom_trv_bedroom_trv_heating",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Heating %",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.bedroom_trv_bedroom_trv_temperature",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Temp",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.bedroom_trv_bedroom_trv_humidity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "RH",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.bedroom_trv_bedroom_trv_window",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Window",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.bedroom_trv_bedroom_trv_connectivity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Online",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Kids room 1",
+     "heading_style": "subtitle",
+     "icon": "mdi:thermometer",
+     "type": "heading"
+    },
+    {
+     "entity": "climate.kid1_room_trv_kid1_room_trv",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Valve",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid1_room_trv_kid1_room_trv_heating",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Heating %",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid1_room_trv_kid1_room_trv_temperature",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Temp",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid1_room_trv_kid1_room_trv_humidity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "RH",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Window",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.kid1_room_trv_kid1_room_trv_connectivity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Online",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Kids room 2",
+     "heading_style": "subtitle",
+     "icon": "mdi:thermometer",
+     "type": "heading"
+    },
+    {
+     "entity": "climate.kid2_room_trv_kid2_room_trv",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Valve",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid2_room_trv_kid2_room_trv_heating",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Heating %",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid2_room_trv_kid2_room_trv_temperature",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Temp",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.kid2_room_trv_kid2_room_trv_humidity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "RH",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Window",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.kid2_room_trv_kid2_room_trv_connectivity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Online",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "input_boolean.purifier_pm25_trusted",
+     "features": [
+      {
+       "type": "toggle"
+      }
+     ],
+     "grid_options": {
+      "columns": 6
+     },
+     "icon": "mdi:blur",
+     "name": "Trust the purifier PM2.5",
+     "type": "tile"
+    },
+    {
+     "entity": "input_text.purifier_last_run",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:history",
+     "name": "Purifier last run",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  }
+ ],
+ "subview": true,
+ "title": "Climate — advanced",
+ "type": "sections"
 }

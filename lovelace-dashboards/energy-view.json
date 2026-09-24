@@ -1,1045 +1,1045 @@
 {
-  "title": "Energy",
-  "path": "energy",
-  "type": "sections",
-  "icon": "mdi:lightning-bolt",
-  "max_columns": 4,
-  "badges": [
+ "badges": [
+  {
+   "color": "green",
+   "entity": "sensor.ac_power_total",
+   "name": "AC load now",
+   "show_state": true,
+   "type": "entity"
+  },
+  {
+   "color": "teal",
+   "entity": "sensor.socket_power_total",
+   "name": "Socket load",
+   "show_state": true,
+   "type": "entity"
+  },
+  {
+   "color": "amber",
+   "entity": "sensor.current_spot_electricity_price",
+   "name": "Spot now",
+   "show_state": true,
+   "type": "entity"
+  },
+  {
+   "color": "blue",
+   "entity": "sensor.volvo_xc40_charging_power",
+   "name": "Car charging",
+   "show_state": true,
+   "type": "entity",
+   "visibility": [
     {
-      "type": "entity",
-      "entity": "sensor.ac_power_total",
-      "name": "AC load now",
-      "show_state": true,
-      "color": "green"
-    },
-    {
-      "type": "entity",
-      "entity": "sensor.socket_power_total",
-      "name": "Socket load",
-      "show_state": true,
-      "color": "teal"
-    },
-    {
-      "type": "entity",
-      "entity": "sensor.current_spot_electricity_price",
-      "name": "Spot now",
-      "show_state": true,
-      "color": "amber"
-    },
-    {
-      "type": "entity",
-      "entity": "sensor.volvo_xc40_charging_power",
-      "name": "Car charging",
-      "show_state": true,
-      "color": "blue",
-      "visibility": [
-        {
-          "condition": "numeric_state",
-          "entity": "sensor.volvo_xc40_charging_power",
-          "above": 0
-        }
-      ]
+     "above": 0,
+     "condition": "numeric_state",
+     "entity": "sensor.volvo_xc40_charging_power"
     }
-  ],
-  "sections": [
+   ]
+  }
+ ],
+ "icon": "mdi:lightning-bolt",
+ "max_columns": 4,
+ "path": "energy",
+ "sections": [
+  {
+   "cards": [
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Load now",
-          "icon": "mdi:speedometer"
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.ac_power_total",
-              "name": "All air conditioners",
-              "color": "#4caf50"
-            },
-            {
-              "entity": "sensor.socket_power_total",
-              "name": "All sockets",
-              "color": "#00bcd4"
-            }
-          ],
-          "icon": "mdi:lightning-bolt",
-          "hours_to_show": 24,
-          "points_per_hour": 4,
-          "line_width": 2,
-          "height": 140,
-          "lower_bound": 0,
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": true,
-            "legend": false,
-            "fill": "fade",
-            "extrema": true
-          },
-          "grid_options": {
-            "columns": 12,
-            "rows": "auto"
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Per air conditioner",
-          "heading_style": "subtitle",
-          "icon": "mdi:air-conditioner"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.living_room_livingroom_ac_power",
-          "name": "Living room",
-          "icon": "mdi:air-conditioner",
-          "template": "vg_meter",
-          "variables": {
-            "max": 1500,
-            "tint": "orange"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "orange"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.office_guest_room_office_ac_power",
-          "name": "Office",
-          "icon": "mdi:air-conditioner",
-          "template": "vg_meter",
-          "variables": {
-            "max": 1500,
-            "tint": "indigo"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "indigo"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.master_bedroom_bedroom_ac_power",
-          "name": "Bedroom",
-          "icon": "mdi:air-conditioner",
-          "template": "vg_meter",
-          "variables": {
-            "max": 1500,
-            "tint": "purple"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "purple"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid1_room_ac_power",
-          "name": "Kids room 1",
-          "icon": "mdi:air-conditioner",
-          "template": "vg_meter",
-          "variables": {
-            "max": 1500,
-            "tint": "pink"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "pink"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.kid2_room_ac_power",
-          "name": "Kids room 2",
-          "icon": "mdi:air-conditioner",
-          "template": "vg_meter",
-          "variables": {
-            "max": 1500,
-            "tint": "cyan"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "cyan"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ]
+     "heading": "Load now",
+     "icon": "mdi:speedometer",
+     "type": "heading"
     },
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Sockets",
-          "icon": "mdi:power-socket-de",
-          "badges": [
-            {
-              "type": "entity",
-              "entity": "sensor.socket_power_total",
-              "name": "Load",
-              "show_state": true,
-              "color": "green"
-            }
-          ]
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.living_room_tv_socket_power",
-              "name": "TV",
-              "color": "#ffc107"
-            },
-            {
-              "entity": "sensor.media_corner_power",
-              "name": "Media corner",
-              "color": "#e91e63"
-            },
-            {
-              "entity": "sensor.living_room_vacuum_socket_power",
-              "name": "Vacuum dock",
-              "color": "#009688"
-            },
-            {
-              "entity": "sensor.downstairs_toilet_power",
-              "name": "Toilet down",
-              "color": "#03a9f4"
-            },
-            {
-              "entity": "sensor.upstairs_toilet_power",
-              "name": "Toilet up",
-              "color": "#00bcd4"
-            },
-            {
-              "entity": "sensor.poe_network_power",
-              "name": "PoE network",
-              "color": "#607d8b"
-            },
-            {
-              "entity": "sensor.lr_powerline_power",
-              "name": "LR powerline",
-              "color": "#795548"
-            }
-          ],
-          "icon": "mdi:power-socket-de",
-          "hours_to_show": 24,
-          "points_per_hour": 2,
-          "line_width": 2,
-          "height": 150,
-          "lower_bound": 0,
-          "show": {
-            "name": false,
-            "icon": false,
-            "state": false,
-            "labels": true,
-            "legend": true,
-            "fill": false,
-            "extrema": false
-          },
-          "grid_options": {
-            "columns": 12,
-            "rows": "auto"
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.living_room_tv_socket_power",
-          "name": "TV",
-          "icon": "mdi:television-classic",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.living_room_tv_socket",
-            "base": "#ffc107",
-            "max": 300,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.media_corner_power",
-          "name": "Media corner",
-          "icon": "mdi:audio-video",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.media_corner",
-            "base": "#e91e63",
-            "max": 150,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.living_room_vacuum_socket_power",
-          "name": "Vacuum dock",
-          "icon": "mdi:robot-vacuum",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.living_room_vacuum_socket",
-            "base": "#009688",
-            "max": 1600,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.downstairs_toilet_power",
-          "name": "Toilet down",
-          "icon": "mdi:toilet",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.downstairs_toilet",
-            "base": "#03a9f4",
-            "max": 1600,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.upstairs_toilet_power",
-          "name": "Toilet up",
-          "icon": "mdi:toilet",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.upstairs_toilet",
-            "base": "#00bcd4",
-            "max": 1000,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.poe_network_power",
-          "name": "PoE network",
-          "icon": "mdi:server-network",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.poe_network",
-            "base": "#607d8b",
-            "max": 60,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.lr_powerline_power",
-          "name": "LR powerline",
-          "icon": "mdi:transmission-tower",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "sw": "switch.lr_powerline",
-            "base": "#795548",
-            "max": 50,
-            "tint": "var(--primary-color)"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-          "template": "vg_meter",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Outlets without metering",
-          "heading_style": "subtitle",
-          "icon": "mdi:power-plug-outline"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "switch.living_room_tv_socket_switchbot_bridge",
-          "name": "Switchbot bridge",
-          "icon": "mdi:bridge",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "base": "#2196f3"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
-              }
-            ]
-          },
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "switch.living_room_vacuum_socket_magsafe_charger",
-          "name": "MagSafe charger",
-          "icon": "mdi:cellphone-charging",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "variables": {
-            "base": "#2196f3"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
-              }
-            ]
-          },
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ]
+     "entities": [
+      {
+       "color": "#4caf50",
+       "entity": "sensor.ac_power_total",
+       "name": "All air conditioners"
+      },
+      {
+       "color": "#00bcd4",
+       "entity": "sensor.socket_power_total",
+       "name": "All sockets"
+      }
+     ],
+     "grid_options": {
+      "columns": 12,
+      "rows": "auto"
+     },
+     "height": 140,
+     "hours_to_show": 24,
+     "icon": "mdi:lightning-bolt",
+     "line_width": 2,
+     "lower_bound": 0,
+     "points_per_hour": 4,
+     "show": {
+      "extrema": true,
+      "fill": "fade",
+      "icon": true,
+      "labels": true,
+      "legend": false,
+      "name": true,
+      "state": true
+     },
+     "type": "custom:mini-graph-card"
     },
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Spot price",
-          "icon": "mdi:cash-clock"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.current_spot_electricity_price",
-          "name": "Electricity now",
-          "icon": "mdi:transmission-tower",
-          "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ var p = parseFloat(entity.state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
-              }
-            ]
-          },
-          "template": "vg_stat",
-          "show_label": true,
-          "show_state": false,
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:mini-graph-card",
-          "entities": [
-            {
-              "entity": "sensor.current_spot_electricity_price",
-              "name": "Electricity",
-              "color": "#ff9800"
-            }
-          ],
-          "name": "Spot electricity",
-          "icon": "mdi:cash-clock",
-          "hours_to_show": 24,
-          "points_per_hour": 1,
-          "line_width": 2,
-          "height": 130,
-          "aggregate_func": "max",
-          "show": {
-            "name": true,
-            "icon": true,
-            "state": true,
-            "labels": true,
-            "legend": false,
-            "fill": "fade",
-            "extrema": true
-          },
-          "grid_options": {
-            "columns": 12,
-            "rows": "auto"
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.spot_cheapest_electricity_today",
-          "name": "Cheapest today",
-          "icon": "mdi:arrow-down-bold",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.spot_most_expensive_electricity_today",
-          "name": "Dearest today",
-          "icon": "mdi:arrow-up-bold",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.spot_electricity_is_cheapest",
-          "name": "Cheapest block",
-          "icon": "mdi:clock-check-outline",
-          "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return 'not published yet'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "[[[ return entity.state === 'on' ? '#4caf50' : '#9e9e9e'; ]]]"
-              }
-            ]
-          },
-          "template": "vg_room",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Tomorrow",
-          "heading_style": "subtitle",
-          "icon": "mdi:calendar-arrow-right",
-          "visibility": [
-            {
-              "condition": "state",
-              "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
-              "state": "on"
-            }
-          ]
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.spot_cheapest_electricity_tomorrow",
-          "name": "Cheapest",
-          "icon": "mdi:arrow-down-bold",
-          "visibility": [
-            {
-              "condition": "state",
-              "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
-              "state": "on"
-            }
-          ],
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.spot_most_expensive_electricity_tomorrow",
-          "name": "Dearest",
-          "icon": "mdi:arrow-up-bold",
-          "visibility": [
-            {
-              "condition": "state",
-              "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
-              "state": "on"
-            }
-          ],
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Gas",
-          "heading_style": "subtitle",
-          "icon": "mdi:fire"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.current_spot_gas_price",
-          "name": "Today",
-          "icon": "mdi:fire",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.tomorrow_spot_gas_price",
-          "name": "Tomorrow",
-          "icon": "mdi:fire",
-          "visibility": [
-            {
-              "condition": "state",
-              "entity": "binary_sensor.spot_gas_has_tomorrow_data",
-              "state": "on"
-            }
-          ],
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ]
+     "heading": "Per air conditioner",
+     "heading_style": "subtitle",
+     "icon": "mdi:air-conditioner",
+     "type": "heading"
     },
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Consumption",
-          "icon": "mdi:chart-bar"
-        },
-        {
-          "type": "energy-date-selection",
-          "grid_options": {
-            "columns": "full"
-          }
-        },
-        {
-          "type": "energy-devices-graph",
-          "title": "Per device",
-          "grid_options": {
-            "columns": "full",
-            "rows": 6
-          }
-        },
-        {
-          "type": "statistics-graph",
-          "title": "Daily kWh, last 14 days",
-          "chart_type": "bar",
-          "period": "day",
-          "days_to_show": 14,
-          "stat_types": [
-            "change"
-          ],
-          "grid_options": {
-            "columns": "full",
-            "rows": 6
-          },
-          "entities": [
-            {
-              "entity": "sensor.living_room_livingroom_ac_energy",
-              "name": "Living room AC",
-              "color": "orange"
-            },
-            {
-              "entity": "sensor.office_guest_room_office_ac_energy",
-              "name": "Office AC",
-              "color": "indigo"
-            },
-            {
-              "entity": "sensor.master_bedroom_bedroom_ac_energy",
-              "name": "Bedroom AC",
-              "color": "purple"
-            },
-            {
-              "entity": "sensor.kid1_room_ac_energy",
-              "name": "Kids room 1' AC",
-              "color": "pink"
-            },
-            {
-              "entity": "sensor.kid2_room_ac_energy",
-              "name": "Kids room 2's AC",
-              "color": "cyan"
-            },
-            {
-              "entity": "sensor.living_room_tv_socket_total_energy",
-              "name": "TV socket",
-              "color": "amber"
-            },
-            {
-              "entity": "sensor.media_corner_energy",
-              "name": "Media corner socket",
-              "color": "red"
-            },
-            {
-              "entity": "sensor.living_room_vacuum_socket_total_energy",
-              "name": "Vacuum socket",
-              "color": "deep-purple"
-            },
-            {
-              "entity": "sensor.downstairs_toilet_energy",
-              "name": "Downstairs Toilet socket",
-              "color": "teal"
-            },
-            {
-              "entity": "sensor.upstairs_toilet_energy",
-              "name": "Upstairs Toilet socket",
-              "color": "brown"
-            },
-            {
-              "entity": "sensor.poe_network_energy",
-              "name": "PoE network socket",
-              "color": "blue-grey"
-            },
-            {
-              "entity": "sensor.lr_powerline_energy",
-              "name": "LR powerline socket",
-              "color": "green"
-            }
-          ]
-        },
-        {
-          "type": "statistics-graph",
-          "title": "Monthly kWh, last 12 months",
-          "chart_type": "bar-stack",
-          "period": "month",
-          "days_to_show": 365,
-          "stat_types": [
-            "change"
-          ],
-          "grid_options": {
-            "columns": "full",
-            "rows": 6
-          },
-          "entities": [
-            {
-              "entity": "sensor.living_room_livingroom_ac_energy",
-              "name": "Living room AC",
-              "color": "orange"
-            },
-            {
-              "entity": "sensor.office_guest_room_office_ac_energy",
-              "name": "Office AC",
-              "color": "indigo"
-            },
-            {
-              "entity": "sensor.master_bedroom_bedroom_ac_energy",
-              "name": "Bedroom AC",
-              "color": "purple"
-            },
-            {
-              "entity": "sensor.kid1_room_ac_energy",
-              "name": "Kids room 1' AC",
-              "color": "pink"
-            },
-            {
-              "entity": "sensor.kid2_room_ac_energy",
-              "name": "Kids room 2's AC",
-              "color": "cyan"
-            },
-            {
-              "entity": "sensor.living_room_tv_socket_total_energy",
-              "name": "TV socket",
-              "color": "amber"
-            },
-            {
-              "entity": "sensor.media_corner_energy",
-              "name": "Media corner socket",
-              "color": "red"
-            },
-            {
-              "entity": "sensor.living_room_vacuum_socket_total_energy",
-              "name": "Vacuum socket",
-              "color": "deep-purple"
-            },
-            {
-              "entity": "sensor.downstairs_toilet_energy",
-              "name": "Downstairs Toilet socket",
-              "color": "teal"
-            },
-            {
-              "entity": "sensor.upstairs_toilet_energy",
-              "name": "Upstairs Toilet socket",
-              "color": "brown"
-            },
-            {
-              "entity": "sensor.poe_network_energy",
-              "name": "PoE network socket",
-              "color": "blue-grey"
-            },
-            {
-              "entity": "sensor.lr_powerline_energy",
-              "name": "LR powerline socket",
-              "color": "green"
-            }
-          ]
-        }
+     "entity": "sensor.living_room_livingroom_ac_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "Living room",
+     "styles": {
+      "icon": [
+       {
+        "color": "orange"
+       }
       ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 1500,
+      "tint": "orange"
+     }
     },
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Modelled load — lights",
-          "icon": "mdi:calculator-variant-outline"
-        },
-        {
-          "type": "tile",
-          "entity": "sensor.all_lights_power",
-          "name": "Lights now",
-          "icon": "mdi:lightbulb-group",
-          "color": "amber",
-          "grid_options": {
-            "columns": 12
-          },
-          "features": [
-            {
-              "type": "trend-graph",
-              "hours_to_show": 24
-            }
-          ]
-        },
-        {
-          "type": "statistics-graph",
-          "title": "Modelled kWh, last 14 days",
-          "chart_type": "bar",
-          "period": "day",
-          "days_to_show": 14,
-          "stat_types": [
-            "change"
-          ],
-          "grid_options": {
-            "columns": "full",
-            "rows": 6
-          },
-          "entities": [
-            {
-              "entity": "sensor.all_lights_energy",
-              "name": "Lights",
-              "color": "amber"
-            }
-          ]
-        }
+     "entity": "sensor.office_guest_room_office_ac_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "Office",
+     "styles": {
+      "icon": [
+       {
+        "color": "indigo"
+       }
       ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 1500,
+      "tint": "indigo"
+     }
     },
     {
-      "type": "grid",
-      "column_span": 2,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Car",
-          "icon": "mdi:car-electric",
-          "tap_action": {
-            "action": "navigate",
-            "navigation_path": "/lovelace/appliances"
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.volvo_xc40_battery",
-          "name": "Battery",
-          "icon": "mdi:battery-charging",
-          "template": "vg_meter",
-          "variables": {
-            "max": 100,
-            "tint": "green"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.volvo_xc40_charging_status",
-          "name": "Charging",
-          "icon": "mdi:ev-station",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "sensor.volvo_xc40_charging_power",
-          "name": "Charging now",
-          "icon": "mdi:ev-station",
-          "template": "vg_meter",
-          "variables": {
-            "max": 3700,
-            "tint": "amber"
-          },
-          "styles": {
-            "icon": [
-              {
-                "color": "amber"
-              }
-            ]
-          },
-          "tap_action": {
-            "action": "more-info"
-          },
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        }
+     "entity": "sensor.master_bedroom_bedroom_ac_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "Bedroom",
+     "styles": {
+      "icon": [
+       {
+        "color": "purple"
+       }
       ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 1500,
+      "tint": "purple"
+     }
+    },
+    {
+     "entity": "sensor.kid1_room_ac_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "Kids room 1",
+     "styles": {
+      "icon": [
+       {
+        "color": "pink"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 1500,
+      "tint": "pink"
+     }
+    },
+    {
+     "entity": "sensor.kid2_room_ac_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "Kids room 2",
+     "styles": {
+      "icon": [
+       {
+        "color": "cyan"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 1500,
+      "tint": "cyan"
+     }
     }
-  ]
+   ],
+   "column_span": 2,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "badges": [
+      {
+       "color": "green",
+       "entity": "sensor.socket_power_total",
+       "name": "Load",
+       "show_state": true,
+       "type": "entity"
+      }
+     ],
+     "heading": "Sockets",
+     "icon": "mdi:power-socket-de",
+     "type": "heading"
+    },
+    {
+     "entities": [
+      {
+       "color": "#ffc107",
+       "entity": "sensor.living_room_tv_socket_power",
+       "name": "TV"
+      },
+      {
+       "color": "#e91e63",
+       "entity": "sensor.media_corner_power",
+       "name": "Media corner"
+      },
+      {
+       "color": "#009688",
+       "entity": "sensor.living_room_vacuum_socket_power",
+       "name": "Vacuum dock"
+      },
+      {
+       "color": "#03a9f4",
+       "entity": "sensor.downstairs_toilet_power",
+       "name": "Toilet down"
+      },
+      {
+       "color": "#00bcd4",
+       "entity": "sensor.upstairs_toilet_power",
+       "name": "Toilet up"
+      },
+      {
+       "color": "#607d8b",
+       "entity": "sensor.poe_network_power",
+       "name": "PoE network"
+      },
+      {
+       "color": "#795548",
+       "entity": "sensor.lr_powerline_power",
+       "name": "LR powerline"
+      }
+     ],
+     "grid_options": {
+      "columns": 12,
+      "rows": "auto"
+     },
+     "height": 150,
+     "hours_to_show": 24,
+     "icon": "mdi:power-socket-de",
+     "line_width": 2,
+     "lower_bound": 0,
+     "points_per_hour": 2,
+     "show": {
+      "extrema": false,
+      "fill": false,
+      "icon": false,
+      "labels": true,
+      "legend": true,
+      "name": false,
+      "state": false
+     },
+     "type": "custom:mini-graph-card"
+    },
+    {
+     "entity": "sensor.living_room_tv_socket_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:television-classic",
+     "name": "TV",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#ffc107",
+      "max": 300,
+      "sw": "switch.living_room_tv_socket",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.media_corner_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:audio-video",
+     "name": "Media corner",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#e91e63",
+      "max": 150,
+      "sw": "switch.media_corner",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.living_room_vacuum_socket_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:robot-vacuum",
+     "name": "Vacuum dock",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#009688",
+      "max": 1600,
+      "sw": "switch.living_room_vacuum_socket",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.downstairs_toilet_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:toilet",
+     "name": "Toilet down",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#03a9f4",
+      "max": 1600,
+      "sw": "switch.downstairs_toilet",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.upstairs_toilet_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:toilet",
+     "name": "Toilet up",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#00bcd4",
+      "max": 1000,
+      "sw": "switch.upstairs_toilet",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.poe_network_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:server-network",
+     "name": "PoE network",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#607d8b",
+      "max": 60,
+      "sw": "switch.poe_network",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "entity": "sensor.lr_powerline_power",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:transmission-tower",
+     "name": "LR powerline",
+     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#795548",
+      "max": 50,
+      "sw": "switch.lr_powerline",
+      "tint": "var(--primary-color)"
+     }
+    },
+    {
+     "heading": "Outlets without metering",
+     "heading_style": "subtitle",
+     "icon": "mdi:power-plug-outline",
+     "type": "heading"
+    },
+    {
+     "entity": "switch.living_room_tv_socket_switchbot_bridge",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:bridge",
+     "name": "Switchbot bridge",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#2196f3"
+     }
+    },
+    {
+     "entity": "switch.living_room_vacuum_socket_magsafe_charger",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:cellphone-charging",
+     "name": "MagSafe charger",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "variables": {
+      "base": "#2196f3"
+     }
+    }
+   ],
+   "column_span": 2,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Spot price",
+     "icon": "mdi:cash-clock",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.current_spot_electricity_price",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:transmission-tower",
+     "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
+     "name": "Electricity now",
+     "show_label": true,
+     "show_state": false,
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ var p = parseFloat(entity.state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "aggregate_func": "max",
+     "entities": [
+      {
+       "color": "#ff9800",
+       "entity": "sensor.current_spot_electricity_price",
+       "name": "Electricity"
+      }
+     ],
+     "grid_options": {
+      "columns": 12,
+      "rows": "auto"
+     },
+     "height": 130,
+     "hours_to_show": 24,
+     "icon": "mdi:cash-clock",
+     "line_width": 2,
+     "name": "Spot electricity",
+     "points_per_hour": 1,
+     "show": {
+      "extrema": true,
+      "fill": "fade",
+      "icon": true,
+      "labels": true,
+      "legend": false,
+      "name": true,
+      "state": true
+     },
+     "type": "custom:mini-graph-card"
+    },
+    {
+     "entity": "sensor.spot_cheapest_electricity_today",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:arrow-down-bold",
+     "name": "Cheapest today",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.spot_most_expensive_electricity_today",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:arrow-up-bold",
+     "name": "Dearest today",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.spot_electricity_is_cheapest",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:clock-check-outline",
+     "label": "[[[ var s = entity.attributes['Start hour']; var e = entity.attributes['End hour']; if (s === undefined || s === null) return 'not published yet'; return s + ':00–' + e + ':00' + (entity.state === 'on' ? ' · now' : ''); ]]]",
+     "name": "Cheapest block",
+     "styles": {
+      "icon": [
+       {
+        "color": "[[[ return entity.state === 'on' ? '#4caf50' : '#9e9e9e'; ]]]"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_room",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Tomorrow",
+     "heading_style": "subtitle",
+     "icon": "mdi:calendar-arrow-right",
+     "type": "heading",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "entity": "sensor.spot_cheapest_electricity_tomorrow",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:arrow-down-bold",
+     "name": "Cheapest",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "entity": "sensor.spot_most_expensive_electricity_tomorrow",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:arrow-up-bold",
+     "name": "Dearest",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.spot_electricity_has_tomorrow_data",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "heading": "Gas",
+     "heading_style": "subtitle",
+     "icon": "mdi:fire",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.current_spot_gas_price",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:fire",
+     "name": "Today",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.tomorrow_spot_gas_price",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:fire",
+     "name": "Tomorrow",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.spot_gas_has_tomorrow_data",
+       "state": "on"
+      }
+     ]
+    }
+   ],
+   "column_span": 2,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Consumption",
+     "icon": "mdi:chart-bar",
+     "type": "heading"
+    },
+    {
+     "grid_options": {
+      "columns": "full"
+     },
+     "type": "energy-date-selection"
+    },
+    {
+     "grid_options": {
+      "columns": "full",
+      "rows": 6
+     },
+     "title": "Per device",
+     "type": "energy-devices-graph"
+    },
+    {
+     "chart_type": "bar",
+     "days_to_show": 14,
+     "entities": [
+      {
+       "color": "orange",
+       "entity": "sensor.living_room_livingroom_ac_energy",
+       "name": "Living room AC"
+      },
+      {
+       "color": "indigo",
+       "entity": "sensor.office_guest_room_office_ac_energy",
+       "name": "Office AC"
+      },
+      {
+       "color": "purple",
+       "entity": "sensor.master_bedroom_bedroom_ac_energy",
+       "name": "Bedroom AC"
+      },
+      {
+       "color": "pink",
+       "entity": "sensor.kid1_room_ac_energy",
+       "name": "Kids room 1' AC"
+      },
+      {
+       "color": "cyan",
+       "entity": "sensor.kid2_room_ac_energy",
+       "name": "Kids room 2's AC"
+      },
+      {
+       "color": "amber",
+       "entity": "sensor.living_room_tv_socket_total_energy",
+       "name": "TV socket"
+      },
+      {
+       "color": "red",
+       "entity": "sensor.media_corner_energy",
+       "name": "Media corner socket"
+      },
+      {
+       "color": "deep-purple",
+       "entity": "sensor.living_room_vacuum_socket_total_energy",
+       "name": "Vacuum socket"
+      },
+      {
+       "color": "teal",
+       "entity": "sensor.downstairs_toilet_energy",
+       "name": "Downstairs Toilet socket"
+      },
+      {
+       "color": "brown",
+       "entity": "sensor.upstairs_toilet_energy",
+       "name": "Upstairs Toilet socket"
+      },
+      {
+       "color": "blue-grey",
+       "entity": "sensor.poe_network_energy",
+       "name": "PoE network socket"
+      },
+      {
+       "color": "green",
+       "entity": "sensor.lr_powerline_energy",
+       "name": "LR powerline socket"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": 6
+     },
+     "period": "day",
+     "stat_types": [
+      "change"
+     ],
+     "title": "Daily kWh, last 14 days",
+     "type": "statistics-graph"
+    },
+    {
+     "chart_type": "bar-stack",
+     "days_to_show": 365,
+     "entities": [
+      {
+       "color": "orange",
+       "entity": "sensor.living_room_livingroom_ac_energy",
+       "name": "Living room AC"
+      },
+      {
+       "color": "indigo",
+       "entity": "sensor.office_guest_room_office_ac_energy",
+       "name": "Office AC"
+      },
+      {
+       "color": "purple",
+       "entity": "sensor.master_bedroom_bedroom_ac_energy",
+       "name": "Bedroom AC"
+      },
+      {
+       "color": "pink",
+       "entity": "sensor.kid1_room_ac_energy",
+       "name": "Kids room 1' AC"
+      },
+      {
+       "color": "cyan",
+       "entity": "sensor.kid2_room_ac_energy",
+       "name": "Kids room 2's AC"
+      },
+      {
+       "color": "amber",
+       "entity": "sensor.living_room_tv_socket_total_energy",
+       "name": "TV socket"
+      },
+      {
+       "color": "red",
+       "entity": "sensor.media_corner_energy",
+       "name": "Media corner socket"
+      },
+      {
+       "color": "deep-purple",
+       "entity": "sensor.living_room_vacuum_socket_total_energy",
+       "name": "Vacuum socket"
+      },
+      {
+       "color": "teal",
+       "entity": "sensor.downstairs_toilet_energy",
+       "name": "Downstairs Toilet socket"
+      },
+      {
+       "color": "brown",
+       "entity": "sensor.upstairs_toilet_energy",
+       "name": "Upstairs Toilet socket"
+      },
+      {
+       "color": "blue-grey",
+       "entity": "sensor.poe_network_energy",
+       "name": "PoE network socket"
+      },
+      {
+       "color": "green",
+       "entity": "sensor.lr_powerline_energy",
+       "name": "LR powerline socket"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": 6
+     },
+     "period": "month",
+     "stat_types": [
+      "change"
+     ],
+     "title": "Monthly kWh, last 12 months",
+     "type": "statistics-graph"
+    }
+   ],
+   "column_span": 2,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Modelled load — lights",
+     "icon": "mdi:calculator-variant-outline",
+     "type": "heading"
+    },
+    {
+     "color": "amber",
+     "entity": "sensor.all_lights_power",
+     "features": [
+      {
+       "hours_to_show": 24,
+       "type": "trend-graph"
+      }
+     ],
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:lightbulb-group",
+     "name": "Lights now",
+     "type": "tile"
+    },
+    {
+     "chart_type": "bar",
+     "days_to_show": 14,
+     "entities": [
+      {
+       "color": "amber",
+       "entity": "sensor.all_lights_energy",
+       "name": "Lights"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": 6
+     },
+     "period": "day",
+     "stat_types": [
+      "change"
+     ],
+     "title": "Modelled kWh, last 14 days",
+     "type": "statistics-graph"
+    }
+   ],
+   "column_span": 2,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Car",
+     "icon": "mdi:car-electric",
+     "tap_action": {
+      "action": "navigate",
+      "navigation_path": "/lovelace/appliances"
+     },
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.volvo_xc40_battery",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:battery-charging",
+     "name": "Battery",
+     "styles": {
+      "icon": [
+       {
+        "color": "green"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "green"
+     }
+    },
+    {
+     "entity": "sensor.volvo_xc40_charging_status",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:ev-station",
+     "name": "Charging",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.volvo_xc40_charging_power",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:ev-station",
+     "name": "Charging now",
+     "styles": {
+      "icon": [
+       {
+        "color": "amber"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 3700,
+      "tint": "amber"
+     }
+    }
+   ],
+   "column_span": 2,
+   "type": "grid"
+  }
+ ],
+ "title": "Energy",
+ "type": "sections"
 }

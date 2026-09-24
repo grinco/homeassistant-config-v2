@@ -373,3 +373,247 @@ button, and the garbage-collection button. The scene and automation buttons
 (`view_scene_button`, `view_automation_button`) are wired and waiting but have nothing to
 show: this instance has **no `scene` entities**, and its four automations are climate and
 purifier logic rather than anything a room page should offer.
+
+## The pages did not grow, and that was the whole point of the page
+
+*2026-09-23, later the same day.*
+
+> "i added more lights and theyre not showing up in the room dashboards (hallway
+> specifically) and the new light doesnt show in corridor (i replaced one and moved the bulb
+> to hallway) … make sure that all future entities are automatically added to the area
+> dashboard once added? lights and all? … i thought the dashboards were dinamic and would
+> automatically grow/enhance their capabilities over time. is it even possible?"
+
+Three separate complaints, one cause. The room views above had been
+`strategy: {type: home-area}` — Home Assistant deciding the contents from the area, every
+render. Rebuilding them on button-card replaced a generated page with a **hand-written card
+list**, and a hand-written list is a snapshot of the registry on the afternoon it was typed.
+
+What that cost, precisely:
+
+| symptom | why |
+|---|---|
+| Hallway showed no lights | the page was written when the area had none; `light.stairs` and `light.hallway` are in it now |
+| Corridor missed the replacement bulb | the page named `light.livingroom_stairs`, which had been renamed to `light.stairs` and moved to Hallway; `light.corridor_light` was never named |
+| The Hallway tile read `—` | its `grp` variable was `""`, frozen from when the area had no Magic Areas group |
+| The admin *Paired, not yet placed* list never changed | it was a hand-typed inventory of IEEE-named entities |
+
+The honest answer to *is it even possible* is yes, and the design record should say why the
+generated version was given up in the first place: nothing was wrong with it except that it
+could not be styled. **That was a bad trade and it is now reversed** — the pages are generated
+again, and styled, because the generation happens in a card rather than in a strategy.
+
+### What replaced the card lists
+
+[`auto-entities`](https://github.com/thomasloven/lovelace-auto-entities) (HACS). Each block of
+a room page is a filter over the entity registry rather than a list of ids:
+
+```yaml
+type: custom:auto-entities
+card: {type: grid, columns: 1}
+card_param: cards
+show_empty: false
+filter:
+  include:
+    - domain: light
+      area: hallway
+      options: {type: custom:button-card, template: hue_white_bulb, entity: this.entity_id}
+  exclude:
+    - {entity_category: config}
+    - {entity_category: diagnostic}
+    - {label: not_on_room_pages}
+```
+
+Three facts about the card were read out of the shipped `auto-entities.js` rather than taken
+from its README, because each one decides a design detail:
+
+- **`this.entity_id` is substituted anywhere in `options`, at any depth.** The card serialises
+  the options object and string-replaces. That is what lets a generated bulb card keep its
+  inline `slider-entity-row` and its separate power pill — both of which name the entity a
+  second time, nested. Without it the generated cards would have been flat tiles.
+- **`area:` matches the area's *name or id*, resolved from the entity, falling back to its
+  device.** Identical to the fallback the tiles use, so "in this room" means one thing.
+- **`$$` matches against the JSON of an attribute.** `supported_color_modes` is a list, and a
+  list is otherwise untestable. `"$$/xy/"` is how a bulb is asked whether it can do colour.
+
+That last one is what keeps **upstream's templates unedited**. Rather than one bulb template
+with a capability switch inside it — which would have meant copying upstream's inline SVGs into
+a `vg_` template — there are three include rules, most specific first, deduplicated with
+`unique: entity`:
+
+| rule | matches | template |
+|---|---|---|
+| `supported_color_modes` contains `xy` | Hue colour bulbs | `hue_color_bulb` |
+| contains `rgb` | the Govee strip | `hue_led_strip` |
+| anything else | white and brightness-only bulbs | `hue_white_bulb` |
+
+A bulb takes the first rule that fits. A *new* bulb takes one too, without anybody choosing.
+
+**The headings are generated as well.** A heading is its own `auto-entities` card with
+`card_param: badges` and `show_empty: false`, so *Media* exists on a page only while that room
+has a media player, and appears in the same render as the first one. It carries up to three
+live badges. This is the rule the rest of these dashboards already follow — only live state
+earns space — applied to the label rather than to the card.
+
+### The tiles resolve their own room
+
+The Home room tiles had the same disease in a smaller space: `grp`, `ac` and `pres` were entity
+ids pasted in at authoring time. They now take **one variable, `area`**, and resolve the room's
+group, bulbs, thermostat and presence sensor from `hass.entities` on every render — button-card
+hands JS the whole `hass` object, so the registry is reachable from inside a card.
+
+The gesture model in [room-tile-navigation.md](room-tile-navigation.md) is unchanged, and for
+the first time it is *structurally* true. That document promised a room with no lights "starts
+working by itself the moment a light is added to the area"; with a pasted group id that was
+aspiration. Tap is now:
+
+```yaml
+tap_action:
+  action: perform-action
+  perform_action: "[[[ …any light on in this area? … ]]]"   # turn_off : turn_on
+  target: {area_id: "[[[ return variables.area; ]]]"}
+```
+
+button-card evaluates templates inside action configs — plain Lovelace does not, and the HA
+docs say so — which is what allows the group's *semantics* (any on → all off) to survive
+without naming a group. Checked in the bundled `button-card.js`, not assumed.
+
+**No tile renders a dash any more.** A room with neither lights nor climate falls back to its
+presence sensor and says `Empty` or `● here`. A room whose bulbs are all unreachable says
+`Unavail` rather than reporting `Off` for a light nobody can switch — the corridor is in
+exactly that state as this is written, and the first draft of the label quietly said `Off`.
+
+### Curation moved into Home Assistant
+
+A generic filter cannot carry exceptions, and the moment it does it stops being generic. So the
+exceptions live in the registry instead, as a label — **`Not on room pages`** — applied to 33
+entities:
+
+- every raw reading that already **feeds a resolved `sensor.climate_*`** shown on the same page.
+  A child's room would otherwise show four temperatures (meter, AC, TRV, resolved) and invite the
+  reader to wonder which is true. Which entities those are was read out of each template
+  helper's own config, not guessed;
+- the two `light.gallery` member bulbs, which the fixture group already represents;
+- `sensor.background_radiation_total_counts`, a monotonic accumulator that
+  [dashboard-surfacing-2026-09.md](dashboard-surfacing-2026-09.md) had already ruled off the
+  dashboards.
+
+Anyone can now suppress an entity from its room page by labelling it, with no dashboard edit
+and no code change. That is the same instinct as the rest of this repo: make the general case
+structural and let the exception be data.
+
+**Energy readings are excluded by device class, not by label** — `power`, `energy`, `voltage`,
+`current` and their relatives, in one regex. Without it the living room's Conditions block came
+to **34 cards** of per-socket watts and kWh, which would have undone the consolidation that put
+socket monitoring on the Energy tab. It was measured before it shipped, not after.
+
+### Sockets stay off the room pages, and are excluded by class
+
+The first version of this change put switches on the room pages wholesale, which brought the
+sockets back with them. The operator's correction was immediate and is the same sentence that
+settled their design the first time:
+
+> "exclude sockets from the room views, too - theyre there only for measuring energy
+> consumption"
+
+So the **2026-09-23 consolidation stands unreversed**: sockets live on the Energy tab, and the
+two rooms whose only device is a socket keep their link out to it rather than a switch.
+
+The interesting part is how they are excluded. A list of seven entity ids would have been the
+same mistake this whole document is about — correct on the day it was typed, and silently wrong
+the next time a plug is bought. The exclusion is therefore **by device class**:
+
+```yaml
+exclude:
+  - {attributes: {device_class: outlet}}
+```
+
+That only worked after fixing the data. **Only the two Tuya SP112s declared
+`device_class: outlet`; the five Zigbee2MQTT plugs reported nothing at all**, so a class-based
+rule would have caught two of seven and looked like it worked. All nine outlet entities — seven
+plugs plus the two USB gangs — now carry the class in the entity registry, which is also simply
+correct metadata and gives them the right icon.
+
+The remaining seam is honest and worth stating: **a newly paired plug that does not declare
+itself an outlet will appear on its room page** until someone sets *Show as: Outlet*. That is a
+one-field fix in the entity settings, and it is a far smaller seam than a hand-maintained list.
+
+An earlier draft tried to close it entirely with a registry-side rule — *a switch whose device
+also reports power must be an outlet* — and it was dropped: that catches every air conditioner's
+display-lighting and sound-effect switch too, and **a check that fails for the wrong reason is
+worse than no check**. The heuristic that would have distinguished them (the switch's object id
+equals its device's slug) fails on the two SP112s, whose entity ids are area-prefixed while
+their device names are not. So the invariant is asserted where it is exact, on the dashboard:
+
+| | check |
+|---|---|
+| C12 | no room page generates a `device_class: outlet` entity |
+
+**C12 found a gap in its own fix.** Written first and run against the live config, it reported
+**24** offending blocks rather than twelve: the *heading* cards filter on `switch` too, so the
+Controls heading would have carried a live socket badge above a card that no longer listed it.
+The exclusion now goes on both.
+
+One thing did not change: `switch.poe_network` and `switch.lr_powerline` also carry the
+`not_on_room_pages` label. They feed the switches, access points and powerline adapter, and a
+mis-tap drops the network. Belt and braces is proportionate there — the class rule alone would
+be undone by one person clearing a device class.
+
+### The checks came first, and two of them caught this change
+
+Written against the broken config before anything was fixed, in the order AGENTS.md requires:
+
+| | check |
+|---|---|
+| C9 | every entity an **area** holds is reachable from that area's room view — named outright, or matched by an auto-entities rule for that area and domain. It is driven from the **area registry**, so a room that loses its tile or its page fails loudly instead of dropping out of the loop |
+| C10 | a Home room tile resolves its room from `variables.area` and names no per-room entity id, so it cannot freeze at the moment it was written |
+| C11 | `home-classic` carries none of the rebuild's vocabulary — no button-card, no auto-entities |
+| C12 | no room page generates a `device_class: outlet` entity — see above |
+
+C9 and C10 failed on the live config exactly as intended: twelve tiles pinning entity ids,
+twelve areas whose pages could not be checked at all.
+
+**C11 exists because the fix broke something the lint could not see.** The transform found the
+room tiles by their section heading, *"Rooms"* — and `Home (classic)` has a section with that
+heading too, built from native `area` cards. The first dry run silently restyled the rollback
+view. A rollback that has been restyled is not a rollback. The transform now matches the Home
+view **by path**, and C11 makes the leak fail a build rather than depend on someone noticing.
+
+This is the third time in this repo that *selecting by a name instead of by structure* has hit
+the same class of bug — `vg_room` clobbering seven unrelated cards (C8), the template check
+comparing against the wrong dashboard's library, and now a heading shared by two views. It was
+caught here only because the change was dry-run against a copy of `.storage` and diffed before
+being written to the live instance, which is now the standing procedure:
+
+1. write the transform to a file;
+2. apply it to a **copy** of `.storage`, run `lint.py` and `mutate.py` against the copy;
+3. push it through `ha_config_set_dashboard(python_transform=…)`;
+4. **diff the live config against the tested copy** and require them to be identical.
+
+Step 4 is the one that makes step 2 mean anything — it proves the thing that was tested is the
+thing that shipped.
+
+`mutate.py` now carries **19** mutations, seven of them new, including the two that started this
+(a tile pinning its light group; a page losing its lights rule) and the rollback restyle.
+
+### The export is code now
+
+`tests/dashboards/export.py` re-exports the sanitised snapshots, applying the anonymisation
+rules AGENTS.md states as prose: lookaround anchors that treat `_` as a boundary, multi-token
+forms before general stems, 22 canary words counted before and after, and a scan of the result
+for every original term. The live names are not in the script; it reads them from the same
+gitignored file `leakcheck.py` uses, and refuses to run if that file is missing rather than
+exporting raw.
+
+### Not verified
+
+- **How any of it looks.** No view was rendered. The generated blocks are new geometry — a grid
+  card inside a section grid — and that is exactly what a screenshot would show and reasoning
+  will not.
+- **That a newly added entity appears.** The filters were replicated against the live registry
+  to predict each page's contents (133 generated cards across the twelve), and the tile labels
+  were replicated against live state. Neither is the same as adding a bulb and watching it turn
+  up, which is the one test that would actually close this.
+- **`auto-entities` is a new runtime dependency** on the dashboard the household uses daily.
+  Its resource is registered and C5 now covers it, so a missing resource fails the lint — but a
+  breaking change in the card itself would take every room page's contents with it.

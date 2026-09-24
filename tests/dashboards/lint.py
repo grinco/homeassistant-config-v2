@@ -42,6 +42,28 @@ Checks, each one written because something it catches actually shipped:
                          different card leaves every lookup undefined and the
                          card renders a fallback dash - which is what happened
                          to six Home tiles.
+  C9 area-coverage       every entity a room's AREA holds is reachable from that
+                         room's view - either named outright, or matched by an
+                         auto-entities rule for that area and domain. A view
+                         built by hand goes stale the moment a bulb is added to
+                         the area; on 2026-09-23 that hid two lights in Hallway
+                         and one in Corridor, and no other check noticed.
+  C10 tiles-self-resolve a Home room tile resolves its room from `variables.area`
+                         and names no per-room entity id. A tile that hardcodes
+                         its light group renders a dash forever once the group
+                         is created, renamed, or first appears - which is what
+                         Hallway did.
+  C11 rollback-intact    the `home-classic` view carries none of the rebuild's
+                         vocabulary - no button-card, no auto-entities. It is
+                         the fallback the Mushroom rebuild left in place, and a
+                         rollback that has been restyled is not a rollback. The
+                         transform that generated the room tiles matched the
+                         section by its "Rooms" heading and silently rewrote the
+                         classic view's too; nothing else noticed.
+  C12 outlets-off-rooms  no room page generates a `device_class: outlet` entity.
+                         Sockets are on the Energy tab for monitoring and
+                         nothing else; a room page that offers one as a toggle
+                         undoes that, and one of them feeds the network gear.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -80,6 +102,23 @@ ENTITY_RE = re.compile(
 # Service names and Jinja/JS concatenation stems the regex cannot tell from ids.
 ENTITY_ALLOW = {"button.press", "light.turn_off", "light.turn_on", "sun.sun"}
 
+# Domains a room page is expected to account for. `update`, `button`, `select`,
+# `number` and `event` are deliberately absent: they are device plumbing, not
+# things a room page is judged on.
+ROOM_DOMAINS = ("light", "switch", "fan", "climate", "cover", "lock", "vacuum",
+                "media_player", "sensor", "binary_sensor")
+
+# Readings that belong to the Energy tab. Putting them on a room page would undo
+# the 2026-09-23 consolidation, so C9 does not demand them.
+ENERGY_CLASSES = {"energy", "power", "voltage", "current", "power_factor",
+                  "apparent_power", "reactive_power", "monetary", "energy_storage"}
+
+# The registry label that suppresses an entity from its room page. It lives in
+# Home Assistant rather than in the dashboard on purpose: a curation decision
+# about one entity should not be a dashboard edit, and a filter that is generic
+# cannot carry exceptions.
+ROOM_HIDDEN_LABEL = "not_on_room_pages"
+
 RESOURCE_SLUG = {
     "button-card": "button-card",
     "slider-entity-row": "lovelace-slider-entity-row",
@@ -91,6 +130,7 @@ RESOURCE_SLUG = {
     "multiple-entity-row": "lovelace-multiple-entity-row",
     "vacuum-card": "vacuum-card",
     "alarmo-card": "alarmo-card",
+    "auto-entities": "lovelace-auto-entities",
 }
 
 
@@ -102,6 +142,68 @@ def load(name):
 def registry():
     with io.open(os.path.join(STORAGE, "core.entity_registry"), encoding="utf-8") as fh:
         return {e["entity_id"] for e in json.load(fh)["data"]["entities"]}
+
+
+def _store(name, key):
+    with io.open(os.path.join(STORAGE, name), encoding="utf-8") as fh:
+        return json.load(fh)["data"][key]
+
+
+def area_members():
+    """area_id -> the entities a room page is expected to account for.
+
+    Area comes from the entity, or from its device when the entity itself
+    carries none - the same fallback auto-entities applies, so the two agree on
+    what "in this room" means.
+    """
+    devices = {d["id"]: d for d in _store("core.device_registry", "devices")}
+    out = {}
+    for e in _store("core.entity_registry", "entities"):
+        if e.get("disabled_by") or e.get("hidden_by") or e.get("entity_category"):
+            continue
+        if ROOM_HIDDEN_LABEL in (e.get("labels") or []):
+            continue
+        domain = e["entity_id"].split(".")[0]
+        if domain not in ROOM_DOMAINS:
+            continue
+        if (e.get("original_device_class") or e.get("device_class")) in ENERGY_CLASSES:
+            continue
+        area = e.get("area_id") or (devices.get(e.get("device_id")) or {}).get("area_id")
+        if not area:
+            continue
+        out.setdefault(area, set()).add(e["entity_id"])
+    return out
+
+
+def area_names():
+    """area_id -> name, for areas on a floor.
+
+    An area with no floor is not a room: `outside` holds the weather station and
+    has no page, and demanding one would be a check failing for a wrong reason.
+    """
+    return {a["id"]: a.get("name") for a in _store("core.area_registry", "areas")
+            if a.get("floor_id")}
+
+
+def generated(view):
+    """(area, domain) pairs an auto-entities card on this view populates.
+
+    Only the shape is read, never the matching: what a rule selects is
+    auto-entities' business, and re-implementing it here would make the check
+    agree with itself rather than with the card.
+    """
+    pairs = set()
+    for _, card in cards(view):
+        if card.get("type") != "custom:auto-entities":
+            continue
+        for rule in ((card.get("filter") or {}).get("include") or []):
+            area = rule.get("area")
+            dom = rule.get("domain")
+            if not area or not dom:
+                continue
+            for d in (dom if isinstance(dom, list) else [dom]):
+                pairs.add((str(area), str(d)))
+    return pairs
 
 
 def resources():
@@ -322,6 +424,136 @@ def main():
         if undef:
             fail("C8", "%s: %d card(s) reference a variable nothing defines - they "
                        "will render a fallback, not a value" % (label, len(undef)), undef)
+
+        # C10 - a Home room tile resolves its own room.
+        # The tile that started this: Hallway's `grp` was "" because the area
+        # had no light group when the tile was written. Magic Areas created one
+        # the moment a bulb was placed there, and the tile went on rendering a
+        # dash - a value frozen at authoring time, in a card whose whole job is
+        # to report the present. Naming the AREA instead of the entities is the
+        # structural version of the promise room-tile-navigation.md already
+        # made: "it starts working by itself the moment a light is added".
+        #
+        # The room tiles are located by the section they live in, NOT by their
+        # template name: `vg_room` is also worn by the six quick-strip tiles and
+        # by Energy's Cheapest block, and selecting on the name is what
+        # clobbered all seven of them in the compaction pass (C8). The first
+        # draft of this check repeated that mistake and reported 19 tiles.
+        if label == "lovelace":
+            areas = area_names()
+            tiles = []
+            for view in views:
+                for sec in (view.get("sections") or []):
+                    cs = sec.get("cards") or []
+                    if not cs or cs[0].get("heading") != "Rooms":
+                        continue
+                    for i, c in enumerate(cs):
+                        if c.get("type") == "custom:button-card" and "vg_room" in template_names(c):
+                            tiles.append(("%s/rooms/%d" % (label, i), c))
+            if not tiles:
+                fail("C10", "%s: found no room tiles at all - the Rooms section is "
+                            "gone or renamed, and C9/C10 would pass by default" % label)
+
+            tile_area, stale, unknown = {}, [], []
+            for path, card in tiles:
+                v = card.get("variables") or {}
+                nav = (card.get("hold_action") or {}).get("navigation_path") or ""
+                frozen = sorted(k for k in ("grp", "ac", "pres")
+                                if isinstance(v.get(k), str) and "." in v[k])
+                if frozen:
+                    stale.append("%s  %r pins %s" % (path, card.get("name"),
+                                                     ", ".join("%s=%s" % (k, v[k]) for k in frozen)))
+                area = v.get("area")
+                if not area:
+                    unknown.append("%s  %r defines no variables.area" % (path, card.get("name")))
+                elif area not in areas:
+                    unknown.append("%s  %r names area %r, which does not exist"
+                                   % (path, card.get("name"), area))
+                else:
+                    tile_area[area] = nav[len("/lovelace/"):] if nav.startswith("/lovelace/") else None
+            if stale:
+                fail("C10", "%s: %d room tile(s) pin a per-room entity id, so the "
+                            "tile freezes at the moment it was written"
+                     % (label, len(stale)), stale)
+            if unknown:
+                fail("C10", "%s: %d room tile(s) do not resolve a real area"
+                     % (label, len(unknown)), unknown)
+
+            # C9 - a room view accounts for everything its area holds.
+            # Driven from the AREA REGISTRY rather than from the views, so a
+            # room that lost its tile or its page fails loudly instead of
+            # dropping out of the loop and passing.
+            members = area_members()
+            by_path = {v.get("path"): v for v in views}
+            roomless = sorted(a for a in areas
+                              if a in members and a not in tile_area)
+            if roomless:
+                fail("C9", "%s: %d area(s) hold entities but no Home tile claims "
+                           "them, so nothing routes to a room page" % (label, len(roomless)),
+                     roomless)
+
+            uncovered, pageless = [], []
+            for area, path in sorted(tile_area.items()):
+                view = by_path.get(path)
+                if view is None:
+                    pageless.append("%s -> %r" % (area, path))
+                    continue
+                pairs = generated(view)
+                blob_v = json.dumps(view, ensure_ascii=False)
+                for eid in sorted(members.get(area, ())):
+                    domain = eid.split(".")[0]
+                    if (area, domain) in pairs or (str(areas.get(area)), domain) in pairs:
+                        continue
+                    if eid in blob_v:
+                        continue
+                    uncovered.append("%-14s %s" % (path, eid))
+            if pageless:
+                fail("C9", "%s: %d room tile(s) navigate nowhere" % (label, len(pageless)), pageless)
+            if uncovered:
+                fail("C9", "%s: %d entity/entities sit in an area whose room view "
+                           "neither names them nor generates their domain"
+                     % (label, len(uncovered)), uncovered)
+
+        # C12 - sockets stay off the room pages.
+        # Checked on the dashboard rather than on the registry: "a switch whose
+        # device also reports power" catches every AC display-lighting and
+        # sound-effect switch too, and a check that fails for the wrong reason
+        # is worse than none. The invariant here is exact - once an entity is
+        # marked an outlet, no room page may generate it.
+        if label == "lovelace":
+            unguarded = []
+            for view in views:
+                if not view.get("subview") or view.get("back_path") != "/lovelace/home":
+                    continue
+                if view.get("path") == "home-classic":
+                    continue
+                for path, card in cards(view, "%s/%s" % (label, view.get("path"))):
+                    if card.get("type") != "custom:auto-entities":
+                        continue
+                    inc = (card.get("filter") or {}).get("include") or []
+                    if not any(r.get("domain") == "switch" for r in inc):
+                        continue
+                    exc = (card.get("filter") or {}).get("exclude") or []
+                    if not any((e.get("attributes") or {}).get("device_class") == "outlet"
+                               for e in exc):
+                        unguarded.append("%s  (%s)" % (path, view.get("path")))
+            if unguarded:
+                fail("C12", "%s: %d room block(s) generate switches without excluding "
+                            "outlets, so a metered socket lands back on a room page"
+                     % (label, len(unguarded)), unguarded)
+
+        # C11 - the rollback view is left alone.
+        if label == "lovelace":
+            classic = [v for v in views if v.get("path") == "home-classic"]
+            leaked = []
+            for v in classic:
+                for path, card in cards(v, "%s/home-classic" % label):
+                    t = card.get("type")
+                    if t in ("custom:button-card", "custom:auto-entities"):
+                        leaked.append("%s  %s  (%s)" % (path, t, card.get("entity")))
+            if leaked:
+                fail("C11", "%s: %d card(s) of the rebuild's vocabulary have leaked "
+                            "into the rollback view" % (label, len(leaked)), leaked)
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

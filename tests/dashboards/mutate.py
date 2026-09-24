@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LINT = os.path.join(HERE, "lint.py")
 LIVE = os.environ.get("HA_STORAGE", "/usr/share/hassio/homeassistant/.storage")
 FILES = ("lovelace.lovelace", "lovelace.admin_panel", "core.entity_registry",
-         "lovelace_resources")
+         "core.device_registry", "core.area_registry", "lovelace_resources")
 
 LOV, ADM = "lovelace.lovelace", "lovelace.admin_panel"
 
@@ -162,7 +162,125 @@ def m_clobbered_label(d):
     return "C8"
 
 
+def _room_tile(cfg, name="Hallway"):
+    for v in cfg["data"]["config"]["views"]:
+        for sec in (v.get("sections") or []):
+            cs = sec.get("cards") or []
+            if cs and cs[0].get("heading") == "Rooms":
+                for c in cs:
+                    if c.get("name") == name:
+                        return c
+    raise SystemExit("no %s room tile found to mutate" % name)
+
+
+def _room_view(cfg, path="hallway"):
+    for v in cfg["data"]["config"]["views"]:
+        if v.get("path") == path:
+            return v
+    raise SystemExit("no %s view found to mutate" % path)
+
+
+def m_tile_pins_entity(d):
+    """The bug that started this: a tile naming its room's light group instead
+    of its room. Correct on the day it was written, a dash ever after."""
+    doc = _cfg(d, LOV)
+    tile = _room_tile(doc)
+    tile["variables"]["grp"] = "light.magic_areas_light_groups_hallway_all_lights"
+    _save(d, LOV, doc)
+    return "C10"
+
+
+def m_tile_loses_area(d):
+    doc = _cfg(d, LOV)
+    _room_tile(doc)["variables"].pop("area", None)
+    _save(d, LOV, doc)
+    return "C10"
+
+
+def m_rooms_section_renamed(d):
+    """C9 and C10 both hang off finding the Rooms section. If that lookup comes
+    back empty they would pass by saying nothing, which is the failure mode this
+    whole suite exists for - so the empty case is itself a failure."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        for sec in (v.get("sections") or []):
+            cs = sec.get("cards") or []
+            if cs and cs[0].get("heading") == "Rooms":
+                cs[0]["heading"] = "The rooms"
+    _save(d, LOV, doc)
+    return "C10"
+
+
+def m_room_loses_lights(d):
+    """A room page built by hand again: the generative rule for its lights is
+    gone, so a bulb added to that area would appear nowhere."""
+    doc = _cfg(d, LOV)
+    view = _room_view(doc)
+    for sec in view["sections"]:
+        sec["cards"] = [c for c in sec["cards"]
+                        if not (c.get("type") == "custom:auto-entities"
+                                and any(r.get("domain") == "light"
+                                        for r in c["filter"]["include"]))]
+    _save(d, LOV, doc)
+    return "C9"
+
+
+def m_rule_names_wrong_area(d):
+    """Copy-paste between two room pages - the rule is present and well-formed,
+    it just populates from the wrong room. Nothing renders an error."""
+    doc = _cfg(d, LOV)
+    view = _room_view(doc)
+    for sec in view["sections"]:
+        for c in sec["cards"]:
+            if c.get("type") != "custom:auto-entities":
+                continue
+            for r in c["filter"]["include"]:
+                if r.get("area") == "hallway":
+                    r["area"] = "closet"
+    _save(d, LOV, doc)
+    return "C9"
+
+
+def m_rollback_restyled(d):
+    """What the room-tile transform did before it was scoped by path: the
+    classic view's Rooms section rewritten because it shares the heading."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("path") != "home-classic":
+            continue
+        v["sections"][0]["cards"].append(
+            {"type": "custom:button-card", "template": "vg_stat",
+             "entity": "sun.sun", "grid_options": {"columns": 6, "rows": 1}})
+    _save(d, LOV, doc)
+    return "C11"
+
+
+def m_socket_back_on_room(d):
+    """The outlet exclusion dropped from a room's Controls block - every metered
+    plug returns as a toggle, including the one feeding the network gear."""
+    doc = _cfg(d, LOV)
+    view = _room_view(doc, "living-room")
+    for sec in view["sections"]:
+        for c in sec["cards"]:
+            if c.get("type") != "custom:auto-entities":
+                continue
+            inc = (c.get("filter") or {}).get("include") or []
+            if any(r.get("domain") == "switch" for r in inc):
+                c["filter"]["exclude"] = [
+                    e for e in c["filter"]["exclude"]
+                    if (e.get("attributes") or {}).get("device_class") != "outlet"]
+    _save(d, LOV, doc)
+    return "C12"
+
+
 MUTATIONS = [
+    ("a socket returns to a room page", m_socket_back_on_room),
+    ("the rollback view gets restyled", m_rollback_restyled),
+    ("a room tile pins its light group", m_tile_pins_entity),
+    ("a room tile stops naming its area", m_tile_loses_area),
+    ("the Rooms section is renamed away", m_rooms_section_renamed),
+    ("a room page loses its lights rule", m_room_loses_lights),
+    ("a room rule names the wrong area", m_rule_names_wrong_area),
     ("a label using variables nothing defines", m_clobbered_label),
     ("a card taller than its content", m_tall_cards),
     ("a card off the column ladder", m_off_ladder_columns),

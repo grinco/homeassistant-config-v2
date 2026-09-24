@@ -1,182 +1,182 @@
 {
-  "title": "Security",
-  "path": "security",
-  "type": "sections",
-  "icon": "mdi:shield-home",
-  "max_columns": 3,
-  "badges": [],
-  "sections": [
+ "badges": [],
+ "icon": "mdi:shield-home",
+ "max_columns": 3,
+ "path": "security",
+ "sections": [
+  {
+   "cards": [
     {
-      "type": "grid",
-      "column_span": 1,
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Alarm",
-          "icon": "mdi:shield-home"
-        },
-        {
-          "type": "custom:alarmo-card",
-          "entity": "alarm_control_panel.home",
-          "name": "",
-          "keep_keypad_visible": false,
-          "button_scale_actions": 1,
-          "button_scale_keypad": 1,
-          "states": {},
-          "show_messages": true,
-          "show_ready_indicator": true,
-          "show_bypassed_sensors": true,
-          "use_code_dialog": false,
-          "hide_keypad": false,
-          "grid_options": {
-            "columns": "full",
-            "rows": "auto"
-          }
-        }
-      ]
+     "heading": "Alarm",
+     "icon": "mdi:shield-home",
+     "type": "heading"
     },
     {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Sensors",
-          "icon": "mdi:motion-sensor"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.0x0017880106495a81_occupancy",
-          "name": "Front door motion",
-          "icon": "mdi:motion-sensor",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.shower_sink_leak_water_leak",
-          "name": "Shower sink leak",
-          "icon": "mdi:water-alert",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 12,
-            "rows": 1
-          }
-        },
-        {
-          "type": "heading",
-          "heading": "Presence",
-          "heading_style": "subtitle",
-          "icon": "mdi:account-group"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "person.vadim_grinco",
-          "name": "Vadim",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "person.janka_grinco",
-          "name": "Janka",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "person.kid1_grinco",
-          "name": "Kids room 1",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ]
-    },
-    {
-      "type": "grid",
-      "cards": [
-        {
-          "type": "heading",
-          "heading": "Front door camera",
-          "icon": "mdi:cctv",
-          "badges": [
-            {
-              "type": "entity",
-              "entity": "sensor.home_door_battery",
-              "name": "Battery",
-              "show_state": true,
-              "color": "green"
-            },
-            {
-              "type": "entity",
-              "entity": "binary_sensor.home_door_motion",
-              "name": "PIR",
-              "show_state": true,
-              "color": "amber"
-            }
-          ]
-        },
-        {
-          "type": "picture-entity",
-          "entity": "image.home_door_last_motion_image",
-          "name": "Last motion",
-          "show_state": false,
-          "show_name": false,
-          "fit_mode": "contain",
-          "grid_options": {
-            "columns": "full",
-            "rows": 6
-          },
-          "tap_action": {
-            "action": "more-info"
-          }
-        },
-        {
-          "type": "markdown",
-          "text_only": true,
-          "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}"
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "camera.home_door",
-          "name": "Live view",
-          "icon": "mdi:cctv",
-          "tap_action": {
-            "action": "more-info"
-          },
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        },
-        {
-          "type": "custom:button-card",
-          "entity": "binary_sensor.home_door_motion",
-          "name": "Camera PIR",
-          "icon": "mdi:motion-sensor",
-          "template": "vg_stat",
-          "grid_options": {
-            "columns": 6,
-            "rows": 1
-          }
-        }
-      ],
-      "background": {
-        "color": "blue-grey",
-        "opacity": 10
-      }
+     "button_scale_actions": 1,
+     "button_scale_keypad": 1,
+     "entity": "alarm_control_panel.home",
+     "grid_options": {
+      "columns": "full",
+      "rows": "auto"
+     },
+     "hide_keypad": false,
+     "keep_keypad_visible": false,
+     "name": "",
+     "show_bypassed_sensors": true,
+     "show_messages": true,
+     "show_ready_indicator": true,
+     "states": {},
+     "type": "custom:alarmo-card",
+     "use_code_dialog": false
     }
-  ]
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Sensors",
+     "icon": "mdi:motion-sensor",
+     "type": "heading"
+    },
+    {
+     "entity": "binary_sensor.0x0017880106495a81_occupancy",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:motion-sensor",
+     "name": "Front door motion",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.shower_sink_leak_water_leak",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:water-alert",
+     "name": "Shower sink leak",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "heading": "Presence",
+     "heading_style": "subtitle",
+     "icon": "mdi:account-group",
+     "type": "heading"
+    },
+    {
+     "entity": "person.vadim_grinco",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Vadim",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "person.janka_grinco",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Janka",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "person.kid1_grinco",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Kids room 1",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    }
+   ],
+   "type": "grid"
+  },
+  {
+   "background": {
+    "color": "blue-grey",
+    "opacity": 10
+   },
+   "cards": [
+    {
+     "badges": [
+      {
+       "color": "green",
+       "entity": "sensor.home_door_battery",
+       "name": "Battery",
+       "show_state": true,
+       "type": "entity"
+      },
+      {
+       "color": "amber",
+       "entity": "binary_sensor.home_door_motion",
+       "name": "PIR",
+       "show_state": true,
+       "type": "entity"
+      }
+     ],
+     "heading": "Front door camera",
+     "icon": "mdi:cctv",
+     "type": "heading"
+    },
+    {
+     "entity": "image.home_door_last_motion_image",
+     "fit_mode": "contain",
+     "grid_options": {
+      "columns": "full",
+      "rows": 6
+     },
+     "name": "Last motion",
+     "show_name": false,
+     "show_state": false,
+     "tap_action": {
+      "action": "more-info"
+     },
+     "type": "picture-entity"
+    },
+    {
+     "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}",
+     "text_only": true,
+     "type": "markdown"
+    },
+    {
+     "entity": "camera.home_door",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:cctv",
+     "name": "Live view",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.home_door_motion",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:motion-sensor",
+     "name": "Camera PIR",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    }
+   ],
+   "type": "grid"
+  }
+ ],
+ "title": "Security",
+ "type": "sections"
 }
