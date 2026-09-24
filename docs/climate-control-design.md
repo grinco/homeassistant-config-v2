@@ -1,6 +1,6 @@
 # Automatic per-room climate control — design
 
-Status: **implemented and live** (2026-09-21). Version 5.9.
+Status: **implemented and live** (2026-09-24). Version 5.10.
 Written retrospectively after a v1 model that shipped and had to be replaced the same evening,
 then revised through four adversarial reviews. v4 is a deliberate simplification of the control
 model requested by the operator, and it closes the round-4 findings at the same time.
@@ -32,6 +32,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.7** | **A unit that goes to `off` for a reason we cannot identify is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
 | **v5.8** | **Safety dispatch hoisted above the back-offs.** A freezing room that was stood down or overridden resolved to `heat` and then never sent the command, for up to 20 minutes | Round-14 F14-5 — see §31 |
 | **v5.9** | **A hold now records WHY it exists** — `external` or `standdown` — and the label is cleared when the hold ends. The hold mechanism is untouched | Round-14 F14-2, round-15 A3; `docs/proposal-decide-act-split.md` |
+| **v5.10** | **Room hysteresis moved from an overshoot band ABOVE the target to a re-entry deadband BELOW it**, in both directions, and split onto its own helper | The exit could not be reached by the unit's own action, so a room sat in `heat` all day — see §32 |
 
 ---
 
@@ -2406,3 +2407,125 @@ the proposed fix for F14-3 and it is **not yet implemented** — it needs a thre
 one before seeing a few real stand-down cycles would be inventing a constant, which §28 is about.
 The instrumentation to choose it honestly is the next step: record `since_cmd` on every
 stand-down and look at the distribution.
+
+---
+
+## 32. v5.10 — the exit the unit could never deliver
+
+*2026-09-24. Found in production, not in review.*
+
+> "check why living room heating is working pretry much all day"
+
+### What was actually happening
+
+Not what the complaint implies, and the distinction is the whole diagnosis. The living room AC
+was **in `heat` mode** from 10:53 until it was fixed at 17:59. It was **not heating** for most of
+that:
+
+| window | energy |
+|---|---:|
+| 11:00–13:00 | **1.13 kWh** — genuinely heating, room 21.9 → 22.6 |
+| 13:00–17:30 | **0.011 kWh** — about 3 W. Idle. |
+
+The unit reached its own setpoint and stopped, exactly as a thermostat should. What never
+happened was the automation turning it **off**.
+
+### Why `off` was unreachable
+
+The heat branch read:
+
+```jinja
+temp < target or (now_mode == 'heat' and temp < target + hyst) or filter_on
+```
+
+The second clause is exit hysteresis expressed as an **overshoot band above the target**: once
+heating, keep heating until the room reaches `target + hyst`. With the operator's
+`climate_hysteresis` at 2.0 and a target of 22, that exit wanted **24.0 °C**.
+
+But the setpoint this automation commands is `target` — 22 — and the unit stops at its own
+setpoint. **The room can only reach `target + hyst` if something other than the unit warms it.**
+So the off branch was not merely rarely taken; it was unreachable by the system's own action.
+It had in fact fired the previous afternoon, when solar gain pushed the room to 24.1.
+
+The band was not wrong because it was set to 2. At the documented default of 1 the exit wanted
+23 and was equally unreachable. **Raising the slider widened a hole that was already there**, and
+it is the kind of bug a synthetic review does not find because every case it was tested against
+straddled the entry threshold, never the exit.
+
+Both other heating rooms were in the same state; the operator attributed the bedroom to an open
+window, and the window explains why that room could not reach its target — but it would have sat
+in `heat` regardless, for this reason, once it entered.
+
+### The fix, in both directions
+
+```jinja
+heat:  filter_on or temp < target - (0 if now_mode == 'heat' else room_hyst)
+cool:  filter_on or temp > target + (0 if now_mode == 'cool' else room_hyst)
+```
+
+Keep going until the room **reaches** its target; once stopped, wait until it drifts `room_hyst`
+past it before restarting. The exit is now something the unit actually delivers, because it is
+the same number the unit is commanded.
+
+`v5.4` and `v5.5` each corrected one direction of a two-directional hazard and shipped the mirror
+of the bug they were fixing. Four of the nine new cases are the cooling mirror, and one of the
+three new mutations is the cooling mirror of the reintroduced bug, so a one-sided fix here fails
+the suite.
+
+### One slider was doing two jobs
+
+`climate_hysteresis` governed both the **house season** exit band and this **per-room** exit band.
+Raising it to widen the first silently widened the second. It is now split:
+
+| helper | governs | range |
+|---|---|---|
+| `climate_hysteresis` | the house heat/cool season boundary, exit-only | as before |
+| `climate_room_hysteresis` | the per-room re-entry deadband | **0.2**–3.0, step 0.1, seeded 0.5 |
+
+**The minimum is 0.2 rather than 0 on purpose.** A zero deadband makes a room flap at its
+setpoint, and the range is this system's established way of making an unsafe value unreachable —
+"the range is the plausibility envelope", as §28 puts it about the AC offset. That is why no new
+logic guards it and no test asserts it: the value cannot be entered.
+
+The config-health notice was corrected in the same pass. It had said a low `hyst` means "rooms
+will flap at their target", which stopped being true the moment the room band moved to its own
+helper — a health check asserting something it can no longer know is the defect class this
+document keeps naming.
+
+### The 1 °C step does not apply here
+
+The operator's caution, and worth writing down because it is a natural objection:
+
+> "dont forget that the ac has a 1c step, doesnt discriminare betweem 21 and 21.5"
+
+Correct about setpoints, and `room_hyst` is not one. It is compared against the **measured room
+temperature**, which comes from the SwitchBot meter at 0.1 °C resolution, and decides only
+whether the unit is switched on or off. Every commanded setpoint still goes through `set_target`,
+which rounds to a whole degree and clamps to the unit's range — unchanged. A 0.5 °C deadband on
+the measurement is meaningful even though a 0.5 °C setpoint would not be.
+
+### Verified
+
+- **Nine new cases, written before the change and failing against the live expression** — four
+  red for the right reason, five green, because the cases that must *not* move are the guard
+  against over-correcting. After the fix, 163/163.
+- **Three new mutations**, all caught: the heat band put back above the target, the cooling
+  mirror, and the deadband removed entirely.
+- The fix was applied to a **copy** of `automations.yaml` first and the suite run against it via
+  `HA_AUTOMATIONS`, before anything was written live.
+- **In the house:** the living room AC went `off` at 17:59:01, on the first tick after the
+  deploy, with the room at 22.6 against a target of 21.
+
+### Not fixed here, deliberately
+
+**The commanded setpoint carries no sensor bias.** The unit is told `target` while its own probe
+reads 1–2 °C high, so the room settles slightly *below* what was asked for — the living room sat
+at 22.6 against a target the operator had just lowered to 21, and the AC's own sensor said 23.
+Operator's call, asked and answered: one change at a time, watch this one through some real
+heating weather first. It touches every room and both directions, which is precisely the shape
+that has gone wrong twice.
+
+**The AC power sensors under-report badly.** `sensor.living_room_livingroom_ac_power` averaged
+65 W across the hour in which the energy counter gained 743 Wh. The energy counters are the
+trustworthy ones; the live power tiles and the Energy tab's AC meters understate reality. Noted
+here because the meter ceilings in `docs/room-views-button-card.md` were set from this data.

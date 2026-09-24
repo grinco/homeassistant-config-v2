@@ -1,24 +1,24 @@
 {
-  "id": "1789802676002",
-  "alias": "Climate — stamp HA start",
-  "description": "Records when Home Assistant last started. The climate loop needs this to know whether a climate entity's last_changed is a real state change or an artefact of the restart: on restart every entity is re-created and last_changed resets to the boot instant, which would otherwise make a unit that is merely ignoring us look like a person who just touched it at the wall.",
-  "triggers": [
-    {
-      "trigger": "homeassistant",
-      "event": "start"
-    }
-  ],
-  "conditions": [],
-  "actions": [
-    {
-      "action": "input_datetime.set_datetime",
-      "target": {
-        "entity_id": "input_datetime.climate_ha_started"
-      },
-      "data": {
-        "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      }
-    }
-  ],
-  "mode": "single"
+ "actions": [
+  {
+   "action": "input_datetime.set_datetime",
+   "data": {
+    "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+   },
+   "target": {
+    "entity_id": "input_datetime.climate_ha_started"
+   }
+  }
+ ],
+ "alias": "Climate — stamp HA start",
+ "conditions": [],
+ "description": "Records when Home Assistant last started. The climate loop needs this to know whether a climate entity's last_changed is a real state change or an artefact of the restart: on restart every entity is re-created and last_changed resets to the boot instant, which would otherwise make a unit that is merely ignoring us look like a person who just touched it at the wall.",
+ "id": "1789802676002",
+ "mode": "single",
+ "triggers": [
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  }
+ ]
 }

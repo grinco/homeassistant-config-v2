@@ -22,7 +22,7 @@ import harness  # noqa: E402  -- for the gitignored room-alias map, see load_roo
 BASE = dict(
     temp=21.0, safety_on=True, comfort=True, frost=7.0, away_min=18.0, away_max=30.0,
     manual_active=False, away=False, enabled=True, house="heat", now_mode="off",
-    target=22.0, hyst=1.0, filter_on=False,
+    target=22.0, hyst=1.0, room_hyst=0.5, filter_on=False,
 )
 
 def case(name, expr, expect, given=None, subs=None, finding=""):
@@ -56,14 +56,58 @@ A(case("disabled room stays off", "mode", "off", {"enabled": False}, finding="v4
 # ---------------------------------------------------------------- mode: comfort + hysteresis
 A(case("heat below target", "mode", "heat", {"temp": 20.0}, finding="v4"))
 A(case("heat stops above target", "mode", "off", {"temp": 23.5}, finding="v4"))
-A(case("exit hysteresis keeps heating inside the band", "mode", "heat",
-       {"temp": 22.5, "now_mode": "heat"}, finding="v3 exit-only hysteresis"))
-A(case("exit hysteresis releases past the band", "mode", "off",
+A(case("heat releases well past target", "mode", "off",
        {"temp": 23.5, "now_mode": "heat"}, finding="v3"))
 A(case("cool above target", "mode", "cool",
        {"house": "cool", "temp": 24.0, "target": 22.0}, finding="v4"))
-A(case("cool exit hysteresis", "mode", "cool",
-       {"house": "cool", "temp": 21.5, "target": 22.0, "now_mode": "cool"}, finding="v3"))
+
+# ------------------------------------------------ v5.10: the band moved below target
+# Until 2026-09-24 the hysteresis was an OVERSHOOT band ABOVE the target:
+# a heating room kept heating until `temp >= target + hyst`. The unit is only
+# ever commanded `target`, and it stops at its own setpoint - so that exit could
+# not be reached by the unit's own action, and `off` was unreachable. Observed
+# live: the living room sat in `heat` from 10:53 to at least 17:30 having burned
+# 1.13 kWh before 13:00 and ~nothing after, room flat at 22.6 against a 22
+# target and an exit that wanted 24.0.
+#
+# The band is now a RE-ENTRY deadband BELOW target: heat until the room reaches
+# target, then wait until it falls `room_hyst` below before restarting. Each
+# pair below straddles the threshold it is about, because a case that does not
+# cross the line proves direction, not consequence.
+_V510 = "v5.10: exit band sat above the commanded setpoint, so off was unreachable"
+
+A(case("heating stops once the room reaches target", "mode", "off",
+       {"temp": 22.6, "target": 22.0, "now_mode": "heat", "hyst": 2.0},
+       finding=_V510 + " (the live 2026-09-24 living room)"))
+A(case("heating continues below target", "mode", "heat",
+       {"temp": 21.8, "target": 22.0, "now_mode": "heat", "hyst": 2.0},
+       finding=_V510 + " - the other side of the same threshold"))
+A(case("an idle room waits out the deadband", "mode", "off",
+       {"temp": 21.8, "target": 22.0, "now_mode": "off", "room_hyst": 0.5},
+       finding=_V510 + " - re-entry must not flap at the setpoint"))
+A(case("an idle room restarts past the deadband", "mode", "heat",
+       {"temp": 21.4, "target": 22.0, "now_mode": "off", "room_hyst": 0.5},
+       finding=_V510 + " - and must still restart"))
+
+# The mirror. v5.4 and v5.5 each corrected one direction of a two-directional
+# hazard and shipped the mirror of the bug they were fixing; these four exist so
+# that cannot happen a third time.
+A(case("cooling stops once the room reaches target", "mode", "off",
+       {"house": "cool", "temp": 22.0, "target": 22.0, "now_mode": "cool", "hyst": 2.0},
+       finding=_V510 + " - cooling mirror"))
+A(case("cooling continues above target", "mode", "cool",
+       {"house": "cool", "temp": 22.4, "target": 22.0, "now_mode": "cool", "hyst": 2.0},
+       finding=_V510 + " - cooling mirror, other side"))
+A(case("an idle room waits out the cooling deadband", "mode", "off",
+       {"house": "cool", "temp": 22.3, "target": 22.0, "now_mode": "off", "room_hyst": 0.5},
+       finding=_V510 + " - cooling mirror, re-entry"))
+A(case("an idle room restarts past the cooling deadband", "mode", "cool",
+       {"house": "cool", "temp": 22.6, "target": 22.0, "now_mode": "off", "room_hyst": 0.5},
+       finding=_V510 + " - cooling mirror, restart"))
+A(case("the air filter still overrides the cooling deadband", "mode", "cool",
+       {"house": "cool", "temp": 18.0, "target": 22.0, "now_mode": "off",
+        "filter_on": True},
+       finding=_V510 + " - the filter short-circuit must survive the rewrite"))
 A(case("shoulder runs nothing", "mode", "off", {"house": "shoulder"}, finding="v4"))
 A(case("air filter runs fan_only in shoulder", "mode", "fan_only",
        {"house": "shoulder", "filter_on": True}, finding="v4 air filter"))

@@ -1,358 +1,358 @@
 {
-  "id": "1789947000001",
-  "alias": "Purifier — run after the cat toilet",
-  "description": "v5. Runs the corridor purifier after a cat visit for up to ~28 minutes. The PM2.5 sensor is currently ASSUMED BROKEN (input_boolean.purifier_pm25_trusted is off), so it gets no vote and every run goes the full window; turning that toggle on restores the early stop, which additionally requires the reading to have risen after the visit before 'back down' means anything. The start is confirmed by WAITING for the fan to report on, never by reading its state at a guessed offset. If the start cannot be confirmed the fan is commanded off rather than abandoned.",
-  "triggers": [
+ "actions": [
+  {
+   "choose": [
     {
-      "trigger": "state",
-      "entity_id": "sensor.cat_toilet_excretion_times_day",
-      "id": "visit"
+     "alias": "Recover a run killed by a restart OR a reload",
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "boot"
+      }
+     ],
+     "sequence": [
+      {
+       "if": [
+        {
+         "condition": "state",
+         "entity_id": "input_boolean.purifier_auto_run",
+         "state": "on"
+        }
+       ],
+       "then": [
+        {
+         "action": "fan.turn_off",
+         "continue_on_error": true,
+         "target": {
+          "entity_id": "fan.corridor_xiaomi_air_purifier"
+         }
+        },
+        {
+         "action": "input_boolean.turn_off",
+         "target": {
+          "entity_id": "input_boolean.purifier_auto_run"
+         }
+        },
+        {
+         "action": "input_text.set_value",
+         "data": {
+          "value": "{{ now().strftime('%m-%d %H:%M') }} recovered a stranded run"
+         },
+         "target": {
+          "entity_id": "input_text.purifier_last_run"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "default": [
+    {
+     "alias": "Was this actually a cat visit?",
+     "variables": {
+      "cooldown": 1800,
+      "stop_ts": "{{ state_attr('input_datetime.purifier_manual_stop','timestamp') | float(0) }}",
+      "visit_happened": "{{ trigger.id == 'visit' and (trigger.from_state.state | float(-1)) >= 0 and (states('sensor.cat_toilet_excretion_times_day') | float(-1)) > (trigger.from_state.state | float(-1)) }}"
+     }
     },
     {
-      "trigger": "homeassistant",
-      "event": "start",
-      "id": "boot"
+     "alias": "visit_happened",
+     "condition": "template",
+     "value_template": "{{ visit_happened }}"
     },
     {
-      "trigger": "event",
-      "event_type": "automation_reloaded",
-      "id": "boot"
-    }
-  ],
-  "conditions": [],
-  "actions": [
+     "variables": {
+      "already_running": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and not is_state('input_boolean.purifier_auto_run','on') }}",
+      "manual_cooldown": "{{ stop_ts > 1000000000 and (now().timestamp() - stop_ts) < cooldown }}"
+     }
+    },
     {
-      "choose": [
+     "alias": "Never take over a fan somebody else started - but SAY SO, because a stranded fan would otherwise silence this automation permanently",
+     "if": [
+      {
+       "condition": "template",
+       "value_template": "{{ already_running }}"
+      }
+     ],
+     "then": [
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": "{{ now().strftime('%m-%d %H:%M') }} skipped - fan already on and not ours"
+       },
+       "target": {
+        "entity_id": "input_text.purifier_last_run"
+       }
+      },
+      {
+       "stop": "the purifier is already running and we do not own it"
+      }
+     ]
+    },
+    {
+     "alias": "not_manual_cooldown",
+     "condition": "template",
+     "value_template": "{{ not manual_cooldown }}"
+    },
+    {
+     "variables": {
+      "corridor_before": "{{ states('sensor.climate_temp_corridor') | float(-99) }}",
+      "pm_before": "{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') | float(-1) }}",
+      "started_at": "{{ now().timestamp() }}"
+     }
+    },
+    {
+     "action": "fan.turn_on",
+     "continue_on_error": true,
+     "target": {
+      "entity_id": "fan.corridor_xiaomi_air_purifier"
+     }
+    },
+    {
+     "alias": "WAIT for the fan to actually report on - do not sample at a guessed offset",
+     "continue_on_timeout": true,
+     "timeout": {
+      "seconds": 120
+     },
+     "wait_for_trigger": [
+      {
+       "entity_id": "fan.corridor_xiaomi_air_purifier",
+       "for": {
+        "seconds": 15
+       },
+       "to": "on",
+       "trigger": "state"
+      }
+     ]
+    },
+    {
+     "alias": "Confirmed running?",
+     "variables": {
+      "we_started": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"
+     }
+    },
+    {
+     "alias": "Give up - but command it OFF first, never abandon a fan that may yet come on",
+     "if": [
+      {
+       "condition": "template",
+       "value_template": "{{ not we_started }}"
+      }
+     ],
+     "then": [
+      {
+       "action": "fan.turn_off",
+       "continue_on_error": true,
+       "target": {
+        "entity_id": "fan.corridor_xiaomi_air_purifier"
+       }
+      },
+      {
+       "action": "input_boolean.turn_off",
+       "target": {
+        "entity_id": "input_boolean.purifier_auto_run"
+       }
+      },
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": "{{ now().strftime('%m-%d %H:%M') }} FAILED TO START (commanded off again)"
+       },
+       "target": {
+        "entity_id": "input_text.purifier_last_run"
+       }
+      },
+      {
+       "stop": "fan never confirmed running"
+      }
+     ]
+    },
+    {
+     "action": "input_boolean.turn_on",
+     "alias": "Claim ownership only AFTER the fan is confirmed running",
+     "target": {
+      "entity_id": "input_boolean.purifier_auto_run"
+     }
+    },
+    {
+     "action": "fan.set_preset_mode",
+     "continue_on_error": true,
+     "data": {
+      "preset_mode": "Favorite"
+     },
+     "target": {
+      "entity_id": "fan.corridor_xiaomi_air_purifier"
+     }
+    },
+    {
+     "alias": "Let the sensor sample - still done while untrusted, because it is the evidence that would show the sensor recovering",
+     "delay": {
+      "minutes": 3
+     }
+    },
+    {
+     "variables": {
+      "corridor_after": "{{ states('sensor.climate_temp_corridor') | float(-99) }}",
+      "pm_after_settle": "{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') | float(-1) }}"
+     }
+    },
+    {
+     "alias": "Is the reading allowed a vote at all, and did it actually rise?",
+     "variables": {
+      "pm_usable": "{{ is_state('input_boolean.purifier_pm25_trusted','on') and pm_after_settle >= 2 }}"
+     }
+    },
+    {
+     "alias": "No usable reading: the sensor gets no vote, run the full window",
+     "choose": [
+      {
+       "alias": "Trusted and responsive: wait for it to come back down",
+       "conditions": [
         {
-          "conditions": [
-            {
-              "condition": "trigger",
-              "id": "boot"
-            }
-          ],
-          "sequence": [
-            {
-              "if": [
-                {
-                  "condition": "state",
-                  "entity_id": "input_boolean.purifier_auto_run",
-                  "state": "on"
-                }
-              ],
-              "then": [
-                {
-                  "action": "fan.turn_off",
-                  "target": {
-                    "entity_id": "fan.corridor_xiaomi_air_purifier"
-                  },
-                  "continue_on_error": true
-                },
-                {
-                  "action": "input_boolean.turn_off",
-                  "target": {
-                    "entity_id": "input_boolean.purifier_auto_run"
-                  }
-                },
-                {
-                  "action": "input_text.set_value",
-                  "target": {
-                    "entity_id": "input_text.purifier_last_run"
-                  },
-                  "data": {
-                    "value": "{{ now().strftime('%m-%d %H:%M') }} recovered a stranded run"
-                  }
-                }
-              ]
-            }
-          ],
-          "alias": "Recover a run killed by a restart OR a reload"
+         "condition": "template",
+         "value_template": "{{ pm_usable }}"
         }
-      ],
-      "default": [
+       ],
+       "sequence": [
         {
-          "variables": {
-            "cooldown": 1800,
-            "stop_ts": "{{ state_attr('input_datetime.purifier_manual_stop','timestamp') | float(0) }}",
-            "visit_happened": "{{ trigger.id == 'visit' and (trigger.from_state.state | float(-1)) >= 0 and (states('sensor.cat_toilet_excretion_times_day') | float(-1)) > (trigger.from_state.state | float(-1)) }}"
+         "continue_on_timeout": true,
+         "timeout": {
+          "minutes": 25
+         },
+         "wait_for_trigger": [
+          {
+           "below": 2,
+           "entity_id": "sensor.corridor_xiaomi_air_purifier_pm2_5",
+           "for": {
+            "minutes": 2
+           },
+           "id": "cleared",
+           "trigger": "numeric_state"
           },
-          "alias": "Was this actually a cat visit?"
-        },
-        {
-          "condition": "template",
-          "value_template": "{{ visit_happened }}",
-          "alias": "visit_happened"
-        },
-        {
-          "variables": {
-            "manual_cooldown": "{{ stop_ts > 1000000000 and (now().timestamp() - stop_ts) < cooldown }}",
-            "already_running": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and not is_state('input_boolean.purifier_auto_run','on') }}"
+          {
+           "entity_id": "fan.corridor_xiaomi_air_purifier",
+           "for": {
+            "seconds": 15
+           },
+           "id": "human",
+           "to": "off",
+           "trigger": "state"
           }
-        },
-        {
-          "if": [
-            {
-              "condition": "template",
-              "value_template": "{{ already_running }}"
-            }
-          ],
-          "then": [
-            {
-              "action": "input_text.set_value",
-              "target": {
-                "entity_id": "input_text.purifier_last_run"
-              },
-              "data": {
-                "value": "{{ now().strftime('%m-%d %H:%M') }} skipped - fan already on and not ours"
-              }
-            },
-            {
-              "stop": "the purifier is already running and we do not own it"
-            }
-          ],
-          "alias": "Never take over a fan somebody else started - but SAY SO, because a stranded fan would otherwise silence this automation permanently"
-        },
-        {
-          "condition": "template",
-          "value_template": "{{ not manual_cooldown }}",
-          "alias": "not_manual_cooldown"
-        },
-        {
-          "variables": {
-            "pm_before": "{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') | float(-1) }}",
-            "corridor_before": "{{ states('sensor.climate_temp_corridor') | float(-99) }}",
-            "started_at": "{{ now().timestamp() }}"
-          }
-        },
-        {
-          "action": "fan.turn_on",
-          "target": {
-            "entity_id": "fan.corridor_xiaomi_air_purifier"
-          },
-          "continue_on_error": true
-        },
-        {
-          "wait_for_trigger": [
-            {
-              "trigger": "state",
-              "entity_id": "fan.corridor_xiaomi_air_purifier",
-              "to": "on",
-              "for": {
-                "seconds": 15
-              }
-            }
-          ],
-          "timeout": {
-            "seconds": 120
-          },
-          "continue_on_timeout": true,
-          "alias": "WAIT for the fan to actually report on - do not sample at a guessed offset"
-        },
-        {
-          "variables": {
-            "we_started": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"
-          },
-          "alias": "Confirmed running?"
-        },
-        {
-          "if": [
-            {
-              "condition": "template",
-              "value_template": "{{ not we_started }}"
-            }
-          ],
-          "then": [
-            {
-              "action": "fan.turn_off",
-              "target": {
-                "entity_id": "fan.corridor_xiaomi_air_purifier"
-              },
-              "continue_on_error": true
-            },
-            {
-              "action": "input_boolean.turn_off",
-              "target": {
-                "entity_id": "input_boolean.purifier_auto_run"
-              }
-            },
-            {
-              "action": "input_text.set_value",
-              "target": {
-                "entity_id": "input_text.purifier_last_run"
-              },
-              "data": {
-                "value": "{{ now().strftime('%m-%d %H:%M') }} FAILED TO START (commanded off again)"
-              }
-            },
-            {
-              "stop": "fan never confirmed running"
-            }
-          ],
-          "alias": "Give up - but command it OFF first, never abandon a fan that may yet come on"
-        },
-        {
-          "action": "input_boolean.turn_on",
-          "target": {
-            "entity_id": "input_boolean.purifier_auto_run"
-          },
-          "alias": "Claim ownership only AFTER the fan is confirmed running"
-        },
-        {
-          "action": "fan.set_preset_mode",
-          "target": {
-            "entity_id": "fan.corridor_xiaomi_air_purifier"
-          },
-          "data": {
-            "preset_mode": "Favorite"
-          },
-          "continue_on_error": true
-        },
-        {
-          "delay": {
-            "minutes": 3
-          },
-          "alias": "Let the sensor sample - still done while untrusted, because it is the evidence that would show the sensor recovering"
-        },
-        {
-          "variables": {
-            "pm_after_settle": "{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') | float(-1) }}",
-            "corridor_after": "{{ states('sensor.climate_temp_corridor') | float(-99) }}"
-          }
-        },
-        {
-          "variables": {
-            "pm_usable": "{{ is_state('input_boolean.purifier_pm25_trusted','on') and pm_after_settle >= 2 }}"
-          },
-          "alias": "Is the reading allowed a vote at all, and did it actually rise?"
-        },
-        {
-          "choose": [
-            {
-              "conditions": [
-                {
-                  "condition": "template",
-                  "value_template": "{{ pm_usable }}"
-                }
-              ],
-              "sequence": [
-                {
-                  "wait_for_trigger": [
-                    {
-                      "trigger": "numeric_state",
-                      "entity_id": "sensor.corridor_xiaomi_air_purifier_pm2_5",
-                      "below": 2,
-                      "for": {
-                        "minutes": 2
-                      },
-                      "id": "cleared"
-                    },
-                    {
-                      "trigger": "state",
-                      "entity_id": "fan.corridor_xiaomi_air_purifier",
-                      "to": "off",
-                      "for": {
-                        "seconds": 15
-                      },
-                      "id": "human"
-                    }
-                  ],
-                  "timeout": {
-                    "minutes": 25
-                  },
-                  "continue_on_timeout": true
-                }
-              ],
-              "alias": "Trusted and responsive: wait for it to come back down"
-            }
-          ],
-          "default": [
-            {
-              "wait_for_trigger": [
-                {
-                  "trigger": "state",
-                  "entity_id": "fan.corridor_xiaomi_air_purifier",
-                  "to": "off",
-                  "for": {
-                    "seconds": 15
-                  },
-                  "id": "human"
-                }
-              ],
-              "timeout": {
-                "minutes": 25
-              },
-              "continue_on_timeout": true
-            }
-          ],
-          "alias": "No usable reading: the sensor gets no vote, run the full window"
-        },
-        {
-          "variables": {
-            "stopped_by_human": "{{ wait.trigger is not none and wait.trigger.id == 'human' }}",
-            "outcome": "{% if wait.trigger is not none and wait.trigger.id == 'human' %}stopped by hand{% elif wait.trigger is not none %}cleared{% else %}full window{% endif %}"
-          }
-        },
-        {
-          "variables": {
-            "we_may_stop": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and we_started and not stopped_by_human }}"
-          }
-        },
-        {
-          "if": [
-            {
-              "condition": "template",
-              "value_template": "{{ we_may_stop }}",
-              "alias": "we_may_stop"
-            }
-          ],
-          "then": [
-            {
-              "action": "fan.turn_off",
-              "target": {
-                "entity_id": "fan.corridor_xiaomi_air_purifier"
-              }
-            }
-          ]
-        },
-        {
-          "if": [
-            {
-              "condition": "template",
-              "value_template": "{{ stopped_by_human }}"
-            }
-          ],
-          "then": [
-            {
-              "action": "input_datetime.set_datetime",
-              "target": {
-                "entity_id": "input_datetime.purifier_manual_stop"
-              },
-              "data": {
-                "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-              }
-            }
-          ],
-          "alias": "Remember the manual stop so the next cat cannot undo it"
-        },
-        {
-          "action": "input_boolean.turn_off",
-          "target": {
-            "entity_id": "input_boolean.purifier_auto_run"
-          }
-        },
-        {
-          "action": "input_text.set_value",
-          "target": {
-            "entity_id": "input_text.purifier_last_run"
-          },
-          "data": {
-            "value": "{{ now().strftime('%m-%d %H:%M') }} {{ outcome }} | {{ ((now().timestamp() - started_at) / 60) | round(0) | int }}min | pm {{ pm_before | int }}>{{ pm_after_settle | int }}>{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}{% if not is_state('input_boolean.purifier_pm25_trusted','on') %} (untrusted{{ ' - MOVED, worth rechecking' if pm_after_settle >= 2 else '' }}){% elif not pm_usable %} UNRESPONSIVE{% endif %} | corridor {{ corridor_before | round(1) }}>{{ corridor_after | round(1) }}"
-          },
-          "alias": "One line of evidence per run"
+         ]
         }
-      ],
-      "note": "v5. The operator has declared the PM2.5 sensor broken for now, after it failed to move across 46 minutes of full airflow immediately following a cat visit (see the design doc, incident 7.2).\n\nTHE ASSUMPTION IS A TOGGLE, NOT A REWRITE. input_boolean.purifier_pm25_trusted is off, and pm_usable requires it before the reading is allowed any influence at all. Cleaning the laser intake later is one switch, not a code change - and nothing about the automation's shape records a guess about the hardware that a future reader would have to reverse-engineer.\n\nWITH IT OFF, EVERY RUN GOES THE FULL WINDOW. That is the same behaviour an unresponsive-but-trusted sensor already produced, so the change is small; what it buys is honesty. The old logic happened to do the right thing because the reading never rose. Now it does the right thing because we decided it should.\n\nTHE SETTLE AND THE READ ARE STILL DONE. They serve no control purpose while the sensor is untrusted, and that is deliberate: the run log records pm before, after settle and final on every cycle, so if the sensor ever starts moving again the line says '(untrusted - MOVED, worth rechecking)'. Deleting the read would make recovery invisible and would mean the toggle could never be flipped back on evidence.\n\nEVERYTHING ELSE IS UNCHANGED from v4: the start is confirmed by waiting for the fan to report on and hold it 15 s rather than sampling at a guessed offset; an unconfirmed start commands the fan off rather than abandoning it; already_running refuses a fan somebody else started and says so; recovery fires on reload as well as restart; a manual stop suppresses re-starts for 30 minutes."
+       ]
+      }
+     ],
+     "default": [
+      {
+       "continue_on_timeout": true,
+       "timeout": {
+        "minutes": 25
+       },
+       "wait_for_trigger": [
+        {
+         "entity_id": "fan.corridor_xiaomi_air_purifier",
+         "for": {
+          "seconds": 15
+         },
+         "id": "human",
+         "to": "off",
+         "trigger": "state"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "variables": {
+      "outcome": "{% if wait.trigger is not none and wait.trigger.id == 'human' %}stopped by hand{% elif wait.trigger is not none %}cleared{% else %}full window{% endif %}",
+      "stopped_by_human": "{{ wait.trigger is not none and wait.trigger.id == 'human' }}"
+     }
+    },
+    {
+     "variables": {
+      "we_may_stop": "{{ is_state('fan.corridor_xiaomi_air_purifier','on') and we_started and not stopped_by_human }}"
+     }
+    },
+    {
+     "if": [
+      {
+       "alias": "we_may_stop",
+       "condition": "template",
+       "value_template": "{{ we_may_stop }}"
+      }
+     ],
+     "then": [
+      {
+       "action": "fan.turn_off",
+       "target": {
+        "entity_id": "fan.corridor_xiaomi_air_purifier"
+       }
+      }
+     ]
+    },
+    {
+     "alias": "Remember the manual stop so the next cat cannot undo it",
+     "if": [
+      {
+       "condition": "template",
+       "value_template": "{{ stopped_by_human }}"
+      }
+     ],
+     "then": [
+      {
+       "action": "input_datetime.set_datetime",
+       "data": {
+        "datetime": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+       },
+       "target": {
+        "entity_id": "input_datetime.purifier_manual_stop"
+       }
+      }
+     ]
+    },
+    {
+     "action": "input_boolean.turn_off",
+     "target": {
+      "entity_id": "input_boolean.purifier_auto_run"
+     }
+    },
+    {
+     "action": "input_text.set_value",
+     "alias": "One line of evidence per run",
+     "data": {
+      "value": "{{ now().strftime('%m-%d %H:%M') }} {{ outcome }} | {{ ((now().timestamp() - started_at) / 60) | round(0) | int }}min | pm {{ pm_before | int }}>{{ pm_after_settle | int }}>{{ states('sensor.corridor_xiaomi_air_purifier_pm2_5') }}{% if not is_state('input_boolean.purifier_pm25_trusted','on') %} (untrusted{{ ' - MOVED, worth rechecking' if pm_after_settle >= 2 else '' }}){% elif not pm_usable %} UNRESPONSIVE{% endif %} | corridor {{ corridor_before | round(1) }}>{{ corridor_after | round(1) }}"
+     },
+     "target": {
+      "entity_id": "input_text.purifier_last_run"
+     }
     }
-  ],
-  "mode": "restart",
-  "max_exceeded": "silent"
+   ],
+   "note": "v5. The operator has declared the PM2.5 sensor broken for now, after it failed to move across 46 minutes of full airflow immediately following a cat visit (see the design doc, incident 7.2).\n\nTHE ASSUMPTION IS A TOGGLE, NOT A REWRITE. input_boolean.purifier_pm25_trusted is off, and pm_usable requires it before the reading is allowed any influence at all. Cleaning the laser intake later is one switch, not a code change - and nothing about the automation's shape records a guess about the hardware that a future reader would have to reverse-engineer.\n\nWITH IT OFF, EVERY RUN GOES THE FULL WINDOW. That is the same behaviour an unresponsive-but-trusted sensor already produced, so the change is small; what it buys is honesty. The old logic happened to do the right thing because the reading never rose. Now it does the right thing because we decided it should.\n\nTHE SETTLE AND THE READ ARE STILL DONE. They serve no control purpose while the sensor is untrusted, and that is deliberate: the run log records pm before, after settle and final on every cycle, so if the sensor ever starts moving again the line says '(untrusted - MOVED, worth rechecking)'. Deleting the read would make recovery invisible and would mean the toggle could never be flipped back on evidence.\n\nEVERYTHING ELSE IS UNCHANGED from v4: the start is confirmed by waiting for the fan to report on and hold it 15 s rather than sampling at a guessed offset; an unconfirmed start commands the fan off rather than abandoning it; already_running refuses a fan somebody else started and says so; recovery fires on reload as well as restart; a manual stop suppresses re-starts for 30 minutes."
+  }
+ ],
+ "alias": "Purifier — run after the cat toilet",
+ "conditions": [],
+ "description": "v5. Runs the corridor purifier after a cat visit for up to ~28 minutes. The PM2.5 sensor is currently ASSUMED BROKEN (input_boolean.purifier_pm25_trusted is off), so it gets no vote and every run goes the full window; turning that toggle on restores the early stop, which additionally requires the reading to have risen after the visit before 'back down' means anything. The start is confirmed by WAITING for the fan to report on, never by reading its state at a guessed offset. If the start cannot be confirmed the fan is commanded off rather than abandoned.",
+ "id": "1789947000001",
+ "max_exceeded": "silent",
+ "mode": "restart",
+ "triggers": [
+  {
+   "entity_id": "sensor.cat_toilet_excretion_times_day",
+   "id": "visit",
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "id": "boot",
+   "trigger": "homeassistant"
+  },
+  {
+   "event_type": "automation_reloaded",
+   "id": "boot",
+   "trigger": "event"
+  }
+ ]
 }

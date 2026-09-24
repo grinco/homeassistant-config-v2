@@ -45,6 +45,15 @@ BUGS = [
   lambda t: "{{ states(r.reason) != 'none' }}"),
  ("boot grace dropped again (v5.4)", "expr", "no_temp",
   lambda t: t.replace(" and uptime > boot_grace", "")),
+ # v5.10: the exit band that could not be reached
+ ("v5.10: room hysteresis back above the target (heat)", "expr", "mode",
+  lambda t: t.replace("temp < target - (0 if now_mode == 'heat' else room_hyst)",
+                      "temp < target or (now_mode == 'heat' and temp < target + room_hyst)")),
+ ("v5.10: the cooling mirror of the same band", "expr", "mode",
+  lambda t: t.replace("temp > target + (0 if now_mode == 'cool' else room_hyst)",
+                      "temp > target or (now_mode == 'cool' and temp > target - room_hyst)")),
+ ("v5.10: deadband dropped, so the room flaps at the setpoint", "expr", "mode",
+  lambda t: t.replace("target - (0 if now_mode == 'heat' else room_hyst)", "target")),
  # purifier automation -- bugs it would be natural to write
  ("purifier: bare state trigger (fires on midnight reset)", "expr2", "visit_happened",
   lambda t: "{{ trigger.id == 'visit' }}"),
