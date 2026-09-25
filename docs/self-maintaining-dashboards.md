@@ -83,3 +83,23 @@ silently**. The labelled-extras block on every room page used a list from its cr
 2026-09-25, so no labelled switch ever appeared; found when the cat toilet's auto-clean switch
 did not. Labelled entities also bypass the `entity_category` exclusion (the label is the opt-in),
 which is why Tuya's config-category *Clean now* button and *Auto clean* switch now show.
+
+## Theme: Material You (2026-09-25)
+
+The layout is unchanged; only the look is. HACS installs *Material You Theme* and *Material You
+Utilities* (loaded through `frontend.extra_module_url`). The theme is the default for light
+and dark. The palette is generated in the browser from a seed colour, so every card that uses
+theme variables follows it without an edit.
+
+- Settings are helpers named `<domain>.material_you_<setting>` (house-wide; a per-user suffix
+  overrides): `input_text.material_you_base_color` = `#D08A2E` (warm amber, matching the
+  lamp-on accent the room cards already hard-code), `input_select.material_you_spec` = `2025`.
+- **Keep the spec at 2025.** With `2021`, utilities 2.1.25/2.1.26 threw
+  `RangeError: Maximum call stack size exceeded` in `toneDeltaPair` and silently fell back to
+  the stock blue palette. There was no visible error, only the wrong colours.
+- The theme turns the view tabs into a bottom navigation bar. Full-page renders show it
+  floating mid-page because it is `position: fixed`. That comes from the screenshot, not a
+  layout bug.
+- One device often has an entity from each of several integrations (Android TV Remote, Cast,
+  Music Assistant, Denon). Keep the one with real controls on the room page and label the
+  others `not_on_room_pages`.
