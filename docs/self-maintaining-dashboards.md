@@ -28,6 +28,7 @@ The one step Home Assistant does not allow to be generated: adding a new plug to
 | `not_on_room_pages` | entity | keep a default-domain entity off its room page (e.g. the members of a light group) |
 | `no_area_needed` | device | a device with no room by nature (phone, cloud account, network gear); keeps it off *To do* |
 | `offline_ok` | device | a device that is allowed to be unresponsive; keeps it off the health lists |
+| `on_home_page` | entity | pin it to Home → *Around the house* (sensors get a 7-day trend, buttons press on tap). The cat toilet's visits, weight and *Clean litter box now* carry it |
 
 ## Rules the generators use
 
@@ -42,3 +43,43 @@ The one step Home Assistant does not allow to be generated: adding a new plug to
 - Curated names, icons and colours for sockets and rooms live as structured data on the generating
   card (`sockets`, `outlets`, `rooms`), which the Jinja reads as `config`. Missing keys fall back to
   the registry name and a default icon.
+
+## The family Home (2026-09-25)
+
+Designed for everyone who picks up a phone in this house — grandparents, guests, children — and
+rendered at phone and desktop width before it shipped (`tests/dashboards/render.py`).
+
+- **One tab for everyone.** Climate, Energy, Appliances and Security are visible to the two adult
+  accounts only (view `visible:`); guests, kids and anyone new see Home and the room pages. Add a
+  user to those views' `visible` list to give them the detail tabs.
+- **Home** = greeting, date and the outdoor reading in words; *Needs attention* only when something
+  does; a **room card** per area, by floor (2 across on phones, 4 on wide screens — one generator
+  per width, lint C9 requires every floor to carry both); **Quick actions** (all lights off, Ask,
+  alarm, vacuum); the weather forecast; *Now playing* only while something plays.
+- **Room card** (`vg_room_card`): big name, the room's resolved temperature and humidity (found by
+  the `on_room_page` label, never by entity id), a plain-words status line (lights, heating /
+  cooling, someone here, oven on, window open), a round light button when the room has lights, and
+  a red border and headline for leak, smoke, gas or CO. Tapping it opens the room.
+- **Room page**: light tiles with a brightness slider; the climate heading carries the readings;
+  the room's **comfort controls** (day and night temperature with − / +, automatic climate, air
+  filter) come next — they are what the climate automation reads, so changing the unit directly is
+  left to its tile's more-info dialog; then fans, blinds & locks, media, labelled extras, and a
+  low-key Automation row.
+- Duplicate media integrations of one device (Cast / HomeKit / HEOS twins) carry
+  `not_on_room_pages`, which also keeps them out of *Now playing*.
+
+## Rendering
+
+`python3 tests/dashboards/render.py out.png /lovelace/home 390` renders any page as the guest user
+(token in `~/guest.key`, gitignored by living outside the repo) at any width, full page, and prints
+broken cards and console errors. It needs `pip install playwright` and
+`python -m playwright install chromium-headless-shell`. The ha-mcp screenshot beta (Puppet add-on,
+no host port) is the fallback; it cannot render the admin panel, because the guest is not an admin.
+
+## auto-entities gotcha (lint C16)
+
+A rule's `domain` (or any matcher) must be a string or a `/regex/` — **a list matches nothing,
+silently**. The labelled-extras block on every room page used a list from its creation until
+2026-09-25, so no labelled switch ever appeared; found when the cat toilet's auto-clean switch
+did not. Labelled entities also bypass the `entity_category` exclusion (the label is the opt-in),
+which is why Tuya's config-category *Clean now* button and *Auto clean* switch now show.

@@ -83,6 +83,11 @@ Checks, each one written because something it catches actually shipped:
                          automation switches). The kitchen page listed 49
                          entities on 2026-09-25, 46 of them appliance settings
                          nobody opens a room page for.
+  C16 string-matchers    an auto-entities rule's `domain` (or any matcher) is a
+                         string or a /regex/, never a list. A list matches
+                         NOTHING and says nothing: the labelled-extras block
+                         shipped that way on 2026-09-25 and no labelled switch
+                         ever reached a room page until the cat toilet's did not.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -502,9 +507,14 @@ def main():
                 fail("C10", "%s: the %d floor generators run different templates - a fix "
                             "made to one floor silently misses the other" % (label, len(gens)))
             covered = set()
+            variants = {}
             for path, gen in gens:
                 floor = gen.get("floor")
                 covered.add(floor)
+                # A floor can be generated once per screen width (2 columns on
+                # phones, 4 on wide screens). Every floor must carry the same set
+                # of variants, or its rooms vanish at one width only.
+                variants.setdefault(floor, set()).add(json.dumps(gen.get("visibility"), sort_keys=True))
                 for area, o in sorted((gen.get("rooms") or {}).items()):
                     pinned = sorted(k for k, v in o.items()
                                     if isinstance(v, str) and ENTITY_RE.fullmatch(v))
@@ -530,6 +540,12 @@ def main():
             # tile opens Home Assistant's own area page until it is given a styled one.
             members = area_members()
             by_path = {v.get("path"): v for v in views}
+            allv = set().union(*variants.values()) if variants else set()
+            short = sorted("%s lacks %d screen variant(s)" % (f, len(allv - v))
+                           for f, v in variants.items() if v != allv)
+            if short:
+                fail("C9", "%s: a floor's rooms are generated for fewer screen widths than "
+                           "another's, so they disappear at some widths" % label, short)
             roomless = sorted(a for a in areas if a in members and floors.get(a) not in covered)
             if roomless:
                 fail("C9", "%s: %d area(s) hold entities on a floor no generator covers, "
@@ -543,9 +559,13 @@ def main():
                     continue
                 pairs = generated(view)
                 blob_v = json.dumps(view, ensure_ascii=False)
+                rx = [re.compile(d[1:-1]) for a2, d in pairs
+                      if a2 in (area, str(areas.get(area))) and d.startswith("/") and d.endswith("/")]
                 for eid in sorted(members.get(area, ())):
                     domain = eid.split(".")[0]
                     if (area, domain) in pairs or (str(areas.get(area)), domain) in pairs:
+                        continue
+                    if any(r.search(domain) for r in rx):
                         continue
                     if eid in blob_v:
                         continue
@@ -661,6 +681,20 @@ def main():
             if unfocused:
                 fail("C15", "%s: %d room rule(s) pull in entities nobody asked for"
                      % (label, len(unfocused)), sorted(set(unfocused)))
+
+        # C16 - auto-entities matchers are strings.
+        listy = []
+        for path, card in found:
+            if card.get("type") != "custom:auto-entities":
+                continue
+            for part in ("include", "exclude"):
+                for i, r in enumerate(((card.get("filter") or {}).get(part)) or []):
+                    for k, val in r.items():
+                        if k != "options" and isinstance(val, list):
+                            listy.append("%s  %s[%d].%s = %r" % (path, part, i, k, val))
+        if listy:
+            fail("C16", "%s: %d auto-entities matcher(s) are lists, which match nothing"
+                 % (label, len(listy)), listy)
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

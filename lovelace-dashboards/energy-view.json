@@ -986,5 +986,13 @@
   }
  ],
  "title": "Energy",
- "type": "sections"
+ "type": "sections",
+ "visible": [
+  {
+   "user": "43341eb6e503484cb5affcac9886b3bf"
+  },
+  {
+   "user": "dc0e9b3ce0814ca78dffa7cd73dee180"
+  }
+ ]
 }

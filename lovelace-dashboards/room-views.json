@@ -52,55 +52,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "living_room",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -118,126 +70,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "living_room",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "living_room",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "living_room",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -295,7 +162,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -320,18 +242,11 @@
          "area": "living_room",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -629,12 +544,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -654,17 +563,47 @@
        "include": [
         {
          "area": "living_room",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -794,55 +733,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "kitchen",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -860,126 +751,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "kitchen",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "kitchen",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "kitchen",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -1037,7 +843,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -1062,18 +923,11 @@
          "area": "kitchen",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -1371,12 +1225,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -1396,17 +1244,47 @@
        "include": [
         {
          "area": "kitchen",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -1536,55 +1414,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -1602,126 +1432,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "bedroom",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "bedroom",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "bedroom",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -1779,7 +1524,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -1804,18 +1604,11 @@
          "area": "bedroom",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -2113,12 +1906,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -2138,17 +1925,47 @@
        "include": [
         {
          "area": "bedroom",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -2278,55 +2095,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "corridor",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -2344,126 +2113,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "corridor",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "corridor",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "corridor",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -2521,7 +2205,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -2546,18 +2285,11 @@
          "area": "corridor",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -2855,12 +2587,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -2880,17 +2606,47 @@
        "include": [
         {
          "area": "corridor",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -3020,55 +2776,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom_2",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -3086,126 +2794,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "bedroom_2",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "bedroom_2",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -3263,7 +2886,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -3288,18 +2966,11 @@
          "area": "bedroom_2",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -3597,12 +3268,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -3622,17 +3287,47 @@
        "include": [
         {
          "area": "bedroom_2",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -3762,55 +3457,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "kid1_room",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -3828,126 +3475,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "kid1_room",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "kid1_room",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "kid1_room",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -4005,7 +3567,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -4030,18 +3647,11 @@
          "area": "kid1_room",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -4339,12 +3949,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -4364,17 +3968,47 @@
        "include": [
         {
          "area": "kid1_room",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -4504,55 +4138,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "kid2_room",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -4570,126 +4156,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "kid2_room",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "kid2_room",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "kid2_room",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -4747,7 +4248,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -4772,18 +4328,11 @@
          "area": "kid2_room",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -5081,12 +4630,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -5106,17 +4649,47 @@
        "include": [
         {
          "area": "kid2_room",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -5246,55 +4819,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "hallway",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -5312,126 +4837,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "hallway",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "hallway",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "hallway",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -5489,7 +4929,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -5514,18 +5009,11 @@
          "area": "hallway",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -5823,12 +5311,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -5848,17 +5330,47 @@
        "include": [
         {
          "area": "hallway",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -5988,55 +5500,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "bathroom",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -6054,126 +5518,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "bathroom",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "bathroom",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "bathroom",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -6231,7 +5610,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -6256,18 +5690,11 @@
          "area": "bathroom",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -6565,12 +5992,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -6590,17 +6011,47 @@
        "include": [
         {
          "area": "bathroom",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -6730,55 +6181,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "shower",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -6796,126 +6199,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "shower",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "shower",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "shower",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -6973,7 +6291,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -6998,18 +6371,11 @@
          "area": "shower",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -7307,12 +6673,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -7332,17 +6692,47 @@
        "include": [
         {
          "area": "shower",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -7472,55 +6862,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "laundry_room",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -7538,126 +6880,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "laundry_room",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "laundry_room",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "laundry_room",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -7715,7 +6972,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -7740,18 +7052,11 @@
          "area": "laundry_room",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -8049,12 +7354,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -8074,17 +7373,47 @@
        "include": [
         {
          "area": "laundry_room",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -8214,55 +7543,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "closet",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -8280,126 +7561,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "closet",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "closet",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "closet",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -8457,7 +7653,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -8482,18 +7733,11 @@
          "area": "closet",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -8791,12 +8035,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -8816,17 +8054,47 @@
        "include": [
         {
          "area": "closet",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
@@ -8956,55 +8224,7 @@
      },
      {
       "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "Magic Areas group",
-          "name": "All lights",
-          "template": "vg_room_master",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
-          }
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -9022,126 +8242,41 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
         }
        ],
        "include": [
         {
          "area": "terrace",
-         "attributes": {
-          "supported_color_modes": "$$/xy/"
-         },
          "domain": "light",
+         "integration": "magic_areas",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_color_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
-         }
-        },
-        {
-         "area": "terrace",
-         "attributes": {
-          "supported_color_modes": "$$/rgb/"
-         },
-         "domain": "light",
-         "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
-           }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_led_strip",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "icon": "mdi:lightbulb-group",
+          "name": "All lights",
+          "type": "tile"
          }
         },
         {
          "area": "terrace",
          "domain": "light",
          "options": {
-          "custom_fields": {
-           "power_icon": {
-            "card": {
-             "entity": "this.entity_id",
-             "template": "view_power_icon_layout",
-             "type": "custom:button-card"
-            }
-           },
-           "slider": {
-            "card": {
-             "entity": "this.entity_id",
-             "full_row": true,
-             "toggle": false,
-             "type": "custom:slider-entity-row"
-            }
+          "features": [
+           {
+            "type": "light-brightness"
            }
-          },
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12,
-           "rows": "auto"
-          },
-          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
-          "template": "hue_white_bulb",
-          "type": "custom:button-card",
-          "variables": {
-           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
-          }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
       },
       "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -9199,7 +8334,62 @@
      },
      {
       "card": {
-       "columns": 1,
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "input_number",
+         "label": "on_room_page",
+         "options": {
+          "features": [
+           {
+            "style": "buttons",
+            "type": "numeric-input"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "terrace",
+         "domain": "input_boolean",
+         "label": "on_room_page",
+         "options": {
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
        "square": false,
        "type": "grid"
       },
@@ -9224,18 +8414,11 @@
          "area": "terrace",
          "domain": "climate",
          "options": {
-          "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "state_content": [
+           "hvac_action",
+           "current_temperature"
+          ],
+          "type": "tile"
          }
         }
        ]
@@ -9533,12 +8716,6 @@
       "filter": {
        "exclude": [
         {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
          "hidden_by": "/.+/"
         },
         {
@@ -9558,17 +8735,47 @@
        "include": [
         {
          "area": "terrace",
-         "domain": [
-          "switch",
-          "sensor",
-          "binary_sensor",
-          "button",
-          "select",
-          "number",
-          "scene",
-          "script",
-          "vacuum"
-         ],
+         "domain": "button",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "hide_state": true,
+          "icon_tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "tap_action": {
+           "action": "perform-action",
+           "perform_action": "button.press",
+           "target": {
+            "entity_id": "this.entity_id"
+           }
+          },
+          "type": "tile"
+         }
+        },
+        {
+         "area": "terrace",
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "terrace",
+         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
          "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",

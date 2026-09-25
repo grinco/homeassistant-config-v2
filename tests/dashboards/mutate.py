@@ -345,9 +345,22 @@ def m_room_page_unfocused(d):
     return "C15"
 
 
+def m_list_matcher(d):
+    """A rule whose domain is a list: auto-entities matches nothing, silently."""
+    doc = _cfg(d, LOV)
+    for c in _room_view(doc, "kitchen")["sections"][0]["cards"]:
+        for r in (c.get("filter") or {}).get("include") or []:
+            if r.get("domain") == "light":
+                r["domain"] = ["light"]
+                _save(d, LOV, doc)
+                return "C16"
+    raise SystemExit("no light rule to mutate")
+
+
 MUTATIONS = [
     ("a socket returns to a room page", m_socket_back_on_room),
     ("a room page is edited by hand", m_room_page_hand_edited),
+    ("an auto-entities matcher becomes a list", m_list_matcher),
     ("a room page lists every sensor again", m_room_page_unfocused),
     ("the rollback view gets restyled", m_rollback_restyled),
     ("a room map pins its light group", m_tile_pins_entity),
