@@ -1048,7 +1048,9 @@ A(case("an already-clear label is not rewritten", "reason_stale", "False",
 # Terrace and forecast carry different values in every case, so the output names one tier.
 OUT = "Climate temp outdoor"
 OUT_T = "states('sensor.outdoor_motion_temperature')"
-OUT_W = "states('sensor.house_temperature')"
+# The forecast sensor's live id carries the street name, so it is published as
+# `sensor.house_temperature` and resolved from the gitignored local map here.
+OUT_W = "states('%s')" % harness.load_rooms()["house"]["forecast_temp"]
 OUT_R = "states('sensor.climate_temp_outdoor')"
 
 A(sensor_case(

@@ -55,6 +55,9 @@ Exports are produced by reading the live instance (`automations.yaml`, `.storage
 5. **Scan for more than room names.** `person.*` entities, `notify.*` targets and sensor names
    derived from a person's device or desk all carry names. So do `device_tracker.*` and anything
    named after a phone.
+   **The address counts too.** The home zone is named after the street, and Home Assistant
+   copies that name into the forecast weather entity and every Home Connect appliance id.
+   Those are scrubbed like the rooms, and the tests reach their live ids through the local map.
 6. **Check the commit message too**, not just the files.
 
 ### Where the names hide

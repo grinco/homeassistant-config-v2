@@ -149,7 +149,7 @@ BUGS = [
  ("outdoor: availability gated on the terrace alone", "sensor", "Climate temp outdoor::availability",
   lambda t: "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 }}"),
  ("outdoor: the house reads the forecast directly again", "expr", "outdoor",
-  lambda t: "{{ states('sensor.house_temperature') | float(-999) }}"),
+  lambda t: "{{ states('%s') | float(-999) }}" % harness.load_rooms()["house"]["forecast_temp"]),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
