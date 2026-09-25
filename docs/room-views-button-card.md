@@ -2,6 +2,13 @@
 
 *2026-09-23.*
 
+> **Historical.** On 2026-09-25 the repository stopped being a fork. None of upstream's
+> templates were still used by any live view: the room pages and Home cards had moved to
+> the generated `vg_*` templates (see `self-maintaining-dashboards.md`). The upstream
+> library and its history were left out of the new repository. The templates in use are
+> in `lovelace-dashboards/button-card-templates.yaml`. The rest of this record describes
+> the state on 2026-09-23.
+
 ## What this repository is a fork of, and what had happened to it
 
 This repo is a fork of [eximo84/homeassistant-config-v2](https://github.com/eximo84/homeassistant-config-v2),
@@ -74,7 +81,7 @@ enforced structurally rather than by intention:
   missing, no extra, no content drift;
 - the additions this household needed are **two** templates, `vg_room_master` and `vg_nav`,
   under a `vg_` prefix that cannot collide;
-- they live in a **new file**, `Custom Buttons/vg-extensions.yaml`, beside upstream's. Not one
+- they live in a **new file**, `Custom Buttons/vg-extensions.yaml` (now `lovelace-dashboards/button-card-templates.yaml`), beside upstream's. Not one
   upstream file was edited, so the library can be re-pulled without a merge.
 
 ### The one place upstream is routed around rather than fixed
