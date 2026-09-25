@@ -9,7 +9,7 @@
   },
   {
    "color": "green",
-   "entity": "sensor.house_temperature",
+   "entity": "sensor.climate_temp_outdoor",
    "name": "Outside",
    "show_state": true,
    "type": "entity"
@@ -54,7 +54,7 @@
      "type": "heading"
     },
     {
-     "content": "{% set night = is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') %}{% set away = is_state('alarm_control_panel.home','armed_away') and (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 %}{% set o = states('sensor.house_temperature') | float(-999) %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% set hm = states('input_select.climate_house_mode') %}{% if o <= -900 %}{% set house = 'Unknown - outdoor sensor unavailable' %}{% elif hm == 'heat' %}{% set house = 'HEATING' %}{% elif hm == 'cool' %}{% set house = 'COOLING' %}{% else %}{% set house = 'SHOULDER - neither' %}{% endif %}### House: {{ house }}\n\n{{ '**Away** - safety band only' if away else ('**Night** targets' if night else '**Day** targets') }} · outdoor {{ '-' if o <= -900 else (o | round(1) ~ '°') }} · heat below {{ hbo }}° / cool above {{ cao }}°{% if o > -900 and states('input_select.climate_house_mode') == 'shoulder' %}\n\nOutdoor sits in the shoulder band, so no room will heat or cool. Rooms with **air filter** on run the fan only.{% endif %}{% if is_state('input_boolean.climate_auto','off') %}\n\n⚠️ **Automation is OFF** - comfort control is not running.{% set nsf = namespace(fon=[]) %}{% for n, s in [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% if is_state('input_boolean.climate_air_filter_' ~ s,'on') %}{% set nsf.fon = nsf.fon + [n] %}{% endif %}{% endfor %}{% if nsf.fon %} **Air filter is on in {{ nsf.fon | join(', ') }} and is doing nothing** - the filter needs automatic control to be on.{% endif %}{% if is_state('input_boolean.climate_safety_always','on') %} Safety limits still apply.{% endif %}{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}\n\n⚠️ **Safety limits are OFF** - no frost protection and no away band.{% endif %}",
+     "content": "{% set night = is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') %}{% set away = is_state('alarm_control_panel.home','armed_away') and (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 %}{% set o = states('sensor.climate_temp_outdoor') | float(-999) %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% set hm = states('input_select.climate_house_mode') %}{% if o <= -900 %}{% set house = 'Unknown - outdoor sensor unavailable' %}{% elif hm == 'heat' %}{% set house = 'HEATING' %}{% elif hm == 'cool' %}{% set house = 'COOLING' %}{% else %}{% set house = 'SHOULDER - neither' %}{% endif %}### House: {{ house }}\n\n{{ '**Away** - safety band only' if away else ('**Night** targets' if night else '**Day** targets') }} · outdoor {{ '-' if o <= -900 else (o | round(1) ~ '°') }}{% if o > -900 %} ({{ 'terrace' if has_value('sensor.outdoor_motion_temperature') else 'forecast' }}){% endif %} · heat below {{ hbo }}° / cool above {{ cao }}°{% if o > -900 and states('input_select.climate_house_mode') == 'shoulder' %}\n\nOutdoor sits in the shoulder band, so no room will heat or cool. Rooms with **air filter** on run the fan only.{% endif %}{% if is_state('input_boolean.climate_auto','off') %}\n\n⚠️ **Automation is OFF** - comfort control is not running.{% set nsf = namespace(fon=[]) %}{% for n, s in [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% if is_state('input_boolean.climate_air_filter_' ~ s,'on') %}{% set nsf.fon = nsf.fon + [n] %}{% endif %}{% endfor %}{% if nsf.fon %} **Air filter is on in {{ nsf.fon | join(', ') }} and is doing nothing** - the filter needs automatic control to be on.{% endif %}{% if is_state('input_boolean.climate_safety_always','on') %} Safety limits still apply.{% endif %}{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}\n\n⚠️ **Safety limits are OFF** - no frost protection and no away band.{% endif %}",
      "text_only": true,
      "type": "markdown"
     },
@@ -104,7 +104,7 @@
      "badges": [
       {
        "color": "light-blue",
-       "entity": "sensor.house_temperature",
+       "entity": "sensor.climate_temp_outdoor",
        "show_state": true,
        "type": "entity"
       }
@@ -703,28 +703,39 @@
      "entities": [
       {
        "color": "#4caf50",
+       "entity": "sensor.climate_temp_outdoor",
+       "name": "In use"
+      },
+      {
+       "color": "#ff9800",
+       "entity": "sensor.outdoor_motion_temperature",
+       "name": "Terrace"
+      },
+      {
+       "color": "#607d8b",
        "entity": "sensor.house_temperature",
-       "name": "Outside"
+       "name": "Forecast"
       }
      ],
-     "font_size": 75,
      "grid_options": {
-      "columns": 12,
-      "rows": 3
+      "columns": "full",
+      "rows": "auto"
      },
+     "height": 180,
      "hours_to_show": 24,
-     "icon": "mdi:thermometer",
      "line_width": 2,
+     "name": "Outside, 24 h",
      "points_per_hour": 2,
      "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
+      "fill": false,
+      "icon": false,
+      "labels": true,
+      "legend": true,
       "name": true,
-      "state": true
+      "state": false
      },
-     "type": "custom:mini-graph-card"
+     "type": "custom:mini-graph-card",
+     "unit": "°C"
     },
     {
      "entities": [
@@ -1101,7 +1112,7 @@
       },
       {
        "color": "#4caf50",
-       "entity": "sensor.house_temperature",
+       "entity": "sensor.climate_temp_outdoor",
        "name": "Outside"
       }
      ],

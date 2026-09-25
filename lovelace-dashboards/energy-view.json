@@ -233,259 +233,166 @@
      "type": "heading"
     },
     {
-     "entities": [
-      {
-       "color": "#ffc107",
-       "entity": "sensor.living_room_tv_socket_power",
-       "name": "TV"
+     "card": {
+      "height": 150,
+      "hours_to_show": 24,
+      "icon": "mdi:power-socket-de",
+      "line_width": 2,
+      "lower_bound": 0,
+      "points_per_hour": 2,
+      "show": {
+       "extrema": false,
+       "fill": false,
+       "icon": false,
+       "labels": true,
+       "legend": true,
+       "name": false,
+       "state": false
       },
-      {
-       "color": "#e91e63",
-       "entity": "sensor.media_corner_power",
-       "name": "Media corner"
-      },
-      {
-       "color": "#009688",
-       "entity": "sensor.living_room_vacuum_socket_power",
-       "name": "Vacuum dock"
-      },
-      {
-       "color": "#03a9f4",
-       "entity": "sensor.downstairs_toilet_power",
-       "name": "Toilet down"
-      },
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.upstairs_toilet_power",
-       "name": "Toilet up"
-      },
-      {
-       "color": "#607d8b",
-       "entity": "sensor.poe_network_power",
-       "name": "PoE network"
-      },
-      {
-       "color": "#795548",
-       "entity": "sensor.lr_powerline_power",
-       "name": "LR powerline"
-      }
-     ],
+      "type": "custom:mini-graph-card"
+     },
+     "card_param": "entities",
+     "filter": {
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set e = {'entity': s.power, 'name': o.get('name') or s.name} -%}\n{%- if o.get('color') %}{% set e = dict(e, color=o.get('color')) %}{% endif -%}\n{%- set out.l = out.l + [e] -%}\n{%- endfor -%}\n{{ out.l }}"
+     },
      "grid_options": {
       "columns": 12,
       "rows": "auto"
      },
-     "height": 150,
-     "hours_to_show": 24,
-     "icon": "mdi:power-socket-de",
-     "line_width": 2,
-     "lower_bound": 0,
-     "points_per_hour": 2,
-     "show": {
-      "extrema": false,
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": false,
-      "state": false
+     "show_empty": false,
+     "sockets": {
+      "sensor.downstairs_toilet_power": {
+       "chart": "teal",
+       "color": "#03a9f4",
+       "icon": "mdi:toilet",
+       "max": 1600,
+       "name": "Toilet down"
+      },
+      "sensor.living_room_tv_socket_power": {
+       "chart": "amber",
+       "color": "#ffc107",
+       "icon": "mdi:television-classic",
+       "max": 300,
+       "name": "TV"
+      },
+      "sensor.living_room_vacuum_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
+      "sensor.lr_powerline_power": {
+       "chart": null,
+       "color": "#795548",
+       "icon": "mdi:transmission-tower",
+       "max": 50,
+       "name": "LR powerline"
+      },
+      "sensor.media_corner_power": {
+       "chart": "red",
+       "color": "#e91e63",
+       "icon": "mdi:audio-video",
+       "max": 150,
+       "name": "Media corner"
+      },
+      "sensor.mini_rack_power": {
+       "chart": "deep-orange",
+       "color": "#ff5722",
+       "icon": "mdi:server",
+       "max": 150,
+       "name": "Mini rack"
+      },
+      "sensor.poe_network_power": {
+       "chart": "blue-grey",
+       "color": "#607d8b",
+       "icon": "mdi:server-network",
+       "max": 60,
+       "name": "PoE network"
+      },
+      "sensor.upstairs_toilet_power": {
+       "chart": "brown",
+       "color": "#00bcd4",
+       "icon": "mdi:toilet",
+       "max": 1000,
+       "name": "Toilet up"
+      }
      },
-     "type": "custom:mini-graph-card"
+     "type": "custom:auto-entities"
     },
     {
-     "entity": "sensor.living_room_tv_socket_power",
+     "card": {
+      "columns": 2,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- endfor -%}\n{{ out.l }}"
+     },
      "grid_options": {
-      "columns": 6,
-      "rows": 1
+      "columns": "full"
      },
-     "icon": "mdi:television-classic",
-     "name": "TV",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
+     "show_empty": false,
+     "sockets": {
+      "sensor.downstairs_toilet_power": {
+       "chart": "teal",
+       "color": "#03a9f4",
+       "icon": "mdi:toilet",
+       "max": 1600,
+       "name": "Toilet down"
+      },
+      "sensor.living_room_tv_socket_power": {
+       "chart": "amber",
+       "color": "#ffc107",
+       "icon": "mdi:television-classic",
+       "max": 300,
+       "name": "TV"
+      },
+      "sensor.living_room_vacuum_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
+      "sensor.lr_powerline_power": {
+       "chart": null,
+       "color": "#795548",
+       "icon": "mdi:transmission-tower",
+       "max": 50,
+       "name": "LR powerline"
+      },
+      "sensor.media_corner_power": {
+       "chart": "red",
+       "color": "#e91e63",
+       "icon": "mdi:audio-video",
+       "max": 150,
+       "name": "Media corner"
+      },
+      "sensor.mini_rack_power": {
+       "chart": "deep-orange",
+       "color": "#ff5722",
+       "icon": "mdi:server",
+       "max": 150,
+       "name": "Mini rack"
+      },
+      "sensor.poe_network_power": {
+       "chart": "blue-grey",
+       "color": "#607d8b",
+       "icon": "mdi:server-network",
+       "max": 60,
+       "name": "PoE network"
+      },
+      "sensor.upstairs_toilet_power": {
+       "chart": "brown",
+       "color": "#00bcd4",
+       "icon": "mdi:toilet",
+       "max": 1000,
+       "name": "Toilet up"
+      }
      },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#ffc107",
-      "max": 300,
-      "sw": "switch.living_room_tv_socket",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.media_corner_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:audio-video",
-     "name": "Media corner",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#e91e63",
-      "max": 150,
-      "sw": "switch.media_corner",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.living_room_vacuum_socket_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:robot-vacuum",
-     "name": "Vacuum dock",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#009688",
-      "max": 1600,
-      "sw": "switch.living_room_vacuum_socket",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.downstairs_toilet_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:toilet",
-     "name": "Toilet down",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#03a9f4",
-      "max": 1600,
-      "sw": "switch.downstairs_toilet",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.upstairs_toilet_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:toilet",
-     "name": "Toilet up",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#00bcd4",
-      "max": 1000,
-      "sw": "switch.upstairs_toilet",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.poe_network_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:server-network",
-     "name": "PoE network",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#607d8b",
-      "max": 60,
-      "sw": "switch.poe_network",
-      "tint": "var(--primary-color)"
-     }
-    },
-    {
-     "entity": "sensor.lr_powerline_power",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:transmission-tower",
-     "name": "LR powerline",
-     "state_display": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return 'Off'; var w = parseFloat(entity.state); return isNaN(w) ? '-' : Math.round(w) + ' W'; ]]]",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ var s = states[variables.sw]; if (!s || s.state !== 'on') return '#9e9e9e'; var w = parseFloat(entity.state); if (isNaN(w)) return '#9e9e9e'; if (w < 1) return variables.base; if (w < 50) return '#4caf50'; if (w < 300) return '#ffc107'; return '#ff5722'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_meter",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#795548",
-      "max": 50,
-      "sw": "switch.lr_powerline",
-      "tint": "var(--primary-color)"
-     }
+     "type": "custom:auto-entities"
     },
     {
      "heading": "Outlets without metering",
@@ -494,52 +401,30 @@
      "type": "heading"
     },
     {
-     "entity": "switch.living_room_tv_socket_switchbot_bridge",
+     "card": {
+      "columns": 2,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set mains = ns.s | map(attribute='switch') | list -%}\n{%- set oo = config.get('outlets', {}) -%}\n{%- set out = namespace(l=[]) -%}\n{%- for s in states.switch | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','outlet') | map(attribute='entity_id') | reject('in', mains) | sort -%}\n{%- set o = oo.get(s, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_outlet', 'entity': s, 'name': o.get('name') or state_attr(s, 'friendly_name'), 'icon': o.get('icon') or 'mdi:power-plug-outline'}] -%}\n{%- endfor -%}\n{{ out.l }}"
+     },
      "grid_options": {
-      "columns": 6,
-      "rows": 1
+      "columns": "full"
      },
-     "icon": "mdi:bridge",
-     "name": "Switchbot bridge",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
-       }
-      ]
+     "outlets": {
+      "switch.living_room_tv_socket_switchbot_bridge": {
+       "icon": "mdi:bridge",
+       "name": "Switchbot bridge"
+      },
+      "switch.living_room_vacuum_socket_magsafe_charger": {
+       "icon": "mdi:cellphone-charging",
+       "name": "MagSafe charger"
+      }
      },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#2196f3"
-     }
-    },
-    {
-     "entity": "switch.living_room_vacuum_socket_magsafe_charger",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:cellphone-charging",
-     "name": "MagSafe charger",
-     "styles": {
-      "icon": [
-       {
-        "color": "[[[ return entity.state === 'on' ? variables.base : '#9e9e9e'; ]]]"
-       }
-      ]
-     },
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "variables": {
-      "base": "#2196f3"
-     }
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "column_span": 2,
@@ -760,8 +645,17 @@
      "type": "energy-devices-graph"
     },
     {
-     "chart_type": "bar",
-     "days_to_show": 14,
+     "card": {
+      "chart_type": "bar",
+      "days_to_show": 14,
+      "period": "day",
+      "stat_types": [
+       "change"
+      ],
+      "title": "Daily kWh, last 14 days",
+      "type": "statistics-graph"
+     },
+     "card_param": "entities",
      "entities": [
       {
        "color": "orange",
@@ -787,57 +681,87 @@
        "color": "cyan",
        "entity": "sensor.kid2_room_ac_energy",
        "name": "Kids room 2's AC"
-      },
-      {
-       "color": "amber",
-       "entity": "sensor.living_room_tv_socket_total_energy",
-       "name": "TV socket"
-      },
-      {
-       "color": "red",
-       "entity": "sensor.media_corner_energy",
-       "name": "Media corner socket"
-      },
-      {
-       "color": "deep-purple",
-       "entity": "sensor.living_room_vacuum_socket_total_energy",
-       "name": "Vacuum socket"
-      },
-      {
-       "color": "teal",
-       "entity": "sensor.downstairs_toilet_energy",
-       "name": "Downstairs Toilet socket"
-      },
-      {
-       "color": "brown",
-       "entity": "sensor.upstairs_toilet_energy",
-       "name": "Upstairs Toilet socket"
-      },
-      {
-       "color": "blue-grey",
-       "entity": "sensor.poe_network_energy",
-       "name": "PoE network socket"
-      },
-      {
-       "color": "green",
-       "entity": "sensor.lr_powerline_energy",
-       "name": "LR powerline socket"
       }
      ],
+     "filter": {
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s if s.energy -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set e = {'entity': s.energy, 'name': (o.get('name') or s.name) ~ ' socket'} -%}\n{%- if o.get('chart') %}{% set e = dict(e, color=o.get('chart')) %}{% endif -%}\n{%- set out.l = out.l + [e] -%}\n{%- endfor -%}\n{{ out.l }}"
+     },
      "grid_options": {
       "columns": "full",
       "rows": 6
      },
-     "period": "day",
-     "stat_types": [
-      "change"
-     ],
-     "title": "Daily kWh, last 14 days",
-     "type": "statistics-graph"
+     "sockets": {
+      "sensor.downstairs_toilet_power": {
+       "chart": "teal",
+       "color": "#03a9f4",
+       "icon": "mdi:toilet",
+       "max": 1600,
+       "name": "Toilet down"
+      },
+      "sensor.living_room_tv_socket_power": {
+       "chart": "amber",
+       "color": "#ffc107",
+       "icon": "mdi:television-classic",
+       "max": 300,
+       "name": "TV"
+      },
+      "sensor.living_room_vacuum_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
+      "sensor.lr_powerline_power": {
+       "chart": null,
+       "color": "#795548",
+       "icon": "mdi:transmission-tower",
+       "max": 50,
+       "name": "LR powerline"
+      },
+      "sensor.media_corner_power": {
+       "chart": "red",
+       "color": "#e91e63",
+       "icon": "mdi:audio-video",
+       "max": 150,
+       "name": "Media corner"
+      },
+      "sensor.mini_rack_power": {
+       "chart": "deep-orange",
+       "color": "#ff5722",
+       "icon": "mdi:server",
+       "max": 150,
+       "name": "Mini rack"
+      },
+      "sensor.poe_network_power": {
+       "chart": "blue-grey",
+       "color": "#607d8b",
+       "icon": "mdi:server-network",
+       "max": 60,
+       "name": "PoE network"
+      },
+      "sensor.upstairs_toilet_power": {
+       "chart": "brown",
+       "color": "#00bcd4",
+       "icon": "mdi:toilet",
+       "max": 1000,
+       "name": "Toilet up"
+      }
+     },
+     "type": "custom:auto-entities"
     },
     {
-     "chart_type": "bar-stack",
-     "days_to_show": 365,
+     "card": {
+      "chart_type": "bar-stack",
+      "days_to_show": 365,
+      "period": "month",
+      "stat_types": [
+       "change"
+      ],
+      "title": "Monthly kWh, last 12 months",
+      "type": "statistics-graph"
+     },
+     "card_param": "entities",
      "entities": [
       {
        "color": "orange",
@@ -863,53 +787,74 @@
        "color": "cyan",
        "entity": "sensor.kid2_room_ac_energy",
        "name": "Kids room 2's AC"
-      },
-      {
-       "color": "amber",
-       "entity": "sensor.living_room_tv_socket_total_energy",
-       "name": "TV socket"
-      },
-      {
-       "color": "red",
-       "entity": "sensor.media_corner_energy",
-       "name": "Media corner socket"
-      },
-      {
-       "color": "deep-purple",
-       "entity": "sensor.living_room_vacuum_socket_total_energy",
-       "name": "Vacuum socket"
-      },
-      {
-       "color": "teal",
-       "entity": "sensor.downstairs_toilet_energy",
-       "name": "Downstairs Toilet socket"
-      },
-      {
-       "color": "brown",
-       "entity": "sensor.upstairs_toilet_energy",
-       "name": "Upstairs Toilet socket"
-      },
-      {
-       "color": "blue-grey",
-       "entity": "sensor.poe_network_energy",
-       "name": "PoE network socket"
-      },
-      {
-       "color": "green",
-       "entity": "sensor.lr_powerline_energy",
-       "name": "LR powerline socket"
       }
      ],
+     "filter": {
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s if s.energy -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set e = {'entity': s.energy, 'name': (o.get('name') or s.name) ~ ' socket'} -%}\n{%- if o.get('chart') %}{% set e = dict(e, color=o.get('chart')) %}{% endif -%}\n{%- set out.l = out.l + [e] -%}\n{%- endfor -%}\n{{ out.l }}"
+     },
      "grid_options": {
       "columns": "full",
       "rows": 6
      },
-     "period": "month",
-     "stat_types": [
-      "change"
-     ],
-     "title": "Monthly kWh, last 12 months",
-     "type": "statistics-graph"
+     "sockets": {
+      "sensor.downstairs_toilet_power": {
+       "chart": "teal",
+       "color": "#03a9f4",
+       "icon": "mdi:toilet",
+       "max": 1600,
+       "name": "Toilet down"
+      },
+      "sensor.living_room_tv_socket_power": {
+       "chart": "amber",
+       "color": "#ffc107",
+       "icon": "mdi:television-classic",
+       "max": 300,
+       "name": "TV"
+      },
+      "sensor.living_room_vacuum_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
+      "sensor.lr_powerline_power": {
+       "chart": null,
+       "color": "#795548",
+       "icon": "mdi:transmission-tower",
+       "max": 50,
+       "name": "LR powerline"
+      },
+      "sensor.media_corner_power": {
+       "chart": "red",
+       "color": "#e91e63",
+       "icon": "mdi:audio-video",
+       "max": 150,
+       "name": "Media corner"
+      },
+      "sensor.mini_rack_power": {
+       "chart": "deep-orange",
+       "color": "#ff5722",
+       "icon": "mdi:server",
+       "max": 150,
+       "name": "Mini rack"
+      },
+      "sensor.poe_network_power": {
+       "chart": "blue-grey",
+       "color": "#607d8b",
+       "icon": "mdi:server-network",
+       "max": 60,
+       "name": "PoE network"
+      },
+      "sensor.upstairs_toilet_power": {
+       "chart": "brown",
+       "color": "#00bcd4",
+       "icon": "mdi:toilet",
+       "max": 1000,
+       "name": "Toilet up"
+      }
+     },
+     "type": "custom:auto-entities"
     }
    ],
    "column_span": 2,

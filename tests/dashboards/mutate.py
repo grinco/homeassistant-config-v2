@@ -162,15 +162,16 @@ def m_clobbered_label(d):
     return "C8"
 
 
-def _room_tile(cfg, name="Hallway"):
+def _room_gen(cfg, floor="upper_floor"):
+    """The auto-entities that generates one floor's Home tiles."""
     for v in cfg["data"]["config"]["views"]:
         for sec in (v.get("sections") or []):
             cs = sec.get("cards") or []
             if cs and cs[0].get("heading") == "Rooms":
                 for c in cs:
-                    if c.get("name") == name:
-                        return c
-    raise SystemExit("no %s room tile found to mutate" % name)
+                    if c.get("type") == "custom:auto-entities" and c.get("floor") == floor:
+                        return c, cs
+    raise SystemExit("no %s room generator found to mutate" % floor)
 
 
 def _room_view(cfg, path="hallway"):
@@ -182,19 +183,67 @@ def _room_view(cfg, path="hallway"):
 
 def m_tile_pins_entity(d):
     """The bug that started this: a tile naming its room's light group instead
-    of its room. Correct on the day it was written, a dash ever after."""
+    of its room. Correct on the day it was written, a dash ever after. In the
+    generated form it can only come back through the room map."""
     doc = _cfg(d, LOV)
-    tile = _room_tile(doc)
-    tile["variables"]["grp"] = "light.magic_areas_light_groups_hallway_all_lights"
+    gen, _ = _room_gen(doc)
+    gen["rooms"]["hallway"]["grp"] = "light.magic_areas_light_groups_hallway_all_lights"
     _save(d, LOV, doc)
     return "C10"
 
 
 def m_tile_loses_area(d):
     doc = _cfg(d, LOV)
-    _room_tile(doc)["variables"].pop("area", None)
+    gen, _ = _room_gen(doc)
+    gen["rooms"]["no_such_room"] = {"name": "Nowhere", "page": "closet"}
     _save(d, LOV, doc)
     return "C10"
+
+
+def m_floor_generator_dropped(d):
+    """A floor whose generator is gone: its rooms vanish from Home, silently."""
+    doc = _cfg(d, LOV)
+    gen, cs = _room_gen(doc)
+    cs.remove(gen)
+    _save(d, LOV, doc)
+    return "C9"
+
+
+def m_generators_diverge(d):
+    """One floor's template edited and the other forgotten."""
+    doc = _cfg(d, LOV)
+    gen, _ = _room_gen(doc)
+    gen["filter"]["template"] = gen["filter"]["template"].replace("area_name(a)", "a")
+    _save(d, LOV, doc)
+    return "C10"
+
+
+def _section(cfg, vpath, heading):
+    for v in cfg["data"]["config"]["views"]:
+        if v.get("path") == vpath:
+            for sec in (v.get("sections") or []):
+                cs = sec.get("cards") or []
+                if cs and cs[0].get("heading") == heading:
+                    return cs
+    raise SystemExit("no %s/%s section found to mutate" % (vpath, heading))
+
+
+def m_socket_hand_listed(d):
+    """The pre-2026-09-25 shape: a plug gets its own card, one edit per device."""
+    doc = _cfg(d, LOV)
+    _section(doc, "energy", "Sockets").append(
+        {"type": "custom:button-card", "entity": "sensor.mini_rack_power",
+         "template": "vg_meter", "grid_options": {"columns": 6, "rows": 1}})
+    _save(d, LOV, doc)
+    return "C13"
+
+
+def m_devices_view_gone(d):
+    doc = _cfg(d, ADM)
+    views = doc["data"]["config"]["views"]
+    doc["data"]["config"]["views"] = [v for v in views if v.get("path") != "devices"]
+    _save(d, ADM, doc)
+    return "C13"
 
 
 def m_rooms_section_renamed(d):
@@ -273,11 +322,40 @@ def m_socket_back_on_room(d):
     return "C12"
 
 
+def m_room_page_hand_edited(d):
+    """One room page gets a card the others do not: it has left the skeleton."""
+    doc = _cfg(d, LOV)
+    _room_view(doc, "kitchen")["sections"][0]["cards"].append(
+        {"type": "tile", "entity": "light.gallery"})
+    _save(d, LOV, doc)
+    return "C14"
+
+
+def m_room_page_unfocused(d):
+    """The pre-2026-09-25 kitchen: every sensor in the area, labelled or not."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("subview") and v.get("back_path") == "/lovelace/home" and v.get("path") != "home-classic":
+            for c in v["sections"][0]["cards"]:
+                if c.get("type") == "custom:auto-entities":
+                    for r in (c.get("filter") or {}).get("include") or []:
+                        if r.get("label") == "on_room_page":
+                            r.pop("label")
+    _save(d, LOV, doc)
+    return "C15"
+
+
 MUTATIONS = [
     ("a socket returns to a room page", m_socket_back_on_room),
+    ("a room page is edited by hand", m_room_page_hand_edited),
+    ("a room page lists every sensor again", m_room_page_unfocused),
     ("the rollback view gets restyled", m_rollback_restyled),
-    ("a room tile pins its light group", m_tile_pins_entity),
-    ("a room tile stops naming its area", m_tile_loses_area),
+    ("a room map pins its light group", m_tile_pins_entity),
+    ("a room map names an area that does not exist", m_tile_loses_area),
+    ("a floor loses its tile generator", m_floor_generator_dropped),
+    ("the floor generators diverge", m_generators_diverge),
+    ("a socket gets a hand-listed card again", m_socket_hand_listed),
+    ("the admin Devices view is deleted", m_devices_view_gone),
     ("the Rooms section is renamed away", m_rooms_section_renamed),
     ("a room page loses its lights rule", m_room_loses_lights),
     ("a room rule names the wrong area", m_rule_names_wrong_area),

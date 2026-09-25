@@ -64,6 +64,25 @@ Checks, each one written because something it catches actually shipped:
                          Sockets are on the Energy tab for monitoring and
                          nothing else; a room page that offers one as a toggle
                          undoes that, and one of them feeds the network gear.
+  C13 generated          the sections that list DEVICES - Home rooms, Energy
+                         sockets, Security sensors, admin people and the admin
+                         Devices view - contain headings, markdown and
+                         auto-entities only, never a card that names an entity.
+                         A hand-listed card is a dashboard edit per device: the
+                         mini rack plug (2026-09-24) needed nine of them and
+                         still missed the socket total, and renaming the terrace
+                         sensor broke ten more. A missing section fails too, so
+                         the check cannot pass by the section being deleted.
+  C14 one-room-skeleton  every room page is the same page with its area swapped in.
+                         A page edited by hand stops receiving fixes made to the
+                         others, and a new area can only be added cheaply if its
+                         page is a copy of a known-good one.
+  C15 focused-rooms      a room page generates lights, climate, fans, covers,
+                         locks and media for its area, and anything else ONLY
+                         through the `on_room_page` label (or Magic Areas'
+                         automation switches). The kitchen page listed 49
+                         entities on 2026-09-25, 46 of them appliance settings
+                         nobody opens a room page for.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -119,6 +138,20 @@ ENERGY_CLASSES = {"energy", "power", "voltage", "current", "power_factor",
 # cannot carry exceptions.
 ROOM_HIDDEN_LABEL = "not_on_room_pages"
 
+# Room pages (C15): domains shown by default, and the opt-in label for the rest.
+ROOM_DEFAULT_DOMAINS = ("light", "climate", "fan", "cover", "lock", "media_player")
+ROOM_SHOW_LABEL = "on_room_page"
+
+# Sections that list devices and must therefore be generated (C13):
+# (dashboard, view path, first heading of the section, or None for every section).
+GENERATED = [
+    ("lovelace", "home", "Rooms"),
+    ("lovelace", "energy", "Sockets"),
+    ("lovelace", "security", "Sensors"),
+    ("admin-panel", "system", "Phones & presence"),
+    ("admin-panel", "devices", None),
+]
+
 RESOURCE_SLUG = {
     "button-card": "button-card",
     "slider-entity-row": "lovelace-slider-entity-row",
@@ -161,12 +194,16 @@ def area_members():
     for e in _store("core.entity_registry", "entities"):
         if e.get("disabled_by") or e.get("hidden_by") or e.get("entity_category"):
             continue
-        if ROOM_HIDDEN_LABEL in (e.get("labels") or []):
+        labels = e.get("labels") or []
+        if ROOM_HIDDEN_LABEL in labels:
             continue
         domain = e["entity_id"].split(".")[0]
-        if domain not in ROOM_DOMAINS:
+        # Since 2026-09-25 a room page is focused (C15): the default domains, plus
+        # whatever carries the opt-in label. Nothing else is owed a place on it.
+        if domain not in ROOM_DEFAULT_DOMAINS and ROOM_SHOW_LABEL not in labels:
             continue
-        if (e.get("original_device_class") or e.get("device_class")) in ENERGY_CLASSES:
+        if ROOM_SHOW_LABEL not in labels and \
+                (e.get("original_device_class") or e.get("device_class")) in ENERGY_CLASSES:
             continue
         area = e.get("area_id") or (devices.get(e.get("device_id")) or {}).get("area_id")
         if not area:
@@ -441,56 +478,62 @@ def main():
         # draft of this check repeated that mistake and reported 19 tiles.
         if label == "lovelace":
             areas = area_names()
-            tiles = []
+            floors = {a["id"]: a.get("floor_id") for a in _store("core.area_registry", "areas")}
+            # Since 2026-09-25 the tiles are GENERATED: one auto-entities per floor,
+            # whose Jinja reads `floor` and a `rooms` map (area -> name/icon/page/
+            # special) out of its own config. The map is structured data on purpose,
+            # so this check reads it rather than re-implementing the template.
+            gens = []
             for view in views:
                 for sec in (view.get("sections") or []):
                     cs = sec.get("cards") or []
                     if not cs or cs[0].get("heading") != "Rooms":
                         continue
                     for i, c in enumerate(cs):
-                        if c.get("type") == "custom:button-card" and "vg_room" in template_names(c):
-                            tiles.append(("%s/rooms/%d" % (label, i), c))
-            if not tiles:
-                fail("C10", "%s: found no room tiles at all - the Rooms section is "
-                            "gone or renamed, and C9/C10 would pass by default" % label)
+                        if c.get("type") == "custom:auto-entities" and "floor" in c:
+                            gens.append(("%s/rooms/%d" % (label, i), c))
+            if not gens:
+                fail("C10", "%s: found no room-tile generator at all - the Rooms section "
+                            "is gone or renamed, and C9/C10 would pass by default" % label)
 
             tile_area, stale, unknown = {}, [], []
-            for path, card in tiles:
-                v = card.get("variables") or {}
-                nav = (card.get("hold_action") or {}).get("navigation_path") or ""
-                frozen = sorted(k for k in ("grp", "ac", "pres")
-                                if isinstance(v.get(k), str) and "." in v[k])
-                if frozen:
-                    stale.append("%s  %r pins %s" % (path, card.get("name"),
-                                                     ", ".join("%s=%s" % (k, v[k]) for k in frozen)))
-                area = v.get("area")
-                if not area:
-                    unknown.append("%s  %r defines no variables.area" % (path, card.get("name")))
-                elif area not in areas:
-                    unknown.append("%s  %r names area %r, which does not exist"
-                                   % (path, card.get("name"), area))
-                else:
-                    tile_area[area] = nav[len("/lovelace/"):] if nav.startswith("/lovelace/") else None
+            tpls = {json.dumps((c.get("filter") or {}).get("template")) for _, c in gens}
+            if len(tpls) > 1:
+                fail("C10", "%s: the %d floor generators run different templates - a fix "
+                            "made to one floor silently misses the other" % (label, len(gens)))
+            covered = set()
+            for path, gen in gens:
+                floor = gen.get("floor")
+                covered.add(floor)
+                for area, o in sorted((gen.get("rooms") or {}).items()):
+                    pinned = sorted(k for k, v in o.items()
+                                    if isinstance(v, str) and ENTITY_RE.fullmatch(v))
+                    if pinned:
+                        stale.append("%s  %s pins %s" % (path, area,
+                                                         ", ".join("%s=%s" % (k, o[k]) for k in pinned)))
+                    if area not in areas:
+                        unknown.append("%s  names area %r, which does not exist" % (path, area))
+                    elif floors.get(area) != floor:
+                        unknown.append("%s  maps %r, which is not on floor %r" % (path, area, floor))
+                    elif o.get("page"):
+                        tile_area[area] = o["page"]
             if stale:
-                fail("C10", "%s: %d room tile(s) pin a per-room entity id, so the "
+                fail("C10", "%s: %d room(s) pin a per-room entity id, so the "
                             "tile freezes at the moment it was written"
                      % (label, len(stale)), stale)
             if unknown:
-                fail("C10", "%s: %d room tile(s) do not resolve a real area"
+                fail("C10", "%s: %d room map entr(ies) do not resolve a real area"
                      % (label, len(unknown)), unknown)
 
-            # C9 - a room view accounts for everything its area holds.
-            # Driven from the AREA REGISTRY rather than from the views, so a
-            # room that lost its tile or its page fails loudly instead of
-            # dropping out of the loop and passing.
+            # C9 - every room is reachable, and a styled page accounts for its area.
+            # Driven from the AREA REGISTRY. An area with no map entry is legal: its
+            # tile opens Home Assistant's own area page until it is given a styled one.
             members = area_members()
             by_path = {v.get("path"): v for v in views}
-            roomless = sorted(a for a in areas
-                              if a in members and a not in tile_area)
+            roomless = sorted(a for a in areas if a in members and floors.get(a) not in covered)
             if roomless:
-                fail("C9", "%s: %d area(s) hold entities but no Home tile claims "
-                           "them, so nothing routes to a room page" % (label, len(roomless)),
-                     roomless)
+                fail("C9", "%s: %d area(s) hold entities on a floor no generator covers, "
+                           "so they get no Home tile" % (label, len(roomless)), roomless)
 
             uncovered, pageless = [], []
             for area, path in sorted(tile_area.items()):
@@ -508,7 +551,7 @@ def main():
                         continue
                     uncovered.append("%-14s %s" % (path, eid))
             if pageless:
-                fail("C9", "%s: %d room tile(s) navigate nowhere" % (label, len(pageless)), pageless)
+                fail("C9", "%s: %d room(s) map to a page that does not exist" % (label, len(pageless)), pageless)
             if uncovered:
                 fail("C9", "%s: %d entity/entities sit in an area whose room view "
                            "neither names them nor generates their domain"
@@ -554,6 +597,70 @@ def main():
             if leaked:
                 fail("C11", "%s: %d card(s) of the rebuild's vocabulary have leaked "
                             "into the rollback view" % (label, len(leaked)), leaked)
+
+        # C13 - device lists are generated, not hand-listed.
+        for (dash, vpath, heading) in GENERATED:
+            if dash != label:
+                continue
+            view = next((v for v in views if v.get("path") == vpath), None)
+            secs = [] if view is None else [
+                s for s in (view.get("sections") or [])
+                if heading is None or ((s.get("cards") or [{}])[0].get("heading") == heading)]
+            if not secs:
+                fail("C13", "%s: %s has no %s section - a generated list that is "
+                            "missing passes every other check"
+                     % (label, vpath, repr(heading) if heading else "any"))
+                continue
+            listed = []
+            for s in secs:
+                for i, c in enumerate(s.get("cards") or []):
+                    t_ = c.get("type")
+                    if t_ in ("heading", "markdown"):
+                        continue
+                    if t_ == "custom:auto-entities" and not c.get("entities"):
+                        continue
+                    listed.append("%s/%s/%s#%d  %s  (%s)" % (label, vpath, heading or "*", i, t_,
+                                                            c.get("entity") or c.get("name")))
+            if listed:
+                fail("C13", "%s: %d hand-listed card(s) in a section the registry could "
+                            "generate - every new device is another edit"
+                     % (label, len(listed)), listed)
+
+        # C14 / C15 - room pages: one skeleton, and focused.
+        if label == "lovelace":
+            rooms = [v for v in views if v.get("subview") and v.get("back_path") == "/lovelace/home"
+                     and v.get("path") != "home-classic"]
+            shapes = {}
+            unfocused = []
+            for v in rooms:
+                areas_here = set()
+                for _, card in cards(v):
+                    for r in ((card.get("filter") or {}).get("include") or []):
+                        if r.get("area"):
+                            areas_here.add(str(r["area"]))
+                        doms = r.get("domain")
+                        doms = doms if isinstance(doms, list) else [doms]
+                        if not r.get("area") or r.get("label") == ROOM_SHOW_LABEL:
+                            continue
+                        if r.get("integration") == "magic_areas":
+                            continue
+                        loose = [d for d in doms if d and d not in ROOM_DEFAULT_DOMAINS]
+                        if loose:
+                            unfocused.append("%s  generates %s without the %r label"
+                                             % (v.get("path"), "/".join(loose), ROOM_SHOW_LABEL))
+                body = {k: v[k] for k in v if k not in ("title", "path", "icon")}
+                blob = json.dumps(body, sort_keys=True, ensure_ascii=False)
+                for a in areas_here:
+                    blob = blob.replace('"area": "%s"' % a, '"area": "@AREA"')
+                shapes.setdefault(blob, []).append(v.get("path"))
+            if len(shapes) > 1:
+                groups = sorted(shapes.values(), key=len, reverse=True)
+                fail("C14", "%s: room pages come in %d shapes, not one - the odd ones out "
+                            "no longer receive fixes made to the rest" % (label, len(shapes)),
+                     ["%d page(s): %s" % (len(g), ", ".join(sorted(g))) for g in groups])
+            if unfocused:
+                fail("C15", "%s: %d room rule(s) pull in entities nobody asked for"
+                     % (label, len(unfocused)), sorted(set(unfocused)))
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

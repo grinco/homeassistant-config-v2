@@ -243,6 +243,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -330,8 +432,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -353,13 +455,18 @@
        "include": [
         {
          "area": "living_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -393,20 +500,30 @@
        "include": [
         {
          "area": "living_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -504,209 +621,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "living_room",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "living_room",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_living_room",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_living_room",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_co2_living_room",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:molecule-co2",
-      "name": "CO2",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -728,35 +642,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "living_room",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "living_room",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -769,40 +681,56 @@
       "unique": "entity"
      },
      {
-      "heading": "Elsewhere",
-      "heading_style": "subtitle",
-      "icon": "mdi:arrow-right-circle-outline",
-      "type": "heading"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
       },
-      "icon": "mdi:power-socket-de",
-      "label": "on the Energy tab",
-      "name": "Sockets",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/energy"
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
       },
-      "template": "vg_nav",
-      "type": "custom:button-card"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:robot-vacuum",
-      "label": "on Appliances",
-      "name": "Vacuum",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/appliances"
-      },
-      "template": "vg_nav",
-      "type": "custom:button-card"
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -1057,6 +985,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -1144,8 +1174,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -1167,13 +1197,18 @@
        "include": [
         {
          "area": "kitchen",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -1207,20 +1242,30 @@
        "include": [
         {
          "area": "kitchen",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -1318,176 +1363,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kitchen",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kitchen",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -1509,35 +1384,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "kitchen",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "kitchen",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -1550,25 +1423,56 @@
       "unique": "entity"
      },
      {
-      "heading": "Elsewhere",
-      "heading_style": "subtitle",
-      "icon": "mdi:arrow-right-circle-outline",
-      "type": "heading"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
       },
-      "icon": "mdi:silverware-fork-knife",
-      "label": "oven, dishwasher, cooktop",
-      "name": "Appliances",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/appliances"
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
       },
-      "template": "vg_nav",
-      "type": "custom:button-card"
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -1823,6 +1727,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -1910,8 +1916,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -1933,13 +1939,18 @@
        "include": [
         {
          "area": "bedroom",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -1973,20 +1984,30 @@
        "include": [
         {
          "area": "bedroom",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -2084,209 +2105,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_office",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_office",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_co2_office",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:molecule-co2",
-      "name": "CO2",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -2308,35 +2126,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "bedroom",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "bedroom",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -2345,6 +2161,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -2601,6 +2469,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -2688,8 +2658,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -2711,13 +2681,18 @@
        "include": [
         {
          "area": "corridor",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -2751,20 +2726,30 @@
        "include": [
         {
          "area": "corridor",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -2862,198 +2847,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "corridor",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "corridor",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_corridor",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_corridor",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -3075,35 +2868,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "corridor",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "corridor",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -3116,25 +2907,56 @@
       "unique": "entity"
      },
      {
-      "heading": "Elsewhere",
-      "heading_style": "subtitle",
-      "icon": "mdi:arrow-right-circle-outline",
-      "type": "heading"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
       },
-      "icon": "mdi:doorbell-video",
-      "label": "on the Security tab",
-      "name": "Front door",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/security"
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
       },
-      "template": "vg_nav",
-      "type": "custom:button-card"
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -3389,6 +3211,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -3476,8 +3400,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -3499,13 +3423,18 @@
        "include": [
         {
          "area": "bedroom_2",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -3539,20 +3468,30 @@
        "include": [
         {
          "area": "bedroom_2",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -3650,198 +3589,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom_2",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom_2",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_bedroom",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_bedroom",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -3863,35 +3610,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "bedroom_2",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -3900,6 +3645,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -4156,6 +3953,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -4243,8 +4142,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -4266,13 +4165,18 @@
        "include": [
         {
          "area": "kid1_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -4306,20 +4210,30 @@
        "include": [
         {
          "area": "kid1_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -4417,198 +4331,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid1_room",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid1_room",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_kid1",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_kid1",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -4630,35 +4352,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "kid1_room",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "kid1_room",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -4667,6 +4387,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -4923,6 +4695,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -5010,8 +4884,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -5033,13 +4907,18 @@
        "include": [
         {
          "area": "kid2_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -5073,20 +4952,30 @@
        "include": [
         {
          "area": "kid2_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -5184,198 +5073,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid2_room",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid2_room",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.climate_temp_kid2",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:thermometer",
-      "name": "Temperature",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.climate_humidity_kid2",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:water-percent",
-      "name": "Humidity",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -5397,35 +5094,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "kid2_room",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "kid2_room",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -5434,6 +5129,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -5690,6 +5437,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -5777,8 +5626,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -5800,13 +5649,18 @@
        "include": [
         {
          "area": "hallway",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -5840,20 +5694,30 @@
        "include": [
         {
          "area": "hallway",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -5951,198 +5815,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "hallway",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "hallway",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "entity": "sensor.radiation_dose_rate",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:radioactive",
-      "name": "Dose rate",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "entity": "sensor.background_radiation_cpm",
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
-      },
-      "icon": "mdi:radioactive",
-      "name": "Counts",
-      "template": "view_sensor_layout",
-      "type": "custom:button-card"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -6164,35 +5836,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "hallway",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "hallway",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -6201,6 +5871,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -6457,6 +6179,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -6544,8 +6368,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -6567,13 +6391,18 @@
        "include": [
         {
          "area": "bathroom",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -6607,20 +6436,30 @@
        "include": [
         {
          "area": "bathroom",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -6718,176 +6557,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bathroom",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bathroom",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -6909,35 +6578,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "bathroom",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "bathroom",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -6950,25 +6617,56 @@
       "unique": "entity"
      },
      {
-      "heading": "Elsewhere",
-      "heading_style": "subtitle",
-      "icon": "mdi:arrow-right-circle-outline",
-      "type": "heading"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
       },
-      "icon": "mdi:power-socket-de",
-      "label": "on the Energy tab",
-      "name": "Toilet socket",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/energy"
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
       },
-      "template": "vg_nav",
-      "type": "custom:button-card"
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -7223,6 +6921,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -7310,8 +7110,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -7333,13 +7133,18 @@
        "include": [
         {
          "area": "shower",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -7373,20 +7178,30 @@
        "include": [
         {
          "area": "shower",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -7484,176 +7299,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "shower",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "shower",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -7675,35 +7320,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "shower",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "shower",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -7716,25 +7359,56 @@
       "unique": "entity"
      },
      {
-      "heading": "Elsewhere",
-      "heading_style": "subtitle",
-      "icon": "mdi:arrow-right-circle-outline",
-      "type": "heading"
-     },
-     {
-      "grid_options": {
-       "columns": 6,
-       "rows": "auto"
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
       },
-      "icon": "mdi:power-socket-de",
-      "label": "on the Energy tab",
-      "name": "Toilet socket",
-      "tap_action": {
-       "action": "navigate",
-       "navigation_path": "/lovelace/energy"
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
       },
-      "template": "vg_nav",
-      "type": "custom:button-card"
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -7989,6 +7663,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -8076,8 +7852,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -8099,13 +7875,18 @@
        "include": [
         {
          "area": "laundry_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -8139,20 +7920,30 @@
        "include": [
         {
          "area": "laundry_room",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -8250,176 +8041,6 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "laundry_room",
-         "domain": "switch",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "vacuum",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "laundry_room",
-         "domain": "switch",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
-     },
-     {
-      "card": {
        "columns": 2,
        "square": false,
        "type": "grid"
@@ -8441,35 +8062,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
          "area": "laundry_room",
-         "domain": "sensor",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "laundry_room",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -8478,6 +8097,58 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -8734,6 +8405,108 @@
      },
      {
       "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": "climate",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        },
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": "climate",
+         "options": {
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "heading": "Air",
        "icon": "mdi:air-purifier",
        "type": "heading"
@@ -8821,8 +8594,8 @@
      },
      {
       "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
        "type": "heading"
       },
       "card_param": "badges",
@@ -8844,13 +8617,18 @@
        "include": [
         {
          "area": "closet",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         }
        ]
@@ -8884,20 +8662,30 @@
        "include": [
         {
          "area": "closet",
-         "domain": "climate",
+         "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "header": {
-           "toggle": true
-          },
-          "layout": {
-           "mode": {
-            "headings": false,
-            "icons": true
-           },
-           "step": "row"
-          },
-          "type": "custom:simple-thermostat"
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "lock",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
+          "type": "tile"
          }
         }
        ]
@@ -8995,8 +8783,138 @@
      },
      {
       "card": {
-       "heading": "Controls",
-       "icon": "mdi:toggle-switch-outline",
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     }
+    ],
+    "column_span": 1,
+    "type": "grid"
+   }
+  ],
+  "subview": true,
+  "title": "Closet",
+  "type": "sections"
+ },
+ {
+  "back_path": "/lovelace/home",
+  "icon": "mdi:balcony",
+  "max_columns": 2,
+  "path": "terrace",
+  "sections": [
+   {
+    "cards": [
+     {
+      "card": {
+       "heading": "Lights",
+       "icon": "mdi:lightbulb-group",
        "type": "heading"
       },
       "card_param": "badges",
@@ -9016,17 +8934,243 @@
         },
         {
          "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
         }
        ],
        "include": [
         {
-         "area": "closet",
-         "domain": "switch",
+         "area": "terrace",
+         "domain": "light",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "light",
+         "integration": "magic_areas",
+         "options": {
+          "custom_fields": {
+           "power_icon": {
+            "card": {
+             "entity": "this.entity_id",
+             "template": "view_power_icon_layout",
+             "type": "custom:button-card"
+            }
+           }
+          },
+          "entity": "this.entity_id",
+          "grid_options": {
+           "columns": 12,
+           "rows": "auto"
+          },
+          "label": "Magic Areas group",
+          "name": "All lights",
+          "template": "vg_room_master",
+          "type": "custom:button-card",
+          "variables": {
+           "custom_state_display": "[[[ var m = entity.attributes.entity_id || []; var n = 0; for (var i = 0; i < m.length; i++) { if (states[m[i]] && states[m[i]].state === 'on') n++; } return n + ' of ' + m.length + ' on'; ]]]"
+          }
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        },
+        {
+         "integration": "magic_areas"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "attributes": {
+          "supported_color_modes": "$$/xy/"
+         },
+         "domain": "light",
+         "options": {
+          "custom_fields": {
+           "power_icon": {
+            "card": {
+             "entity": "this.entity_id",
+             "template": "view_power_icon_layout",
+             "type": "custom:button-card"
+            }
+           },
+           "slider": {
+            "card": {
+             "entity": "this.entity_id",
+             "full_row": true,
+             "toggle": false,
+             "type": "custom:slider-entity-row"
+            }
+           }
+          },
+          "entity": "this.entity_id",
+          "grid_options": {
+           "columns": 12,
+           "rows": "auto"
+          },
+          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
+          "template": "hue_color_bulb",
+          "type": "custom:button-card",
+          "variables": {
+           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+          }
+         }
+        },
+        {
+         "area": "terrace",
+         "attributes": {
+          "supported_color_modes": "$$/rgb/"
+         },
+         "domain": "light",
+         "options": {
+          "custom_fields": {
+           "power_icon": {
+            "card": {
+             "entity": "this.entity_id",
+             "template": "view_power_icon_layout",
+             "type": "custom:button-card"
+            }
+           },
+           "slider": {
+            "card": {
+             "entity": "this.entity_id",
+             "full_row": true,
+             "toggle": false,
+             "type": "custom:slider-entity-row"
+            }
+           }
+          },
+          "entity": "this.entity_id",
+          "grid_options": {
+           "columns": 12,
+           "rows": "auto"
+          },
+          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
+          "template": "hue_led_strip",
+          "type": "custom:button-card",
+          "variables": {
+           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+          }
+         }
+        },
+        {
+         "area": "terrace",
+         "domain": "light",
+         "options": {
+          "custom_fields": {
+           "power_icon": {
+            "card": {
+             "entity": "this.entity_id",
+             "template": "view_power_icon_layout",
+             "type": "custom:button-card"
+            }
+           },
+           "slider": {
+            "card": {
+             "entity": "this.entity_id",
+             "full_row": true,
+             "toggle": false,
+             "type": "custom:slider-entity-row"
+            }
+           }
+          },
+          "entity": "this.entity_id",
+          "grid_options": {
+           "columns": 12,
+           "rows": "auto"
+          },
+          "label": "[[[ var e = (hass && hass.entities) ? hass.entities[entity.entity_id] : null; var d = (e && e.device_id && hass.devices) ? hass.devices[e.device_id] : null; return (d && d.model) ? d.model : ''; ]]]",
+          "template": "hue_white_bulb",
+          "type": "custom:button-card",
+          "variables": {
+           "custom_state_display": "[[[ if (entity.state === 'unavailable') return 'Unavailable'; if (entity.state !== 'on') return 'Off'; var b = entity.attributes.brightness; return b ? 'On \\u00b7 ' + Math.round(b / 2.55) + '%' : 'On'; ]]]"
+          }
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Climate",
+       "icon": "mdi:thermostat",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "climate",
          "options": {
           "show_state": true,
           "type": "entity"
@@ -9036,30 +9180,99 @@
          }
         },
         {
-         "area": "closet",
-         "domain": "cover",
+         "area": "terrace",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
          "options": {
           "show_state": true,
           "type": "entity"
-         },
-         "sort": {
-          "count": 3
          }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
         },
         {
-         "area": "closet",
-         "domain": "lock",
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "climate",
          "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
+          "entity": "this.entity_id",
+          "header": {
+           "toggle": true
+          },
+          "layout": {
+           "mode": {
+            "headings": false,
+            "icons": true
+           },
+           "step": "row"
+          },
+          "type": "custom:simple-thermostat"
          }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Air",
+       "icon": "mdi:air-purifier",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
         },
         {
-         "area": "closet",
-         "domain": "vacuum",
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "fan",
          "options": {
           "show_state": true,
           "type": "entity"
@@ -9094,58 +9307,126 @@
         },
         {
          "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
         }
        ],
        "include": [
         {
-         "area": "closet",
-         "domain": "switch",
+         "area": "terrace",
+         "domain": "fan",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
+          "features": [
+           {
+            "style": "dropdown",
+            "type": "fan-preset-modes"
+           },
+           {
+            "type": "fan-speed"
+           }
+          ],
+          "features_position": "bottom",
           "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Blinds & locks",
+       "icon": "mdi:blinds",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "cover",
+         "options": {
+          "show_state": true,
+          "type": "entity"
          }
         },
         {
-         "area": "closet",
+         "area": "terrace",
+         "domain": "lock",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
          "domain": "cover",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
+          "features": [
+           {
+            "type": "cover-open-close"
+           }
+          ],
+          "features_position": "bottom",
           "type": "tile"
          }
         },
         {
-         "area": "closet",
+         "area": "terrace",
          "domain": "lock",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "closet",
-         "domain": "vacuum",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 12
-          },
+          "features": [
+           {
+            "type": "lock-commands"
+           }
+          ],
+          "features_position": "bottom",
           "type": "tile"
          }
         }
@@ -9159,9 +9440,88 @@
       "unique": "entity"
      },
      {
-      "heading": "Conditions",
-      "icon": "mdi:gauge",
-      "type": "heading"
+      "card": {
+       "heading": "Media",
+       "icon": "mdi:speaker",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "media_player",
+         "options": {
+          "show_state": true,
+          "type": "entity"
+         },
+         "sort": {
+          "count": 3
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 1,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "media_player",
+         "options": {
+          "entity": "this.entity_id",
+          "group": true,
+          "hide": {
+           "power_state": false
+          },
+          "type": "custom:mini-media-player"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "sort": {
+       "method": "friendly_name"
+      },
+      "type": "custom:auto-entities",
+      "unique": "entity"
      },
      {
       "card": {
@@ -9186,35 +9546,33 @@
         },
         {
          "attributes": {
-          "device_class": "/^(energy|power|voltage|current|power_factor|apparent_power|reactive_power|monetary|energy_storage)$/"
+          "device_class": "outlet"
+         }
+        },
+        {
+         "attributes": {
+          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
          }
         }
        ],
        "include": [
         {
-         "area": "closet",
-         "domain": "sensor",
+         "area": "terrace",
+         "domain": [
+          "switch",
+          "sensor",
+          "binary_sensor",
+          "button",
+          "select",
+          "number",
+          "scene",
+          "script",
+          "vacuum"
+         ],
+         "label": "on_room_page",
          "options": {
           "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
-         }
-        },
-        {
-         "area": "closet",
-         "domain": "binary_sensor",
-         "options": {
-          "entity": "this.entity_id",
-          "grid_options": {
-           "columns": 6,
-           "rows": "auto"
-          },
-          "template": "view_sensor_layout",
-          "type": "custom:button-card"
+          "type": "tile"
          }
         }
        ]
@@ -9225,6 +9583,58 @@
       },
       "type": "custom:auto-entities",
       "unique": "entity"
+     },
+     {
+      "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "terrace",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        },
+        {
+         "area": "terrace",
+         "attributes": {
+          "device_class": "occupancy"
+         },
+         "domain": "binary_sensor",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
      }
     ],
     "column_span": 1,
@@ -9232,7 +9642,7 @@
    }
   ],
   "subview": true,
-  "title": "Closet",
+  "title": "Terrace",
   "type": "sections"
  }
 ]

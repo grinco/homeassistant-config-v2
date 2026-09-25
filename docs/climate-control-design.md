@@ -33,6 +33,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.8** | **Safety dispatch hoisted above the back-offs.** A freezing room that was stood down or overridden resolved to `heat` and then never sent the command, for up to 20 minutes | Round-14 F14-5 — see §31 |
 | **v5.9** | **A hold now records WHY it exists** — `external` or `standdown` — and the label is cleared when the hold ends. The hold mechanism is untouched | Round-14 F14-2, round-15 A3; `docs/proposal-decide-act-split.md` |
 | **v5.10** | **Room hysteresis moved from an overshoot band ABOVE the target to a re-entry deadband BELOW it**, in both directions, and split onto its own helper | The exit could not be reached by the unit's own action, so a room sat in `heat` all day — see §32 |
+| **v5.11** | **The house reads a resolved outdoor sensor** — a terrace thermometer first, the forecast integration's temperature second — instead of naming the forecast directly | A sensor went up on the terrace — see §33 |
 
 ---
 
@@ -311,6 +312,8 @@ Two properties worth stating explicitly:
 - **If the outdoor sensor is unusable the house falls to SHOULDER**, not to a guessed season.
   v3 defaulted the reading to 15 °C, which would have put the whole house into heating on a
   fabricated number. The safety band does not read the outdoor sensor and still runs.
+  Since v5.11 "the outdoor sensor" is `sensor.climate_temp_outdoor`, which is only unusable when
+  the terrace sensor **and** the forecast are both down (§33).
 
 ### Night
 
@@ -2529,3 +2532,96 @@ that has gone wrong twice.
 65 W across the hour in which the energy counter gained 743 Wh. The energy counters are the
 trustworthy ones; the live power tiles and the Energy tab's AC meters understate reality. Noted
 here because the meter ceilings in `docs/room-views-button-card.md` were set from this data.
+
+## 33. v5.11 — an outdoor thermometer at the house
+
+On 2026-09-24 the operator moved the Hue outdoor motion sensor — until then the front-door
+motion sensor, paired under its IEEE address — onto the terrace, named it *Outdoor Motion*, and
+asked for its temperature to drive the season decision, with the forecast as the fallback.
+
+### One resolved outdoor sensor, like the rooms
+
+The automation no longer names an outdoor source. `outdoor` reads `sensor.climate_temp_outdoor`,
+a template helper in the same family as `sensor.climate_temp_<room>`, and the source order lives
+there:
+
+1. `sensor.outdoor_motion_temperature` — measured, at the house;
+2. `sensor.house_temperature` — the forecast integration's current temperature, which was
+   the only source before this change;
+3. nothing — the helper goes `unavailable` and `outdoor` becomes the -999 sentinel, which the
+   house decision already turns into SHOULDER (§3).
+
+Step 3 is gated by the helper's **availability** template, not by rendering an empty state: the
+radiation sensor showed that HA keeps the previous number when a state template renders empty.
+
+### Staleness is Zigbee2MQTT's job, not the template's
+
+A freshness test on `last_reported` looked like the obvious guard and would have been wrong. The
+sensor reads in steps of about 0.14 °C, and HA's MQTT sensors skip the state write when a report
+repeats the previous value, so `last_reported` does not move. On a still night a healthy sensor
+can hold one value for hours; an age test would flip the house to the forecast — 2.5 °C away on
+the first night — and back again when the reading moved.
+
+Instead, Zigbee2MQTT marks **this device** unavailable after **180 minutes** with no message of
+any kind (`availability.timeout: 180` on the device; the global default for a battery device is
+25 hours). The device reports four clusters (temperature, illuminance, occupancy, battery) at
+least hourly, so three missed hours is a dead sensor, not a quiet night. That arrives in HA as
+`unavailable`, which the helper already falls back from, and it is visible on every card that
+shows the sensor. The setting lives in the Zigbee2MQTT configuration, not in this repo.
+
+### Not guarded, deliberately — morning sun (operator's call, 2026-09-25)
+
+The sensor is mounted by an **east-facing window, so it takes direct sun in the morning** and will
+read warm then. A warm-reading morning can take the house out of `heat` early (the `heat_below_out`
+exit is 17 + house hysteresis). This is **accepted for now**: the operator intends to re-site the
+sensor later, and asked for no sun guard in the meantime.
+
+**Do not reach for the sensor's illuminance as the sun signal.** The operator's judgement: the lux
+sensor is very sensitive and is better suited to tracking cloud cover than to telling "sensor in
+direct sun" from "bright day". A gate keyed on it would fall back to the forecast on most bright days.
+If a guard is built later, it is a check that overrides a sensor, so it gets the both-directions
+analysis first.
+
+The exposure is visible rather than hidden: the Climate tab's **Outside, 24 h** graph plots the value
+in use, the terrace sensor and the forecast together, so the morning offset shows up as the
+terrace line lifting away from the forecast after sunrise.
+
+### Verified
+
+- **Eleven new cases, written before the change.** Against the live system they failed for the
+  right reason: first `sensor 'Climate temp outdoor' not found`, then — with the helper in place
+  and the automation unchanged — the substitution guard refused the two automation cases because
+  the automation still named the forecast. After the change, 174/174.
+- **Four new mutations**, all caught: forecast first again, a 0 °C reading treated as missing,
+  availability gated on the terrace alone, and the house reading the forecast directly again.
+- `wiring.py`: every entity the templates name resolves.
+- **In the house:** the helper read 13.12 °C (terrace) against a forecast of 10.6 °C at 00:40.
+  Both are far below the 17 °C heat threshold, so the house stayed in `heat` and nothing actuated.
+
+### Dashboards
+
+Every card that showed the forecast temperature as "Outside" now shows the resolved sensor, and
+the Climate status line says which source it is on (`terrace` / `forecast`). The one exception is
+the Climate tab's outdoor graph, which deliberately plots all three — in use, terrace, forecast —
+in the style of the "All rooms" graph, so the two sources can be compared. The Terrace area got
+a generated room page and a Home tile (upper floor), whose label shows the outdoor temperature
+and motion through the tiles' `special` hook — the terrace has no lights, AC or presence sensor
+for the generic label to report, so the tile opens the page on tap instead of toggling lights.
+The raw terrace reading carries `not_on_room_pages`, as every resolved room's inputs do.
+
+## 34. v5.11 (cont.) — a real meter in Kids room 2
+
+On 2026-09-25 the operator moved the second SwitchBot Meter Pro — the one that had sat unplaced on
+the admin page — into Kids room 2. The room's resolved sensors now use the same four-tier chain as
+Kids room 1 (§ "A real instrument in Kids room 1"): the meter over BLE, the same meter over Matter
+through the hub, the TRV only while live and cold (plus the TRV offset), the AC probe (plus the AC
+offset). Humidity follows the same order without the radiator gate.
+
+The templates were derived from Kids room 1's by substituting entity ids, not rewritten, and checked
+before deploy against a patched copy of `core.config_entries` (`HA_ENTRIES`): nine new cases, red
+first ("substitution never matched" — the helper did not read the meter), 183/183 after. One new
+mutation (the meter tier dropped) is caught by two cases.
+
+The automation needed no change: it reads `sensor.climate_temp_<room>` and nothing else. The room
+list's `sensor` / `fallback` keys are read by nothing (checked); they are stale for both kids'
+rooms and are left for a separate clean-up rather than bumping the automation for dead data.

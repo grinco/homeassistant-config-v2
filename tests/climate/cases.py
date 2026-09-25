@@ -683,6 +683,72 @@ A(sensor_case(
     sensor=K1_H, finding="liveness gates the TRV in both resolved sensors"))
 
 
+# ---------------------------------------------------------------- a real meter in the second kid's room
+# 2026-09-25.  The operator moved the second SwitchBot Meter Pro (the one that sat unplaced on the
+# admin page) into Kids room 2, which gains the same four-tier chain as Kids room 1 above: the meter
+# over BLE, the same meter over Matter, the TRV (live AND cold, plus its offset), the AC probe (plus
+# the AC offset). Same rules, so the same cases - a room whose chain quietly differs from its twin's
+# is how one of them ends up reading the radiator.
+K2 = harness.load_rooms()["kid2"]
+K2_T = "Climate temp " + K2["title"]
+K2_H = "Climate humidity " + K2["title"]
+K2_B_T = "states('%s')" % K2["meter_temp"]
+K2_M_T = "states('%s')" % K2["matter_temp"]
+K2_V_T = "states('%s')" % K2["trv_temp"]
+K2_A_T = "states('%s')" % K2["ac_temp"]
+K2_CONN = "is_state('%s','on')" % K2["trv_conn"]
+K2_HEAT = "states('%s')" % K2["trv_heat"]
+K2_B_H = "states('%s')" % K2["meter_hum"]
+K2_M_H = "states('%s')" % K2["matter_hum"]
+K2_V_H = "states('%s')" % K2["trv_hum"]
+K2_A_H = "states('%s')" % K2["ac_hum"]
+
+A(sensor_case(
+    "kid 2: the room meter outranks the TRV", "23.4",
+    {K2_B_T: "'23.4'", K2_M_T: "'23.5'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
+     K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K2_T, finding="2026-09-25: the meter moved in; it is the instrument in the room's air"))
+A(sensor_case(
+    "kid 2: a correctly placed meter takes NO calibration offset", "23.4",
+    {K2_B_T: "'23.4'", K2_M_T: "'unavailable'", K2_V_T: "'unavailable'", K2_A_T: "'25.0'",
+     K2_CONN: "false", K2_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
+    sensor=K2_T, finding="offsets correct instruments in the wrong air; this one is not"))
+A(sensor_case(
+    "kid 2: a dead BLE meter falls to the same meter over Matter", "23.5",
+    {K2_B_T: "'unavailable'", K2_M_T: "'23.5'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
+     K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K2_T, finding="second transport to one instrument"))
+A(sensor_case(
+    "kid 2: both meter paths down fall to the TRV, offset and all", "23.0",
+    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
+     K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K2_T, finding="the TRV keeps its place as the only INDEPENDENT fallback"))
+A(sensor_case(
+    "kid 2: a hot radiator still disqualifies the TRV", "22.0",
+    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'26.0'", K2_A_T: "'24.0'",
+     K2_CONN: "true", K2_HEAT: "'65'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K2_T, finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
+A(sensor_case(
+    "kid 2: every source down yields nothing", "",
+    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'unavailable'",
+     K2_A_T: "'unavailable'", K2_CONN: "false", K2_HEAT: "'0'",
+     AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K2_T, finding="R7-9: the skip sentinel, never a fabricated number"))
+A(sensor_case(
+    "kid 2: room humidity prefers the meter over the TRV", "39.0",
+    {K2_B_H: "'39'", K2_M_H: "'44'", K2_V_H: "'46'", K2_A_H: "'31'", K2_CONN: "true"},
+    sensor=K2_H, finding="same instrument ranking as temperature"))
+A(sensor_case(
+    "kid 2: a dead BLE humidity reading falls to Matter", "44.0",
+    {K2_B_H: "'unavailable'", K2_M_H: "'44'", K2_V_H: "'46'", K2_A_H: "'31'", K2_CONN: "true"},
+    sensor=K2_H, finding="Matter is demoted, not removed"))
+A(sensor_case(
+    "kid 2: both meter paths down fall to the TRV humidity", "46.0",
+    {K2_B_H: "'unavailable'", K2_M_H: "'unavailable'", K2_V_H: "'46'", K2_A_H: "'31'",
+     K2_CONN: "true"},
+    sensor=K2_H, finding="the TRV humidity has no radiator gate -- only a liveness one"))
+
+
 # ---------------------------------------------------------------- background radiation
 # 2026-09-21. A Geiger-Muller tube on the ESPHome bluetooth proxy (GPIO13) publishes
 # COUNTS PER MINUTE, which is the tube-independent measurement. Turning counts into a
@@ -960,3 +1026,75 @@ A(case("a live hold keeps its label", "reason_stale", "False",
 A(case("an already-clear label is not rewritten", "reason_stale", "False",
        {}, {HOLD_TS: "1000.0", "now().timestamp()": "2000.0", REASON: "'none'"},
        finding="idempotent: no write every tick for five rooms"))
+
+
+# ---------------------------------------------------------------- outdoor temperature
+# 2026-09-25.  A Hue outdoor motion sensor went up on the terrace, and the house season
+# decision (heat / shoulder / cool) now reads it instead of the forecast.  The automation no
+# longer names a source at all: it reads `Climate temp outdoor`, a resolved sensor like the
+# rooms have, so the fallback lives in one place and is tested here.
+#
+#   1. the terrace sensor   -- measured, at the house
+#   2. the forecast         -- the only outdoor source before 2026-09-25
+#   3. nothing              -- `outdoor` becomes -999 and the house falls to shoulder
+#
+# Staleness is NOT judged in the template.  The sensor reads in ~0.14 C steps and HA's MQTT
+# sensors skip writing an unchanged value, so a still night can hold one reading for hours
+# with a perfectly healthy device; an age test on last_reported would flip the house to the
+# forecast (2-3 C away the first night) and back.  Zigbee2MQTT marks this one device
+# unavailable after 3 h without ANY message instead (it reports four clusters at least
+# hourly), and that arrives here as 'unavailable' -- which these cases do cover.
+#
+# Terrace and forecast carry different values in every case, so the output names one tier.
+OUT = "Climate temp outdoor"
+OUT_T = "states('sensor.outdoor_motion_temperature')"
+OUT_W = "states('sensor.house_temperature')"
+OUT_R = "states('sensor.climate_temp_outdoor')"
+
+A(sensor_case(
+    "the terrace sensor outranks the forecast", "13.1",
+    {OUT_T: "'13.1'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="2026-09-25: measured at the house beats modelled for the area"))
+A(sensor_case(
+    "an unavailable terrace sensor falls to the forecast", "10.6",
+    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="Z2M's 3 h availability timeout lands here, not on a stale number"))
+A(sensor_case(
+    "a terrace sensor that has not reported yet falls to the forecast", "10.6",
+    {OUT_T: "'unknown'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="after a restart or re-pair the sensor is 'unknown' first"))
+A(sensor_case(
+    "a terrace reading of exactly zero is a reading", "0.0",
+    {OUT_T: "'0.0'", OUT_W: "'3.0'"},
+    sensor=OUT, finding="0 C is the reading that matters most in winter; not falsy"))
+A(sensor_case(
+    "a sub-zero terrace reading is used as it is", "-5.3",
+    {OUT_T: "'-5.3'", OUT_W: "'-2.0'"},
+    sensor=OUT, finding="the -900 cutoff must not swallow real frost"))
+A(sensor_case(
+    "both outdoor sources down yield nothing", "",
+    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
+    sensor=OUT, finding="R7-9: the skip sentinel, never a fabricated number"))
+
+# The empty state alone does not clear the entity -- HA kept the old number when that was
+# tried on the radiation sensor -- so availability gates it, exactly as there.
+A(sensor_case(
+    "the outdoor sensor is available on the terrace alone", "True",
+    {OUT_T: "'13.1'", OUT_W: "'unavailable'"},
+    sensor=OUT + "::availability", finding="either source is enough"))
+A(sensor_case(
+    "the outdoor sensor is available on the forecast alone", "True",
+    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
+    sensor=OUT + "::availability", finding="either source is enough"))
+A(sensor_case(
+    "the outdoor sensor is unavailable when both sources are", "False",
+    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
+    sensor=OUT + "::availability",
+    finding="an empty state kept the previous number on the radiation sensor"))
+
+A(case("the house reads the resolved outdoor sensor", "outdoor", "13.1",
+       {}, {OUT_R: "'13.1'"},
+       finding="2026-09-25: the automation names no outdoor source of its own"))
+A(case("an unavailable resolved outdoor sensor is the -999 sentinel", "outdoor", "-999",
+       {}, {OUT_R: "'unavailable'"},
+       finding="the sentinel the house decision already falls to shoulder on"))

@@ -15,6 +15,7 @@ from cases import CASES, AC_OFF as AC_OFF_G
 REAL_EXPR = harness.load_expressions()
 REAL_SENS = harness.load_sensor_templates()
 KID1_T = "Climate temp " + harness.load_rooms()["kid1"]["title"]
+KID2_T = "Climate temp " + harness.load_rooms()["kid2"]["title"]
 
 BUGS = [
  ("the 2026-09-20 unit_moved bug (drop '- settle')", "expr", "unit_moved",
@@ -136,6 +137,19 @@ BUGS = [
   lambda t: t.replace(" and want_preset != now_preset", "")),
  ("presets: commanded before the mode converges", "expr", "will_set_preset",
   lambda t: t.replace("active and mode_ok and", "active and")),
+ # Kids room 2 gained its meter on 2026-09-25; the chain must not quietly revert.
+ ("kid 2: the room meter dropped from the chain", "sensor", KID2_T,
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}", "{% if m > -900 %}")),
+ # Outdoor temperature, 2026-09-25: terrace sensor first, forecast second.
+ ("outdoor: the forecast outranks the terrace again", "sensor", "Climate temp outdoor",
+  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",
+                      "{% if w > -900 %}{{ w | round(2) }}{% elif t > -900 %}{{ t | round(2) }}")),
+ ("outdoor: a reading of exactly zero taken for no reading", "sensor", "Climate temp outdoor",
+  lambda t: t.replace("{% if t > -900 %}", "{% if t and t > -900 %}")),
+ ("outdoor: availability gated on the terrace alone", "sensor", "Climate temp outdoor::availability",
+  lambda t: "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 }}"),
+ ("outdoor: the house reads the forecast directly again", "expr", "outdoor",
+  lambda t: "{{ states('sensor.house_temperature') | float(-999) }}"),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

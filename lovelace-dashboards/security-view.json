@@ -41,26 +41,23 @@
      "type": "heading"
     },
     {
-     "entity": "binary_sensor.0x0017880106495a81_occupancy",
-     "grid_options": {
-      "columns": 12,
-      "rows": 1
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
      },
-     "icon": "mdi:motion-sensor",
-     "name": "Front door motion",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.shower_sink_leak_water_leak",
-     "grid_options": {
-      "columns": 12,
-      "rows": 1
+     "card_param": "cards",
+     "exclude": [
+      "binary_sensor.home_door_motion"
+     ],
+     "filter": {
+      "template": "\n{%- set ma = integration_entities('magic_areas') -%}\n{%- set ex = config.get('exclude', []) -%}\n{%- set word = {'motion': 'motion', 'occupancy': 'motion', 'moisture': 'leak', 'door': 'door', 'window': 'window', 'opening': 'opening', 'garage_door': 'garage door', 'smoke': 'smoke', 'gas': 'gas', 'carbon_monoxide': 'CO', 'safety': 'safety', 'tamper': 'tamper', 'vibration': 'vibration'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) -%}\n{%- if s.entity_id not in ma and s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': s.entity_id, 'name': area_name(s.entity_id) ~ ' ' ~ word[s.attributes.device_class]}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
      },
-     "icon": "mdi:water-alert",
-     "name": "Shower sink leak",
-     "template": "vg_stat",
-     "type": "custom:button-card"
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities"
     },
     {
      "heading": "Presence",
@@ -69,34 +66,20 @@
      "type": "heading"
     },
     {
-     "entity": "person.vadim_grinco",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
+     "card": {
+      "columns": 2,
+      "square": false,
+      "type": "grid"
      },
-     "name": "Vadim",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "person.janka_grinco",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for p in states.person | sort(attribute='name') -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': p.entity_id, 'name': p.name.split(' ') | first}] -%}\n{%- endfor -%}\n{{ ns.l }}"
      },
-     "name": "Janka",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "person.kid1_grinco",
      "grid_options": {
-      "columns": 6,
-      "rows": 1
+      "columns": "full"
      },
-     "name": "Kids room 1",
-     "template": "vg_stat",
-     "type": "custom:button-card"
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "type": "grid"
