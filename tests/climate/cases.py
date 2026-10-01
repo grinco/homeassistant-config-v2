@@ -862,29 +862,41 @@ A(guard("the boot trigger is never a visit", "visit_happened", "False",
 # finding F2: the flag is a second source of truth about a physical device, and in
 # the direction "flag off while fan on" the timeout's shutdown was skipped, the boot
 # recovery did not fire (it only acts when the flag IS set) and every later visit
-# refused to touch the fan -- stranded on for ever. Shutdown now turns on a RUN-LOCAL
-# fact, we_started; the flag is for cross-restart bookkeeping only.
-A(guard("we stop a fan this run actually started", "we_may_stop", "True",
-        {FAN_ON: "true", "we_started": "true", "stopped_by_human": "false"},
+# refused to touch the fan -- stranded on for ever. Shutdown turns on run-local facts;
+# the flag is for cross-restart bookkeeping only.
+#
+# 2026-10-02 (v6): the fan drops to `unavailable` for 20-60 s every few minutes. Every
+# guard below used to read is_state(..., 'on'), which treats "unreachable" as "off".
+# At the end of a run that meant no off command at all (09-28 21:02, ran on to 21:56);
+# at the start-confirm it meant FAILED TO START and an off command into a device that
+# could not hear it (10-01 13:46, came back on, ran for hours). The question both
+# guards actually ask is "is it known to be OFF?" -- so unreachable is not off.
+FAN = "states('fan.corridor_xiaomi_air_purifier')"
+
+A(guard("we stop a fan that is running at the end", "we_may_stop", "True",
+        {FAN: "'on'", "stopped_by_human": "false"},
         finding="F2: shutdown must not depend on the persistent flag"))
-A(guard("we never stop a fan this run did not start", "we_may_stop", "False",
-        {FAN_ON: "true", "we_started": "false", "stopped_by_human": "false"},
-        finding="the climate lesson: never take control away from the operator"))
+A(guard("a fan unreachable at the end is still stopped", "we_may_stop", "True",
+        {FAN: "'unavailable'", "stopped_by_human": "false"},
+        finding="2026-09-28 21:02: is_state(on) read a dropout as off, so no off was sent"))
 A(guard("nothing to stop if the fan is already off", "we_may_stop", "False",
-        {FAN_ON: "false", "we_started": "true", "stopped_by_human": "false"},
+        {FAN: "'off'", "stopped_by_human": "false"},
         finding="a person switched it off mid-run; abandon rather than re-command"))
 A(guard("a person taking over ends our claim", "we_may_stop", "False",
-        {FAN_ON: "true", "we_started": "true", "stopped_by_human": "true"},
+        {FAN: "'on'", "stopped_by_human": "true"},
         finding="F2: off-then-on by hand during the wait must not be re-stopped by us"))
 
-# we_started is the run-local fact the whole shutdown path now hangs on, so it needs
-# its own cases -- binding it as an input to we_may_stop does NOT test it. Caught by
-# mutate.py, which flagged "trusts fan.turn_on without re-reading" as undetected.
+# we_started decides between "run the window" and "give up and command it off". It
+# needs its own cases -- binding it as an input to another guard does NOT test it.
 A(guard("a fan confirmed running counts as started by us", "we_started", "True",
-        {FAN_ON: "true"}, finding="F2: re-read after commanding, never assume it worked"))
-A(guard("a fan that did not come on is not ours", "we_started", "False",
-        {FAN_ON: "false"},
-        finding="F2: fan.turn_on can fail; claiming ownership anyway stranded the flag"))
+        {FAN: "'on'"}, finding="F2: re-read after commanding, never assume it worked"))
+A(guard("a fan that stayed off did not start", "we_started", "False",
+        {FAN: "'off'"},
+        finding="F2: fan.turn_on can fail; the run must not pretend otherwise"))
+A(guard("a fan unreachable at the confirm is not written off", "we_started", "True",
+        {FAN: "'unavailable'"},
+        finding="2026-10-01 13:46: a dropout at the read became FAILED TO START, and the "
+                "fan came back on 50 s later with nobody owning it"))
 
 # Round 1 F3/F1: the early stop may only be armed once the sensor has PROVED it is
 # responsive. A sensor pinned at its floor tells us nothing, so there is nothing to

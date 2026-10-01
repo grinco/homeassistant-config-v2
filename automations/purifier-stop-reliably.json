@@ -1,0 +1,44 @@
+{
+ "alias": "Purifier — stop reliably",
+ "description": "Turns the corridor purifier off and does not return until it REPORTS off (or ~20 min of retries run out). The miio link drops to 'unavailable' for 20-60 s every few minutes; a single fan.turn_off sent into a dropout goes nowhere and the fan comes back 'on' with nobody owning it (2026-10-01 13:46). Called by automation.purifier_run_after_the_cat_toilet at the end of a run, on an unconfirmed start, and on boot recovery. wait_template, not wait_for_trigger, on purpose: 'already reachable' and 'already off' must return at once. Each new run of the automation cancels this script first (script.turn_off), so a stop left in flight by a restarted run cannot fight the new run's start.",
+ "icon": "mdi:air-purifier-off",
+ "mode": "restart",
+ "sequence": [
+  {
+   "alias": "Retry until the fan reports off",
+   "repeat": {
+    "sequence": [
+     {
+      "alias": "Give the device up to 2 min to become reachable, then send anyway",
+      "continue_on_timeout": true,
+      "timeout": {
+       "seconds": 120
+      },
+      "wait_template": "{{ states('fan.corridor_xiaomi_air_purifier') not in ['unavailable', 'unknown'] }}"
+     },
+     {
+      "action": "fan.turn_off",
+      "continue_on_error": true,
+      "target": {
+       "entity_id": "fan.corridor_xiaomi_air_purifier"
+      }
+     },
+     {
+      "alias": "Did it actually go off?",
+      "continue_on_timeout": true,
+      "timeout": {
+       "seconds": 30
+      },
+      "wait_template": "{{ is_state('fan.corridor_xiaomi_air_purifier', 'off') }}"
+     }
+    ],
+    "until": [
+     {
+      "condition": "template",
+      "value_template": "{{ is_state('fan.corridor_xiaomi_air_purifier', 'off') or repeat.index >= 8 }}"
+     }
+    ]
+   }
+  }
+ ]
+}

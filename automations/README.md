@@ -41,5 +41,10 @@ Two things in it are less obvious than they look:
   flag records that, the run abandons if somebody switches the unit off by hand,
   and a visit that arrives while the purifier is already running is left alone.
 
+- **"Unreachable" is never read as "off".** The fan drops off the network for
+  up to a minute every few minutes, so starts are retried until the fan holds `on`,
+  and every stop goes through `purifier-stop-reliably.json`, which waits for the
+  device to be reachable and retries until it reports off.
+
 Guard expressions are covered by `tests/climate/`; the sequencing is not, and
 the suite's README says why.

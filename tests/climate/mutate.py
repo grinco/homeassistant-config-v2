@@ -61,7 +61,7 @@ BUGS = [
  ("purifier: no numeric guard on the previous value", "expr2", "visit_happened",
   lambda t: t.replace("(trigger.from_state.state | float(-1)) >= 0 and ", "")),
  ("purifier: turns off a purifier a person started", "expr2", "we_may_stop",
-  lambda t: "{{ is_state('fan.corridor_xiaomi_air_purifier','on') }}"),
+  lambda t: "{{ states('fan.corridor_xiaomi_air_purifier') != 'off' }}"),
  ("purifier: takes over a running purifier", "expr2", "already_running",
   lambda t: "{{ false }}"),
  # round-1 findings: each mutation restores the bug the fix removed
@@ -75,6 +75,12 @@ BUGS = [
   lambda t: "{{ pm_after_settle >= 2 }}"),
  ("purifier F4: no cooldown after a manual stop", "expr2", "manual_cooldown",
   lambda t: "{{ false }}"),
+ # v6, 2026-10-02: the fan drops to 'unavailable' every few minutes, and is_state(on)
+ # read every dropout as "off". Each mutation restores one of the two shipped readings.
+ ("purifier v6: an unreachable fan at the end is left running", "expr2", "we_may_stop",
+  lambda t: t.replace("!= 'off'", "== 'on'")),
+ ("purifier v6: an unreachable fan at the confirm is written off", "expr2", "we_started",
+  lambda t: t.replace("!= 'off'", "== 'on'")),
  # CO2 additions
  ("health risk: CO2 check dropped", "sensor", "Climate health risk",
   lambda t: t.replace("{% if c >= 1400 %}{% set ns.risk = true %}{% endif %}", "")),

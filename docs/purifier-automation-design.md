@@ -1,7 +1,8 @@
 # Corridor air purifier — design
 
-Status: **implemented and live** (2026-09-20). Version 5, after round 1 of review and
-**two live incidents**. The PM2.5 sensor is **assumed broken** — see §2.1.
+Status: **implemented and live** (2026-09-20). Version 6 (2026-10-02), after round 1 of
+review and **three live incidents** — the third is §7.4. The PM2.5 sensor is trusted again
+(see below; §2.1 is the history).
 Instance: HA 2026.9.3 Supervised, Home.
 
 A Xiaomi zhimi mb3 air purifier and a MINI-C self-cleaning litter box share the corridor,
@@ -131,13 +132,24 @@ boot  -> if the ownership flag is set, turn the purifier off and clear it
 
 visit -> visit_happened?        previous value numeric AND new value strictly greater
          already_running?       fan on while we do NOT own it  -> abandon
-         claim ownership, fan.turn_on, then set preset Favorite
+         cancel any purifier_stop_reliably still in flight from the run this one restarted
+         claim ownership                      <- BEFORE commanding (§7.4)
+         fan.turn_on, re-sent every 20 s until the fan has HELD on for 15 s
+           (~2 min if it answers; up to ~5 min while it is unreachable)
+         we_started?            fan not known to be OFF (unreachable is not off)
+           no  -> reliable stop, release, log FAILED TO START
+         set preset Favorite
          delay 3 min                          <- let the sensor actually sample
-         wait for:  PM2.5 below 2 for 2 min   (cleared)
-                    fan -> off                (a person took over)
+         wait for:  PM2.5 below 2 for 2 min   (cleared, only if pm_usable)
+                    fan on -> off for 15 s    (a person took over)
            timeout: 25 min
-         we_may_stop?           fan still on AND we still own it -> turn off
+         we_may_stop?           not stopped by a person AND fan not known to be off
+           yes -> script.purifier_stop_reliably
          release ownership
+
+script.purifier_stop_reliably:
+         repeat up to 8x: wait (<=2 min) until the fan is reachable,
+                          fan.turn_off, wait (<=30 s) for it to REPORT off
 ```
 
 ### 3.1 The settle delay is the point
@@ -315,6 +327,67 @@ Neither incident was found by review. Both were found by the system doing its jo
 somebody watched — the reload by editing a file mid-run, the misread by the operator noticing
 a fan that would not stop. That is now three times in this project that the worst bug was
 found in production and not on paper.
+
+### 7.4 The fan drops off the network, and every guard read that as "off" (v6, 2026-10-02)
+
+Reported by the operator: *the purifier doesn't always start after a visit, and sometimes
+doesn't stop after half an hour.* From 2026-09-28 the miio link drops the fan to
+`unavailable` for 20–60 s every few minutes. Three episodes from history (local time):
+
+| when | what the automation saw | what happened |
+|---|---|---|
+| 09-28 21:02 | end of a full window; fan `unavailable` | `we_may_stop` was `is_state(on) and …` → **false**, no off command at all. Fan came back `on`, ran to 21:56 |
+| 09-29 08:39 → 08:41 | two visits 101 s apart | the first run was inside the confirm wait, **before** claiming ownership. `mode: restart` killed it; the second run saw "fan on, not ours" and skipped. Ran until 22:16 — 14 hours — and silenced six more visits |
+| 10-01 13:46 | fan `on` at 13:46:16, `unavailable` at 13:48:10 | the confirm was `wait_for_trigger to: on`, which needs a *transition* — the fan was already on, so it always ran its full 120 s, then sampled once. The sample landed in a dropout → FAILED TO START → `fan.turn_off` sent to a device that could not hear it. Back `on` at 13:49:07, owned by nobody; the 15:46 visit skipped it |
+
+**One root cause, three faces.** Every decision was a single snapshot of
+`is_state(fan, 'on')`, which answers "is it known to be on?" when every guard needed "is it
+known to be off?". On a device that is regularly unreachable those disagree for minutes at a
+time. Two aggravating factors: §7.2's confirm wait never actually waited *for* anything (the
+optimistic `on` arrives inside the `turn_on` call, before the wait attaches), which made a
+2-minute window both for the dropout to land in and for a second visit to orphan the fan; and
+every off command was fire-and-forget.
+
+**v6:**
+
+- **Ownership is claimed before the fan is commanded.** A restarted run then sees its own fan
+  as its own. The opposite direction (flag on, fan off) is the one boot recovery already
+  handles, and a run that ends normally clears it — so this is the safe way round.
+- **The start is a retry loop, not a sample.** `turn_on` is re-sent every 20 s while the fan
+  is not `on`, until it has held `on` for 15 s (a native state condition with `for:`) — six
+  tries if the device answers, up to fifteen (~5 min) while it is still unreachable, so the
+  verdict is almost never taken on a fan nobody could reach. That keeps §7.2's 15-second hold and also covers a visit that lands during a
+  dropout, which v5 could not start at all.
+- **`we_started` and `we_may_stop` ask "not off", not "on".** Unreachable carries on with the
+  run, or still gets stopped.
+- **Every stop goes through `script.purifier_stop_reliably`**: wait until the device is
+  reachable, send off, wait for it to *report* off, retry up to eight times (~20 min). Used
+  at the end of a run, on an unconfirmed start, and in boot recovery. The run log line now
+  says `FAN DID NOT CONFIRM OFF` if even that fails.
+- **The person-stop trigger needs `from: on`.** A reconnect that reports `off` is
+  `unavailable → off`, not a person; v5 would have counted it and started a 30-minute
+  cooldown.
+
+**What is tested.** `we_started` and `we_may_stop` with the fan `unavailable` — both returned
+false on v5 (replicated against the live expressions before the change) — plus two mutations
+that put `== 'on'` back. **The order of ownership and command, the retry loops and the
+`from: on` are sequencing and are not tested** — the harness has no step order (§5). They were
+checked by reading the stored config back, and the first real cycles are what will prove them.
+
+**Review round (`review-20261001-39cc.md`).**
+
+| # | Finding | Verdict | Status |
+|---|---|---|---|
+| F1 | `we_started = not off` turns a dropout longer than the 2-min loop into a run against a fan that never came on | **Confirmed**, but the claimed blast radius is wrong: the flag does not make later visits refuse (`already_running` needs the fan *unowned*), they restart the run and retry the start | **Fixed** — the loop keeps trying for up to ~5 min while the fan is unreachable; past that, carrying on and stopping reliably is still the safe direction |
+| F3 | Under `mode: restart` a second visit can land during the blocking stop. If the cancelled run's script keeps going it fights the new start, and the fan going off would read as a *person* (`from: on`, 15 s) and arm the 30-min cooldown | **Confirmed as a risk** — whether HA cancels a blocking script call with its caller was not established, so the fix does not depend on it | **Fixed** — each new run calls `script.turn_off` on the stop script before claiming |
+| F2 | `we_may_stop` no longer contains `we_started`; the deleted case was the operator-control assertion at the stop | Correct. The invariant moved: `we_may_stop` is only reachable after `we_started`, ownership is claimed before commanding, and a person's own fan is refused at visit time by `already_running`; a person who switches it off mid-run is `stopped_by_human`. Re-adding `we_started` would be a term that is always true where it is evaluated | **Documented here**, not re-coded |
+| F4 | Boot recovery now blocks on a stop that can take ~20 min if the device is slow to connect | Correct | **Accepted** — the log line is written when it finishes, and says so if the fan never confirmed off |
+| F5 | A person switching the fan off *during* a dropout gives `unavailable → off`, so `from: on` misses it and the cooldown does not arm | Correct | **Accepted** — the stop is a harmless no-op; the cost is that the next visit can re-run. If "it came back on right after I turned it off" is ever reported, this is why |
+| F6 | The reachability wait sends the off anyway on timeout; the alias implied a gate | Correct | Alias renamed |
+| minor | Run-log suffix inconsistent across the three stop sites | Correct | All three now append `FAN DID NOT CONFIRM OFF` |
+
+**Not fixed here: why the device drops.** That is Wi-Fi or the miio integration; the
+automation now tolerates it, it does not cure it.
 
 ---
 
