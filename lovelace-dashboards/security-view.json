@@ -42,7 +42,7 @@
     },
     {
      "card": {
-      "columns": 1,
+      "columns": 2,
       "square": false,
       "type": "grid"
      },
@@ -51,7 +51,7 @@
       "binary_sensor.home_door_motion"
      ],
      "filter": {
-      "template": "\n{%- set ma = integration_entities('magic_areas') -%}\n{%- set ex = config.get('exclude', []) -%}\n{%- set word = {'motion': 'motion', 'occupancy': 'motion', 'moisture': 'leak', 'door': 'door', 'window': 'window', 'opening': 'opening', 'garage_door': 'garage door', 'smoke': 'smoke', 'gas': 'gas', 'carbon_monoxide': 'CO', 'safety': 'safety', 'tamper': 'tamper', 'vibration': 'vibration'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) -%}\n{%- if s.entity_id not in ma and s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': s.entity_id, 'name': area_name(s.entity_id) ~ ' ' ~ word[s.attributes.device_class]}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
+      "template": "\n{%- set ma = integration_entities('magic_areas') -%}\n{%- set ex = config.get('exclude', []) -%}\n{%- set word = {'motion': 'motion', 'occupancy': 'motion', 'moisture': 'leak', 'door': 'door', 'window': 'window', 'opening': 'opening', 'garage_door': 'garage door', 'smoke': 'smoke', 'gas': 'gas', 'carbon_monoxide': 'CO', 'safety': 'safety', 'tamper': 'tamper', 'vibration': 'vibration'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) -%}\n{%- if s.entity_id not in ex and s.entity_id not in ma and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name') or '') if dev else '' -%}\n{%- set own = (s.name | replace(dn, '') | trim | lower) if dn else '' -%}\n{%- set ns.l = ns.l + [{'entity': s.entity_id, 'name': area_name(s.entity_id) ~ ' ' ~ word[s.attributes.device_class], 'alt': area_name(s.entity_id) ~ ' ' ~ (own or word[s.attributes.device_class])}] -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set names = ns.l | map(attribute='name') | list -%}\n{%- set out = namespace(l=[]) -%}\n{%- for c in ns.l -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': c.entity, 'name': c.alt if (names | select('eq', c.name) | list | count) > 1 else c.name}] -%}\n{%- endfor -%}\n{{ out.l | sort(attribute='name') }}"
      },
      "grid_options": {
       "columns": "full"
@@ -155,6 +155,35 @@
      "name": "Camera PIR",
      "template": "vg_stat",
      "type": "custom:button-card"
+    }
+   ],
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Cameras",
+     "icon": "mdi:cctv",
+     "type": "heading"
+    },
+    {
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "exclude": [
+      "camera.home_door"
+     ],
+     "filter": {
+      "template": "\n{%- set ex = config.get('exclude', []) -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.camera | sort(attribute='entity_id') -%}\n{%- if s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else none -%}\n{%- set ns.l = ns.l + [{'type': 'picture-entity', 'entity': s.entity_id, 'name': dn or area_name(s.entity_id), 'camera_view': 'auto', 'show_state': false, 'fit_mode': 'contain', 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 'full', 'rows': 5}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "type": "grid"

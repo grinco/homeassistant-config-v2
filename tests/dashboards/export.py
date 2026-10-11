@@ -58,6 +58,8 @@ AUTOS = {
     "1789725511503": "climate-maintain-per-room-targets.json",
     "1789802676002": "climate-stamp-ha-start.json",
     "1789947000001": "purifier-after-cat-toilet.json",
+    "1790200000001": "house-night-mode.json",
+    "1790300000001": "climate-radiators.json",
 }
 # `automations/resolved-sensors.json` is NOT re-exported here. It is a curated
 # selection of config-flow helpers rather than a whole-file dump, and nothing in

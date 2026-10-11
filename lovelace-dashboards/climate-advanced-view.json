@@ -4,6 +4,68 @@
  "path": "climate-advanced",
  "sections": [
   {
+   "cards": [
+    {
+     "heading": "Radiators",
+     "icon": "mdi:radiator",
+     "type": "heading"
+    },
+    {
+     "entity": "automation.climate_radiators",
+     "grid_options": {
+      "columns": 12
+     },
+     "name": "Radiators follow room targets",
+     "tap_action": {
+      "action": "toggle"
+     },
+     "type": "tile"
+    },
+    {
+     "entity": "input_number.climate_ac_boost_below",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "features_position": "bottom",
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "AC boosts when behind by",
+     "type": "tile"
+    },
+    {
+     "entity": "input_number.climate_preheat_minutes",
+     "features": [
+      {
+       "style": "buttons",
+       "type": "numeric-input"
+      }
+     ],
+     "features_position": "bottom",
+     "grid_options": {
+      "columns": 6
+     },
+     "name": "Morning warm-up lead",
+     "type": "tile"
+    },
+    {
+     "content": "{% set z = [('Living room','living_room'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% set ns = namespace(l=[]) %}{% for n, k in z %}{% set h = state_attr('input_datetime.climate_rad_hold_' ~ k, 'timestamp') | float(0) %}{% if h > now().timestamp() + 1800 %}{% set ns.l = ns.l + ['**' ~ n ~ '** radiator set by hand - automatic again at ' ~ (h | timestamp_custom('%H:%M'))] %}{% endif %}{% endfor %}{{ ns.l | join('  \\n') if ns.l else 'Every radiator follows its room target.' }}",
+     "type": "markdown",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "automation.climate_radiators",
+       "state": "on"
+      }
+     ]
+    }
+   ],
+   "type": "grid"
+  },
+  {
    "background": {
     "color": "green",
     "opacity": 8
@@ -86,6 +148,18 @@
      "type": "tile"
     },
     {
+     "entity": "input_boolean.climate_preheat_living_room",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:weather-sunset-up",
+     "name": "Morning warm-up",
+     "tap_action": {
+      "action": "toggle"
+     },
+     "type": "tile"
+    },
+    {
      "color": "amber",
      "entity": "input_number.climate_target_day_living_room",
      "features": [
@@ -147,6 +221,18 @@
       "columns": 6
      },
      "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "entity": "input_boolean.climate_preheat_office",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:weather-sunset-up",
+     "name": "Morning warm-up",
+     "tap_action": {
+      "action": "toggle"
+     },
      "type": "tile"
     },
     {
@@ -214,6 +300,18 @@
      "type": "tile"
     },
     {
+     "entity": "input_boolean.climate_preheat_bedroom",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:weather-sunset-up",
+     "name": "Morning warm-up",
+     "tap_action": {
+      "action": "toggle"
+     },
+     "type": "tile"
+    },
+    {
      "color": "amber",
      "entity": "input_number.climate_target_day_bedroom",
      "features": [
@@ -275,6 +373,18 @@
       "columns": 6
      },
      "name": "Air filter",
+     "type": "tile"
+    },
+    {
+     "entity": "input_boolean.climate_preheat_kid1",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:weather-sunset-up",
+     "name": "Morning warm-up",
+     "tap_action": {
+      "action": "toggle"
+     },
      "type": "tile"
     },
     {
@@ -342,6 +452,18 @@
      "type": "tile"
     },
     {
+     "entity": "input_boolean.climate_preheat_kid2",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:weather-sunset-up",
+     "name": "Morning warm-up",
+     "tap_action": {
+      "action": "toggle"
+     },
+     "type": "tile"
+    },
+    {
      "color": "amber",
      "entity": "input_number.climate_target_day_kid2",
      "features": [
@@ -372,10 +494,29 @@
      "type": "tile"
     },
     {
-     "heading": "Night window",
+     "heading": "Day / night — the alarm decides",
      "heading_style": "subtitle",
      "icon": "mdi:weather-night",
      "type": "heading"
+    },
+    {
+     "entity": "alarm_control_panel.home",
+     "features": [
+      {
+       "modes": [
+        "armed_home",
+        "armed_night"
+       ],
+       "type": "alarm-modes"
+      }
+     ],
+     "features_position": "inline",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:theme-light-dark",
+     "name": "Day / night",
+     "type": "tile"
     },
     {
      "entity": "schedule.climate_night",
@@ -728,7 +869,7 @@
      "type": "custom:button-card"
     },
     {
-     "heading": "Radiator valves — read only",
+     "heading": "Radiator valves",
      "heading_style": "subtitle",
      "icon": "mdi:radiator",
      "type": "heading"

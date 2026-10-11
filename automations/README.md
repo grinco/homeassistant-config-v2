@@ -24,6 +24,13 @@ Two rules for whoever does it:
 - **Verify by canary**, not by eye. Count those words before and after; if any count changed,
   the replacement was too greedy. Then grep the result for the originals and expect zero hits.
 
+## `house-night-mode.json`
+
+The alarm is the house's day/night switch (2026-10-11). `alarm_control_panel.home` in `armed_night`
+is night for the climate loop, the lights and Adaptive Lighting's sleep mode. The night schedule
+only moves the alarm at its edges, so a manual switch to day or night wins until the next edge.
+Alarmo has no sensors, codes or sirens here, so arming it is a mode switch and nothing else.
+
 ## `purifier-after-cat-toilet.json`
 
 Runs the corridor air purifier after the litter box reports a completed visit,

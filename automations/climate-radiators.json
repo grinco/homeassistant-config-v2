@@ -1,0 +1,320 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "away": "{{ is_state('alarm_control_panel.home','armed_away') and (now().timestamp() - (state_attr('input_datetime.climate_away_since','timestamp') | float(0))) > 1800 }}",
+    "away_min": "{{ states('input_number.climate_away_min') | float(18) }}",
+    "comfort": "{{ is_state('input_boolean.climate_auto','on') }}",
+    "house": "{{ states('input_select.climate_house_mode') }}",
+    "manual_hold": "{{ states('input_number.climate_manual_hold_hours') | float(2) }}",
+    "night": "{% set a = states('alarm_control_panel.home') %}{{ a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) }}",
+    "zones": [
+     {
+      "cmd": "input_number.climate_rad_cmd_living_room",
+      "day_t": "input_number.climate_target_day_living_room",
+      "enable": "input_boolean.climate_room_living_room",
+      "hold": "input_datetime.climate_rad_hold_living_room",
+      "name": "Living room",
+      "night_t": "input_number.climate_target_night_living_room",
+      "window": "binary_sensor.livingroom_thermostat_livingroom_thermostat_window",
+      "zone": "climate.livingroom_thermostat_livingroom_thermostat"
+     },
+     {
+      "cmd": "input_number.climate_rad_cmd_bedroom",
+      "day_t": "input_number.climate_target_day_bedroom",
+      "enable": "input_boolean.climate_room_bedroom",
+      "hold": "input_datetime.climate_rad_hold_bedroom",
+      "name": "Bedroom",
+      "night_t": "input_number.climate_target_night_bedroom",
+      "window": "binary_sensor.bedroom_trv_bedroom_trv_window",
+      "zone": "climate.bedroom_trv_bedroom_trv"
+     },
+     {
+      "cmd": "input_number.climate_rad_cmd_kid1",
+      "day_t": "input_number.climate_target_day_kid1",
+      "enable": "input_boolean.climate_room_kid1",
+      "hold": "input_datetime.climate_rad_hold_kid1",
+      "name": "Kids room 1",
+      "night_t": "input_number.climate_target_night_kid1",
+      "window": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
+      "zone": "climate.kid1_room_trv_kid1_room_trv"
+     },
+     {
+      "cmd": "input_number.climate_rad_cmd_kid2",
+      "day_t": "input_number.climate_target_day_kid2",
+      "enable": "input_boolean.climate_room_kid2",
+      "hold": "input_datetime.climate_rad_hold_kid2",
+      "name": "Kids room 2",
+      "night_t": "input_number.climate_target_night_kid2",
+      "window": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
+      "zone": "climate.kid2_room_trv_kid2_room_trv"
+     }
+    ]
+   }
+  },
+  {
+   "variables": {
+    "unmanaged": "{% set listed = zones | map(attribute='zone') | list %}{{ integration_entities('tado') | select('match', 'climate\\.') | reject('in', listed) | list }}"
+   }
+  },
+  {
+   "else": [
+    {
+     "action": "persistent_notification.dismiss",
+     "continue_on_error": true,
+     "data": {
+      "notification_id": "climate_radiators_unmanaged"
+     }
+    }
+   ],
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ unmanaged | count > 0 }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "persistent_notification.create",
+     "data": {
+      "message": "{{ unmanaged | join(', ') }} {{ 'is' if unmanaged | count == 1 else 'are' }} not in the radiator list, so {{ 'it stays' if unmanaged | count == 1 else 'they stay' }} on Tado's own schedule. Add the zone, with the targets it should follow, to automation Climate - radiators.",
+      "notification_id": "climate_radiators_unmanaged",
+      "title": "Climate: radiator zone(s) not managed"
+     }
+    }
+   ]
+  },
+  {
+   "repeat": {
+    "for_each": "{{ zones }}",
+    "sequence": [
+     {
+      "variables": {
+       "r": "{{ repeat.item }}"
+      }
+     },
+     {
+      "variables": {
+       "day_t": "{{ states(r.day_t) | float(21) }}",
+       "enabled": "{{ is_state(r.enable, 'on') }}",
+       "hold_active": "{{ now().timestamp() < (state_attr(r.hold, 'timestamp') | float(0)) }}",
+       "last_cmd": "{{ states(r.cmd) | float(0) }}",
+       "night_t": "{{ states(r.night_t) | float(19) }}",
+       "z_state": "{{ states(r.zone) }}",
+       "z_target": "{{ state_attr(r.zone, 'temperature') | float(0) }}",
+       "z_window": "{{ is_state(r.window, 'on') }}"
+      }
+     },
+     {
+      "variables": {
+       "rad_target": "{% if house not in ['heat', 'shoulder', 'cool'] %}none{% elif not comfort %}auto{% elif away %}{{ away_min | float | round(1) }}{% elif not enabled %}auto{% elif house != 'heat' %}off{% elif night %}{{ night_t | float | round(1) }}{% else %}{{ day_t | float | round(1) }}{% endif %}"
+      }
+     },
+     {
+      "variables": {
+       "want": "{{ rad_target }}",
+       "z_code": "{{ -1.0 if z_state == 'off' else (-2.0 if z_state == 'auto' else (z_target | float(0) | round(1))) }}"
+      }
+     },
+     {
+      "variables": {
+       "rad_send": "{% set zc = -1.0 if z_state == 'off' else (-2.0 if z_state == 'auto' else (z_target | float(0) | round(1))) %}{% set wc = -1.0 if want == 'off' else (-2.0 if want == 'auto' else (want | float(0) | round(1))) %}{% set lc = last_cmd | float(0) | round(1) %}{{ want != 'none' and z_state not in ['unavailable', 'unknown'] and not hold_active and not z_window and (lc == 0 or zc == lc) and zc != wc }}",
+       "touched": "{% set zc = -1.0 if z_state == 'off' else (-2.0 if z_state == 'auto' else (z_target | float(0) | round(1))) %}{% set lc = last_cmd | float(0) | round(1) %}{{ z_state not in ['unavailable', 'unknown'] and not hold_active and not z_window and lc != 0 and zc != lc }}",
+       "want_code": "{{ -1.0 if want == 'off' else (-2.0 if want == 'auto' else (want | float(0) | round(1))) }}"
+      }
+     },
+     {
+      "if": [
+       {
+        "condition": "template",
+        "value_template": "{{ touched }}"
+       }
+      ],
+      "then": [
+       {
+        "action": "input_datetime.set_datetime",
+        "data": {
+         "datetime": "{{ (now() + timedelta(hours = manual_hold | float(2))).strftime('%Y-%m-%d %H:%M:%S') }}"
+        },
+        "target": {
+         "entity_id": "{{ r.hold }}"
+        }
+       },
+       {
+        "action": "input_number.set_value",
+        "data": {
+         "value": "{{ z_code }}"
+        },
+        "target": {
+         "entity_id": "{{ r.cmd }}"
+        }
+       },
+       {
+        "action": "persistent_notification.create",
+        "data": {
+         "message": "The {{ r.name }} radiator was changed outside Home Assistant (now {{ z_state }}{% if z_state == 'heat' %} at {{ z_target }} C{% endif %}). Leaving it for {{ manual_hold }} h, then returning it to the room's target.",
+         "notification_id": "climate_radiator_{{ r.name | lower | replace(' ', '_') }}",
+         "title": "Climate: {{ r.name }} radiator changed by hand"
+        }
+       }
+      ]
+     },
+     {
+      "if": [
+       {
+        "condition": "template",
+        "value_template": "{{ rad_send }}"
+       }
+      ],
+      "then": [
+       {
+        "choose": [
+         {
+          "conditions": [
+           {
+            "condition": "template",
+            "value_template": "{{ want == 'off' }}"
+           }
+          ],
+          "sequence": [
+           {
+            "action": "climate.set_hvac_mode",
+            "data": {
+             "hvac_mode": "off"
+            },
+            "target": {
+             "entity_id": "{{ r.zone }}"
+            }
+           }
+          ]
+         },
+         {
+          "conditions": [
+           {
+            "condition": "template",
+            "value_template": "{{ want == 'auto' }}"
+           }
+          ],
+          "sequence": [
+           {
+            "action": "climate.set_hvac_mode",
+            "data": {
+             "hvac_mode": "auto"
+            },
+            "target": {
+             "entity_id": "{{ r.zone }}"
+            }
+           }
+          ]
+         }
+        ],
+        "default": [
+         {
+          "action": "climate.set_temperature",
+          "data": {
+           "hvac_mode": "heat",
+           "temperature": "{{ want | float }}"
+          },
+          "target": {
+           "entity_id": "{{ r.zone }}"
+          }
+         }
+        ]
+       },
+       {
+        "action": "input_number.set_value",
+        "data": {
+         "value": "{{ want_code }}"
+        },
+        "target": {
+         "entity_id": "{{ r.cmd }}"
+        }
+       },
+       {
+        "action": "input_datetime.set_datetime",
+        "data": {
+         "datetime": "{{ (now() + timedelta(minutes = 30)).strftime('%Y-%m-%d %H:%M:%S') }}"
+        },
+        "target": {
+         "entity_id": "{{ r.hold }}"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "alias": "Climate — radiators",
+ "conditions": [],
+ "description": "v6 (2026-10-11, operator). Home Assistant sets each Tado heating zone from the room's day/night targets (night = the alarm, see House - night mode). Heating season: the target; away: the pet floor (climate_away_min); shoulder/cool season: off; a disabled room or the comfort master off: back to Tado's own schedule ('auto'); an unknown season: nothing. Tado's free cloud tier allows ~100 calls a day, so a zone is commanded ONLY when it differs from what it should be. A zone changed by hand (dial or app) is noticed against input_number.climate_rad_cmd_<room> (last commanded: temperature, -1 off, -2 schedule, 0 never) and held for climate_manual_hold_hours; after HA's own command a 30-minute settle hold stops Tado's slow polling looking like a person. Radiators outnumber ACs: this list is ZONES, not AC rooms - a zone not listed here stays on Tado's schedule and is reported. Tests: tests/climate/cases.py (radiator:). While a zone's own window sensor is on, Tado's open-window protection owns it: HA neither judges nor commands it (review 2026-10-11), and re-checks when the window closes.",
+ "id": "1790300000001",
+ "max": 5,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": [
+    "alarm_control_panel.home",
+    "input_select.climate_house_mode",
+    "input_boolean.climate_auto",
+    "input_boolean.climate_room_living_room",
+    "input_boolean.climate_room_bedroom",
+    "input_boolean.climate_room_kid1",
+    "input_boolean.climate_room_kid2",
+    "input_number.climate_target_day_living_room",
+    "input_number.climate_target_night_living_room",
+    "input_number.climate_target_day_bedroom",
+    "input_number.climate_target_night_bedroom",
+    "input_number.climate_target_day_kid1",
+    "input_number.climate_target_night_kid1",
+    "input_number.climate_target_day_kid2",
+    "input_number.climate_target_night_kid2",
+    "input_number.climate_away_min"
+   ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": "alarm_control_panel.home",
+   "for": "00:30:00",
+   "to": "armed_away",
+   "trigger": "state"
+  },
+  {
+   "attribute": "temperature",
+   "entity_id": [
+    "climate.livingroom_thermostat_livingroom_thermostat",
+    "climate.bedroom_trv_bedroom_trv",
+    "climate.kid1_room_trv_kid1_room_trv",
+    "climate.kid2_room_trv_kid2_room_trv"
+   ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": [
+    "climate.livingroom_thermostat_livingroom_thermostat",
+    "climate.bedroom_trv_bedroom_trv",
+    "climate.kid1_room_trv_kid1_room_trv",
+    "climate.kid2_room_trv_kid2_room_trv"
+   ],
+   "trigger": "state"
+  },
+  {
+   "hours": "/3",
+   "trigger": "time_pattern"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  },
+  {
+   "entity_id": [
+    "binary_sensor.livingroom_thermostat_livingroom_thermostat_window",
+    "binary_sensor.bedroom_trv_bedroom_trv_window",
+    "binary_sensor.kid1_room_trv_kid1_room_trv_window",
+    "binary_sensor.kid2_room_trv_kid2_room_trv_window"
+   ],
+   "to": "off",
+   "trigger": "state"
+  }
+ ]
+}

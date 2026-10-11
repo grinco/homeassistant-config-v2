@@ -317,8 +317,23 @@ Two properties worth stating explicitly:
 
 ### Night
 
-Night is the same window as before — the `schedule.climate_night` helper (22:00–06:00), or the
-alarm armed night. v3 expressed night as a *setback*, a shift applied to both thresholds. v4
+**v5.12 (2026-10-11, operator): night IS the alarm's night mode** — `alarm_control_panel.home`
+in `armed_night`, nothing else. `schedule.climate_night` (22:00–06:00) no longer decides; it only
+MOVES the alarm at its edges (automation *House — night mode*: on → Night from Home or Disarmed,
+off → Home from Night; Away and Triggered are left alone). Before this, night was "schedule OR
+armed_night", so a manual switch to day was overruled by the schedule — the opposite of the control
+the operator asked for. Alarmo here has no sensors, codes or sirens: arming it is a mode switch.
+The same alarm state drives the lights (`binary_sensor.lighting_night`) and Adaptive Lighting's
+sleep mode, so the whole house agrees on one night. Tests: *night is the alarm's night mode*,
+*the schedule alone no longer makes it night*, and the *House* cases. While the alarm ITSELF is unavailable or unknown (an Alarmo reload, a restart), and only then,
+the schedule stands in — otherwise a reload at night computed DAY targets (review 2026-10-11, F12);
+the climate loop, the lights and Adaptive Lighting share that one expression. By design and
+recorded: a restart does not re-sync the alarm to the schedule, a missed edge stays missed, and
+coming back from Away in the small hours gives day mode until the operator sets Night — all of
+them "manual wins until the next edge", which is what the operator asked for. Away is unchanged:
+armed_away held 30 min stops comfort entirely; only frost and the away band (pets) act.
+
+Earlier: night was the `schedule.climate_night` helper, or the alarm armed night. v3 expressed night as a *setback*, a shift applied to both thresholds. v4
 expresses it as what it is: a second target. Cooler at night for sleep, warmer by day, both set
 directly.
 
@@ -581,7 +596,7 @@ discard the restored value on every HA restart and silently reset the operator's
 | Per room, manual until | `input_datetime.climate_manual_until_<room>` ×5 | past |
 | Per room, last command | `input_datetime.climate_cmd_<room>` ×5 | 2000-01-01 |
 | Away stamp | `input_datetime.climate_away_since` | — |
-| Night window | `schedule.climate_night` | 22:00–06:00 |
+| Night | `alarm_control_panel.home` = `armed_night` (v5.12); `schedule.climate_night` 22:00–06:00 only moves it | — |
 | HA start stamp | `input_datetime.climate_ha_started` | 2000-01-01 |
 | Per room, safety alert stamp | `input_datetime.climate_safety_alert_<room>` ×5 | 2000-01-01 |
 
@@ -2625,3 +2640,70 @@ mutation (the meter tier dropped) is caught by two cases.
 The automation needed no change: it reads `sensor.climate_temp_<room>` and nothing else. The room
 list's `sensor` / `fallback` keys are read by nothing (checked); they are stale for both kids'
 rooms and are left for a separate clean-up rather than bumping the automation for dead data.
+
+## v6 — radiators first, morning warm-up (2026-10-11)
+
+Tado now runs the gas boiler per zone instead of the boiler running on a single thermostat, so the
+radiators are an efficient, silent heat source. The operator asked to use them, especially at night
+("more silent, and the windows aren't fogging due to convection of hot air"). Decided with the
+operator: **Home Assistant sets the radiators** from the rooms' existing day/night targets; **by day
+the radiator holds and the AC only boosts**; **at night the AC heats a radiator room only for
+safety**; Tado is on the **free API tier** (≈100 cloud calls a day for the account).
+
+**What changed, and the invariant it replaces.** Until v6 the boiler and the Tado valves were never
+commanded — the "no fight" property rested on the operator keeping valve setpoints below the AC's
+(M6). v6 commands the valves, so the two heat sources are coordinated explicitly instead:
+
+- **AC loop** (`automation.climate_maintain_per_room_targets`), per room with a radiator (`r.rad`),
+  heating season only: at night `off` for comfort (the safety branches above it still heat); by day
+  it starts only when the room is `input_number.climate_ac_boost_below` (1.5 °C) behind and hands
+  back at `target − room_hyst`. Rooms without a radiator (the office) are unchanged. The air-filter
+  toggle still runs the unit — an explicit operator toggle wins, and this is recorded rather than
+  silently dropped.
+- **Radiator automation** (`automation.climate_radiators`, its own list of ZONES — radiators outnumber
+  ACs): heating season → the room's target (night = the alarm); away → `climate_away_min` (the boiler
+  holds the pet floor more cheaply than the AC); shoulder/cool → off; a disabled room or the comfort
+  master off → back to Tado's own schedule (`auto`) — never "off", which is Tado's 5 °C frost
+  protection and would leave a disabled bedroom cold; an unknown season → nothing. A zone not in the
+  list stays on Tado's schedule and is named in a notification.
+- **Quota discipline:** a zone is commanded only when it differs from what it should be, on events
+  and a 3-hourly check — about two calls per zone per day.
+- **Manual override on a valve** (operator: valves get turned by hand like the AC): each zone stores
+  what HA last commanded (`input_number.climate_rad_cmd_<room>`: a temperature, −1 off, −2 schedule,
+  0 never). A zone that no longer matches it was changed by someone else → held for
+  `climate_manual_hold_hours`, then taken back. After HA's own command a 30-minute settle hold stops
+  Tado's slow free-tier polling from reporting the old value and looking like a person.
+
+- **No working valve, no radiator** (operator: "if there is no TRV valve in a given room, heat it
+  with air - even at night as a fallback, otherwise we'll freeze"). `has_rad` is dynamic: a room's
+  radiator counts only while its zone can heat (`heat` or `auto`). A valve that is offline, out of
+  battery or switched off leaves the room to the AC, exactly as if it had none — night included.
+  The one exception is a zone shut by Tado's open-window detection: it still counts, so the AC does
+  not blow hot air out of an open window (the safety band still covers the room).
+- **Tado's own open-window detection** switches a zone off by itself. While a zone's window sensor
+  is on, HA neither judges nor commands it; a window closing re-triggers the check (review
+  2026-10-11 — without it, HA called the valve's own protection "changed by hand" and fought it).
+- **Accepted, from the same review:** a disabled room follows whatever its Tado schedule says (the
+  operator's schedule); Tado's own away/geofencing should stay unused — HA's alarm is the one
+  presence source; a failed Tado call is retried at the next event or 3-hourly check, never in a
+  loop; a dial turned inside the 30-minute settle is caught when the settle ends, not missed.
+
+**Morning warm-up** (operator: "pleasant to enter in the morning a room that has been also warmed by
+the AC ... some sort of pre-conditioning"): per room `input_boolean.climate_preheat_<room>`; in the
+last `input_number.climate_preheat_minutes` (45) before the night schedule's morning edge, the room
+aims at its DAY target and the AC may heat it even with a radiator, without the boost threshold (the
+night `quiet` preset still applies). Only while the schedule itself is on — a manual "night" has no
+morning edge, a manual day has already ended the night.
+
+**Known, recorded:**
+- The bedroom has no room meter: with its radiator now hot more often, its resolved temperature
+  falls back from the valve (gated on a cold radiator) to the AC probe + offset more often. A meter
+  in the bedroom would fix it.
+- The radiators do not pre-condition; they move at the alarm's edges. The AC does the warm-up.
+- **Future (operator, 2026-10-11): geofencing** — use "approaching home" as a boost trigger. The
+  natural hook is the same one as warm-up: a per-room or house-wide window in which the AC may heat
+  past the boost threshold.
+
+Tests: `tests/climate/cases.py` — *radiator room …*, *radiator: …*, *warm-up: …*; `mutate.py` has a
+mutation for each rule above. The radiator automation was created DISABLED and is enabled only after
+review and a dry run against live state.

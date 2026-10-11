@@ -88,6 +88,44 @@ Checks, each one written because something it catches actually shipped:
                          NOTHING and says nothing: the labelled-extras block
                          shipped that way on 2026-09-25 and no labelled switch
                          ever reached a room page until the cat toilet's did not.
+  C17 whole-room-group   a room card that picks its light group out of Magic
+                         Areas' lights picks the `_all_lights` one. Magic Areas
+                         makes one group per light category as well; once the
+                         living room got an `overhead_lights` group (2026-10-07)
+                         "last Magic Areas light wins" could hand the room's
+                         light button a subset of the room.
+  C18 environment-shown  every environmental reading in a room's area -
+                         temperature, humidity, light level, CO2, particulates,
+                         VOC, pressure - is generated as a tile on its room page,
+                         unless labelled `not_on_room_pages` (a raw probe that a
+                         resolved sensor already reports). Matched rule by rule,
+                         not per domain: on 2026-10-07 the terrace's light level,
+                         the corridor's PM2.5 and a bedroom's PM2.5/VOC sat in a
+                         domain C9 counted as covered, behind a label rule they
+                         could never satisfy, and no page showed them.
+  C19 one-per-name       an include rule that gives its tile a fixed `name`
+                         matches at most one entity per room. Magic Areas' new
+                         `overhead_lights` group (2026-10-07) matched the "All
+                         lights" rule beside the real all-lights group, and the
+                         living room showed two identical "All lights" tiles.
+  C20 single-source-agg  a Magic Areas aggregate that stands in for a room's
+                         reading (labelled `on_room_page`) averages exactly ONE
+                         sensor. It is a mean of every sensor of its class in the
+                         area: a second one - a probe in other air, a fridge
+                         thermometer - would silently change the room's number.
+                         Then the room needs a resolved template, not an
+                         aggregate (review 2026-10-07).
+  C21 safety-attention   Home's "Needs attention" section appears for ANY safety
+                         alarm (it is gated on `binary_sensor.any_safety_alarm`)
+                         and names no leak/smoke/gas/CO sensor by entity id. On
+                         2026-10-09 a smoke and CO alarm was installed and the
+                         section turned out to know one leak sensor by name and
+                         nothing about smoke or CO.
+  C22 one-night          no dashboard computes night the pre-v5.12 way, "schedule
+                         OR alarm". Since 2026-10-11 the alarm's armed_night IS
+                         night; the schedule only moves the alarm. A card still
+                         reading the schedule says "Night targets" after the
+                         operator switched to day by hand.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -147,12 +185,30 @@ ROOM_HIDDEN_LABEL = "not_on_room_pages"
 ROOM_DEFAULT_DOMAINS = ("light", "climate", "fan", "cover", "lock", "media_player")
 ROOM_SHOW_LABEL = "on_room_page"
 
+# Environmental readings a room page shows by default (C18). A sensor of one of
+# these classes, in a room's area, is generated as a tile unless it carries
+# ROOM_HIDDEN_LABEL. The Zigbee VOC index is unitless and has no device class,
+# so it is named by its entity-id suffix instead.
+ENV_CLASSES = ("temperature", "humidity", "illuminance", "carbon_dioxide", "carbon_monoxide",
+               "pm1", "pm25", "pm10", "volatile_organic_compounds",
+               "volatile_organic_compounds_parts", "aqi", "atmospheric_pressure", "pressure",
+               "nitrogen_dioxide", "ozone", "sound_pressure")
+ENV_ID_RE = re.compile(r"_voc_index$")
+
+# C21: the classes that make the house unsafe, and the sensor that rolls them up.
+SAFETY_CLASSES = ("moisture", "smoke", "gas", "carbon_monoxide", "safety")
+SAFETY_ROLLUP = "binary_sensor.any_safety_alarm"
+
 # Sections that list devices and must therefore be generated (C13):
 # (dashboard, view path, first heading of the section, or None for every section).
 GENERATED = [
     ("lovelace", "home", "Rooms"),
     ("lovelace", "energy", "Sockets"),
     ("lovelace", "security", "Sensors"),
+    ("lovelace", "security", "Cameras"),
+    ("lovelace", "climate", "Heating & hot water"),
+    ("lovelace", "climate", "Temperature"),
+    ("lovelace", "climate", "Humidity"),
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
@@ -214,6 +270,105 @@ def area_members():
         if not area:
             continue
         out.setdefault(area, set()).add(e["entity_id"])
+    return out
+
+
+def registry_entities():
+    """Every enabled entity with the fields an auto-entities rule can test."""
+    devices = {d["id"]: d for d in _store("core.device_registry", "devices")}
+    out = []
+    for e in _store("core.entity_registry", "entities"):
+        if e.get("disabled_by"):
+            continue
+        out.append(dict(
+            entity_id=e["entity_id"], domain=e["entity_id"].split(".")[0],
+            area=e.get("area_id") or (devices.get(e.get("device_id")) or {}).get("area_id"),
+            labels=e.get("labels") or [], integration=e.get("platform"),
+            device_class=e.get("device_class") or e.get("original_device_class"),
+            entity_category=e.get("entity_category"), hidden_by=e.get("hidden_by")))
+    return out
+
+
+def _m(pattern, value):
+    """auto-entities' matcher for a string: exact, or /regex/ searched."""
+    value = "" if value is None else str(value)
+    pattern = str(pattern)
+    if len(pattern) > 1 and pattern.startswith("/") and pattern.endswith("/"):
+        return re.search(pattern[1:-1], value) is not None
+    return pattern == value
+
+
+def rule_matches(rule, ent, area_name_of):
+    """Does one include/exclude rule match a registry entity?
+
+    Covers the matchers room pages use. An attribute other than device_class
+    cannot be read from the registry, so a rule testing one returns None
+    (unknown) rather than guessing - callers decide what unknown means.
+    """
+    unknown = False
+    for k, want in rule.items():
+        if k in ("options", "sort"):
+            continue
+        if k == "domain":
+            ok = _m(want, ent["domain"])
+        elif k == "area":
+            ok = ent["area"] is not None and (_m(want, ent["area"])
+                                              or _m(want, area_name_of.get(ent["area"])))
+        elif k == "label":
+            ok = any(_m(want, l) for l in ent["labels"])
+        elif k == "integration":
+            ok = _m(want, ent["integration"])
+        elif k == "entity_id":
+            ok = _m(want, ent["entity_id"])
+        elif k in ("entity_category", "hidden_by"):
+            ok = ent[k] is not None and _m(want, ent[k])
+        elif k == "attributes":
+            ok = True
+            for ak, av in want.items():
+                if ak == "device_class":
+                    ok = ok and _m(av, ent["device_class"])
+                else:
+                    unknown = True
+        else:
+            unknown = True
+            ok = True
+        if not ok:
+            return False
+    return None if unknown else True
+
+
+def env_rule(rule):
+    """Is this the environmental-readings rule (C15 allows it, C18 needs it)?
+
+    Exactly: sensors, selected by a device-class alternation drawn ONLY from
+    ENV_CLASSES, or by the VOC-index id suffix. A broader class pattern would
+    let the focused room page fill up with power and diagnostic readings again.
+    """
+    if rule.get("domain") != "sensor" or rule.get("label"):
+        return False
+    keys = set(rule) - {"domain", "area", "options", "sort"}
+    if keys == {"entity_id"}:
+        return rule["entity_id"] == "/" + ENV_ID_RE.pattern + "/"
+    if keys != {"attributes"} or set(rule["attributes"]) != {"device_class"}:
+        return False
+    m = re.match(r"^/\^\((.*)\)\$/$", str(rule["attributes"]["device_class"]))
+    return bool(m) and all(c in ENV_CLASSES for c in m.group(1).split("|"))
+
+
+def generators(view):
+    """(card, includes, excludes) for each auto-entities card that makes TILES.
+
+    A generator whose own card is a heading only contributes badges, which is
+    not a place an operator reads a value from on a phone.
+    """
+    out = []
+    for _, card in cards(view):
+        if card.get("type") != "custom:auto-entities":
+            continue
+        if ((card.get("card") or {}).get("type")) == "heading":
+            continue
+        f = card.get("filter") or {}
+        out.append((card, f.get("include") or [], f.get("exclude") or []))
     return out
 
 
@@ -664,6 +819,8 @@ def main():
                             continue
                         if r.get("integration") == "magic_areas":
                             continue
+                        if env_rule(r):
+                            continue
                         loose = [d for d in doms if d and d not in ROOM_DEFAULT_DOMAINS]
                         if loose:
                             unfocused.append("%s  generates %s without the %r label"
@@ -682,6 +839,110 @@ def main():
                 fail("C15", "%s: %d room rule(s) pull in entities nobody asked for"
                      % (label, len(unfocused)), sorted(set(unfocused)))
 
+        # C18 / C19 - environmental readings reach their room, and a fixed tile
+        # name belongs to one entity.
+        if label == "lovelace":
+            ents = registry_entities()
+            area_name_of = {a["id"]: a["name"] for a in _store("core.area_registry", "areas")}
+            missing_env, doubled = [], []
+            for v in rooms:
+                gens = generators(v)
+                page_areas = set()
+                for _, inc, _ in gens:
+                    for r in inc:
+                        if r.get("area"):
+                            page_areas.add(str(r["area"]))
+                here = [e for e in ents if e["area"] is not None and
+                        (e["area"] in page_areas or area_name_of.get(e["area"]) in page_areas)]
+                for e in here:
+                    if e["domain"] != "sensor" or e["entity_category"] or e["hidden_by"]:
+                        continue
+                    if ROOM_HIDDEN_LABEL in e["labels"]:
+                        continue
+                    if e["device_class"] not in ENV_CLASSES and not ENV_ID_RE.search(e["entity_id"]):
+                        continue
+                    shown = any(
+                        any(rule_matches(r, e, area_name_of) for r in inc)
+                        and not any(rule_matches(x, e, area_name_of) for x in exc)
+                        for _, inc, exc in gens)
+                    if not shown:
+                        missing_env.append("%-14s %s (%s)" % (v.get("path"), e["entity_id"],
+                                                              e["device_class"] or "no class"))
+                for _, inc, exc in gens:
+                    for r in inc:
+                        name = (r.get("options") or {}).get("name")
+                        # A name CONFIG ([{type: entity}, ...]) is resolved per entity;
+                        # only a literal string names every tile the rule makes.
+                        if not isinstance(name, str) or not name:
+                            continue
+                        hit = [e["entity_id"] for e in here
+                               if rule_matches(r, e, area_name_of) is not False
+                               and not any(rule_matches(x, e, area_name_of) for x in exc)]
+                        if len(hit) > 1:
+                            doubled.append("%-14s %r <- %s" % (v.get("path"), name, ", ".join(sorted(hit))))
+            if missing_env:
+                fail("C18", "%s: %d environmental reading(s) in a room's area appear on no "
+                            "room page" % (label, len(missing_env)), sorted(missing_env))
+            if doubled:
+                fail("C19", "%s: %d fixed tile name(s) are given to more than one entity"
+                     % (label, len(doubled)), sorted(doubled))
+
+        # C20 - a labelled Magic Areas aggregate has exactly one member.
+        if label == "lovelace":
+            ents = registry_entities()
+            multi = []
+            for a in ents:
+                if a["integration"] != "magic_areas" or ROOM_SHOW_LABEL not in a["labels"]:
+                    continue
+                if a["domain"] != "sensor" or "_aggregate_" not in a["entity_id"]:
+                    continue
+                members = [e["entity_id"] for e in ents
+                           if e["domain"] == "sensor" and e["integration"] != "magic_areas"
+                           and e["area"] == a["area"] and e["device_class"] == a["device_class"]]
+                if len(members) != 1:
+                    multi.append("%s averages %d: %s" % (a["entity_id"], len(members), ", ".join(sorted(members))))
+            if multi:
+                fail("C20", "%s: %d room reading(s) are a Magic Areas mean of other than one sensor"
+                     % (label, len(multi)), sorted(multi))
+
+        # C21 - Needs attention covers every safety alarm, by class, not by name.
+        if label == "lovelace":
+            home = next((v for v in views if v.get("path") == "home"), {})
+            na = [sec for sec in (home.get("sections") or [])
+                  if (sec.get("cards") or [{}])[0].get("heading") == "Needs attention"]
+            safety_ids = {e["entity_id"] for e in registry_entities()
+                          if e["domain"] == "binary_sensor" and e["device_class"] in SAFETY_CLASSES}
+            problems = []
+            if not na:
+                problems.append("home has no 'Needs attention' section")
+            for sec in na:
+                # Structure, not a substring (review 2026-10-09 F7): the section must be
+                # visible when the roll-up is ON on its own - a top-level condition, or a
+                # branch of a top-level OR. An AND, or the wrong state, hides a lone fire.
+                vis = sec.get("visibility") or []
+                want = {"condition": "state", "entity": SAFETY_ROLLUP, "state": "on"}
+                branches = [c for c in vis if c == want] + [
+                    b for c in vis if c.get("condition") == "or" and len(vis) == 1
+                    for b in (c.get("conditions") or []) if b == want]
+                if not branches:
+                    problems.append("the section is not shown whenever %s is on by itself "
+                                    "(need it as the sole condition or a branch of a lone OR)"
+                                    % SAFETY_ROLLUP)
+                for path, card in cards([sec], "home/needs-attention"):
+                    named = card.get("entity")
+                    if named in safety_ids:
+                        problems.append("%s hand-lists %s" % (path, named))
+            if problems:
+                fail("C21", "%s: Needs attention would miss a safety alarm" % label, problems)
+
+        # C22 - one definition of night.
+        stale = [path for path, card in found
+                 if "is_state('schedule.climate_night','on') or" in json.dumps(card)
+                 and card.get("type") not in ("custom:auto-entities",)]
+        if stale:
+            fail("C22", "%s: %d card(s) still compute night from the schedule" % (label, len(stale)),
+                 stale)
+
         # C16 - auto-entities matchers are strings.
         listy = []
         for path, card in found:
@@ -695,6 +956,18 @@ def main():
         if listy:
             fail("C16", "%s: %d auto-entities matcher(s) are lists, which match nothing"
                  % (label, len(listy)), listy)
+
+        # C17 - a room card's group is the whole room, not one light category.
+        partial = []
+        for tname, tdef in sorted(lib.items()):
+            js = json.dumps(tdef)
+            for m in re.finditer(r"platform\s*===?\s*\\?'magic_areas\\?'", js):
+                after = js[m.end():m.end() + 160]
+                if "grp" in after[:40] and "_all_lights" not in after:
+                    partial.append("%s: ...%s..." % (tname, js[m.start():m.end() + 80]))
+        if partial:
+            fail("C17", "%s: %d template(s) take ANY Magic Areas light as the room's group"
+                 % (label, len(partial)), partial)
 
         # C6 - no scratch keys
         debris = ["%s/views/%d %r" % (label, i, k)

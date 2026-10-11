@@ -70,6 +70,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -140,18 +144,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "living_room",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -255,6 +247,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "living_room",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -556,8 +688,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -751,6 +886,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -821,18 +960,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "kitchen",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -936,6 +1063,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kitchen",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -1237,8 +1504,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -1432,6 +1702,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -1502,18 +1776,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "bedroom",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -1617,6 +1879,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -1918,8 +2320,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -2113,6 +2518,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -2183,18 +2592,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "corridor",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -2298,6 +2695,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "corridor",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -2599,8 +3136,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -2794,6 +3334,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -2864,18 +3408,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "bedroom_2",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -2979,6 +3511,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bedroom_2",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -3280,8 +3952,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -3475,6 +4150,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -3545,18 +4224,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "kid1_room",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -3660,6 +4327,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid1_room",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -3961,8 +4768,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -4156,6 +4966,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -4226,18 +5040,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "kid2_room",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -4341,6 +5143,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "kid2_room",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -4642,8 +5584,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -4837,6 +5782,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -4907,18 +5856,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "hallway",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -5022,6 +5959,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "hallway",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -5323,8 +6400,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -5518,6 +6598,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -5588,18 +6672,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "bathroom",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -5703,6 +6775,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "bathroom",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -6004,8 +7216,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -6199,6 +7414,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -6269,18 +7488,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "shower",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -6384,6 +7591,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "shower",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -6685,8 +8032,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -6880,6 +8230,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -6950,18 +8304,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "laundry_room",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -7065,6 +8407,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "laundry_room",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -7366,8 +8848,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -7561,6 +9046,10 @@
         },
         {
          "label": "not_on_room_pages"
+        },
+        {
+         "entity_id": "/_(overhead|task|accent|sleep)_lights$/",
+         "integration": "magic_areas"
         }
        ],
        "include": [
@@ -7631,18 +9120,6 @@
          },
          "sort": {
           "count": 3
-         }
-        },
-        {
-         "area": "closet",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
          }
         }
        ]
@@ -7746,6 +9223,146 @@
       "sort": {
        "method": "friendly_name"
       },
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "title": "Environment",
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "exclude": [
+        {
+         "entity_category": "config"
+        },
+        {
+         "entity_category": "diagnostic"
+        },
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "label": "not_on_room_pages"
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "temperature"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Temperature",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "humidity"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "Humidity",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "carbon_dioxide"
+         },
+         "domain": "sensor",
+         "label": "on_room_page",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": "CO₂",
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "attributes": {
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
+         },
+         "domain": "sensor",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        },
+        {
+         "area": "closet",
+         "domain": "sensor",
+         "entity_id": "/_voc_index$/",
+         "options": {
+          "entity": "this.entity_id",
+          "features": [
+           {
+            "hours_to_show": 24,
+            "type": "trend-graph"
+           }
+          ],
+          "features_position": "bottom",
+          "name": [
+           {
+            "type": "entity"
+           },
+           {
+            "type": "device"
+           }
+          ],
+          "type": "tile"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      },
@@ -8047,8 +9664,11 @@
         },
         {
          "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
+          "device_class": "/^(temperature|humidity|illuminance|carbon_dioxide|carbon_monoxide|pm1|pm25|pm10|volatile_organic_compounds|volatile_organic_compounds_parts|aqi|atmospheric_pressure|pressure|nitrogen_dioxide|ozone|sound_pressure)$/"
          }
+        },
+        {
+         "entity_id": "/_voc_index$/"
         }
        ],
        "include": [
@@ -8169,687 +9789,6 @@
   ],
   "subview": true,
   "title": "Closet",
-  "type": "sections"
- },
- {
-  "back_path": "/lovelace/home",
-  "icon": "mdi:balcony",
-  "max_columns": 2,
-  "path": "terrace",
-  "sections": [
-   {
-    "cards": [
-     {
-      "card": {
-       "heading": "Lights",
-       "icon": "mdi:lightbulb-group",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "integration": "magic_areas"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "light",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "light",
-         "integration": "magic_areas",
-         "options": {
-          "features": [
-           {
-            "type": "light-brightness"
-           }
-          ],
-          "features_position": "bottom",
-          "icon": "mdi:lightbulb-group",
-          "name": "All lights",
-          "type": "tile"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "light",
-         "options": {
-          "features": [
-           {
-            "type": "light-brightness"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Climate",
-       "icon": "mdi:thermostat",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "climate",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        },
-        {
-         "area": "terrace",
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         },
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "input_number",
-         "label": "on_room_page",
-         "options": {
-          "features": [
-           {
-            "style": "buttons",
-            "type": "numeric-input"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "input_boolean",
-         "label": "on_room_page",
-         "options": {
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "climate",
-         "options": {
-          "state_content": [
-           "hvac_action",
-           "current_temperature"
-          ],
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Air",
-       "icon": "mdi:air-purifier",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "fan",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "fan",
-         "options": {
-          "entity": "this.entity_id",
-          "features": [
-           {
-            "style": "dropdown",
-            "type": "fan-preset-modes"
-           },
-           {
-            "type": "fan-speed"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Blinds & locks",
-       "icon": "mdi:blinds",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "cover",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "lock",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "cover",
-         "options": {
-          "entity": "this.entity_id",
-          "features": [
-           {
-            "type": "cover-open-close"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "lock",
-         "options": {
-          "entity": "this.entity_id",
-          "features": [
-           {
-            "type": "lock-commands"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Media",
-       "icon": "mdi:speaker",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "media_player",
-         "options": {
-          "show_state": true,
-          "type": "entity"
-         },
-         "sort": {
-          "count": 3
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 1,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "entity_category": "config"
-        },
-        {
-         "entity_category": "diagnostic"
-        },
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "media_player",
-         "options": {
-          "entity": "this.entity_id",
-          "group": true,
-          "hide": {
-           "power_state": false
-          },
-          "type": "custom:mini-media-player"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      "card_param": "cards",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "label": "not_on_room_pages"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        },
-        {
-         "attributes": {
-          "device_class": "/^(temperature|humidity|carbon_dioxide)$/"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "button",
-         "label": "on_room_page",
-         "options": {
-          "entity": "this.entity_id",
-          "hide_state": true,
-          "icon_tap_action": {
-           "action": "perform-action",
-           "perform_action": "button.press",
-           "target": {
-            "entity_id": "this.entity_id"
-           }
-          },
-          "tap_action": {
-           "action": "perform-action",
-           "perform_action": "button.press",
-           "target": {
-            "entity_id": "this.entity_id"
-           }
-          },
-          "type": "tile"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "sensor",
-         "label": "on_room_page",
-         "options": {
-          "entity": "this.entity_id",
-          "features": [
-           {
-            "hours_to_show": 24,
-            "type": "trend-graph"
-           }
-          ],
-          "features_position": "bottom",
-          "type": "tile"
-         }
-        },
-        {
-         "area": "terrace",
-         "domain": "/^(switch|binary_sensor|select|number|scene|script|vacuum)$/",
-         "label": "on_room_page",
-         "options": {
-          "entity": "this.entity_id",
-          "type": "tile"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "sort": {
-       "method": "friendly_name"
-      },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "terrace",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        },
-        {
-         "area": "terrace",
-         "attributes": {
-          "device_class": "occupancy"
-         },
-         "domain": "binary_sensor",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     }
-    ],
-    "column_span": 1,
-    "type": "grid"
-   }
-  ],
-  "subview": true,
-  "title": "Terrace",
   "type": "sections"
  }
 ]

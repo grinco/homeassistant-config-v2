@@ -1,5 +1,5 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the low-battery helper. Reference only; entity ids are anonymised. NOTE on 'Any battery low': its threshold is duplicated in the dashboard card that renders the list -- the helper decides whether the card is visible, the card decides what goes in it. Change both together or the card appears saying '0 low batteries'.",
+  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the low-battery helper. Reference only; entity ids are anonymised. NOTE on 'Any battery low': its threshold is duplicated in the dashboard card that renders the list -- the helper decides whether the card is visible, the card decides what goes in it. Change both together or the card appears saying '0 low batteries'. 2026-10-07: 'Lighting daylight' (on = bright enough, no lights) is the dark entity Magic Areas reads before switching a room's lights on; the bathroom's and shower's readings are Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's Needs attention; it excludes itself so it cannot latch.",
   "entries": [
     {
       "domain": "min_max",
@@ -174,7 +174,7 @@
       "options": {
         "device_class": "temperature",
         "name": "Climate temp kid1",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_228b_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_8b_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid1_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_228b_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_8b_temperature') | float(-999) %}{% set q = states('sensor.kid1_air_quality_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid1_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "°C"
@@ -234,7 +234,7 @@
       "options": {
         "device_class": "humidity",
         "name": "Climate humidity kid1",
-        "state": "{% set b = states('sensor.indoor_outdoor_meter_228b_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_8b_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid1_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+        "state": "{% set b = states('sensor.indoor_outdoor_meter_228b_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_8b_humidity') | float(-1) %}{% set q = states('sensor.kid1_air_quality_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid1_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif q >= 0 %}{{ q | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "%"
@@ -337,6 +337,35 @@
         "state_class": "measurement",
         "template_type": "sensor",
         "unit_of_measurement": "µSv/h"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Lighting daylight",
+      "options": {
+        "device_class": "light",
+        "name": "Lighting daylight",
+        "state": "{% set lux = states('sensor.outdoor_motion_illuminance') | float(-1) %}{% set dark = states('input_number.lighting_dark_below_lux') | float(400) %}{% set was_bright = this.state == 'on' %}{% if lux >= 0 %}{{ lux >= (dark if was_bright else dark * 2) }}{% else %}{{ (state_attr('sun.sun','elevation') | float(0)) > (6 if was_bright else 12) }}{% endif %}",
+        "template_type": "binary_sensor"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Any safety alarm",
+      "options": {
+        "device_class": "safety",
+        "name": "Any safety alarm",
+        "state": "{{ states.binary_sensor | rejectattr('entity_id','eq','binary_sensor.any_safety_alarm') | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in',['moisture','smoke','gas','carbon_monoxide','safety']) | selectattr('state','eq','on') | list | count > 0 }}",
+        "template_type": "binary_sensor"
+      }
+    },
+    {
+      "domain": "template",
+      "title": "Lighting night",
+      "options": {
+        "name": "Lighting night",
+        "state": "{% set a = states('alarm_control_panel.home') %}{{ a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) }}",
+        "template_type": "binary_sensor"
       }
     }
   ]

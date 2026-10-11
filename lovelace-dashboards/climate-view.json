@@ -54,9 +54,28 @@
      "type": "heading"
     },
     {
-     "content": "{% set night = is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') %}{% set away = is_state('alarm_control_panel.home','armed_away') and (now() - states.alarm_control_panel.home.last_changed).total_seconds() > 1800 %}{% set o = states('sensor.climate_temp_outdoor') | float(-999) %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% set hm = states('input_select.climate_house_mode') %}{% if o <= -900 %}{% set house = 'Unknown - outdoor sensor unavailable' %}{% elif hm == 'heat' %}{% set house = 'HEATING' %}{% elif hm == 'cool' %}{% set house = 'COOLING' %}{% else %}{% set house = 'SHOULDER - neither' %}{% endif %}### House: {{ house }}\n\n{{ '**Away** - safety band only' if away else ('**Night** targets' if night else '**Day** targets') }} · outdoor {{ '-' if o <= -900 else (o | round(1) ~ '°') }}{% if o > -900 %} ({{ 'terrace' if has_value('sensor.outdoor_motion_temperature') else 'forecast' }}){% endif %} · heat below {{ hbo }}° / cool above {{ cao }}°{% if o > -900 and states('input_select.climate_house_mode') == 'shoulder' %}\n\nOutdoor sits in the shoulder band, so no room will heat or cool. Rooms with **air filter** on run the fan only.{% endif %}{% if is_state('input_boolean.climate_auto','off') %}\n\n⚠️ **Automation is OFF** - comfort control is not running.{% set nsf = namespace(fon=[]) %}{% for n, s in [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% if is_state('input_boolean.climate_air_filter_' ~ s,'on') %}{% set nsf.fon = nsf.fon + [n] %}{% endif %}{% endfor %}{% if nsf.fon %} **Air filter is on in {{ nsf.fon | join(', ') }} and is doing nothing** - the filter needs automatic control to be on.{% endif %}{% if is_state('input_boolean.climate_safety_always','on') %} Safety limits still apply.{% endif %}{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}\n\n⚠️ **Safety limits are OFF** - no frost protection and no away band.{% endif %}",
+     "content": "{% set night = (states('alarm_control_panel.home') == 'armed_night' or (states('alarm_control_panel.home') in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))) %}{% set away = is_state('alarm_control_panel.home','armed_away') and (now().timestamp() - (state_attr('input_datetime.climate_away_since','timestamp') | float(0))) > 1800 %}{% set o = states('sensor.climate_temp_outdoor') | float(-999) %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% set hm = states('input_select.climate_house_mode') %}{% if o <= -900 %}{% set house = 'Unknown - outdoor sensor unavailable' %}{% elif hm == 'heat' %}{% set house = 'HEATING' %}{% elif hm == 'cool' %}{% set house = 'COOLING' %}{% else %}{% set house = 'SHOULDER - neither' %}{% endif %}### House: {{ house }}\n\n{{ '**Away** - safety band only' if away else ('**Night** targets' if night else '**Day** targets') }} · outdoor {{ '-' if o <= -900 else (o | round(1) ~ '°') }}{% if o > -900 %} ({{ 'terrace' if has_value('sensor.outdoor_motion_temperature') else 'forecast' }}){% endif %} · heat below {{ hbo }}° / cool above {{ cao }}°{% set rz = [('climate.livingroom_thermostat_livingroom_thermostat'),('climate.bedroom_trv_bedroom_trv'),('climate.kid1_room_trv_kid1_room_trv'),('climate.kid2_room_trv_kid2_room_trv')] %}{% set heating = rz | select('is_state_attr', 'hvac_action', 'heating') | list | count %}{% set ph = ['living_room','office','bedroom','kid1','kid2'] | map('regex_replace', '^', 'input_boolean.climate_preheat_') | select('is_state', 'on') | list | count %}\n\nRadiators: {{ 'follow the room targets' if is_state('automation.climate_radiators','on') else '**on Tado schedules** (automation off)' }}{{ (' · ' ~ heating ~ ' heating now') if heating else '' }} · morning warm-up {{ ('in ' ~ ph ~ ' room' ~ ('' if ph == 1 else 's')) if ph else 'off' }}{% if o > -900 and states('input_select.climate_house_mode') == 'shoulder' %}\n\nOutdoor sits in the shoulder band, so no room will heat or cool. Rooms with **air filter** on run the fan only.{% endif %}{% if is_state('input_boolean.climate_auto','off') %}\n\n⚠️ **Automation is OFF** - comfort control is not running.{% set nsf = namespace(fon=[]) %}{% for n, s in [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% if is_state('input_boolean.climate_air_filter_' ~ s,'on') %}{% set nsf.fon = nsf.fon + [n] %}{% endif %}{% endfor %}{% if nsf.fon %} **Air filter is on in {{ nsf.fon | join(', ') }} and is doing nothing** - the filter needs automatic control to be on.{% endif %}{% if is_state('input_boolean.climate_safety_always','on') %} Safety limits still apply.{% endif %}{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}\n\n⚠️ **Safety limits are OFF** - no frost protection and no away band.{% endif %}",
      "text_only": true,
      "type": "markdown"
+    },
+    {
+     "entity": "alarm_control_panel.home",
+     "features": [
+      {
+       "modes": [
+        "armed_home",
+        "armed_night"
+       ],
+       "type": "alarm-modes"
+      }
+     ],
+     "features_position": "inline",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:theme-light-dark",
+     "name": "Day / night",
+     "type": "tile"
     },
     {
      "color": "green",
@@ -73,17 +92,20 @@
      "type": "tile"
     },
     {
-     "content": "{% set ns2 = namespace(dead=[], m6=[]) %}{% set rr = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% for n, s in rr %}{% if states('sensor.climate_temp_' ~ s) in ['unknown','unavailable'] and (now() - states['sensor.climate_temp_' ~ s].last_changed).total_seconds() > 600 %}{% set ns2.dead = ns2.dead + [n] %}{% endif %}{% endfor %}{% set night = is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') %}{% for n, s, tw in [('Bedroom','bedroom','climate.bedroom_trv_bedroom_trv'),('Kids room 1','kid1','climate.kid1_room_trv_kid1_room_trv'),('Kids room 2','kid2','climate.kid2_room_trv_kid2_room_trv')] %}{% set sp = state_attr(tw,'temperature') | float(0) %}{% set at = (states('input_number.climate_target_night_' ~ s) if night else states('input_number.climate_target_day_' ~ s)) | float(20) %}{% if sp > at %}{% set ns2.m6 = ns2.m6 + [n] %}{% endif %}{% endfor %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set aco = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set upt = now().timestamp() - (state_attr('input_datetime.climate_ha_started','timestamp') | float(0)) %}{% if ns2.dead %}🛰️ **No temperature reading: {{ ns2.dead | join(', ') }}** — the safety band cannot be checked in {{ 'that room' if ns2.dead | count == 1 else 'those rooms' }}.\n\n{% endif %}{% if (tv | abs) > 3 or aco < -3.5 %}⚠️ **Sensor calibration looks wrong** — rooms may be reading several degrees off. The affected sensors are being ignored in favour of their backups.\n\n{% endif %}{% if ns2.m6 %}♨️ **Radiator valve set above target: {{ ns2.m6 | join(', ') }}** — the boiler and the AC will take turns.\n\n{% endif %}{% if upt > 34560000 %}⚠️ **Restart stamp is stale** — the guard that tells a person at the wall from a faulty unit is inert.\n\n{% endif %}{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room','input_datetime.climate_manual_until_living_room'),('Office','counter.climate_fail_office','input_datetime.climate_manual_until_office'),('Bedroom','counter.climate_fail_bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','counter.climate_fail_kid1','input_datetime.climate_manual_until_kid1'),('Kids room 2','counter.climate_fail_kid2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(bad=[], held=[]) %}{% for n, c, m in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% set t = state_attr(m,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n] %}{% endif %}{% endfor %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% if ns.bad %}🔌 **Not responding: {{ ns.bad | join(', ') }}** — comfort throttled, safety still running.\n\n{% endif %}{% if ns.held %}✋ **Manual hold: {{ ns.held | join(', ') }}** — automation hands off until it expires.\n\n{% endif %}{% if hbo >= cao %}⚠️ **House band inverted** ({{ hbo }} / {{ cao }}) — all comfort control is stood down.\n\n{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}⚠️ **Safety limits are OFF** — no frost protection, no away band.\n\n{% endif %}{% if not ns.bad and not ns.held and hbo < cao and is_state('input_boolean.climate_safety_always','on') %}All five units responding · no manual holds · safety limits on.{% endif %}",
+     "content": "{% set ns2 = namespace(dead=[], m6=[]) %}{% set rr = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% for n, s in rr %}{% if states('sensor.climate_temp_' ~ s) in ['unknown','unavailable'] and (now() - states['sensor.climate_temp_' ~ s].last_changed).total_seconds() > 600 %}{% set ns2.dead = ns2.dead + [n] %}{% endif %}{% endfor %}{% set night = (states('alarm_control_panel.home') == 'armed_night' or (states('alarm_control_panel.home') in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))) %}{% for n, s, tw in [('Bedroom','bedroom','climate.bedroom_trv_bedroom_trv'),('Kids room 1','kid1','climate.kid1_room_trv_kid1_room_trv'),('Kids room 2','kid2','climate.kid2_room_trv_kid2_room_trv')] %}{% set sp = state_attr(tw,'temperature') | float(0) %}{% set at = (states('input_number.climate_target_night_' ~ s) if night else states('input_number.climate_target_day_' ~ s)) | float(20) %}{% if sp > at %}{% set ns2.m6 = ns2.m6 + [n] %}{% endif %}{% endfor %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set aco = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set upt = now().timestamp() - (state_attr('input_datetime.climate_ha_started','timestamp') | float(0)) %}{% if ns2.dead %}🛰️ **No temperature reading: {{ ns2.dead | join(', ') }}** — the safety band cannot be checked in {{ 'that room' if ns2.dead | count == 1 else 'those rooms' }}.\n\n{% endif %}{% if (tv | abs) > 3 or aco < -3.5 %}⚠️ **Sensor calibration looks wrong** — rooms may be reading several degrees off. The affected sensors are being ignored in favour of their backups.\n\n{% endif %}{% if ns2.m6 %}♨️ **Radiator valve set above target: {{ ns2.m6 | join(', ') }}** — the boiler and the AC will take turns.\n\n{% endif %}{% if upt > 34560000 %}⚠️ **Restart stamp is stale** — the guard that tells a person at the wall from a faulty unit is inert.\n\n{% endif %}{% set b = states('input_number.climate_breaker_threshold') | int(3) %}{% set rooms = [('Living room','counter.climate_fail_living_room','input_datetime.climate_manual_until_living_room'),('Office','counter.climate_fail_office','input_datetime.climate_manual_until_office'),('Bedroom','counter.climate_fail_bedroom','input_datetime.climate_manual_until_bedroom'),('Kids room 1','counter.climate_fail_kid1','input_datetime.climate_manual_until_kid1'),('Kids room 2','counter.climate_fail_kid2','input_datetime.climate_manual_until_kid2')] %}{% set ns = namespace(bad=[], held=[]) %}{% for n, c, m in rooms %}{% if states(c) | int(0) >= b %}{% set ns.bad = ns.bad + [n] %}{% endif %}{% set t = state_attr(m,'timestamp') %}{% if t and now().timestamp() < t %}{% set ns.held = ns.held + [n] %}{% endif %}{% endfor %}{% set hbo = states('input_number.climate_heat_below_outdoor') | float(17) %}{% set cao = states('input_number.climate_cool_above_outdoor') | float(20) %}{% if ns.bad %}🔌 **Not responding: {{ ns.bad | join(', ') }}** — comfort throttled, safety still running.\n\n{% endif %}{% if ns.held %}✋ **Manual hold: {{ ns.held | join(', ') }}** — automation hands off until it expires.\n\n{% endif %}{% if hbo >= cao %}⚠️ **House band inverted** ({{ hbo }} / {{ cao }}) — all comfort control is stood down.\n\n{% endif %}{% if is_state('input_boolean.climate_safety_always','off') %}⚠️ **Safety limits are OFF** — no frost protection, no away band.\n\n{% endif %}{% if not ns.bad and not ns.held and hbo < cao and is_state('input_boolean.climate_safety_always','on') %}All five units responding · no manual holds · safety limits on.{% endif %}",
      "text_only": true,
      "type": "markdown"
     },
     {
      "grid_options": {
-      "columns": 12
+      "columns": 12,
+      "rows": "auto"
      },
      "icon": "mdi:tune-variant",
-     "icon_height": "28px",
+     "icon_height": "16px",
      "name": "Settings",
+     "show_icon": true,
+     "show_name": true,
      "tap_action": {
       "action": "navigate",
       "navigation_path": "/lovelace/climate-advanced"
@@ -92,6 +114,109 @@
     }
    ],
    "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Heating & hot water",
+     "icon": "mdi:water-boiler",
+     "type": "heading"
+    },
+    {
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "exclude": [
+       {
+        "hidden_by": "/.+/"
+       }
+      ],
+      "include": [
+       {
+        "device_model": "Zone",
+        "domain": "climate",
+        "integration": "tado",
+        "options": {
+         "entity": "this.entity_id",
+         "features": [
+          {
+           "type": "target-temperature"
+          },
+          {
+           "hvac_modes": [
+            "auto",
+            "heat",
+            "off"
+           ],
+           "type": "climate-hvac-modes"
+          }
+         ],
+         "features_position": "bottom",
+         "state_content": [
+          "hvac_action",
+          "current_temperature"
+         ],
+         "type": "tile"
+        }
+       },
+       {
+        "domain": "water_heater",
+        "options": {
+         "entity": "this.entity_id",
+         "features": [
+          {
+           "operation_modes": [
+            "auto",
+            "heat",
+            "off"
+           ],
+           "type": "water-heater-operation-modes"
+          }
+         ],
+         "features_position": "bottom",
+         "type": "tile"
+        }
+       },
+       {
+        "device_model": "Zone",
+        "domain": "sensor",
+        "entity_id": "/_heating$/",
+        "integration": "tado",
+        "options": {
+         "entity": "this.entity_id",
+         "features": [
+          {
+           "hours_to_show": 24,
+           "type": "trend-graph"
+          }
+         ],
+         "features_position": "bottom",
+         "name": [
+          {
+           "type": "device"
+          },
+          {
+           "type": "entity"
+          }
+         ],
+         "type": "tile"
+        }
+       }
+      ]
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities",
+     "unique": "entity"
+    }
+   ],
    "type": "grid"
   },
   {
@@ -112,6 +237,71 @@
      "heading": "Outside",
      "icon": "mdi:weather-partly-cloudy",
      "type": "heading"
+    },
+    {
+     "entities": [
+      {
+       "color": "#4caf50",
+       "entity": "sensor.house_humidity",
+       "name": "Outside humidity"
+      }
+     ],
+     "font_size": 75,
+     "grid_options": {
+      "columns": 12,
+      "rows": 3
+     },
+     "hours_to_show": 24,
+     "icon": "mdi:water-percent",
+     "line_width": 2,
+     "points_per_hour": 2,
+     "show": {
+      "fill": "fade",
+      "icon": true,
+      "labels": false,
+      "legend": false,
+      "name": true,
+      "state": true
+     },
+     "type": "custom:mini-graph-card"
+    },
+    {
+     "entities": [
+      {
+       "color": "#4caf50",
+       "entity": "sensor.climate_temp_outdoor",
+       "name": "In use"
+      },
+      {
+       "color": "#ff9800",
+       "entity": "sensor.outdoor_motion_temperature",
+       "name": "Terrace"
+      },
+      {
+       "color": "#607d8b",
+       "entity": "sensor.house_temperature",
+       "name": "Forecast"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": "auto"
+     },
+     "height": 180,
+     "hours_to_show": 24,
+     "line_width": 2,
+     "name": "Outside, 24 h",
+     "points_per_hour": 2,
+     "show": {
+      "fill": false,
+      "icon": false,
+      "labels": true,
+      "legend": true,
+      "name": true,
+      "state": false
+     },
+     "type": "custom:mini-graph-card",
+     "unit": "°C"
     },
     {
      "color": "light-blue",
@@ -538,257 +728,49 @@
      "type": "heading"
     },
     {
-     "entities": [
-      {
-       "color": "#ff9800",
-       "entity": "sensor.climate_temp_living_room",
-       "name": "Living room"
-      }
-     ],
-     "font_size": 75,
+     "card": {
+      "columns": 2,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','temperature') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'type': 'custom:mini-graph-card', 'entities': [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}], 'icon': 'mdi:thermometer', 'hours_to_show': 24, 'points_per_hour': 2, 'line_width': 2, 'font_size': 75, 'decimals': 1, 'show': {'name': true, 'icon': true, 'state': true, 'labels': false, 'legend': false, 'fill': 'fade'}}] -%}{%- endfor -%}{{ out.l }}"
+     },
      "grid_options": {
-      "columns": 6,
-      "rows": 3
+      "columns": "full"
      },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
+     "show_empty": false,
+     "type": "custom:auto-entities"
     },
     {
-     "entities": [
-      {
-       "color": "#3f51b5",
-       "entity": "sensor.climate_temp_office",
-       "name": "Office"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#9c27b0",
-       "entity": "sensor.climate_temp_bedroom",
-       "name": "Bedroom"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#e91e63",
-       "entity": "sensor.climate_temp_kid1",
-       "name": "Kids room 1"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.climate_temp_kid2",
-       "name": "Kids room 2"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#8bc34a",
-       "entity": "sensor.climate_temp_corridor",
-       "name": "Corridor"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:thermometer",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#4caf50",
-       "entity": "sensor.climate_temp_outdoor",
-       "name": "In use"
+     "card": {
+      "decimals": 1,
+      "height": 180,
+      "hours_to_show": 24,
+      "line_width": 2,
+      "name": "All rooms, 24 h",
+      "points_per_hour": 2,
+      "show": {
+       "fill": false,
+       "icon": false,
+       "labels": true,
+       "legend": true,
+       "name": true,
+       "state": false
       },
-      {
-       "color": "#ff9800",
-       "entity": "sensor.outdoor_motion_temperature",
-       "name": "Terrace"
-      },
-      {
-       "color": "#607d8b",
-       "entity": "sensor.house_temperature",
-       "name": "Forecast"
-      }
-     ],
+      "type": "custom:mini-graph-card",
+      "unit": "°C"
+     },
+     "card_param": "entities",
+     "filter": {
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','temperature') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endfor -%}{{ out.l }}"
+     },
      "grid_options": {
-      "columns": "full",
-      "rows": "auto"
+      "columns": "full"
      },
-     "height": 180,
-     "hours_to_show": 24,
-     "line_width": 2,
-     "name": "Outside, 24 h",
-     "points_per_hour": 2,
-     "show": {
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": true,
-      "state": false
-     },
-     "type": "custom:mini-graph-card",
-     "unit": "°C"
-    },
-    {
-     "entities": [
-      {
-       "color": "#ff9800",
-       "entity": "sensor.climate_temp_living_room",
-       "name": "Living room"
-      },
-      {
-       "color": "#3f51b5",
-       "entity": "sensor.climate_temp_office",
-       "name": "Office"
-      },
-      {
-       "color": "#9c27b0",
-       "entity": "sensor.climate_temp_bedroom",
-       "name": "Bedroom"
-      },
-      {
-       "color": "#e91e63",
-       "entity": "sensor.climate_temp_kid1",
-       "name": "Kids room 1"
-      },
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.climate_temp_kid2",
-       "name": "Kids room 2"
-      },
-      {
-       "color": "#8bc34a",
-       "entity": "sensor.climate_temp_corridor",
-       "name": "Corridor"
-      }
-     ],
-     "grid_options": {
-      "columns": "full",
-      "rows": "auto"
-     },
-     "height": 180,
-     "hours_to_show": 24,
-     "line_width": 2,
-     "name": "All rooms, 24 h",
-     "points_per_hour": 2,
-     "show": {
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": true,
-      "state": false
-     },
-     "type": "custom:mini-graph-card",
-     "unit": "°C"
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "column_span": 2,
@@ -802,246 +784,49 @@
      "type": "heading"
     },
     {
-     "entities": [
-      {
-       "color": "#ff9800",
-       "entity": "sensor.climate_humidity_living_room",
-       "name": "Living room"
-      }
-     ],
-     "font_size": 75,
+     "card": {
+      "columns": 2,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','humidity') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'type': 'custom:mini-graph-card', 'entities': [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}], 'icon': 'mdi:water-percent', 'hours_to_show': 24, 'points_per_hour': 2, 'line_width': 2, 'font_size': 75, 'decimals': 1, 'show': {'name': true, 'icon': true, 'state': true, 'labels': false, 'legend': false, 'fill': 'fade'}}] -%}{%- endfor -%}{{ out.l }}"
+     },
      "grid_options": {
-      "columns": 6,
-      "rows": 3
+      "columns": "full"
      },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
+     "show_empty": false,
+     "type": "custom:auto-entities"
     },
     {
-     "entities": [
-      {
-       "color": "#3f51b5",
-       "entity": "sensor.climate_humidity_office",
-       "name": "Office"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#9c27b0",
-       "entity": "sensor.climate_humidity_bedroom",
-       "name": "Bedroom"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#e91e63",
-       "entity": "sensor.climate_humidity_kid1",
-       "name": "Kids room 1"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.climate_humidity_kid2",
-       "name": "Kids room 2"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#8bc34a",
-       "entity": "sensor.climate_humidity_corridor",
-       "name": "Corridor"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 6,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#4caf50",
-       "entity": "sensor.house_humidity",
-       "name": "Outside"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 12,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#ff9800",
-       "entity": "sensor.climate_humidity_living_room",
-       "name": "Living room"
+     "card": {
+      "decimals": 1,
+      "height": 180,
+      "hours_to_show": 24,
+      "line_width": 2,
+      "name": "All rooms, 24 h",
+      "points_per_hour": 2,
+      "show": {
+       "fill": false,
+       "icon": false,
+       "labels": true,
+       "legend": true,
+       "name": true,
+       "state": false
       },
-      {
-       "color": "#3f51b5",
-       "entity": "sensor.climate_humidity_office",
-       "name": "Office"
-      },
-      {
-       "color": "#9c27b0",
-       "entity": "sensor.climate_humidity_bedroom",
-       "name": "Bedroom"
-      },
-      {
-       "color": "#e91e63",
-       "entity": "sensor.climate_humidity_kid1",
-       "name": "Kids room 1"
-      },
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.climate_humidity_kid2",
-       "name": "Kids room 2"
-      },
-      {
-       "color": "#8bc34a",
-       "entity": "sensor.climate_humidity_corridor",
-       "name": "Corridor"
-      }
-     ],
+      "type": "custom:mini-graph-card",
+      "unit": "%"
+     },
+     "card_param": "entities",
+     "filter": {
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','humidity') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endfor -%}{{ out.l }}"
+     },
      "grid_options": {
-      "columns": "full",
-      "rows": "auto"
+      "columns": "full"
      },
-     "height": 180,
-     "hours_to_show": 24,
-     "line_width": 2,
-     "name": "All rooms, 24 h",
-     "points_per_hour": 2,
-     "show": {
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": true,
-      "state": false
-     },
-     "type": "custom:mini-graph-card",
-     "unit": "%"
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "column_span": 2,

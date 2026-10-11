@@ -23,6 +23,7 @@ BASE = dict(
     temp=21.0, safety_on=True, comfort=True, frost=7.0, away_min=18.0, away_max=30.0,
     manual_active=False, away=False, enabled=True, house="heat", now_mode="off",
     target=22.0, hyst=1.0, room_hyst=0.5, filter_on=False,
+    has_rad=False, night=False, boost=1.5, preheat=False,
 )
 
 def case(name, expr, expect, given=None, subs=None, finding=""):
@@ -624,28 +625,32 @@ K1_B_H = "states('%s')" % K1["meter_hum"]
 K1_M_H = "states('%s')" % K1["matter_hum"]
 K1_V_H = "states('%s')" % K1["trv_hum"]
 K1_A_H = "states('%s')" % K1["ac_hum"]
+# 2026-10-07: a Zigbee air-quality sensor joined the room (see the block after these cases).
+# Every case pins it, so none of them silently reads the live sensor.
+K1_Q_T = "states('%s')" % K1["aq_temp"]
+K1_Q_H = "states('%s')" % K1["aq_hum"]
 
 # Every tier carries a DIFFERENT value, so the expected output names exactly one of them.
 # The AC offset is -2 and the TRV offset +1 throughout, so a tier that wrongly picks up a
 # correction is visible in the result rather than hidden behind a matching number.
 A(sensor_case(
     "the room meter outranks the TRV that the AC blows on", "23.4",
-    {K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
      K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="R8-2/A11: the TRV reads the unit's discharge, not the room"))
 A(sensor_case(
     "a correctly placed meter takes NO calibration offset", "23.4",
-    {K1_B_T: "'23.4'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'", K1_A_T: "'25.0'",
      K1_CONN: "false", K1_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
     sensor=K1_T, finding="offsets correct instruments in the wrong air; this one is not"))
 A(sensor_case(
     "a dead BLE meter falls to the same meter over Matter", "23.5",
-    {K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
      K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="second transport to one instrument, as in the living room"))
 A(sensor_case(
     "both meter paths down fall to the TRV, offset and all", "23.0",
-    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
      K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="the TRV keeps its place as the only INDEPENDENT fallback"))
 # The probe reads 24.0 here, NOT 25.0: with the AC offset at -2 a 25.0 probe resolves to
@@ -653,34 +658,71 @@ A(sensor_case(
 # paths would have been indistinguishable and the case would have passed either way.
 A(sensor_case(
     "a hot radiator still disqualifies the TRV, even as third tier", "22.0",
-    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'26.0'", K1_A_T: "'24.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'26.0'", K1_A_T: "'24.0'",
      K1_CONN: "true", K1_HEAT: "'65'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
 A(sensor_case(
     "every source down yields nothing, never a fabricated number", "",
-    {K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
      K1_A_T: "'unavailable'", K1_CONN: "false", K1_HEAT: "'0'",
      AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 A(sensor_case(
     "room humidity prefers the meter over the TRV", "39.0",
-    {K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
+    {K1_Q_H: "'unavailable'", K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
     sensor=K1_H, finding="same instrument ranking as temperature"))
 A(sensor_case(
     "a dead BLE humidity reading falls to Matter", "44.0",
-    {K1_B_H: "'unavailable'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
+    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
     sensor=K1_H, finding="Matter is demoted, not removed"))
 A(sensor_case(
     "both meter paths down fall to the TRV humidity", "46.0",
-    {K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
      K1_CONN: "true"},
     sensor=K1_H, finding="the TRV humidity has no radiator gate -- only a liveness one"))
 A(sensor_case(
     "an offline TRV drops humidity to the AC probe", "31.0",
-    {K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
      K1_CONN: "false"},
     sensor=K1_H, finding="liveness gates the TRV in both resolved sensors"))
+
+
+# ---------------------------------------------------------------- a third instrument in kid 1's room
+# 2026-10-07.  A Zigbee air-quality sensor (temperature, humidity, PM2.5, VOC) went into Kids
+# room 1.  It is a second, INDEPENDENT thermometer in the room's air, so it ranks below both paths
+# to the meter (the better-characterised instrument) and above the TRV and the AC probe, which sit
+# in the wrong air and need offsets.  Like the meter it takes NO offset.
+A(sensor_case(
+    "kid 1: both meter paths down fall to the air-quality sensor, not the TRV", "22.6",
+    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'",
+     K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="2026-10-07: an independent thermometer in the room's air outranks the TRV"))
+A(sensor_case(
+    "kid 1: the air-quality sensor takes NO calibration offset", "22.6",
+    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
+     K1_A_T: "'25.0'", K1_CONN: "false", K1_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
+    sensor=K1_T, finding="offsets correct instruments in the wrong air; this one is not"))
+A(sensor_case(
+    "kid 1: the meter still outranks the air-quality sensor", "23.4",
+    {K1_Q_T: "'22.6'", K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'",
+     K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="the meter is the better-characterised instrument"))
+A(sensor_case(
+    "kid 1: the meter over Matter still outranks the air-quality sensor", "23.5",
+    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'",
+     K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+    sensor=K1_T, finding="same instrument over a second transport beats a second instrument"))
+A(sensor_case(
+    "kid 1: humidity falls to the air-quality sensor before the TRV", "41.0",
+    {K1_Q_H: "'41'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'",
+     K1_A_H: "'31'", K1_CONN: "true"},
+    sensor=K1_H, finding="same instrument ranking as temperature"))
+A(sensor_case(
+    "kid 1: humidity still prefers the meter over the air-quality sensor", "39.0",
+    {K1_Q_H: "'41'", K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'",
+     K1_CONN: "true"},
+    sensor=K1_H, finding="same instrument ranking as temperature"))
 
 
 # ---------------------------------------------------------------- a real meter in the second kid's room
@@ -1112,3 +1154,444 @@ A(case("the house reads the resolved outdoor sensor", "outdoor", "13.1",
 A(case("an unavailable resolved outdoor sensor is the -999 sentinel", "outdoor", "-999",
        {}, {OUT_R: "'unavailable'"},
        finding="the sentinel the house decision already falls to shoulder on"))
+
+
+# ---------------------------------------------------------------- wet rooms
+# 2026-10-07: the bathroom and shower readings are Magic Areas aggregates (native, the operator's
+# preference) - there is no expression of ours to test. Their one-sensor assumption is guarded by
+# tests/dashboards/lint.py C20 instead.
+
+
+# ---------------------------------------------------------------- daylight, for presence lighting
+# 2026-10-07.  Magic Areas turns a room's lights ON when it becomes occupied only while the room is
+# DARK -- and with no darkness entity configured it assumes dark, around the clock.  So the living
+# room's new mmWave sensor would switch the lamps on at noon.  `binary_sensor.lighting_daylight`
+# is that entity: on = bright enough, no lights.
+#
+# The hazard is a flap at dusk.  Magic Areas reacts to a room turning BRIGHT by switching an
+# occupied room's lights OFF -- with somebody sitting in it.  So the sensor has hysteresis: it goes
+# dark below the threshold but needs TWICE the threshold to come back bright.  These cases straddle
+# both edges, in both directions; a case at a level where both answers agree proves nothing.
+# Outdoor light is the Hue terrace sensor; when it is dead the sun's elevation decides.
+DAY = "Lighting daylight"
+LUX = "states('sensor.outdoor_motion_illuminance')"
+LUX_T = "states('input_number.lighting_dark_below_lux')"
+WAS = "this.state"
+ELEV = "state_attr('sun.sun','elevation')"
+
+A(sensor_case("daylight: bright stays bright between the two edges", "True",
+              {LUX: "'500'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "30.0"}, sensor=DAY,
+              finding="hysteresis: a passing cloud at dusk must not flip the room bright-dark-bright"))
+A(sensor_case("daylight: dark stays dark between the two edges", "False",
+              {LUX: "'500'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "30.0"}, sensor=DAY,
+              finding="hysteresis: BRIGHT turns an occupied room's lights OFF, so it must be earned"))
+A(sensor_case("daylight: bright goes dark below the threshold", "False",
+              {LUX: "'390'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "30.0"}, sensor=DAY,
+              finding="the lower edge"))
+A(sensor_case("daylight: dark goes bright above twice the threshold", "True",
+              {LUX: "'810'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "-10.0"}, sensor=DAY,
+              finding="the upper edge; the sun is not consulted while the lux sensor is alive"))
+A(sensor_case("daylight: dark stays dark just under twice the threshold", "False",
+              {LUX: "'790'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "30.0"}, sensor=DAY,
+              finding="the upper edge, from below"))
+A(sensor_case("daylight: a first evaluation starts on the dark side", "False",
+              {LUX: "'500'", LUX_T: "'400.0'", WAS: "'unknown'", ELEV: "30.0"}, sensor=DAY,
+              finding="after a restart, err towards a lit room, never towards switching one off"))
+A(sensor_case("daylight: 0 lx at night is a reading, not a dead sensor", "False",
+              {LUX: "'0'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "30.0"}, sensor=DAY,
+              finding="the lux sentinel is -1; a 0 must not fall through to the sun"))
+A(sensor_case("daylight: a dead lux sensor falls to the sun, high", "True",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "20.0"}, sensor=DAY,
+              finding="the terrace sensor drops off Zigbee; lighting must not stop working"))
+A(sensor_case("daylight: a dead lux sensor falls to the sun, low", "False",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "4.0"}, sensor=DAY,
+              finding="a low sun is dark indoors well before sunset"))
+A(sensor_case("daylight: a missing threshold helper falls back to 400 lx", "False",
+              {LUX: "'390'", LUX_T: "'unavailable'", WAS: "'on'", ELEV: "30.0"}, sensor=DAY,
+              finding="the default must be a sane threshold, not 0 (never dark) or a huge one"))
+
+# Review 2026-10-07 (A1): the sun fallback had no hysteresis. A dark, occupied room whose lux sensor
+# died at noon flipped straight to BRIGHT - and BRIGHT switches an occupied room's lights OFF. The
+# fallback now needs a clearly high sun (12 deg) to brighten a dark room; a bright one stays bright
+# down to 6 deg. Straddle: 8 deg is between the two edges.
+A(sensor_case("daylight: a dead lux sensor does not brighten a dark room at a middling sun", "False",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "8.0"}, sensor=DAY,
+              finding="review 2026-10-07 A1: the fallback flipped an occupied room BRIGHT"))
+A(sensor_case("daylight: a dead lux sensor keeps a bright room bright at a middling sun", "True",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "8.0"}, sensor=DAY,
+              finding="review 2026-10-07 A1: the fallback's lower edge"))
+A(sensor_case("daylight: a dead lux sensor brightens a dark room once the sun is high", "True",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'off'", ELEV: "13.0"}, sensor=DAY,
+              finding="review 2026-10-07 A1: the fallback's upper edge"))
+A(sensor_case("daylight: no lux and no sun elevation is dark", "False",
+              {LUX: "'unavailable'", LUX_T: "'400.0'", WAS: "'on'", ELEV: "none"}, sensor=DAY,
+              finding="review 2026-10-07 A4: the fallback of the fallback errs towards a lit room"))
+
+# Review 2026-10-07 (A5): the air-quality sensor reports WHOLE degrees. Pin a real whole-degree input,
+# so the case data matches the instrument - this tier is a 1 deg C degraded mode, by design.
+A(sensor_case("kid 1: a whole-degree air-quality reading passes through", "24.0",
+              {K1_Q_T: "'24'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'",
+               K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
+              sensor=K1_T, finding="review 2026-10-07 A5: the instrument's real resolution"))
+
+
+# ---------------------------------------------------------------- any safety alarm (Home: Needs attention)
+# 2026-10-09.  A smoke and CO alarm went into the corridor, and Home's *Needs attention* section
+# turned out to be hand-listed: it knew one leak sensor by entity id and nothing about smoke, gas or
+# CO.  `binary_sensor.any_safety_alarm` makes it self-maintaining: on while ANY leak, smoke, gas, CO
+# or safety sensor in the house is on.  The whole binary_sensor domain is substituted with a literal
+# list, so each case states the house it describes.
+SAFE = "Any safety alarm"
+ALL_BS = "states.binary_sensor"
+
+
+def _bs(eid, state, dc):
+    return {"entity_id": eid, "state": state, "attributes": ({"device_class": dc} if dc else {})}
+
+
+def _house(*sensors):
+    return repr(list(sensors))
+
+
+A(sensor_case("safety: a CO alarm raises it", "True",
+              {ALL_BS: _house(_bs("binary_sensor.co", "on", "carbon_monoxide"),
+                              _bs("binary_sensor.door", "on", "door"))},
+              sensor=SAFE, finding="2026-10-09: Needs attention knew nothing about smoke or CO"))
+A(sensor_case("safety: a smoke alarm raises it", "True",
+              {ALL_BS: _house(_bs("binary_sensor.smoke", "on", "smoke"))},
+              sensor=SAFE, finding="2026-10-09: Needs attention knew nothing about smoke or CO"))
+A(sensor_case("safety: any leak sensor raises it, not only the one it was written for", "True",
+              {ALL_BS: _house(_bs("binary_sensor.new_leak", "on", "moisture"))},
+              sensor=SAFE, finding="2026-10-09: the section named one leak sensor by entity id"))
+A(sensor_case("safety: quiet sensors leave it off", "False",
+              {ALL_BS: _house(_bs("binary_sensor.smoke", "off", "smoke"),
+                              _bs("binary_sensor.leak", "off", "moisture"))},
+              sensor=SAFE, finding="the section must stay hidden in a calm house"))
+A(sensor_case("safety: an open door or motion is not a safety alarm", "False",
+              {ALL_BS: _house(_bs("binary_sensor.door", "on", "door"),
+                              _bs("binary_sensor.motion", "on", "motion"),
+                              _bs("binary_sensor.nodc", "on", None))},
+              sensor=SAFE, finding="only the safety classes count"))
+A(sensor_case("safety: an unavailable alarm is not a fire", "False",
+              {ALL_BS: _house(_bs("binary_sensor.smoke", "unavailable", "smoke"))},
+              sensor=SAFE, finding="a dead battery must not cry fire on the family Home page"))
+A(sensor_case("safety: the roll-up never counts itself", "False",
+              {ALL_BS: _house(_bs("binary_sensor.any_safety_alarm", "on", "safety"),
+                              _bs("binary_sensor.smoke", "off", "smoke"))},
+              sensor=SAFE, finding="a roll-up in its own class would latch on forever"))
+
+
+# ---------------------------------------------------------------- night: the alarm is the house mode
+# 2026-10-11, operator: "switch the alarm to night mode based on a schedule, and sync all binary
+# and climate entities to use it as source of truth; I'll also be able to switch the alarm to
+# day/night manually".  So `alarm_control_panel.home` == armed_night IS night, for everything.
+# `schedule.climate_night` only DRIVES the alarm, at its edges (automation "House - night mode").
+# Alarmo has no sensors, codes or sirens here: arming it is a house-mode switch and nothing else.
+ALARM = "states('alarm_control_panel.home')"
+SCHED_ON = "is_state('schedule.climate_night','on')"
+
+# The climate loop's own night.  Until now it was "schedule OR armed_night", which would keep the
+# house in night mode after the operator switched to day by hand - the exact control they asked for.
+# Review 2026-10-11 (F12): while the ALARM ITSELF is unavailable/unknown (an Alarmo reload, a
+# restart) "not armed_night" is not evidence of day - the loop would compute DAY targets at night.
+# Only then does the schedule stand in.  Every case pins both reads.
+for _who, _kind, _key in (("climate", "expr", "night"), ("lights", "sensor", "Lighting night"),
+                          ("adaptive lighting", "house", "sleep_on")):
+    def _c(name, expect, alarm, sched, finding, _who=_who, _kind=_kind, _key=_key):
+        subs = {ALARM: alarm, SCHED_ON: sched}
+        if _kind == "expr":
+            return case("%s: %s" % (_who, name), _key, expect, {}, subs, finding=finding)
+        if _kind == "sensor":
+            return sensor_case("%s: %s" % (_who, name), expect, subs, finding=finding, sensor=_key)
+        return dict(name="%s: %s" % (_who, name), automation="1790200000001", expr=_key,
+                    expect=expect, given={}, subs=subs, finding=finding)
+    A(_c("night is the alarm's night mode", "True", "'armed_night'", "false",
+         "2026-10-11: the alarm is the source of truth, even outside the schedule"))
+    A(_c("the schedule alone no longer makes it night", "False", "'armed_home'", "true",
+         "2026-10-11: a manual switch to day must win over the schedule"))
+    A(_c("disarmed in the schedule window is day", "False", "'disarmed'", "true",
+         "2026-10-11: manual wins - disarmed is a choice"))
+    A(_c("away is not night", "False", "'armed_away'", "true", "away has its own band"))
+    A(_c("an unavailable alarm falls back to the schedule, at night", "True", "'unavailable'", "true",
+         "review 2026-10-11 F12: a reload at night must not compute day targets"))
+    A(_c("an unavailable alarm falls back to the schedule, by day", "False", "'unavailable'", "false",
+         "review 2026-10-11 F12: the fallback is the schedule, not 'always night'"))
+    A(_c("an unknown alarm falls back to the schedule", "True", "'unknown'", "true",
+         "review 2026-10-11 F12: restart restores to unknown first"))
+
+# The automation that moves the alarm on the schedule's edges, and keeps Adaptive Lighting's
+# sleep mode in step with it.
+HOUSE = "1790200000001"
+SCHED_TO = "trigger.to_state.state"
+ALARM_NOW = "states('alarm_control_panel.home')"
+
+
+def house(name, expr, expect, subs, finding):
+    return dict(name=name, automation=HOUSE, expr=expr, expect=expect, given={}, subs=subs,
+                finding=finding)
+
+
+A(house("22:00 turns Home into Night", "want", "night",
+        {SCHED_TO: "'on'", ALARM_NOW: "'armed_home'"}, "2026-10-11: the evening edge"))
+A(house("22:00 turns Disarmed into Night", "want", "night",
+        {SCHED_TO: "'on'", ALARM_NOW: "'disarmed'"}, "2026-10-11 operator: from home OR disarmed"))
+A(house("22:00 leaves Away alone", "want", "none",
+        {SCHED_TO: "'on'", ALARM_NOW: "'armed_away'"},
+        "away wins: the climate away band and the house's empty state must not be undone"))
+A(house("22:00 leaves an alarm that is already Night alone", "want", "none",
+        {SCHED_TO: "'on'", ALARM_NOW: "'armed_night'"}, "no redundant command"))
+A(house("22:00 leaves a triggered alarm alone", "want", "none",
+        {SCHED_TO: "'on'", ALARM_NOW: "'triggered'"}, "never touch an alarm that is going off"))
+A(house("06:00 turns Night into Home", "want", "home",
+        {SCHED_TO: "'off'", ALARM_NOW: "'armed_night'"}, "2026-10-11: the morning edge"))
+A(house("06:00 leaves a manual Home alone", "want", "none",
+        {SCHED_TO: "'off'", ALARM_NOW: "'armed_home'"},
+        "2026-10-11: the operator switched to day by hand; the morning must not re-assert it"))
+A(house("06:00 never disarms or arms from Away", "want", "none",
+        {SCHED_TO: "'off'", ALARM_NOW: "'armed_away'"}, "the schedule only moves Night <-> Home"))
+A(house("06:00 leaves Disarmed alone", "want", "none",
+        {SCHED_TO: "'off'", ALARM_NOW: "'disarmed'"}, "the morning only ends a night"))
+A(house("a schedule going unavailable does nothing", "want", "none",
+        {SCHED_TO: "'unavailable'", ALARM_NOW: "'armed_home'"}, "a reload is not an edge"))
+A(house("every Adaptive Lighting sleep switch is found, and only those", "sleep_switches",
+        "['switch.adaptive_lighting_a_sleep_mode', 'switch.adaptive_lighting_b_sleep_mode']",
+        {"states.switch": repr([{"entity_id": "switch.adaptive_lighting_a_sleep_mode"},
+                                {"entity_id": "switch.adaptive_lighting_a_adapt_color"},
+                                {"entity_id": "switch.adaptive_lighting_a"},
+                                {"entity_id": "switch.adaptive_lighting_b_sleep_mode"},
+                                {"entity_id": "switch.kitchen_sleep_mode"}])},
+        "2026-10-11: a new Adaptive Lighting zone joins without an edit"))
+
+
+# ---------------------------------------------------------------- v6: radiators first (2026-10-11)
+# Operator: "tado is now controlling the boiler ... for heating we should use it more ... at night I
+# would prefer using TRVs where they exist instead of blowing air - more silent, and the windows
+# aren't fogging".  Decided with the operator: HA sets the radiators from the same day/night
+# targets; by DAY the radiator holds and the AC only boosts a room that is `boost` (1.5 C) behind,
+# handing back near target; at NIGHT the AC heats a radiator room only for SAFETY.  Rooms without
+# a radiator (`has_rad` false) are unchanged.  target 22, room_hyst 0.5, boost 1.5 throughout, so
+# the day entry edge is 20.5 and the hand-back edge is 21.5 - every pair below straddles one.
+RAD = dict(has_rad=True, house="heat", target=22.0)
+
+
+def rad(given):
+    g = dict(RAD); g.update(given); return g
+
+
+A(case("radiator room at night: the AC does not heat for comfort", "mode", "off",
+       rad({"night": True, "temp": 19.0}),
+       finding="v6 operator: radiators only at night - silent, no fogged windows"))
+A(case("radiator room at night: the AC still heats below the pet floor", "mode", "heat",
+       rad({"night": True, "temp": 17.0}),
+       finding="v6 operator: AC at night only for safety"))
+A(case("radiator room at night: frost still heats", "mode", "heat",
+       rad({"night": True, "temp": 5.0}), finding="v6: safety outranks the radiator rule"))
+A(case("radiator room at night: an AC already heating is stood down", "mode", "off",
+       rad({"night": True, "temp": 19.0, "now_mode": "heat"}),
+       finding="v6: at 22:00 the AC hands over, it does not finish its run"))
+A(case("radiator room by day: a small deficit is the radiator's job", "mode", "off",
+       rad({"temp": 20.6}), finding="v6: 1.4 C behind is inside the boost band"))
+A(case("radiator room by day: a large deficit brings the AC in", "mode", "heat",
+       rad({"temp": 20.4}), finding="v6: 1.6 C behind - fast warm-up"))
+A(case("radiator room by day: a boosting AC keeps going while well behind", "mode", "heat",
+       rad({"temp": 21.4, "now_mode": "heat"}), finding="v6: hand back near target, not at the entry edge"))
+A(case("radiator room by day: a boosting AC hands back near target", "mode", "off",
+       rad({"temp": 21.6, "now_mode": "heat"}), finding="v6: the radiator finishes the last half degree"))
+A(case("a room without a radiator still heats at night by AC", "mode", "heat",
+       {"night": True, "temp": 21.0, "house": "heat"},
+       finding="v6: the office has no valve yet - unchanged"))
+A(case("a room without a radiator still heats on a small deficit by day", "mode", "heat",
+       {"temp": 21.0, "house": "heat"}, finding="v6: unchanged for rooms without a valve"))
+A(case("radiator room in cooling season cools as before", "mode", "cool",
+       rad({"house": "cool", "temp": 24.0}), finding="v6 changes heating only"))
+A(case("radiator room at night: the air filter toggle still runs the unit", "mode", "heat",
+       rad({"night": True, "temp": 23.0, "filter_on": True}),
+       finding="v6: an explicit operator toggle wins - recorded, not silently dropped"))
+
+# The radiator automation (id 1790300000001): what each Tado zone should be set to, and whether
+# that needs a command.  Tado's cloud quota is small on the free plan, so a command goes out only
+# when the zone differs from what it should be - never on a schedule.
+RADS = "1790300000001"
+RBASE = dict(comfort=True, enabled=True, house="heat", away=False, night=False,
+             day_t=22.0, night_t=20.0, away_min=18.0, last_cmd=0.0, hold_active=False,
+             z_window=False)
+
+
+def rcase(name, expr, expect, given, finding, subs=None):
+    g = dict(RBASE); g.update(given)
+    return dict(name=name, automation=RADS, expr=expr, expect=expect, given=g, subs=subs or {},
+                finding=finding)
+
+
+A(rcase("radiator: day target by day", "rad_target", "22.0", {}, "v6: one target per room for AC and radiator"))
+A(rcase("radiator: night target at night", "rad_target", "20.0", {"night": True}, "v6"))
+A(rcase("radiator: off in shoulder season", "rad_target", "off", {"house": "shoulder"},
+        "v6: the house decides the season, for radiators too"))
+A(rcase("radiator: off in cooling season", "rad_target", "off", {"house": "cool"},
+        "v6: never heat against the AC cooling"))
+A(rcase("radiator: away holds the pet floor", "rad_target", "18.0", {"away": True},
+        "v6 operator: away = only frost and animal health; the boiler holds it cheaper than the AC"))
+A(rcase("radiator: away holds the pet floor in shoulder season too", "rad_target", "18.0",
+        {"away": True, "house": "shoulder"}, "v6: the floor is not seasonal"))
+# A disabled room, or the master switch off, HANDS THE ZONE BACK to Tado's own schedule ('auto').
+# 'off' would leave it on Tado's 5 C frost protection: two rooms were disabled when this was
+# written, one of them a bedroom, in heating season.
+A(rcase("radiator: a disabled room goes back to Tado's schedule", "rad_target", "auto",
+        {"enabled": False}, "v6: disabled means hands off, never 'cold'"))
+A(rcase("radiator: comfort off hands every zone back to Tado", "rad_target", "auto",
+        {"comfort": False}, "v6: the master switch returns control, it does not switch heating off"))
+A(rcase("radiator: comfort off wins over away", "rad_target", "auto",
+        {"comfort": False, "away": True}, "v6: with the master off, HA does not hold any floor"))
+A(rcase("radiator: a disabled room while away still holds the pet floor", "rad_target", "18.0",
+        {"enabled": False, "away": True}, "v6 operator: away = frost and animal health, in every room"))
+
+A(rcase("radiator: a zone on Tado's schedule is taken over", "rad_send", "True",
+        {"want": "22.0", "z_state": "auto", "z_target": 18.0}, "v6: HA is the radiator boss"))
+A(rcase("radiator: a zone already right is not commanded", "rad_send", "False",
+        {"want": "22.0", "z_state": "heat", "z_target": 22.0},
+        "v6: Tado's free quota - no redundant calls"))
+A(rcase("radiator: a zone at the wrong temperature is corrected", "rad_send", "True",
+        {"want": "20.0", "z_state": "heat", "z_target": 22.0}, "v6: the night edge"))
+A(rcase("radiator: a zone that should be off is switched off", "rad_send", "True",
+        {"want": "off", "z_state": "heat", "z_target": 22.0}, "v6: the season edge"))
+A(rcase("radiator: a zone already off is left alone", "rad_send", "False",
+        {"want": "off", "z_state": "off", "z_target": 0.0}, "v6: no redundant calls"))
+A(rcase("radiator: a zone handed back is put on its schedule", "rad_send", "True",
+        {"want": "auto", "z_state": "heat", "z_target": 22.0}, "v6: hand-back clears HA's overlay"))
+A(rcase("radiator: a zone already on its schedule is left alone", "rad_send", "False",
+        {"want": "auto", "z_state": "auto", "z_target": 18.0},
+        "v6: never fight Tado's own schedule temperature"))
+A(rcase("radiator: an unavailable zone is not commanded", "rad_send", "False",
+        {"want": "22.0", "z_state": "unavailable", "z_target": 0.0},
+        "v6: a cloud outage is not a reason to spend quota"))
+
+# A valve can be overridden by hand, like the AC (operator, 2026-10-11): someone turns the dial or
+# uses the Tado app.  Each zone remembers what HA last commanded (input_number.climate_rad_cmd_<room>:
+# a temperature, -1 = off, -2 = Tado's schedule, 0 = never).  A zone that no longer matches it was
+# changed by someone else: HA holds off for manual_hold, then reasserts.  After its OWN command HA
+# also holds (settle, 30 min) before judging, because Tado is polled slowly on the free API tier and
+# would otherwise report the old value and look like a person.
+A(rcase("radiator: a dial turned by hand is noticed", "touched", "True",
+        {"z_state": "heat", "z_target": 23.0, "last_cmd": 22.0},
+        "2026-10-11 operator: valves get overridden by hand, like the AC"))
+A(rcase("radiator: a zone switched off in the Tado app is noticed", "touched", "True",
+        {"z_state": "off", "z_target": 0.0, "last_cmd": 22.0}, "2026-10-11: any change of ours counts"))
+A(rcase("radiator: a zone put back on its schedule in the app is noticed", "touched", "True",
+        {"z_state": "auto", "z_target": 18.0, "last_cmd": 22.0}, "2026-10-11"))
+A(rcase("radiator: a zone still at our value is not an override", "touched", "False",
+        {"z_state": "heat", "z_target": 22.0, "last_cmd": 22.0}, "no false accusation"))
+A(rcase("radiator: a zone we never commanded is not an override", "touched", "False",
+        {"z_state": "auto", "z_target": 18.0, "last_cmd": 0.0}, "the first takeover is ours to make"))
+A(rcase("radiator: inside our settle window nothing is judged", "touched", "False",
+        {"z_state": "heat", "z_target": 18.0, "last_cmd": 22.0, "hold_active": True},
+        "Tado reports the OLD value until the next poll - that is not a person"))
+A(rcase("radiator: an unavailable zone is not an override", "touched", "False",
+        {"z_state": "unavailable", "z_target": 0.0, "last_cmd": 22.0}, "an outage is not a person"))
+A(rcase("radiator: a turned dial is not reverted", "rad_send", "False",
+        {"want": "22.0", "z_state": "heat", "z_target": 24.0, "last_cmd": 22.0},
+        "2026-10-11: respect the hand on the valve"))
+A(rcase("radiator: a live hold is respected", "rad_send", "False",
+        {"want": "22.0", "z_state": "heat", "z_target": 24.0, "last_cmd": 24.0, "hold_active": True},
+        "the hold, like the AC's"))
+A(rcase("radiator: after the hold HA takes the zone back", "rad_send", "True",
+        {"want": "22.0", "z_state": "heat", "z_target": 24.0, "last_cmd": 24.0},
+        "the hold expires; the room returns to its target"))
+A(rcase("radiator: an unknown season does nothing", "rad_target", "none", {"house": "unknown"},
+        "a restart briefly blanks the house-mode helper; 'not heat' must not switch radiators off"))
+A(rcase("radiator: 'none' is never sent", "rad_send", "False",
+        {"want": "none", "z_state": "heat", "z_target": 22.0}, "no decision, no command"))
+
+
+# ---------------------------------------------------------------- v6: morning warm-up (2026-10-11)
+# Operator: "it's very pleasant to enter in the morning a room that has been also warmed by the AC
+# ... some sort of pre-conditioning".  A room with input_boolean.climate_preheat_<room> on, in the
+# last input_number.climate_preheat_minutes (45) before the night schedule's MORNING edge, aims at
+# its DAY target and the AC may heat it even with a radiator, without the boost threshold.  Only a
+# night that the schedule is running counts - a manual afternoon "night" has no morning edge.
+A(case("warm-up: a radiator room is heated by the AC before the morning edge", "mode", "heat",
+       rad({"night": True, "preheat": True, "temp": 20.0}),
+       finding="2026-10-11 operator: walk into a warm room in the morning"))
+A(case("warm-up: the AC runs on to the day target, not just the boost band", "mode", "heat",
+       rad({"night": True, "preheat": True, "temp": 21.8, "now_mode": "heat"}),
+       finding="warm-up means arriving at the day target"))
+A(case("warm-up: a room already at the day target is left alone", "mode", "off",
+       rad({"night": True, "preheat": True, "temp": 22.2}), finding="no warm-up for a warm room"))
+A(case("warm-up: the night target gives way to the day target in the window", "target", "22.0",
+       {"night": True, "preheat": True},
+       subs={"states(r.night_t)": "'20'", "states(r.day_t)": "'22'"},
+       finding="the warm-up aims at the day temperature"))
+A(case("warm-up: outside the window the night target stands", "target", "20.0",
+       {"night": True, "preheat": False},
+       subs={"states(r.night_t)": "'20'", "states(r.day_t)": "'22'"}, finding="v4 night target unchanged"))
+
+PH_ON = "is_state(r.preheat, 'on')"
+SCHED_IS_ON = "is_state('schedule.climate_night','on')"
+NEXT = "state_attr('schedule.climate_night','next_event')"
+NOWTS = "now().timestamp()"
+
+
+def ph(name, expect, given, subs, finding):
+    g = {"house": "heat", "night": True, "preheat_min": 45.0}; g.update(given)
+    base = {PH_ON: "true", SCHED_IS_ON: "true", NEXT: "'2026-09-21T14:43:20+00:00'", NOWTS: "1790000000.0"}
+    base.update(subs)
+    return case(name, "preheat", expect, g, base, finding=finding)
+
+
+A(ph("warm-up: 30 min before the edge with a 45 min lead is in the window", "True", {}, {},
+     "2026-10-11 operator"))
+A(ph("warm-up: 50 min before the edge is not yet", "False", {}, {NEXT: "'2026-09-21T15:03:20+00:00'"},
+     "the lead time is the window"))
+A(ph("warm-up: a room with the toggle off is not warmed", "False", {}, {PH_ON: "false"},
+     "per room, opt-in"))
+A(ph("warm-up: a manual day already ended the night", "False", {"night": False}, {},
+     "night is the alarm; by day there is nothing to pre-condition"))
+A(ph("warm-up: a manual night outside the schedule has no morning edge", "False", {},
+     {SCHED_IS_ON: "false"}, "the schedule's next event is then its EVENING edge"))
+A(ph("warm-up: only in heating season", "False", {"house": "shoulder"}, {},
+     "pre-conditioning is heating; cooling is not asked for"))
+A(ph("warm-up: a passed edge is not a window", "False", {}, {NEXT: "'2026-09-21T14:12:20+00:00'"},
+     "a stale next_event must not warm all night"))
+A(ph("warm-up: an unknown next event does nothing", "False", {}, {NEXT: "none"},
+     "a schedule without a next event is no window"))
+
+# Review 2026-10-11 (v6): Tado's OWN open-window detection switches a zone off by itself.  Without
+# this, HA called that "changed by hand", held the zone 2 h and pushed a false notification - and
+# fought the valve when the window closed.  While the zone's window sensor is on, HA neither judges
+# nor commands it.
+A(rcase("radiator: an open window switching the zone off is not a person", "touched", "False",
+        {"z_state": "off", "z_target": 0.0, "last_cmd": 22.0, "z_window": True},
+        "review 2026-10-11: no false accusation from Tado's window detection"))
+A(rcase("radiator: a zone with its window open is not commanded", "rad_send", "False",
+        {"want": "22.0", "z_state": "off", "z_target": 0.0, "last_cmd": 22.0, "z_window": True},
+        "review 2026-10-11: never fight the valve's window protection"))
+A(rcase("radiator: once the window closes, a real change is noticed again", "touched", "True",
+        {"z_state": "heat", "z_target": 25.0, "last_cmd": 22.0, "z_window": False},
+        "the window rule pauses judgement, it does not disable it"))
+
+
+# ---------------------------------------------------------------- v6: a radiator only counts while it can heat
+# Operator, 2026-10-11: "if there is no TRV valve in a given room, heat it with air - even at night as
+# a fallback, otherwise we'll freeze".  A valve that is offline, out of battery or switched off is no
+# valve: the AC heats as if the room had none.  The one exception is Tado's own open-window shut-off -
+# hot air into an open window helps nobody, and the safety band still covers the room.
+RAD_E = "states(rad_entity)"
+RAD_W = "is_state(rad_window, 'on')"
+
+
+def hr(name, expect, given, subs, finding):
+    g = {"rad_entity": "climate.room_trv", "rad_window": "binary_sensor.room_trv_window"}
+    g.update(given)
+    return case(name, "has_rad", expect, g, subs, finding=finding)
+
+
+A(hr("a valve that is heating counts", "True", {}, {RAD_E: "'heat'", RAD_W: "false"}, "v6"))
+A(hr("a valve on its own schedule counts", "True", {}, {RAD_E: "'auto'", RAD_W: "false"}, "v6"))
+A(hr("an offline valve does not count - the AC heats", "False", {},
+     {RAD_E: "'unavailable'", RAD_W: "false"},
+     "2026-10-11 operator: otherwise we'll freeze"))
+A(hr("a valve switched off does not count - the AC heats", "False", {},
+     {RAD_E: "'off'", RAD_W: "false"}, "2026-10-11 operator: no working radiator, heat with air"))
+A(hr("a valve shut by Tado's open-window detection still counts", "True", {},
+     {RAD_E: "'off'", RAD_W: "true"}, "no hot air into an open window"))
+A(hr("a room with no valve has no radiator", "False", {"rad_entity": "", "rad_window": ""},
+     {RAD_E: "'unknown'", RAD_W: "false"}, "v6: the office"))

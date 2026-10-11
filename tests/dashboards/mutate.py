@@ -357,7 +357,178 @@ def m_list_matcher(d):
     raise SystemExit("no light rule to mutate")
 
 
+def _rooms(cfg):
+    return [v for v in cfg["data"]["config"]["views"]
+            if v.get("subview") and v.get("back_path") == "/lovelace/home" and v.get("path") != "home-classic"]
+
+
+def _env(view):
+    return [c for c in view["sections"][0]["cards"] if (c.get("card") or {}).get("title") == "Environment"]
+
+
+def m_camera_hand_listed(d):
+    """2026-10-07: cameras are generated; a hand-listed one is an edit per camera."""
+    doc = _cfg(d, LOV)
+    _section(doc, "security", "Cameras").append(
+        {"type": "picture-entity", "entity": "camera.bebecam_fluent", "camera_view": "auto"})
+    _save(d, LOV, doc)
+    return "C13"
+
+
+def m_room_card_any_group(d):
+    """The room card takes whichever Magic Areas light it meets last."""
+    doc = _cfg(d, LOV)
+    v = doc["data"]["config"]["button_card_templates"]["vg_room_card"]["variables"]
+    v["info"] = v["info"].replace("if (!r.grp || id.slice(-11) === '_all_lights') r.grp = id;", "r.grp = id;")
+    _save(d, LOV, doc)
+    return "C17"
+
+
+def m_env_block_dropped(d):
+    """Every room page loses its Environment block - the pre-2026-10-07 page."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in _env(v):
+            v["sections"][0]["cards"].remove(c)
+    _save(d, LOV, doc)
+    return "C18"
+
+
+def m_env_needs_label(d):
+    """Readings only with the opt-in label again: PM2.5 and light level vanish."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in _env(v):
+            for r in c["filter"]["include"]:
+                r["label"] = "on_room_page"
+    _save(d, LOV, doc)
+    return "C18"
+
+
+def m_env_rule_broadened(d):
+    """The environment rule grows a non-environmental class (power)."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in _env(v):
+            for r in c["filter"]["include"]:
+                dc = (r.get("attributes") or {}).get("device_class", "")
+                if dc.startswith("/^("):
+                    r["attributes"]["device_class"] = dc.replace("/^(", "/^(power|", 1)
+    _save(d, LOV, doc)
+    return "C15"
+
+
+def m_all_lights_doubled(d):
+    """Magic Areas' per-category groups reach the 'All lights' rule again."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in v["sections"][0]["cards"]:
+            exc = (c.get("filter") or {}).get("exclude") or []
+            exc[:] = [x for x in exc if not (x.get("integration") == "magic_areas" and x.get("entity_id"))]
+    _save(d, LOV, doc)
+    return "C19"
+
+
+def m_second_sensor_in_aggregated_room(d):
+    """A second thermometer lands in the shower: its aggregate becomes a mean of two."""
+    path = os.path.join(d, "core.entity_registry")
+    with io.open(path, encoding="utf-8") as fh:
+        reg = json.load(fh)
+    reg["data"]["entities"].append({
+        "entity_id": "sensor.mutant_shower_probe_temperature", "platform": "mqtt",
+        "area_id": "shower", "device_id": None, "original_device_class": "temperature",
+        "device_class": None, "labels": [], "unique_id": "mutant", "disabled_by": None,
+        "hidden_by": None, "entity_category": None})
+    with io.open(path, "w", encoding="utf-8") as fh:
+        json.dump(reg, fh)
+    return "C20"
+
+
+def _needs_attention(cfg):
+    home = [v for v in cfg["data"]["config"]["views"] if v.get("path") == "home"][0]
+    return [x for x in home["sections"] if (x.get("cards") or [{}])[0].get("heading") == "Needs attention"][0]
+
+
+def m_safety_hand_listed(d):
+    """The pre-2026-10-09 shape: one leak sensor named in Needs attention."""
+    doc = _cfg(d, LOV)
+    _needs_attention(doc)["cards"].append(
+        {"type": "custom:button-card", "template": "vg_stat",
+         "entity": "binary_sensor.co_smoke_alarm_smoke", "grid_options": {"columns": 12, "rows": 1}})
+    _save(d, LOV, doc)
+    return "C21"
+
+
+def m_safety_gate_dropped(d):
+    """Needs attention no longer appears for a smoke or CO alarm."""
+    doc = _cfg(d, LOV)
+    for cond in _needs_attention(doc)["visibility"][0]["conditions"][:]:
+        if cond.get("entity") == "binary_sensor.any_safety_alarm":
+            _needs_attention(doc)["visibility"][0]["conditions"].remove(cond)
+    _save(d, LOV, doc)
+    return "C21"
+
+
+def m_heating_hand_listed(d):
+    """A heating zone gets its own hand-made card."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Heating & hot water").append(
+        {"type": "tile", "entity": "water_heater.hot_water_hot_water"})
+    _save(d, LOV, doc)
+    return "C13"
+
+
+def m_safety_gate_and(d):
+    """Needs attention shows only when ALL its conditions hold - a lone fire stays hidden."""
+    doc = _cfg(d, LOV)
+    _needs_attention(doc)["visibility"][0]["condition"] = "and"
+    _save(d, LOV, doc)
+    return "C21"
+
+
+def m_safety_gate_wrong_state(d):
+    """The roll-up is named in the gate, but for the wrong state."""
+    doc = _cfg(d, LOV)
+    for cond in _needs_attention(doc)["visibility"][0]["conditions"]:
+        if cond.get("entity") == "binary_sensor.any_safety_alarm":
+            cond["state"] = "off"
+    _save(d, LOV, doc)
+    return "C21"
+
+
+def m_room_temperature_hand_listed(d):
+    """A room's temperature tile is hand-added again - the next new room is missing."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Temperature").append(
+        {"type": "custom:mini-graph-card", "entities": [{"entity": "sensor.climate_temp_office"}]})
+    _save(d, LOV, doc)
+    return "C13"
+
+
+def m_night_from_schedule(d):
+    """A status card computes night the pre-v5.12 way and says Night after a manual day."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Automatic climate").append(
+        {"type": "markdown", "content": "{{ 'Night' if is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') else 'Day' }}"})
+    _save(d, LOV, doc)
+    return "C22"
+
+
 MUTATIONS = [
+    ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
+    ("a card computes night from the schedule", m_night_from_schedule),
+    ("Needs attention gate becomes AND", m_safety_gate_and),
+    ("Needs attention gates on the roll-up being off", m_safety_gate_wrong_state),
+    ("a safety sensor is hand-listed in Needs attention", m_safety_hand_listed),
+    ("Needs attention ignores the safety roll-up", m_safety_gate_dropped),
+    ("a heating zone gets a hand-made card", m_heating_hand_listed),
+    ("a second sensor joins an aggregated room", m_second_sensor_in_aggregated_room),
+    ("a camera gets a hand-listed card", m_camera_hand_listed),
+    ("the room card takes any Magic Areas group", m_room_card_any_group),
+    ("room pages lose the Environment block", m_env_block_dropped),
+    ("environment readings need the label again", m_env_needs_label),
+    ("the environment rule takes in power", m_env_rule_broadened),
+    ("'All lights' given to a category group too", m_all_lights_doubled),
     ("a socket returns to a room page", m_socket_back_on_room),
     ("a room page is edited by hand", m_room_page_hand_edited),
     ("an auto-entities matcher becomes a list", m_list_matcher),

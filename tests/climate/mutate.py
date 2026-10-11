@@ -15,6 +15,7 @@ from cases import CASES, AC_OFF as AC_OFF_G
 REAL_EXPR = harness.load_expressions()
 REAL_SENS = harness.load_sensor_templates()
 KID1_T = "Climate temp " + harness.load_rooms()["kid1"]["title"]
+KID1_H = "Climate humidity " + harness.load_rooms()["kid1"]["title"]
 KID2_T = "Climate temp " + harness.load_rooms()["kid2"]["title"]
 
 BUGS = [
@@ -98,8 +99,129 @@ BUGS = [
  # A real meter in a kid's room. The offset traps are the point: the meter is correctly
  # placed, so a correction applied to it injects the very error the correction removes.
  ("kid1: the TRV outranks the room meter again", "sensor", KID1_T,
-  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif p > -900 %}",
-                      "{% if p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}")),
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}",
+                      "{% if p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}")),
+ # 2026-10-07: the air-quality sensor is the third tier -- below the meter, above the TRV.
+ ("kid1: the air-quality tier is dropped", "sensor", KID1_T,
+  lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "")),
+ ("kid1: the air-quality sensor outranks the meter", "sensor", KID1_T,
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}",
+                      "{% if q > -900 %}{{ q | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}")),
+ ("kid1: the air-quality sensor gets the TRV offset", "sensor", KID1_T,
+  lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "{% elif q > -900 %}{{ (q + tv_eff) | round(2) }}")),
+ ("kid1: humidity loses the air-quality tier", "sensor", KID1_H,
+  lambda t: t.replace("{% elif q >= 0 %}{{ q | round(1) }}", "")),
+ # Daylight for presence lighting. BRIGHT switches an occupied room's lights OFF, so a
+ # flap at dusk is the hazard; and a dead lux sensor must not stop the lights.
+ ("daylight: hysteresis removed (flaps at dusk)", "sensor", "Lighting daylight",
+  lambda t: t.replace("(dark if was_bright else dark * 2)", "dark")),
+ ("daylight: hysteresis inverted", "sensor", "Lighting daylight",
+  lambda t: t.replace("(dark if was_bright else dark * 2)", "(dark * 2 if was_bright else dark)")),
+ ("daylight: 0 lx treated as a dead sensor", "sensor", "Lighting daylight",
+  lambda t: t.replace("{% if lux >= 0 %}", "{% if lux > 0 %}")),
+ ("daylight: no sun fallback", "sensor", "Lighting daylight",
+  lambda t: t.replace("(state_attr('sun.sun','elevation') | float(0)) > (6 if was_bright else 12)", "false")),
+ ("daylight: a restart starts on the bright side", "sensor", "Lighting daylight",
+  lambda t: t.replace("this.state == 'on'", "this.state != 'off'")),
+ # Review 2026-10-07 (A1, A7, A8).
+ # 2026-10-11: the night bridge must mirror the schedule, not invert or ignore it.
+ ("night: the bridge is inverted", "sensor", "Lighting night",
+  lambda t: t.replace("a == 'armed_night'", "a == 'armed_home'")),
+ ("night: the lights lose the unavailable-alarm fallback", "sensor", "Lighting night",
+  lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", "")),
+ ("night: the climate loop loses the unavailable-alarm fallback", "expr", "night",
+  lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", "")),
+ ("night: an unavailable alarm is always night", "expr", "night",
+  lambda t: t.replace(" and is_state('schedule.climate_night','on'))", ")")),
+ # 2026-10-11: the alarm is the house's night. Each of these is a way to lose the operator's
+ # manual control, or to let the schedule override a state it must leave alone.
+ ("night: the climate loop reads the schedule again", "expr", "night",
+  lambda t: "{{ is_state('schedule.climate_night','on') or is_state('alarm_control_panel.home','armed_night') }}"),
+ ("house: 22:00 arms night from Away", "expr2", "want",
+  lambda t: t.replace("a in ['armed_home', 'disarmed']", "a in ['armed_home', 'disarmed', 'armed_away']"), "1790200000001"),
+ ("house: 22:00 ignores a disarmed house", "expr2", "want",
+  lambda t: t.replace("a in ['armed_home', 'disarmed']", "a in ['armed_home']"), "1790200000001"),
+ ("house: 06:00 re-asserts Home over a manual day", "expr2", "want",
+  lambda t: t.replace("s == 'off' and a == 'armed_night'", "s == 'off' and a != 'armed_away'"), "1790200000001"),
+ ("house: 06:00 disarms instead of Home", "expr2", "want",
+  lambda t: t.replace("night{% elif s == 'off' and a == 'armed_night' %}home", "night{% elif s == 'off' and a == 'armed_night' %}disarm"), "1790200000001"),
+ ("house: Adaptive Lighting sleep is inverted", "expr2", "sleep_on",
+  lambda t: t.replace("a == 'armed_night'", "a == 'armed_home'"), "1790200000001"),
+ ("house: Adaptive Lighting loses the unavailable-alarm fallback", "expr2", "sleep_on",
+  lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", ""), "1790200000001"),
+ ("house: the sleep-switch finder takes every Adaptive Lighting switch", "expr2", "sleep_switches",
+  lambda t: t.replace("_.*_sleep_mode$", "_"), "1790200000001"),
+ # v6 fallback (operator 2026-10-11: "otherwise we'll freeze").
+ ("v6: an offline valve still counts as a radiator", "expr", "has_rad",
+  lambda t: t.replace("s in ['heat', 'auto']", "s not in ['none']")),
+ ("v6: a switched-off valve still counts as a radiator", "expr", "has_rad",
+  lambda t: t.replace("s in ['heat', 'auto']", "s in ['heat', 'auto', 'off']")),
+ ("v6: the open-window exception is dropped", "expr", "has_rad",
+  lambda t: t.replace(" or (s == 'off' and rad_window != '' and is_state(rad_window, 'on'))", "")),
+ # v6 morning warm-up (2026-10-11).
+ ("warm-up: a manual night warms too (schedule ignored)", "expr", "preheat",
+  lambda t: t.replace(" and is_state('schedule.climate_night','on')", "")),
+ ("warm-up: the per-room toggle is ignored", "expr", "preheat",
+  lambda t: t.replace("is_state(r.preheat, 'on') and ", "")),
+ ("warm-up: no lead-time bound (warms all night)", "expr", "preheat",
+  lambda t: t.replace(" <= (preheat_min | float(45)) * 60", "")),
+ ("warm-up: a passed edge still counts", "expr", "preheat",
+  lambda t: t.replace("0 < ((as_timestamp", "-99999999 < ((as_timestamp")),
+ ("warm-up: aims at the night target", "expr", "target",
+  lambda t: t.replace("(night and not preheat)", "night")),
+ ("warm-up: the radiator rule still blocks the AC", "expr", "mode",
+  lambda t: t.replace("{% elif has_rad and night and not preheat %}off", "{% elif has_rad and night %}off")),
+ # v6 (2026-10-11): radiators first. The AC loop's yield, and the radiator automation's decisions.
+ ("v6: the AC heats radiator rooms at night again", "expr", "mode",
+  lambda t: t.replace("{% elif has_rad and night and not preheat %}off", "")),
+ ("v6: the AC boosts on any deficit (boost ignored)", "expr", "mode",
+  lambda t: t.replace("(room_hyst if now_mode == 'heat' else boost)", "(0 if now_mode == 'heat' else room_hyst)")),
+ ("v6: a boosting AC runs to target instead of handing back", "expr", "mode",
+  lambda t: t.replace("(room_hyst if now_mode == 'heat' else boost)", "(0 if now_mode == 'heat' else boost)")),
+ ("v6: the radiator rule swallows the air-filter toggle", "expr", "mode",
+  lambda t: t.replace("{% if filter_on %}heat{% elif has_rad and night and not preheat %}", "{% if has_rad and night %}off{% elif filter_on %}heat{% elif has_rad and night and not preheat %}")),
+ ("radiator: a disabled room is switched off (cold bedroom)", "expr2", "rad_target",
+  lambda t: t.replace("{% elif not enabled %}auto", "{% elif not enabled %}off"), "1790300000001"),
+ ("radiator: away does not hold the pet floor", "expr2", "rad_target",
+  lambda t: t.replace("{% elif away %}{{ away_min | float | round(1) }}", ""), "1790300000001"),
+ ("radiator: radiators heat outside the heating season", "expr2", "rad_target",
+  lambda t: t.replace("{% elif house != 'heat' %}off", ""), "1790300000001"),
+ ("radiator: an unknown season switches radiators off", "expr2", "rad_target",
+  lambda t: t.replace("{% if house not in ['heat', 'shoulder', 'cool'] %}none{% elif", "{% if"), "1790300000001"),
+ ("radiator: comfort off switches radiators off", "expr2", "rad_target",
+  lambda t: t.replace("{% elif not comfort %}auto", "{% elif not comfort %}off"), "1790300000001"),
+ ("radiator: a turned dial is reverted", "expr2", "rad_send",
+  lambda t: t.replace(" and (lc == 0 or zc == lc)", ""), "1790300000001"),
+ ("radiator: the hold is ignored", "expr2", "rad_send",
+  lambda t: t.replace(" and not hold_active", ""), "1790300000001"),
+ ("radiator: an unavailable zone is commanded", "expr2", "rad_send",
+  lambda t: t.replace(" and z_state not in ['unavailable', 'unknown']", ""), "1790300000001"),
+ ("radiator: a redundant command is sent", "expr2", "rad_send",
+  lambda t: t.replace(" and zc != wc", ""), "1790300000001"),
+ ("radiator: our own command looks like a person (no settle)", "expr2", "touched",
+  lambda t: t.replace(" and not hold_active", ""), "1790300000001"),
+ ("radiator: Tado's open-window shut-off called a person", "expr2", "touched",
+  lambda t: t.replace(" and not z_window", ""), "1790300000001"),
+ ("radiator: a zone with its window open is commanded", "expr2", "rad_send",
+  lambda t: t.replace(" and not z_window", "").replace(" and (lc == 0 or zc == lc)", ""), "1790300000001"),
+ ("radiator: a zone we never commanded is called an override", "expr2", "touched",
+  lambda t: t.replace(" and lc != 0", ""), "1790300000001"),
+ # 2026-10-09: the house-wide safety roll-up behind Home's Needs attention.
+ ("safety: the roll-up counts itself and latches", "sensor", "Any safety alarm",
+  lambda t: t.replace("| rejectattr('entity_id','eq','binary_sensor.any_safety_alarm') ", "")),
+ ("safety: smoke is not a safety class", "sensor", "Any safety alarm",
+  lambda t: t.replace("'smoke',", "")),
+ ("safety: carbon monoxide is not a safety class", "sensor", "Any safety alarm",
+  lambda t: t.replace("'carbon_monoxide',", "")),
+ ("safety: an unavailable alarm cries fire", "sensor", "Any safety alarm",
+  lambda t: t.replace("selectattr('state','eq','on')", "rejectattr('state','eq','off')")),
+ ("daylight: the sun fallback loses its hysteresis", "sensor", "Lighting daylight",
+  lambda t: t.replace("> (6 if was_bright else 12)", "> 6")),
+ ("kid1: the air-quality sensor outranks the Matter path", "sensor", KID1_T,
+  lambda t: t.replace("{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}",
+                      "{% elif q > -900 %}{{ q | round(2) }}{% elif m > -900 %}{{ m | round(2) }}")),
+ ("kid1: the air-quality sensor gets the AC offset", "sensor", KID1_T,
+  lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "{% elif q > -900 %}{{ (q + ac) | round(2) }}")),
  ("kid1: the room meter gets the AC offset applied to it", "sensor", KID1_T,
   lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}", "{% if b > -900 %}{{ (b + ac) | round(2) }}")),
  ("kid1: a hot radiator no longer disqualifies the TRV", "sensor", KID1_T,
@@ -160,23 +282,26 @@ BUGS = [
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
 allgood = True
-for label, kind, key, mutate in BUGS:
+for label, kind, key, mutate, *aid in BUGS:
+    aid = aid[0] if aid else "1789947000001"   # second automation; the purifier by default
     exprs, sens = dict(REAL_EXPR), dict(REAL_SENS)
     if kind == "expr2":
         # A second automation: mutate its expression by shadowing the loader,
         # so the case still runs against everything else unchanged.
-        exprs2 = dict(harness.load_expressions("1789947000001"))
+        exprs2 = dict(harness.load_expressions(aid))
         before = exprs2[key]
         exprs2[key] = mutate(before)
         if exprs2[key] == before:
             print("  ?? %-46s MUTATION DID NOT APPLY" % label); allgood = False; continue
         orig = harness.load_expressions
-        harness.load_expressions = lambda aid=None, _o=orig, _e=exprs2: (
-            _e if aid == "1789947000001" else _o(aid) if aid else _o())
+        harness.load_expressions = lambda a=None, _o=orig, _e=exprs2, _aid=aid: (
+            _e if a == _aid else _o(a) if a else _o())
         try:
-            rendered = harness.evaluate(harness.build_template(CASES, exprs, sens))
-            got = harness.split_results(rendered, len(CASES))
-            caught = [c["name"] for c, g in zip(CASES, got) if g != str(c["expect"])]
+            # Only the cases that evaluate THIS expression of THIS automation can change.
+            sel = [c for c in CASES if c.get("automation") == aid and c.get("expr") == key]
+            rendered = harness.evaluate(harness.build_template(sel, exprs, sens))
+            got = harness.split_results(rendered, len(sel))
+            caught = [c["name"] for c, g in zip(sel, got) if g != str(c["expect"])]
         except harness.ExtractionError as exc:
             caught = ["structural: " + str(exc).split(":")[0]]
         finally:
@@ -191,9 +316,15 @@ for label, kind, key, mutate in BUGS:
     if tgt[key] == before:
         print("  ?? %-46s MUTATION DID NOT APPLY" % label); allgood = False; continue
     try:
-        rendered = harness.evaluate(harness.build_template(CASES, exprs, sens))
-        got = harness.split_results(rendered, len(CASES))
-        caught = [c["name"] for c, g in zip(CASES, got) if g != str(c["expect"])]
+        # Each case evaluates exactly ONE expression or sensor, so only the cases that evaluate
+        # the mutated one can change - running the other ~300 proved nothing and took hours.
+        if kind == "expr":
+            sel = [c for c in CASES if c.get("expr") == key and "sensor" not in c and not c.get("automation")]
+        else:
+            sel = [c for c in CASES if c.get("sensor") == key]
+        rendered = harness.evaluate(harness.build_template(sel, exprs, sens))
+        got = harness.split_results(rendered, len(sel))
+        caught = [c["name"] for c, g in zip(sel, got) if g != str(c["expect"])]
     except harness.ExtractionError as exc:
         # The substitution guard refused to run a case whose expression changed
         # shape. That is a CATCH, not a crash: it is the protection against a

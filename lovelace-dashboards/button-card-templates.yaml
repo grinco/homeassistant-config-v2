@@ -152,20 +152,24 @@ button_card_templates:
       page: ''
       special: ''
       info: "[[[\nvar A = variables.area; var ents = (hass && hass.entities) || {}; var devs = (hass &&\
-        \ hass.devices) || {};\nvar r = {lights: [], lit: 0, grp: null, clim: null, pres: null, temp:\
-        \ null, hum: null, co2: null, alerts: [], open: []};\nfor (var id in ents) {\n  var e = ents[id];\n\
+        \ hass.devices) || {};\nvar r = {lights: [], lit: 0, grp: null, clim: null, act: {}, pres: null,\
+        \ temp: null, hum: null, co2: null, alerts: [], open: []};\nfor (var id in ents) {\n  var e = ents[id];\n\
         \  var a = e.area_id || (e.device_id && devs[e.device_id] ? devs[e.device_id].area_id : null);\n\
         \  if (a !== A || e.hidden) continue;\n  var s = states[id]; if (!s) continue;\n  var dom = id.substring(0,\
         \ id.indexOf('.')); var dc = s.attributes.device_class; var lab = e.labels || [];\n  if (dom ===\
-        \ 'light' && !e.entity_category) {\n    if (e.platform === 'magic_areas') { r.grp = id; } else\
-        \ { r.lights.push(id); if (s.state === 'on') r.lit++; }\n  } else if (dom === 'climate') {\n \
-        \   if (!r.clim || id.indexOf('_ac') >= 0) r.clim = id;\n  } else if (dom === 'binary_sensor')\
-        \ {\n    if (e.platform === 'magic_areas' && dc === 'occupancy') r.pres = id;\n    else if (['moisture',\
-        \ 'smoke', 'gas', 'carbon_monoxide', 'safety'].indexOf(dc) >= 0 && s.state === 'on') r.alerts.push(dc);\n\
-        \    else if (['window', 'door', 'opening', 'garage_door'].indexOf(dc) >= 0 && s.state === 'on')\
-        \ r.open.push(dc);\n  } else if (dom === 'sensor' && lab.indexOf('on_room_page') >= 0) {\n   \
-        \ if (dc === 'temperature') r.temp = id; else if (dc === 'humidity') r.hum = id; else if (dc ===\
-        \ 'carbon_dioxide') r.co2 = id;\n  }\n}\nreturn r;\n]]]"
+        \ 'light' && !e.entity_category) {\n    if (e.platform === 'magic_areas') { if (!r.grp || id.slice(-11)\
+        \ === '_all_lights') r.grp = id; } else { r.lights.push(id); if (s.state === 'on') r.lit++; }\n\
+        \  } else if (dom === 'climate') {\n    if (!r.clim || id.indexOf('_ac') >= 0) r.clim = id;\n  \
+        \  var ha = s.attributes.hvac_action;\n    if (ha) { if (ha === 'heating' || ha === 'preheating')\
+        \ r.act.heat = 1; else if (ha === 'cooling') r.act.cool = 1; else if (ha === 'drying') r.act.dry\
+        \ = 1; else if (ha === 'fan') r.act.fan = 1; }\n    else { var M = {heat: 'heat', cool: 'cool',\
+        \ dry: 'dry', fan_only: 'fan', auto: 'auto', heat_cool: 'auto'}; if (M[s.state]) r.act[M[s.state]]\
+        \ = 1; }\n  } else if (dom === 'binary_sensor') {\n    if (e.platform === 'magic_areas' && dc ===\
+        \ 'occupancy') r.pres = id;\n    else if (['moisture', 'smoke', 'gas', 'carbon_monoxide', 'safety'].indexOf(dc)\
+        \ >= 0 && s.state === 'on') r.alerts.push(dc);\n    else if (['window', 'door', 'opening', 'garage_door'].indexOf(dc)\
+        \ >= 0 && s.state === 'on') r.open.push(dc);\n  } else if (dom === 'sensor' && lab.indexOf('on_room_page')\
+        \ >= 0) {\n    if (dc === 'temperature') r.temp = id; else if (dc === 'humidity') r.hum = id; else\
+        \ if (dc === 'carbon_dioxide') r.co2 = id;\n  }\n}\nreturn r;\n]]]"
     show_icon: true
     show_name: true
     show_state: false
@@ -193,20 +197,20 @@ button_card_templates:
 
         ]]]'
       status: "[[[\nvar i = variables.info; var p = [];\nvar W = {moisture: 'Water leak', smoke: 'Smoke',\
-        \ gas: 'Gas', carbon_monoxide: 'Carbon monoxide', safety: 'Safety alarm'};\nfor (var k = 0; k\
-        \ < i.alerts.length; k++) p.push('<b style=\"color:#f44336\">' + (W[i.alerts[k]] || 'Alarm') +\
-        \ '</b>');\nif (i.open.length) p.push('<b style=\"color:#ff9800\">' + (i.open.length === 1 ? i.open[0].replace('_',\
+        \ gas: 'Gas', carbon_monoxide: 'Carbon monoxide', safety: 'Safety alarm'};\nfor (var k = 0; k <\
+        \ i.alerts.length; k++) p.push('<b style=\"color:#f44336\">' + (W[i.alerts[k]] || 'Alarm') + '</b>');\n\
+        if (i.open.length) p.push('<b style=\"color:#ff9800\">' + (i.open.length === 1 ? i.open[0].replace('_',\
         \ ' ') + ' open' : i.open.length + ' open') + '</b>');\nif (i.lights.length) p.push(i.lit ? (i.lit\
-        \ === i.lights.length && i.lit > 1 ? 'All lights on' : i.lit + (i.lit === 1 ? ' light on' : '\
-        \ lights on')) : 'Lights off');\nvar c = i.clim ? states[i.clim] : null;\nif (c && c.state !==\
-        \ 'off' && c.state !== 'unavailable') p.push({heat: 'Heating', cool: 'Cooling', dry: 'Drying',\
-        \ fan_only: 'Fan', auto: 'Auto', heat_cool: 'Auto'}[c.state] || c.state);\nif (variables.special\
-        \ === 'kitchen') {\n  var ck = states['sensor.house_cooktop_operation_state'], ov = states['sensor.house_oven_operation_state'];\n\
+        \ === i.lights.length && i.lit > 1 ? 'All lights on' : i.lit + (i.lit === 1 ? ' light on' : ' lights\
+        \ on')) : 'Lights off');\nvar a = i.act || {};\nvar w = a.heat && a.cool ? '<b style=\"color:#ff9800\"\
+        >Heating + cooling</b>' : a.heat ? 'Heating' : a.cool ? 'Cooling' : a.dry ? 'Drying' : a.fan ? 'Fan'\
+        \ : a.auto ? 'Auto' : '';\nif (w) p.push(w);\nif (variables.special === 'kitchen') {\n  var ck =\
+        \ states['sensor.house_cooktop_operation_state'], ov = states['sensor.house_oven_operation_state'];\n\
         \  if (ck && ck.state === 'run') p.push('<b style=\"color:#ff5722\">Cooktop on</b>');\n  if (ov\
         \ && (ov.state === 'run' || ov.state === 'delayedstart')) p.push('<b style=\"color:#ff5722\">Oven\
         \ on</b>');\n}\nif (variables.special === 'terrace') { var mo = states['binary_sensor.outdoor_motion_occupancy'];\
-        \ if (mo && mo.state === 'on') p.push('Motion'); }\nvar pr = i.pres ? states[i.pres] : null;\n\
-        if (pr && pr.state === 'on') p.push('<span style=\"color:#4caf50\">&#9679;</span> Someone here');\n\
+        \ if (mo && mo.state === 'on') p.push('Motion'); }\nvar pr = i.pres ? states[i.pres] : null;\nif\
+        \ (pr && pr.state === 'on') p.push('<span style=\"color:#4caf50\">&#9679;</span> Someone here');\n\
         return p.join(' · ') || '&nbsp;';\n]]]"
       lamp:
         card:
@@ -249,14 +253,12 @@ button_card_templates:
       - width: 46px
       - height: 46px
       - border-radius: 50%
-      - background: '[[[ var i = variables.info; var c = i.clim ? states[i.clim] : null; if (c && c.state
-          === ''heat'') return ''rgba(255,87,34,.15)''; if (c && c.state === ''cool'') return ''rgba(33,150,243,.15)'';
-          return ''var(--secondary-background-color)''; ]]]'
+      - background: '[[[ var i = variables.info; var a = i.act || {}; if (a.heat) return ''rgba(255,87,34,.15)'';
+          if (a.cool) return ''rgba(33,150,243,.15)''; return ''var(--secondary-background-color)''; ]]]'
       icon:
       - width: 26px
-      - color: '[[[ var i = variables.info; var c = i.clim ? states[i.clim] : null; if (c && c.state ===
-          ''heat'') return ''#ff5722''; if (c && c.state === ''cool'') return ''#2196f3''; return ''var(--primary-text-color)'';
-          ]]]'
+      - color: '[[[ var i = variables.info; var a = i.act || {}; if (a.heat) return ''#ff5722''; if (a.cool)
+          return ''#2196f3''; return ''var(--primary-text-color)''; ]]]'
       name:
       - justify-self: start
       - font-size: 17px

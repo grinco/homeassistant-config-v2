@@ -54,6 +54,22 @@
      "type": "heading"
     },
     {
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set word = {'moisture': 'Water leak', 'smoke': 'Smoke', 'gas': 'Gas', 'carbon_monoxide': 'Carbon monoxide', 'safety': 'Safety alarm'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) | selectattr('state','eq','on') -%}\n{%- if s.entity_id != 'binary_sensor.any_safety_alarm' -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': s.entity_id, 'name': word[s.attributes.device_class] ~ ' — ' ~ (area_name(s.entity_id) if area_id(s.entity_id) else s.name), 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities"
+    },
+    {
      "color": "red",
      "entity": "alarm_control_panel.home",
      "features": [
@@ -76,24 +92,6 @@
        "condition": "state",
        "entity": "alarm_control_panel.home",
        "state": "triggered"
-      }
-     ]
-    },
-    {
-     "entity": "binary_sensor.shower_sink_leak_water_leak",
-     "grid_options": {
-      "columns": 12,
-      "rows": 1
-     },
-     "icon": "mdi:water-alert",
-     "name": "Water leak — shower sink",
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.shower_sink_leak_water_leak",
-       "state": "on"
       }
      ]
     },
@@ -146,11 +144,6 @@
      "conditions": [
       {
        "condition": "state",
-       "entity": "binary_sensor.shower_sink_leak_water_leak",
-       "state": "on"
-      },
-      {
-       "condition": "state",
        "entity": "binary_sensor.any_battery_low",
        "state": "on"
       },
@@ -158,6 +151,11 @@
        "condition": "state",
        "entity": "alarm_control_panel.home",
        "state": "triggered"
+      },
+      {
+       "condition": "state",
+       "entity": "binary_sensor.any_safety_alarm",
+       "state": "on"
       }
      ]
     }
@@ -338,12 +336,6 @@
        "icon": "mdi:bed-single-outline",
        "name": "Kids room 1",
        "page": "kid1"
-      },
-      "terrace": {
-       "icon": "mdi:balcony",
-       "name": "Terrace",
-       "page": "terrace",
-       "special": "terrace"
       }
      },
      "show_empty": false,
@@ -399,12 +391,6 @@
        "icon": "mdi:bed-single-outline",
        "name": "Kids room 1",
        "page": "kid1"
-      },
-      "terrace": {
-       "icon": "mdi:balcony",
-       "name": "Terrace",
-       "page": "terrace",
-       "special": "terrace"
       }
      },
      "show_empty": false,
@@ -471,6 +457,7 @@
       {
        "modes": [
         "armed_home",
+        "armed_night",
         "armed_away",
         "disarmed"
        ],
@@ -502,6 +489,47 @@
      },
      "name": "Vacuum",
      "type": "tile"
+    },
+    {
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "exclude": [
+       {
+        "hidden_by": "/.+/"
+       }
+      ],
+      "include": [
+       {
+        "domain": "water_heater",
+        "options": {
+         "entity": "this.entity_id",
+         "features": [
+          {
+           "operation_modes": [
+            "auto",
+            "heat",
+            "off"
+           ],
+           "type": "water-heater-operation-modes"
+          }
+         ],
+         "features_position": "bottom",
+         "name": "Hot water",
+         "type": "tile"
+        }
+       }
+      ]
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities"
     }
    ],
    "column_span": 1,
