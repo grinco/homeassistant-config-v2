@@ -1315,6 +1315,52 @@ A(sensor_case("safety: the roll-up never counts itself", "False",
               sensor=SAFE, finding="a roll-up in its own class would latch on forever"))
 
 
+# ---------------------------------------------------------------- the indoor level is a slider
+# 2026-10-12, operator: "it's overhead to change code to adjust such values".  The FP2's 10-minute mean
+# is judged against ONE number, `input_number.lighting_indoor_dark_below_lux` (admin panel): dark below
+# it, bright above TWICE it, held in between - the same rule as the outdoor sensor.  150 lx is the
+# default and the fallback, which reproduces the old 150/300 thresholds.  A new input_number starts at
+# its MINIMUM, so a slider that is missing, unavailable or <= 0 must fall back, not mean "always bright".
+# Every pair straddles: changing the slider must change the verdict at the same reading.
+IND_B = "Lighting indoor bright"
+IND_D = "Lighting indoor dark"
+FP2_MEAN = "states('sensor.living_room_light_level')"
+SLIDER = "states('input_number.lighting_indoor_dark_below_lux')"
+
+
+def _ind(sensor, expect, mean, slider, was, finding):
+    A(sensor_case("indoor %s: mean %s, slider %s, was %s" % (sensor.split()[-1], mean, slider, was),
+                  expect, {FP2_MEAN: repr(mean), SLIDER: repr(slider), WAS: repr(was)},
+                  sensor=sensor, finding=finding))
+
+
+_ind(IND_B, "True", "301", "150", "off", "2026-10-12: just above twice the slider is bright")
+_ind(IND_B, "False", "300", "150", "off", "the upper edge is exclusive")
+_ind(IND_B, "True", "299", "150", "on", "held: a bright room stays bright inside the band")
+_ind(IND_B, "False", "299", "150", "off", "held: a dark room stays dark inside the band")
+_ind(IND_B, "False", "149", "150", "on", "just below the slider is dark")
+_ind(IND_B, "True", "150", "150", "on", "the lower edge is exclusive")
+_ind(IND_B, "True", "250", "100", "off", "the slider moves the edge: 250 is bright above 2x100")
+_ind(IND_B, "False", "250", "300", "off", "and the other way: 250 is inside the band at 300")
+_ind(IND_B, "True", "301", "unavailable", "off", "a missing slider falls back to 150")
+_ind(IND_B, "False", "250", "0", "off", "a slider at 0 is not a threshold of 0 (new helpers start at the minimum)")
+_ind(IND_B, "False", "250", "-5", "off", "a negative slider falls back too")
+_ind(IND_B, "False", "unavailable", "150", "on", "a dead FP2 is not evidence of light: the lamps may come on")
+_ind(IND_B, "False", "0", "150", "on", "0 lx is a reading")
+_ind(IND_B, "False", "250", "150", "unknown", "a first evaluation inside the band starts dark")
+
+_ind(IND_D, "True", "149", "150", "off", "just below the slider is dark")
+_ind(IND_D, "False", "151", "150", "off", "held: not dark stays not dark inside the band")
+_ind(IND_D, "True", "151", "150", "on", "held: dark stays dark inside the band")
+_ind(IND_D, "False", "301", "150", "on", "above twice the slider is not dark")
+_ind(IND_D, "True", "300", "150", "on", "the upper edge is exclusive")
+_ind(IND_D, "False", "120", "100", "off", "the slider moves the edge: 120 is inside the band at 100")
+_ind(IND_D, "True", "120", "150", "off", "and with the default it is dark")
+_ind(IND_D, "True", "149", "unavailable", "off", "a missing slider falls back to 150")
+_ind(IND_D, "False", "unavailable", "150", "on", "a dead FP2 leaves the kitchen's accents off")
+_ind(IND_D, "False", "151", "150", "unknown", "a first evaluation inside the band starts not-dark")
+
+
 # ---------------------------------------------------------------- batteries and lights left on
 # 2026-10-12.  Two roll-ups that feed notifications.  `Any low battery` lists the house's battery
 # sensors under 20 % so a leak sensor at 15 % is not found by it failing.  Phones, the car and the

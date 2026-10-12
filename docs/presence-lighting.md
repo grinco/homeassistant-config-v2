@@ -171,3 +171,17 @@ the FP2 alone called a sunny noon dark.
 - Not reachable by tests: the notifications and the button. Both roll-ups' expressions are covered in
   tests/climate (`battery:` and `left on:` cases, mutations in mutate.py); the automations were
   checked by rendering their message templates against live state, never by `automation.trigger`.
+
+### The indoor level is a slider (2026-10-12)
+
+The operator: changing a light level should not need a code change. The living-room and kitchen
+darkness decision is now `binary_sensor.open_space_indoor_bright` / `_dark` (template helpers, with the
+same entity ids the wrappers already read) judging the FP2's 10-minute mean against ONE number,
+`input_number.lighting_indoor_dark_below_lux` (default 150): dark below it, bright above TWICE it, held
+in between, exactly the outdoor rule. Both sliders are in the admin panel, System -> *Lighting levels*,
+next to the live readings. A slider that is missing, unavailable or <= 0 falls back to 150 (a new
+input_number starts at its minimum, 20). A dead FP2 reads as not bright and not dark, as before.
+This replaced two native `threshold` helpers: those only take literal limits, so they cannot follow a
+slider. The cost is two templates where there were two helpers; the band is no longer independent of
+the slider. The old helpers' held state was lost in the swap: inside the band a first evaluation
+starts dark / not-dark. The hallway has no darkness check and no slider.
