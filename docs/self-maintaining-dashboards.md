@@ -128,8 +128,14 @@ and dark. The palette is generated in the browser from a seed colour, so every c
 theme variables follows it without an edit.
 
 - Settings are helpers named `<domain>.material_you_<setting>` (house-wide; a per-user suffix
-  overrides): `input_text.material_you_base_color` = `#D08A2E` (warm amber, matching the
-  lamp-on accent the room cards already hard-code), `input_select.material_you_spec` = `2025`.
+  overrides): `input_text.material_you_base_color` = `#1C7ED6` (EaseIT Blue, brand manual v1.2;
+  until 2026-10-12 it was the warm amber `#D08A2E`), `input_select.material_you_spec` = `2025`.
+  The seed drives the whole palette, light and dark, so it is the only brand colour the theme
+  accepts. What it does NOT accept: Paper `#F6F4EF` / Navy `#101826` as exact surfaces (Material
+  You derives surfaces from the seed, so they come out faintly blue), and Space Grotesk / Manrope
+  (the theme sets its own font stack). Signal Green is deliberately not used as a fill. The amber of
+  a lit room and the orange/blue of heating and cooling are functional colours the cards hard-code;
+  they are not part of the brand palette and stay.
 - **Keep the spec at 2025.** With `2021`, utilities 2.1.25/2.1.26 threw
   `RangeError: Maximum call stack size exceeded` in `toneDeltaPair` and silently fell back to
   the stock blue palette. There was no visible error, only the wrong colours.
@@ -139,3 +145,16 @@ theme variables follows it without an edit.
 - One device often has an entity from each of several integrations (Android TV Remote, Cast,
   Music Assistant, Denon). Keep the one with real controls on the room page and label the
   others `not_on_room_pages`.
+
+## One layout at every width (2026-10-12)
+
+Rendered at 390 / 820 / 1280 px (`tests/dashboards/render.py`), three things differed by width:
+
+- **Room pages** were one section: a 400 px strip centred on a tablet or laptop. They are now two
+  (controls and climate | environment, media, extras), so two columns fill from ~800 px (lint C24).
+- **Home room tiles** switched layout at 1024 px, so a tablet got the phone's two tiles per row,
+  each stretched to 300 px. The break is now 600 px: two per row on a phone, four from a tablet up
+  (lint C25).
+- Known and left alone: at 1280 px the Home page leaves its fourth column empty (`max_columns: 4`
+  with sections that span two, lint C7), and the *Environment* heading on a room page is a grid
+  title, larger than the heading cards above it.
