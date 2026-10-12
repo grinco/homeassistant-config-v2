@@ -514,6 +514,34 @@ def m_night_from_schedule(d):
     return "C22"
 
 
+def _occ_cards(v):
+    return [c for sec in v["sections"] for c in sec["cards"]
+            if c.get("type") == "custom:auto-entities"
+            and any((r.get("options") or {}).get("name") == "Occupancy"
+                    for r in c["filter"]["include"])]
+
+
+def m_occupancy_tile_dropped(d):
+    """Every room page goes back to the badge-only occupancy of 2026-10-11."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for sec in v["sections"]:
+            sec["cards"] = [c for c in sec["cards"] if c not in _occ_cards(v)]
+    _save(d, LOV, doc)
+    return "C23"
+
+
+def m_occupancy_tile_not_tappable(d):
+    """The tile is there but tapping it does nothing: 'click for details' is lost."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in _occ_cards(v):
+            for r in c["filter"]["include"]:
+                (r.get("options") or {}).pop("tap_action", None)
+    _save(d, LOV, doc)
+    return "C23"
+
+
 MUTATIONS = [
     ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
     ("a card computes night from the schedule", m_night_from_schedule),
@@ -525,6 +553,8 @@ MUTATIONS = [
     ("a second sensor joins an aggregated room", m_second_sensor_in_aggregated_room),
     ("a camera gets a hand-listed card", m_camera_hand_listed),
     ("the room card takes any Magic Areas group", m_room_card_any_group),
+    ("room pages lose the occupancy tile", m_occupancy_tile_dropped),
+    ("the occupancy tile no longer opens details", m_occupancy_tile_not_tappable),
     ("room pages lose the Environment block", m_env_block_dropped),
     ("environment readings need the label again", m_env_needs_label),
     ("the environment rule takes in power", m_env_rule_broadened),

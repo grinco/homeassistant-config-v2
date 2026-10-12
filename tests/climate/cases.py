@@ -1235,6 +1235,40 @@ A(sensor_case("kid 1: a whole-degree air-quality reading passes through", "24.0"
               sensor=K1_T, finding="review 2026-10-07 A5: the instrument's real resolution"))
 
 
+# ---------------------------------------------------------------- open-space darkness: outdoors wins
+# 2026-10-12, operator: "kitchen and living room report being dark - while it's bright outside".
+# The FP2 sits in the dim half of the room and read 58-167 lx all morning while the terrace sensor
+# read 16000+, so a darkness judged by the FP2 alone called a sunny noon dark.  Outdoor daylight
+# (`binary_sensor.lighting_daylight`, already hysteretic) now overrides the indoor reading: if it is
+# bright outside the open space is bright, whatever the FP2 says.  The indoor reading still decides
+# when it is NOT bright outside (evening, overcast dusk, a closed-curtain afternoon is not handled
+# on purpose: the FP2 mean covers it).  Every case pins both inputs, and each pair straddles.
+OUT_BRIGHT = "is_state('binary_sensor.lighting_daylight','on')"
+IN_BRIGHT = "is_state('binary_sensor.open_space_indoor_bright','on')"
+IN_DARK = "is_state('binary_sensor.open_space_indoor_dark','on')"
+LRB = "Lighting living room bright"
+KD = "Lighting kitchen dark"
+
+A(sensor_case("open space: bright outside is bright inside, whatever the FP2 says", "True",
+              {OUT_BRIGHT: "true", IN_BRIGHT: "false"}, sensor=LRB,
+              finding="2026-10-12: the living room read DARK at noon with 16000 lx outside"))
+A(sensor_case("open space: dark outside and a dim FP2 is dark", "False",
+              {OUT_BRIGHT: "false", IN_BRIGHT: "false"}, sensor=LRB,
+              finding="the indoor reading must still decide at dusk"))
+A(sensor_case("open space: dark outside and a bright FP2 is bright", "True",
+              {OUT_BRIGHT: "false", IN_BRIGHT: "true"}, sensor=LRB,
+              finding="lamps or a lit kitchen must still read as light; outdoors must not be the only vote"))
+A(sensor_case("open space: kitchen is not dark when it is bright outside", "False",
+              {OUT_BRIGHT: "true", IN_DARK: "true"}, sensor=KD,
+              finding="2026-10-12: gallery and beam would light at noon"))
+A(sensor_case("open space: kitchen is dark when both are dark", "True",
+              {OUT_BRIGHT: "false", IN_DARK: "true"}, sensor=KD,
+              finding="the kitchen still lights its accents in the evening"))
+A(sensor_case("open space: kitchen is not dark when the FP2 is in its hysteresis band", "False",
+              {OUT_BRIGHT: "false", IN_DARK: "false"}, sensor=KD,
+              finding="the indoor sensor's own hysteresis must be respected"))
+
+
 # ---------------------------------------------------------------- any safety alarm (Home: Needs attention)
 # 2026-10-09.  A smoke and CO alarm went into the corridor, and Home's *Needs attention* section
 # turned out to be hand-listed: it knew one leak sensor by entity id and nothing about smoke, gas or

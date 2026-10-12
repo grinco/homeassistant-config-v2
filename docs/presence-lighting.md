@@ -82,3 +82,69 @@ dark all three are on; when it brightens, gallery and beam go off and the top st
   20 lx hysteresis, so they cannot switch themselves off. Re-check after a sunny day's data.
 - Light control is OFF by the operator until presence sensing arrives; a motion sensor clears on a
   person standing still at the counter. The Echo Dot playing also counts as presence here.
+
+## Living room and kitchen, measured in the room (2026-10-11)
+
+The living room now has an **Aqara FP2** (HomeKit): presence zones 1–4 in the living room, zones 5–6
+in the kitchen (the space is open, with a bar in the middle), and its own light sensor. The kitchen
+gained a second motion + light sensor at the dining table.
+
+- **Living room darkness is measured in the room**, not outdoors: `sensor.living_room_light_level`
+  (native `statistics`, 10-minute mean of the FP2 light level, which jumps 40–80 lx within seconds as
+  people move) feeds `binary_sensor.living_room_bright` (native `threshold`: bright above 200 lx,
+  dark below 100 lx; "Show as: Light", the only class Magic Areas accepts as a dark entity). Lamps
+  come on only when the room is dark, and Magic Areas switches them off when daylight makes it bright.
+- **The lamps cannot switch themselves off.** Measured 2026-10-11 12:22: both lamps off for 19 s and
+  the FP2 reported no change at all — their contribution is below its reporting step, far inside the
+  100 lx band.
+- **Kitchen presence bleeds into the living room, on purpose** (operator, 2026-10-11: "so that the
+  ambient lights stay on"): the living room's Magic Areas counts FP2 zones 5–6 (kitchen and work
+  area, on the living-room device) and, via `include_entities`, both kitchen motion sensors. Someone
+  at the bar, the worktop or the dining table keeps the living-room lamps on. One way only: the
+  living room does not light the kitchen. The lamps still only come ON when the living room is dark.
+- **Kitchen light level** = mean of both kitchen light sensors (native `min_max`); `binary_sensor.kitchen_dark`
+  now reads it (dark below 15 lx, bright above 35 lx). The worktop sensor reads ~3x the dining one.
+- `binary_sensor.lighting_daylight` (outdoor) is no longer used by any room; it stays, tested, for
+  rooms without a light sensor of their own.
+- The **FP300** presence sensor is paired but unnamed and unplaced — not in use yet, left alone.
+
+### One darkness for the open space (2026-10-11, evening)
+
+The operator: kitchen lit, living room dark, "despite it being essentially the same space —
+separated by the bar", and "the current amount of light is already a little too dark".
+
+- **Cause 1 — two sensors, two scales.** The living room judged darkness by the FP2 (100/200 lx), the
+  kitchen by its corner sensors (15/35 lx). All report lux — it was not a unit problem — but they sit
+  in different light: at noon the FP2 read ~290 lx while the kitchen sensors read ~50. Now ONE signal
+  decides for both: the FP2's 10-minute mean (`sensor.living_room_light_level`), which sees both
+  halves. `binary_sensor.living_room_bright` (bright above 300, dark below 150) and
+  `binary_sensor.kitchen_dark` (its exact mirror) read it, so the two halves always agree. Thresholds
+  raised from 100/200 at the operator's request. The kitchen corner sensors remain for presence and
+  display; `sensor.kitchen_light_level` no longer drives anything.
+- **Cause 2 — Magic Areas' manual latch.** Any light change Magic Areas did not make sets the room's
+  groups to `controlling: false` until the room next EMPTIES. The lamp measurement at 12:22 (lamps
+  off/on by hand) tripped it, and the open-plan room — TV, FP2 zones, kitchen bleed — never emptied,
+  so at 17:08 the room went dark and nothing came on. **Never toggle a room's lights to test or
+  measure while it is occupied**; the lamps were switched on by hand for the evening and the latch
+  releases at the next empty room.
+- Risk: the FP2 is now a single point of failure for open-space darkness. Unavailable reads as dark
+  in the living room (lamps may come on) and as not-dark in the kitchen (gallery/beam stay off).
+
+### Outdoors wins; worktop and kitchen motion switch the Workarea (2026-10-12)
+
+The operator: kitchen and living room "dark" while it was bright outside. The FP2 sits in the dim
+half of the space (58–167 lx all morning against 16 000+ lx on the terrace), so a darkness judged by
+the FP2 alone called a sunny noon dark.
+
+- `binary_sensor.living_room_bright` and `binary_sensor.kitchen_dark` (the entities Magic Areas
+  reads) are now template helpers over two inputs: outdoor `binary_sensor.lighting_daylight`
+  (hysteretic) and the old FP2 thresholds, renamed `binary_sensor.open_space_indoor_bright` /
+  `_dark`. Bright outside = bright inside, whatever the FP2 says; otherwise the FP2 decides, as
+  before. Tested in tests/climate (`open space:` cases, prefix `Lighting`).
+- Not covered on purpose: a sunny day behind closed curtains reads bright.
+- **Workarea** (`light.h1ab2_2`, on/off): `automation.kitchen_workarea_on_with_worktop_presence`
+  turns it on when FP2 zone 6 (worktop) or `binary_sensor.kitchen_motion_occupancy` goes on. Not the
+  kitchen area state, the dining-table sensor or FP2 zone 5. Off stays with Magic Areas (task group).
+  Not testable by the suite (actuation); the trigger entities were checked against live state.
+- Room pages open with an **Occupancy** tile (Magic Areas sensor: state and time since), tap = more-info
+  with the active sensors and history. Lint C23.

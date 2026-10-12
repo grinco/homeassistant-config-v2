@@ -126,6 +126,12 @@ Checks, each one written because something it catches actually shipped:
                          night; the schedule only moves the alarm. A card still
                          reading the schedule says "Night targets" after the
                          operator switched to day by hand.
+  C23 occupancy-shown    every room page opens with a tile for the room's Magic
+                         Areas occupancy sensor (`device_class: occupancy`), and
+                         tapping it opens the sensor's own details (more-info:
+                         which sensors are active, since when, history). Until
+                         2026-10-12 it was a small badge in the last, low-priority
+                         "Automation" row, with no hint it could be opened.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -886,6 +892,39 @@ def main():
             if doubled:
                 fail("C19", "%s: %d fixed tile name(s) are given to more than one entity"
                      % (label, len(doubled)), sorted(doubled))
+
+        # C23 - the room's occupancy is a tile that opens its details.
+        if label == "lovelace":
+            ents = registry_entities()
+            area_name_of = {a["id"]: a["name"] for a in _store("core.area_registry", "areas")}
+            no_occ = []
+            for v in rooms:
+                gens = generators(v)
+                page_areas = set()
+                for _, inc, _ in gens:
+                    for r in inc:
+                        if r.get("area"):
+                            page_areas.add(str(r["area"]))
+                occ = [e for e in ents
+                       if e["integration"] == "magic_areas" and e["domain"] == "binary_sensor"
+                       and e["device_class"] == "occupancy" and e["area"] is not None
+                       and (e["area"] in page_areas or area_name_of.get(e["area"]) in page_areas)]
+                for e in occ:
+                    ok = False
+                    for card, inc, exc in gens:
+                        if (card.get("card") or {}).get("type") == "heading":
+                            continue
+                        for r in inc:
+                            o = r.get("options") or {}
+                            if (o.get("type") == "tile" and rule_matches(r, e, area_name_of) is not False
+                                    and (o.get("tap_action") or {}).get("action") == "more-info"
+                                    and not any(rule_matches(x, e, area_name_of) for x in exc)):
+                                ok = True
+                    if not ok:
+                        no_occ.append("%-14s %s" % (v.get("path"), e["entity_id"]))
+            if no_occ:
+                fail("C23", "%s: %d room(s) show no occupancy tile that opens its details"
+                     % (label, len(no_occ)), sorted(no_occ))
 
         # C20 - a labelled Magic Areas aggregate has exactly one member.
         if label == "lovelace":
