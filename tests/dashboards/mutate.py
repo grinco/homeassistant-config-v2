@@ -571,6 +571,26 @@ def m_home_tablet_gap(d):
     return "C25"
 
 
+def m_energy_not_dense(d):
+    """Energy stops packing densely: the short section's column is empty below it."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("path") == "energy":
+            v.pop("dense_section_placement", None)
+    _save(d, LOV, doc)
+    return "C26"
+
+
+def m_home_four_columns(d):
+    """Home back to max_columns 4 with a section that spans two."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("path") == "home":
+            v["max_columns"] = 4
+    _save(d, LOV, doc)
+    return "C26"
+
+
 MUTATIONS = [
     ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
     ("a card computes night from the schedule", m_night_from_schedule),
@@ -584,6 +604,8 @@ MUTATIONS = [
     ("the room card takes any Magic Areas group", m_room_card_any_group),
     ("room pages lose the occupancy tile", m_occupancy_tile_dropped),
     ("room pages are one narrow column", m_room_page_one_column),
+    ("Energy stops packing densely", m_energy_not_dense),
+    ("Home goes back to four columns", m_home_four_columns),
     ("a tablet is treated as a big phone", m_home_tablet_gap),
     ("the occupancy tile no longer opens details", m_occupancy_tile_not_tappable),
     ("room pages lose the Environment block", m_env_block_dropped),

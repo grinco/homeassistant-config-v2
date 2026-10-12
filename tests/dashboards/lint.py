@@ -141,6 +141,15 @@ Checks, each one written because something it catches actually shipped:
                          meet with no gap and no overlap. Until 2026-10-12 the
                          split was 1023/1024, so a tablet got the phone layout
                          stretched: two enormous room tiles per row.
+  C26 dense-columns      the main tabs (Home, Climate, Energy, Security, Appliances) pack
+                         their sections densely (`dense_section_placement`) at
+                         `max_columns: 3`, which is what 1024 to 1500 px holds. Without
+                         dense placement the next section always starts after the
+                         previous one, so a tall section beside a short one leaves a hole
+                         under the short one; on a laptop or a tablet in landscape a third
+                         of Home, Climate and Energy was empty (2026-10-12). The frontend
+                         sizes each section in 56 px rows, so dense placement fills the
+                         holes with whatever fits.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -227,6 +236,10 @@ GENERATED = [
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
+
+# C26: the tabs whose sections are laid out to fill the width, and how many columns that is.
+MAIN_TABS = ("home", "climate", "energy", "security", "appliances")
+MAIN_COLUMNS = 3
 
 RESOURCE_SLUG = {
     "button-card": "button-card",
@@ -853,6 +866,21 @@ def main():
             if unfocused:
                 fail("C15", "%s: %d room rule(s) pull in entities nobody asked for"
                      % (label, len(unfocused)), sorted(set(unfocused)))
+
+        # C26 - the main tabs pack densely, three columns wide.
+        if label == "lovelace":
+            short = []
+            for v in views:
+                if v.get("path") not in MAIN_TABS:
+                    continue
+                if (v.get("max_columns") or 4) != MAIN_COLUMNS:
+                    short.append("%s: max_columns is %s, not %d"
+                                 % (v.get("path"), v.get("max_columns"), MAIN_COLUMNS))
+                if not v.get("dense_section_placement"):
+                    short.append("%s: dense_section_placement is off, so a short section "
+                                 "leaves a hole under it" % v.get("path"))
+            if short:
+                fail("C26", "%s: main tabs leave part of the width empty" % label, short)
 
         # C24 / C25 - the same page at every width.
         if label == "lovelace":

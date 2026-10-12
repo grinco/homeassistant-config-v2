@@ -155,6 +155,13 @@ Rendered at 390 / 820 / 1280 px (`tests/dashboards/render.py`), three things dif
 - **Home room tiles** switched layout at 1024 px, so a tablet got the phone's two tiles per row,
   each stretched to 300 px. The break is now 600 px: two per row on a phone, four from a tablet up
   (lint C25).
-- Known and left alone: at 1280 px the Home page leaves its fourth column empty (`max_columns: 4`
-  with sections that span two, lint C7), and the *Environment* heading on a room page is a grid
-  title, larger than the heading cards above it.
+- **Main tabs use three columns** (`max_columns: 3`, lint C26). The frontend fits columns of 320 to
+  500 px, so 1280 px holds three and 1024 px (a tablet in landscape) holds two; with `max_columns: 4`
+  a fourth, empty column was reserved. A section is placed after the previous one, and a tall
+  section beside a short one leaves a hole under the short one that `dense_section_placement` does
+  NOT fill (rows are as tall as the tallest neighbour). So balance by hand: put sections of similar
+  height in the same row, and merge small ones under a short one. Climate is Auto climate + Floors |
+  Heating | Outside, then Indoor air | Temperature | Humidity; Home is Rooms (2) | Quick actions, then
+  three singles. Climate's Outside section was split at *Air quality — indoors* for this.
+- Left alone: the *Environment* heading on a room page is a grid title, larger than the heading
+  cards above it.
