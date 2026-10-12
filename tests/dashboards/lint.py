@@ -132,6 +132,15 @@ Checks, each one written because something it catches actually shipped:
                          which sensors are active, since when, history). Until
                          2026-10-12 it was a small badge in the last, low-priority
                          "Automation" row, with no hint it could be opened.
+  C24 rooms-fill-width   a room page has at least two sections, so on a tablet or
+                         laptop it fills two columns instead of one 400 px strip
+                         with blank margins either side (seen at 820 and 1280 px,
+                         2026-10-12).
+  C25 breakpoints-tile   a Home floor is generated for phones (max-width 599px)
+                         and for wider screens (min-width 600px), and the two
+                         meet with no gap and no overlap. Until 2026-10-12 the
+                         split was 1023/1024, so a tablet got the phone layout
+                         stretched: two enormous room tiles per row.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -844,6 +853,31 @@ def main():
             if unfocused:
                 fail("C15", "%s: %d room rule(s) pull in entities nobody asked for"
                      % (label, len(unfocused)), sorted(set(unfocused)))
+
+        # C24 / C25 - the same page at every width.
+        if label == "lovelace":
+            narrow = [v.get("path") for v in rooms if len(v.get("sections") or []) < 2]
+            if narrow:
+                fail("C24", "%s: %d room page(s) are a single section - one narrow column on "
+                            "a tablet or laptop" % (label, len(narrow)), sorted(narrow))
+            home_v = next((v for v in views if v.get("path") == "home"), None)
+            seen = {}
+            for _, card in cards(home_v or {}):
+                if card.get("type") == "custom:auto-entities" and card.get("floor"):
+                    for cond in card.get("visibility") or []:
+                        m = re.search(r"\((max|min)-width:\s*(\d+)px\)", cond.get("media_query") or "")
+                        if cond.get("condition") == "screen" and m:
+                            seen.setdefault(card["floor"], {})[m.group(1)] = int(m.group(2))
+            bad = []
+            for fl, b in sorted(seen.items()):
+                if b.get("max") is None or b.get("min") is None:
+                    bad.append("%s has only one of the two screen variants: %r" % (fl, b))
+                elif b["min"] != b["max"] + 1 or b["max"] != 599:
+                    bad.append("%s: phone up to %spx, wide from %spx (want 599 / 600, no gap)"
+                               % (fl, b["max"], b["min"]))
+            if bad:
+                fail("C25", "%s: Home room tiles do not switch layout at the tablet breakpoint"
+                     % label, bad)
 
         # C18 / C19 - environmental readings reach their room, and a fixed tile
         # name belongs to one entity.

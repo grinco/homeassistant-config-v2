@@ -325,7 +325,7 @@ def m_socket_back_on_room(d):
 def m_room_page_hand_edited(d):
     """One room page gets a card the others do not: it has left the skeleton."""
     doc = _cfg(d, LOV)
-    _room_view(doc, "kitchen")["sections"][0]["cards"].append(
+    _room_view(doc, "kitchen")["sections"][-1]["cards"].append(
         {"type": "tile", "entity": "light.gallery"})
     _save(d, LOV, doc)
     return "C14"
@@ -336,7 +336,7 @@ def m_room_page_unfocused(d):
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
         if v.get("subview") and v.get("back_path") == "/lovelace/home" and v.get("path") != "home-classic":
-            for c in v["sections"][0]["cards"]:
+            for c in _flat(v):
                 if c.get("type") == "custom:auto-entities":
                     for r in (c.get("filter") or {}).get("include") or []:
                         if r.get("label") == "on_room_page":
@@ -348,7 +348,7 @@ def m_room_page_unfocused(d):
 def m_list_matcher(d):
     """A rule whose domain is a list: auto-entities matches nothing, silently."""
     doc = _cfg(d, LOV)
-    for c in _room_view(doc, "kitchen")["sections"][0]["cards"]:
+    for c in _flat(_room_view(doc, "kitchen")):
         for r in (c.get("filter") or {}).get("include") or []:
             if r.get("domain") == "light":
                 r["domain"] = ["light"]
@@ -362,8 +362,13 @@ def _rooms(cfg):
             if v.get("subview") and v.get("back_path") == "/lovelace/home" and v.get("path") != "home-classic"]
 
 
+def _flat(view):
+    """Every card of a view, whichever section holds it."""
+    return [c for sec in view["sections"] for c in sec["cards"]]
+
+
 def _env(view):
-    return [c for c in view["sections"][0]["cards"] if (c.get("card") or {}).get("title") == "Environment"]
+    return [c for c in _flat(view) if (c.get("card") or {}).get("title") == "Environment"]
 
 
 def m_camera_hand_listed(d):
@@ -388,8 +393,9 @@ def m_env_block_dropped(d):
     """Every room page loses its Environment block - the pre-2026-10-07 page."""
     doc = _cfg(d, LOV)
     for v in _rooms(doc):
-        for c in _env(v):
-            v["sections"][0]["cards"].remove(c)
+        envs = _env(v)
+        for sec in v["sections"]:
+            sec["cards"] = [x for x in sec["cards"] if x not in envs]
     _save(d, LOV, doc)
     return "C18"
 
@@ -422,7 +428,7 @@ def m_all_lights_doubled(d):
     """Magic Areas' per-category groups reach the 'All lights' rule again."""
     doc = _cfg(d, LOV)
     for v in _rooms(doc):
-        for c in v["sections"][0]["cards"]:
+        for c in _flat(v):
             exc = (c.get("filter") or {}).get("exclude") or []
             exc[:] = [x for x in exc if not (x.get("integration") == "magic_areas" and x.get("entity_id"))]
     _save(d, LOV, doc)
@@ -542,6 +548,29 @@ def m_occupancy_tile_not_tappable(d):
     return "C23"
 
 
+def m_room_page_one_column(d):
+    """Every room page back to one section: a 400 px strip on a tablet or laptop."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        v["sections"] = [{"type": "grid", "column_span": 1, "cards": _flat(v)}]
+    _save(d, LOV, doc)
+    return "C24"
+
+
+def m_home_tablet_gap(d):
+    """The pre-2026-10-12 breakpoints: a tablet is treated as a big phone."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("path") != "home":
+            continue
+        for c in _flat(v):
+            for cond in c.get("visibility") or []:
+                if cond.get("condition") == "screen":
+                    cond["media_query"] = cond["media_query"].replace("599px", "1023px").replace("600px", "1024px")
+    _save(d, LOV, doc)
+    return "C25"
+
+
 MUTATIONS = [
     ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
     ("a card computes night from the schedule", m_night_from_schedule),
@@ -554,6 +583,8 @@ MUTATIONS = [
     ("a camera gets a hand-listed card", m_camera_hand_listed),
     ("the room card takes any Magic Areas group", m_room_card_any_group),
     ("room pages lose the occupancy tile", m_occupancy_tile_dropped),
+    ("room pages are one narrow column", m_room_page_one_column),
+    ("a tablet is treated as a big phone", m_home_tablet_gap),
     ("the occupancy tile no longer opens details", m_occupancy_tile_not_tappable),
     ("room pages lose the Environment block", m_env_block_dropped),
     ("environment readings need the label again", m_env_needs_label),
