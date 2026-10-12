@@ -1315,6 +1315,85 @@ A(sensor_case("safety: the roll-up never counts itself", "False",
               sensor=SAFE, finding="a roll-up in its own class would latch on forever"))
 
 
+# ---------------------------------------------------------------- batteries and lights left on
+# 2026-10-12.  Two roll-ups that feed notifications.  `Any low battery` lists the house's battery
+# sensors under 20 % so a leak sensor at 15 % is not found by it failing.  Phones, the car and the
+# robot vacuums are charged by people, not replaced, so they are skipped by integration.
+# `Lighting left on` lists the lights still on when everyone has left.  Group lights (they carry an
+# `entity_id` attribute: Magic Areas, Gallery) would list every lamp twice, and the UniFi switch
+# LEDs are indicators, not lighting.  Both answer `none` when there is nothing to say, never "".
+LOWB = "Any low battery"
+LEFT = "Lighting left on"
+ALL_S = "states.sensor"
+ALL_L = "states.light"
+SKIP_MA = "integration_entities('mobile_app')"
+SKIP_VO = "integration_entities('volvo')"
+SKIP_RO = "integration_entities('roborock')"
+
+
+def _bat(eid, state, name=None):
+    return {"entity_id": eid, "state": state,
+            "attributes": {"device_class": "battery", "friendly_name": name or eid}}
+
+
+def _lowb(*sensors, skip_ma=(), skip_vo=(), skip_ro=()):
+    return {ALL_S: repr(list(sensors)), SKIP_MA: repr(list(skip_ma)), SKIP_VO: repr(list(skip_vo)),
+            SKIP_RO: repr(list(skip_ro))}
+
+
+A(sensor_case("battery: a sensor under 20 % is named with its level", "Leak 15%",
+              _lowb(_bat("sensor.leak_battery", "15", "Leak")), sensor=LOWB,
+              finding="2026-10-12: a leak sensor sat at 15 % with nothing to say so"))
+A(sensor_case("battery: exactly 20 % is not yet low", "none",
+              _lowb(_bat("sensor.a_battery", "20")), sensor=LOWB,
+              finding="the edge: the threshold is 'under 20'"))
+A(sensor_case("battery: 19 % is low", "A 19%",
+              _lowb(_bat("sensor.a_battery", "19", "A")), sensor=LOWB,
+              finding="the edge from below"))
+A(sensor_case("battery: an unavailable battery is not a number", "none",
+              _lowb(_bat("sensor.a_battery", "unavailable")), sensor=LOWB,
+              finding="a dead sensor is a different alert, and must not crash the list"))
+A(sensor_case("battery: a phone at 5 % is not a replaceable battery", "none",
+              _lowb(_bat("sensor.phone_battery_level", "5"), skip_ma=["sensor.phone_battery_level"]),
+              sensor=LOWB, finding="phones are charged; they would nag every evening"))
+A(sensor_case("battery: the car and the vacuum are skipped too", "none",
+              _lowb(_bat("sensor.car_battery", "5"), _bat("sensor.vac_battery", "5"),
+                    skip_vo=["sensor.car_battery"], skip_ro=["sensor.vac_battery"]),
+              sensor=LOWB, finding="same reason, other integrations"))
+A(sensor_case("battery: several are listed together", "A 10%, B 3%",
+              _lowb(_bat("sensor.a", "10", "A"), _bat("sensor.ok", "80", "OK"),
+                    _bat("sensor.b", "3.4", "B")), sensor=LOWB,
+              finding="one message, every low battery, healthy ones left out"))
+A(sensor_case("battery: nothing low is the word none, not empty", "none",
+              _lowb(_bat("sensor.a", "80")), sensor=LOWB,
+              finding="an empty state reads unknown and would trigger the notification"))
+
+
+def _light(eid, state, group=False):
+    attrs = {"entity_id": ["light.x"]} if group else {}
+    return {"entity_id": eid, "state": state, "attributes": attrs}
+
+
+def _left(*lights):
+    return {ALL_L: repr(list(lights))}
+
+
+A(sensor_case("left on: a lamp that is on is named by entity id", "light.lamp",
+              _left(_light("light.lamp", "on"), _light("light.other", "off")), sensor=LEFT,
+              finding="2026-10-12: nothing said what was left on when the house emptied"))
+A(sensor_case("left on: a group light is skipped, its members are listed", "light.gallery_left",
+              _left(_light("light.gallery", "on", group=True), _light("light.gallery_left", "on")),
+              sensor=LEFT, finding="a group would list every lamp twice and turn it off twice"))
+A(sensor_case("left on: a switch LED is an indicator", "none",
+              _left(_light("light.rack_switch_led", "on")), sensor=LEFT,
+              finding="UniFi switch LEDs are always on and are not lighting"))
+A(sensor_case("left on: an unavailable bulb is not on", "none",
+              _left(_light("light.hallway", "unavailable")), sensor=LEFT,
+              finding="a wall-switched bulb reads unavailable, not on"))
+A(sensor_case("left on: nothing on is the word none", "none", _left(), sensor=LEFT,
+              finding="an empty state reads unknown and would trigger the notification"))
+
+
 # ---------------------------------------------------------------- night: the alarm is the house mode
 # 2026-10-11, operator: "switch the alarm to night mode based on a schedule, and sync all binary
 # and climate entities to use it as source of truth; I'll also be able to switch the alarm to

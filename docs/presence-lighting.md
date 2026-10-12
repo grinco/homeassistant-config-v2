@@ -148,3 +148,26 @@ the FP2 alone called a sunny noon dark.
   Not testable by the suite (actuation); the trigger entities were checked against live state.
 - Room pages open with an **Occupancy** tile (Magic Areas sensor: state and time since), tap = more-info
   with the active sensors and history. Lint C23.
+
+## Hallway (FP300), battery watchdog, lights left on (2026-10-12)
+
+- **Hallway presence lighting.** The FP300 ("Hallway Presence", Aqara, Z2M) is the hallway's only presence
+  sensor. Magic Areas: `overhead_lights` = `light.hallway`, state `occupied`, light control ON, no dark
+  entity — lit at any hour, like the corridor. A dark entity was deliberately not added: the sensor's
+  lux is noisy (60–210 lx at noon) and sits near the bulb it would switch, so the lamp itself could
+  read the room BRIGHT and switch it off under someone. **The bulb is on a wall switch.** With the switch
+  off the bulb is `unavailable` and Home Assistant cannot light it; presence lighting only works while
+  the switch is left ON (manual control then needs a battery button/dimmer, or a relay behind the switch).
+- **`sensor.any_low_battery`**: names every battery sensor under 20 % (state `none` when there is
+  nothing to say). Phones (`mobile_app`), the car (`volvo`) and the vacuums (`roborock`) are skipped by
+  integration: they are charged, not replaced. `automation.battery_watchdog` notifies Vadim's phone at
+  09:00 daily and the moment the first sensor drops under 20 %. An unavailable battery is a different
+  alert and is NOT listed (a dead smoke/CO alarm battery reads unavailable today).
+- **`sensor.lighting_left_on`**: entity ids of the lights still on, `none` otherwise; group lights
+  (they carry an `entity_id` attribute) and the UniFi `*_led` indicators are skipped.
+  `automation.lights_left_on_when_everyone_leaves`: `zone.home` below 1 for 10 minutes -> both adults'
+  phones get "Still on: …" with a **Turn them off** button; the button is honoured for two hours and
+  turns off whatever the sensor lists at that moment. Nothing is switched without the tap.
+- Not reachable by tests: the notifications and the button. Both roll-ups' expressions are covered in
+  tests/climate (`battery:` and `left on:` cases, mutations in mutate.py); the automations were
+  checked by rendering their message templates against live state, never by `automation.trigger`.
