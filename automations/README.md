@@ -36,6 +36,30 @@ offline. An Alarmo trigger (leak sensors, once they are added) sends the panel a
 It is **disabled** on the instance until a supervised first run at the keypad. The panic mapping in
 particular is untested against the panel. The notification targets are neutral placeholders.
 
+## `house-away.json`
+
+Leaving means arming Away, and Away turns the house's automations off (2026-10-14). Each room's
+presence lighting is paused, but only in rooms where it was on, so a room someone switched off by
+hand stays off on return. The paused list is kept in a text helper, so a restart while away loses
+nothing. Then every indoor light and media player is switched off, and a minute later both adults
+get one note naming anything still open or on. The corridor keeps its presence lighting, because
+it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms
+that were paused. Climate is not here: the climate loop already has its own away band.
+
+## `house-everyone-left.json`
+
+Ten minutes after the last phone leaves home, one notification to both adults: which lights are
+still on, and an offer to arm Away unless the alarm is already Away, arming or going off. Nothing
+happens without a button. Arm Away is honoured only if the house is still empty when the button is
+pressed, and someone coming home clears the notification. A child's phone counts, so a child home
+alone is not an empty house.
+
+Not everyone has a phone. A child can be at home with a sitter while every tracked phone is away,
+so the names of anyone who can be home without one are kept in a text helper on the instance (not
+here). When it names someone, the offer becomes a question ("Is <name> with you?") and the arm
+button is the yes. No answer means no: the alarm is left as it is. Any future automatic arming
+must ask the same way.
+
 ## `house-night-mode.json`
 
 The alarm is the house's day/night switch (2026-10-11). `alarm_control_panel.home` in `armed_night`

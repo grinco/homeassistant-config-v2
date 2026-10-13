@@ -1,0 +1,184 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "ma_on": "{{ states.switch | selectattr('entity_id', 'match', '^switch.magic_areas_light_groups_.+_light_control$') | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | map('replace', 'switch.magic_areas_light_groups_', '') | map('replace', '_light_control', '') | reject('in', ['corridor']) | list }}",
+    "stored": "{% set s = states('input_text.house_away_paused') %}{{ [] if s in ['unknown', 'unavailable', 'none', ''] else s.split(',') | reject('eq', '') | list }}"
+   }
+  },
+  {
+   "variables": {
+    "act": "{% set a = states('alarm_control_panel.home') %}{% if trigger.id == 'away' %}{{ 'none' if trigger.from_state.state in ['triggered', 'pending'] else 'pause' }}{% elif stored | count > 0 and a in ['disarmed', 'armed_home', 'armed_night'] %}restore{% else %}none{% endif %}",
+    "pause_ids": "{% set ns = namespace(l=[]) %}{% for a in ma_on %}{% set ns.l = ns.l + ['switch.magic_areas_light_groups_' ~ a ~ '_light_control'] %}{% endfor %}{{ ns.l }}",
+    "paused": "{{ (stored + ma_on) | unique | list }}",
+    "restore": "{% set have = states.switch | map(attribute='entity_id') | list %}{% set ns = namespace(l=[]) %}{% for a in stored %}{% set e = 'switch.magic_areas_light_groups_' ~ a ~ '_light_control' %}{% if e in have %}{% set ns.l = ns.l + [e] %}{% endif %}{% endfor %}{{ ns.l }}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ act == 'pause' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": "{{ paused | join(',') }}"
+       },
+       "target": {
+        "entity_id": "input_text.house_away_paused"
+       }
+      },
+      {
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ pause_ids | count > 0 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "switch.turn_off",
+         "target": {
+          "entity_id": "{{ pause_ids }}"
+         }
+        }
+       ]
+      },
+      {
+       "action": "light.turn_off",
+       "continue_on_error": true,
+       "target": {
+        "floor_id": [
+         "lower_floor",
+         "upper_floor"
+        ]
+       }
+      },
+      {
+       "action": "media_player.turn_off",
+       "continue_on_error": true,
+       "target": {
+        "floor_id": [
+         "lower_floor",
+         "upper_floor"
+        ]
+       }
+      },
+      {
+       "delay": {
+        "seconds": 60
+       }
+      },
+      {
+       "condition": "state",
+       "entity_id": "alarm_control_panel.home",
+       "state": "armed_away"
+      },
+      {
+       "variables": {
+        "open_now": "{{ states.binary_sensor | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'in', ['door', 'window', 'opening', 'garage_door']) | selectattr('state', 'eq', 'on') | map(attribute='attributes.friendly_name') | list }}",
+        "still_on": "{% set l = states('sensor.lighting_left_on') %}{{ [] if l in ['none', 'unknown', 'unavailable'] else l.split(', ') | map('state_attr', 'friendly_name') | list }}"
+       }
+      },
+      {
+       "variables": {
+        "note": "{% set n = ['Lights and media are off; presence lighting is paused in ' ~ (paused | count) ~ ' room' ~ ('' if paused | count == 1 else 's') ~ '.'] %}{% if open_now %}{% set n = n + ['Still open: ' ~ open_now | join(', ') ~ '.'] %}{% endif %}{% if still_on %}{% set n = n + ['Still on: ' ~ still_on | join(', ') ~ '.'] %}{% endif %}{% if not open_now and not still_on %}{% set n = n + ['Nothing open.'] %}{% endif %}{{ n | join(' ') }}"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "house-away"
+        },
+        "message": "{{ note }}",
+        "title": "House is set to Away"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "house-away"
+        },
+        "message": "{{ note }}",
+        "title": "House is set to Away"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ act == 'restore' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ restore | count > 0 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "switch.turn_on",
+         "target": {
+          "entity_id": "{{ restore }}"
+         }
+        }
+       ]
+      },
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": ""
+       },
+       "target": {
+        "entity_id": "input_text.house_away_paused"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "House — away",
+ "conditions": [],
+ "description": "Operator 2026-10-13/14: leaving = Away, and Away turns the house's automations off. On Away: presence lighting (each room's Magic Areas light_control) is paused - only the rooms where it was on, remembered in input_text.house_away_paused so a restart loses nothing - then every indoor light and media player is switched off, and a minute later both adults get one note naming anything still open or on. The corridor keeps its presence lighting: it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms that were paused. Climate is not here: the climate loop already drops to its away band after 30 min of Away. Tests: tests/climate/cases.py (away). Review 2026-10-14: M1 - an alarm or entry delay ending back in Away does not run the sequence again; M2 - an Away cancelled within the minute sends no note.",
+ "id": "1790500000001",
+ "max": 5,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": "alarm_control_panel.home",
+   "id": "away",
+   "to": "armed_away",
+   "trigger": "state"
+  },
+  {
+   "entity_id": "alarm_control_panel.home",
+   "id": "back",
+   "to": [
+    "disarmed",
+    "armed_home",
+    "armed_night"
+   ],
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "id": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

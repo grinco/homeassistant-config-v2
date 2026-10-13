@@ -1,0 +1,298 @@
+{
+ "actions": [
+  {
+   "if": [
+    {
+     "condition": "trigger",
+     "id": "arrive"
+    }
+   ],
+   "then": [
+    {
+     "action": "notify.mobile_app_adult_phone_1",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "lights-left-on"
+      },
+      "message": "clear_notification"
+     }
+    },
+    {
+     "action": "notify.mobile_app_adult_phone_2",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "lights-left-on"
+      },
+      "message": "clear_notification"
+     }
+    },
+    {
+     "stop": "someone is home"
+    }
+   ]
+  },
+  {
+   "variables": {
+    "ask_about": "{% set s = states('input_text.house_untracked_people') %}{{ [] if s in ['', 'unknown', 'unavailable'] else s.split(',') | map('trim') | reject('eq', '') | list }}",
+    "has_left": "{{ states('sensor.lighting_left_on') not in ['none', 'unavailable', 'unknown'] }}",
+    "offer_arm": "{{ states('alarm_control_panel.home') in ['disarmed', 'armed_home', 'armed_night'] }}"
+   }
+  },
+  {
+   "variables": {
+    "buttons": "{{ (['ARM_AWAY_HOUSE'] if offer_arm else []) + (['LEFT_ON_OFF'] if has_left else []) }}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ buttons | count > 0 }}"
+  },
+  {
+   "variables": {
+    "arm_line": "{% if ask_about %}Is {{ ask_about | join(' and ') }} with you? Arm Away only if so - no answer leaves the alarm as it is.{% else %}The alarm is {{ {'disarmed': 'off', 'armed_home': 'on Home', 'armed_night': 'on Night'}.get(states('alarm_control_panel.home'), states('alarm_control_panel.home')) }}. Arm Away?{% endif %}",
+    "arm_title": "{{ 'Arm Away' if not ask_about else ask_about | join(' and ') ~ (' is' if ask_about | count == 1 else ' are') ~ ' with us - arm Away' }}",
+    "note_title": "{{ 'Everyone left' if not ask_about else 'Every phone has left' }}"
+   }
+  },
+  {
+   "variables": {
+    "acts": "{% set t = {'ARM_AWAY_HOUSE': arm_title, 'LEFT_ON_OFF': 'Turn the lights off'} %}{% set ns = namespace(l=[]) %}{% for b in buttons %}{% set ns.l = ns.l + [{'action': b, 'title': t[b]}] %}{% endfor %}{{ ns.l }}",
+    "msg": "{% set n = [] %}{% if has_left %}{% set n = n + ['Still on: ' ~ states('sensor.lighting_left_on').split(', ') | map('state_attr', 'friendly_name') | join(', ') ~ '.'] %}{% endif %}{% if offer_arm %}{% set n = n + [arm_line] %}{% endif %}{{ n | join(' ') }}"
+   }
+  },
+  {
+   "action": "notify.mobile_app_adult_phone_1",
+   "continue_on_error": true,
+   "data": {
+    "data": {
+     "actions": "{{ acts }}",
+     "tag": "lights-left-on"
+    },
+    "message": "{{ msg }}",
+    "title": "{{ note_title }}"
+   }
+  },
+  {
+   "action": "notify.mobile_app_adult_phone_2",
+   "continue_on_error": true,
+   "data": {
+    "data": {
+     "actions": "{{ acts }}",
+     "tag": "lights-left-on"
+    },
+    "message": "{{ msg }}",
+    "title": "{{ note_title }}"
+   }
+  },
+  {
+   "repeat": {
+    "count": 2,
+    "sequence": [
+     {
+      "continue_on_timeout": false,
+      "timeout": "02:00:00",
+      "wait_for_trigger": [
+       {
+        "event_data": {
+         "action": "ARM_AWAY_HOUSE"
+        },
+        "event_type": "mobile_app_notification_action",
+        "trigger": "event"
+       },
+       {
+        "event_data": {
+         "action": "LEFT_ON_OFF"
+        },
+        "event_type": "mobile_app_notification_action",
+        "trigger": "event"
+       }
+      ]
+     },
+     {
+      "choose": [
+       {
+        "conditions": [
+         {
+          "condition": "template",
+          "value_template": "{{ wait.trigger.event.data.action == 'ARM_AWAY_HOUSE' }}"
+         }
+        ],
+        "sequence": [
+         {
+          "variables": {
+           "arm_now": "{{ states('zone.home') | int(-1) == 0 and states('alarm_control_panel.home') in ['disarmed', 'armed_home', 'armed_night'] }}"
+          }
+         },
+         {
+          "else": [
+           {
+            "action": "notify.mobile_app_adult_phone_1",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "{{ 'Someone is home again.' if states('zone.home') | int(-1) != 0 else 'The alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
+             "title": "Not armed"
+            }
+           },
+           {
+            "action": "notify.mobile_app_adult_phone_2",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "{{ 'Someone is home again.' if states('zone.home') | int(-1) != 0 else 'The alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
+             "title": "Not armed"
+            }
+           }
+          ],
+          "if": [
+           {
+            "condition": "template",
+            "value_template": "{{ arm_now }}"
+           }
+          ],
+          "then": [
+           {
+            "action": "alarm_control_panel.alarm_arm_away",
+            "target": {
+             "entity_id": "alarm_control_panel.home"
+            }
+           },
+           {
+            "action": "notify.mobile_app_adult_phone_1",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "clear_notification"
+            }
+           },
+           {
+            "action": "notify.mobile_app_adult_phone_2",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "clear_notification"
+            }
+           }
+          ]
+         },
+         {
+          "stop": "arm handled; Away turns the lights off"
+         }
+        ]
+       },
+       {
+        "conditions": [
+         {
+          "condition": "template",
+          "value_template": "{{ wait.trigger.event.data.action == 'LEFT_ON_OFF' }}"
+         }
+        ],
+        "sequence": [
+         {
+          "if": [
+           {
+            "condition": "not",
+            "conditions": [
+             {
+              "condition": "state",
+              "entity_id": "sensor.lighting_left_on",
+              "state": [
+               "none",
+               "unavailable",
+               "unknown"
+              ]
+             }
+            ]
+           }
+          ],
+          "then": [
+           {
+            "action": "light.turn_off",
+            "target": {
+             "entity_id": "{{ states('sensor.lighting_left_on').split(', ') }}"
+            }
+           }
+          ]
+         },
+         {
+          "if": [
+           {
+            "condition": "not",
+            "conditions": [
+             {
+              "condition": "state",
+              "entity_id": "alarm_control_panel.home",
+              "state": [
+               "disarmed",
+               "armed_home",
+               "armed_night"
+              ]
+             }
+            ]
+           }
+          ],
+          "then": [
+           {
+            "action": "notify.mobile_app_adult_phone_1",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "clear_notification"
+            }
+           },
+           {
+            "action": "notify.mobile_app_adult_phone_2",
+            "continue_on_error": true,
+            "data": {
+             "data": {
+              "tag": "lights-left-on"
+             },
+             "message": "clear_notification"
+            }
+           },
+           {
+            "stop": "nothing left to offer"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "alias": "House — everyone left",
+ "conditions": [],
+ "description": "Ten minutes after the last person leaves (zone.home counts all three phones, so a child home alone is not 'empty'), ONE note to both adults: which lights are still on (sensor.lighting_left_on), and - unless the alarm is already Away, arming or going off - an offer to arm Away (operator 2026-10-14). Nothing happens without a button. Arm Away is honoured only if the house is still empty when it is pressed. Each button press is awaited for up to two hours; after the lights button the arm offer stays open for another two. Someone coming home clears the note. Tests: tests/climate/cases.py (everyone left). Review 2026-10-14: L1 - the second wait re-reads the alarm live; L2 - once handled, the note is cleared on both phones. Operator 2026-10-14: a child can be home with a sitter and neither has a tracked phone. Names in input_text.house_untracked_people (comma-separated) turn the offer into a question - 'Is <name> with you?' - and the arm button into the yes. No answer is a no: the alarm is left as it is. Any future automatic (geofenced) arming must ask the same way.",
+ "id": "1791800830017",
+ "mode": "restart",
+ "triggers": [
+  {
+   "below": 1,
+   "entity_id": "zone.home",
+   "for": "00:10:00",
+   "id": "empty",
+   "trigger": "numeric_state"
+  },
+  {
+   "above": 0,
+   "entity_id": "zone.home",
+   "id": "arrive",
+   "trigger": "numeric_state"
+  }
+ ]
+}

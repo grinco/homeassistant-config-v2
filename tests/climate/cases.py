@@ -1932,3 +1932,201 @@ A(sync("Night is satisfied by Stay or a keypad Sleep", "ok_states", "['armed_nig
        dict(want="armed_night"), NIGHT))
 A(sync("Away is satisfied by Away only", "ok_states", "['armed_away']", dict(want="armed_away"),
        "Stay is not Away"))
+
+
+# ---------------------------------------------------------------- away: the house goes quiet (2026-10-14)
+# Operator, 2026-10-13: "when we leave we arm EVO192 away, which should turn the automations off".
+# 2026-10-14: lights and media off, presence lighting paused, one note of what is still open.
+# Climate is NOT here: the climate loop already drops to its away band after 30 min of Away.
+# Presence lighting is paused by turning each room's Magic Areas `light_control` switch off, and
+# ONLY the ones that were on - a room the operator switched off by hand stays off on return. The
+# list is kept in `input_text.house_away_paused`, so a restart while away loses nothing. The
+# corridor stays live: it is the way in, and the keypad is there.
+AWAY = "1790500000001"
+LC = "switch.magic_areas_light_groups_%s_light_control"
+PAUSED = "states('input_text.house_away_paused')"
+TRIG = "trigger.id"
+AW = "2026-10-14 operator: Away turns the house's automations off"
+
+
+def away(name, expr, expect, given=None, subs=None, finding=AW):
+    return dict(name="away: " + name, automation=AWAY, expr=expr, expect=expect,
+                given=given or {}, subs=subs or {}, finding=finding)
+
+
+def _sw(*pairs):
+    return {"states.switch": repr([{"entity_id": e, "state": s} for e, s in pairs])}
+
+
+A(away("only the rooms whose presence lighting is on are paused", "ma_on", "['closet', 'hallway']",
+       subs=_sw((LC % "closet", "on"), (LC % "kitchen", "off"), (LC % "hallway", "on"),
+                ("switch.kitchen_socket", "on"))))
+A(away("the corridor stays live - it is the way in to the keypad", "ma_on", "['closet']",
+       subs=_sw((LC % "corridor", "on"), (LC % "closet", "on")),
+       finding=AW + "; entering a dark house to find the keypad is the failure"))
+A(away("an unavailable switch is not paused", "ma_on", "[]",
+       subs=_sw((LC % "closet", "unavailable"))))
+A(away("the stored list survives as a list", "stored", "['closet', 'hallway']",
+       subs={PAUSED: "'closet,hallway'"}, finding="a restart while away must lose nothing"))
+A(away("a fresh helper stores nothing", "stored", "[]", subs={PAUSED: "''"},
+       finding="a new input_text starts empty"))
+A(away("an unavailable helper stores nothing", "stored", "[]", subs={PAUSED: "'unavailable'"},
+       finding="never restore a room called 'unavailable'"))
+A(away("Away again after a trigger keeps what was paused the first time", "paused",
+       "['closet', 'hallway']", given=dict(stored=["closet", "hallway"], ma_on=[]),
+       finding="armed_away -> triggered -> armed_away: the second pass sees everything off"))
+A(away("a room paused twice is listed once", "paused", "['closet', 'hallway']",
+       given=dict(stored=["closet"], ma_on=["closet", "hallway"])))
+TRIG_FROM = "trigger.from_state.state"
+A(away("Away pauses", "act", "pause", given=dict(stored=[]),
+       subs={TRIG: "'away'", TRIG_FROM: "'arming'", ALARM: "'armed_away'"}))
+A(away("Away straight from Home pauses", "act", "pause", given=dict(stored=[]),
+       subs={TRIG: "'away'", TRIG_FROM: "'armed_home'", ALARM: "'armed_away'"}))
+A(away("a leak alarm ending back in Away does not pause again", "act", "none",
+       given=dict(stored=["closet"]), subs={TRIG: "'away'", TRIG_FROM: "'triggered'",
+                                            ALARM: "'armed_away'"},
+       finding="review 2026-10-14 M1: triggered -> armed_away re-ran the sequence and re-sent the note"))
+A(away("an entry delay ending back in Away does not pause again", "act", "none",
+       given=dict(stored=["closet"]), subs={TRIG: "'away'", TRIG_FROM: "'pending'",
+                                            ALARM: "'armed_away'"},
+       finding="review 2026-10-14 M1"))
+A(away("coming home restores", "act", "restore", given=dict(stored=["closet"]),
+       subs={TRIG: "'back'", ALARM: "'disarmed'"}))
+A(away("Night straight from Away restores", "act", "restore", given=dict(stored=["closet"]),
+       subs={TRIG: "'back'", ALARM: "'armed_night'"}, finding="the 22:00 edge never fires from Away, "
+       "but a manual Night does"))
+A(away("nothing paused, nothing to restore", "act", "none", given=dict(stored=[]),
+       subs={TRIG: "'back'", ALARM: "'disarmed'"}))
+A(away("a restart while still Away restores nothing", "act", "none",
+       given=dict(stored=["closet"]), subs={TRIG: "'start'", ALARM: "'armed_away'"},
+       finding="the house is still empty"))
+A(away("a restart after a disarm that HA missed restores", "act", "restore",
+       given=dict(stored=["closet"]), subs={TRIG: "'start'", ALARM: "'armed_home'"},
+       finding="the keypad disarm happened while HA was down"))
+A(away("a restart with the alarm not back yet restores nothing", "act", "none",
+       given=dict(stored=["closet"]), subs={TRIG: "'start'", ALARM: "'unavailable'"},
+       finding="unknown is not evidence anybody came home"))
+A(away("only switches that still exist are restored", "restore", "['%s']" % (LC % "closet"),
+       given=dict(stored=["closet", "old_room"]), subs=_sw((LC % "closet", "off"))))
+A(away("the note names what is open", "open_now", "['Bedroom window']",
+       subs={ALL_BS: _house(dict(_bs("binary_sensor.bw", "on", "window"), attributes={
+           "device_class": "window", "friendly_name": "Bedroom window"}),
+           _bs("binary_sensor.door", "off", "door"),
+           _bs("binary_sensor.pir", "on", "motion"),
+           _bs("binary_sensor.gone", "unavailable", "window"))}))
+
+
+# ---------------------------------------------------------------- everyone left: arm Away? (2026-10-14)
+# The "lights left on" notice already fired ten minutes after the house emptied. It now also offers
+# to arm Away, as ONE notification (two at the same moment would be noise). Nothing arms by itself:
+# the button does it, and only if the house is still empty when it is pressed.
+LEFT_AUTO = "1791800830017"
+ZONE = "states('zone.home')"
+LEFT_NOW = "states('sensor.lighting_left_on')"
+EL = "2026-10-14 operator: when the last person leaves, offer to arm Away"
+
+
+def left(name, expr, expect, given=None, subs=None, finding=EL):
+    return dict(name="everyone left: " + name, automation=LEFT_AUTO, expr=expr, expect=expect,
+                given=given or {}, subs=subs or {}, finding=finding)
+
+
+for _a, _want in (("disarmed", "True"), ("armed_home", "True"), ("armed_night", "True"),
+                  ("armed_away", "False"), ("arming", "False"), ("triggered", "False"),
+                  ("unavailable", "False")):
+    A(left("offer to arm from %s: %s" % (_a, _want), "offer_arm", _want, subs={ALARM: "'%s'" % _a},
+           finding=EL + "; never offer over an alarm that is going off or already leaving"))
+A(left("lights on are worth saying", "has_left", "True", subs={LEFT_NOW: "'light.lamp'"}))
+for _s in ("none", "unavailable", "unknown"):
+    A(left("'%s' is not a light" % _s, "has_left", "False", subs={LEFT_NOW: "'%s'" % _s}))
+A(left("both buttons when both apply", "buttons", "['ARM_AWAY_HOUSE', 'LEFT_ON_OFF']",
+       given=dict(offer_arm=True, has_left=True)))
+A(left("no lights, only the arm button", "buttons", "['ARM_AWAY_HOUSE']",
+       given=dict(offer_arm=True, has_left=False)))
+A(left("already Away, only the lights button", "buttons", "['LEFT_ON_OFF']",
+       given=dict(offer_arm=False, has_left=True), finding="the old notice is unchanged"))
+A(left("the button arms an empty house", "arm_now", "True",
+       subs={ZONE: "'0'", ALARM: "'disarmed'"}))
+A(left("the button does not arm over someone who came back", "arm_now", "False",
+       subs={ZONE: "'1'", ALARM: "'disarmed'"}, finding=EL + "; a late tap must not lock a person in"))
+A(left("the button does not re-arm a house already Away", "arm_now", "False",
+       subs={ZONE: "'0'", ALARM: "'armed_away'"}))
+A(left("an unknown zone count does not arm", "arm_now", "False",
+       subs={ZONE: "'unknown'", ALARM: "'disarmed'"}, finding="unknown is not 'nobody'"))
+
+
+# ---------------------------------------------------------------- a safety sensor that stopped reporting
+# 2026-10-14 operator. The corridor smoke/CO alarm had been unavailable since 2026-10-12 20:32 and
+# nothing said so: `any_safety_alarm` rightly ignores an unavailable alarm (a dead battery is not a
+# fire), which also made a dead alarm invisible. This lists them. 30 minutes first, so a Zigbee blip
+# or a restart does not put a red box on the family Home page.
+SILENT = "Any safety sensor silent"
+NOW_TS = "as_timestamp(now())"
+T0 = 1791900000.0          # "now" in these cases
+OLD = "2026-10-12T18:32:52+00:00"
+
+
+def _iso(ts):
+    import datetime
+    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc).isoformat()
+
+
+def _sb(eid, state, dc, since):
+    s = _bs(eid, state, dc)
+    s["last_changed"] = since
+    return s
+
+
+def silent(name, expect, *sensors, finding="2026-10-14: a dead smoke alarm said nothing"):
+    return sensor_case("silent: " + name, expect, {ALL_BS: _house(*sensors), NOW_TS: repr(T0)},
+                       sensor=SILENT, finding=finding)
+
+
+A(silent("an alarm unavailable for two days is named", "binary_sensor.co_smoke",
+         _sb("binary_sensor.co_smoke", "unavailable", "smoke", OLD)))
+A(silent("unknown counts as silent too", "binary_sensor.leak",
+         _sb("binary_sensor.leak", "unknown", "moisture", OLD)))
+A(silent("ten minutes is a blip, not a dead sensor", "none",
+         _sb("binary_sensor.co_smoke", "unavailable", "smoke", _iso(T0 - 600)),
+         finding="Zigbee drops and restarts must not raise a red box"))
+A(silent("thirty-one minutes is silent", "binary_sensor.co_smoke",
+         _sb("binary_sensor.co_smoke", "unavailable", "smoke", _iso(T0 - 1860))))
+A(silent("a working alarm is not silent", "none",
+         _sb("binary_sensor.co_smoke", "off", "smoke", OLD)))
+A(silent("only safety classes count", "none",
+         _sb("binary_sensor.car_light", "unavailable", "light", OLD),
+         _sb("binary_sensor.door", "unavailable", "door", OLD)),
+  )
+A(silent("the roll-ups never count themselves", "none",
+         _sb("binary_sensor.any_safety_alarm", "unavailable", "safety", OLD)),
+  )
+A(silent("several are listed together", "binary_sensor.a, binary_sensor.b",
+         _sb("binary_sensor.a", "unavailable", "smoke", OLD),
+         _sb("binary_sensor.b", "unavailable", "carbon_monoxide", OLD)))
+
+
+# ---------------------------------------------------------------- everyone left: a child with no phone (2026-10-14)
+# Operator: a child is sometimes left at home with a sitter, and neither has a phone that reports a
+# location, so "every phone has left" does not mean the house is empty. Before Away is offered, ask
+# whether that child is with us; no answer means no - assume the child is home and do not arm.
+# The names live in `input_text.house_untracked_people` on the instance (comma-separated), never
+# in this repo: these cases use invented names.
+UNTRACKED = "states('input_text.house_untracked_people')"
+KID = "2026-10-14 operator: ask whether the phone-less child is with us; silence means home"
+A(left("the untracked names are read from the helper", "ask_about", "['Alex']",
+       subs={UNTRACKED: "'Alex'"}, finding=KID))
+A(left("several names, spaces trimmed", "ask_about", "['Alex', 'Sam']",
+       subs={UNTRACKED: "'Alex, Sam'"}, finding=KID))
+for _s in ("", "unknown", "unavailable"):
+    A(left("an empty or missing helper asks about nobody (%r)" % _s, "ask_about", "[]",
+           subs={UNTRACKED: "'%s'" % _s}, finding=KID))
+A(left("the arm button says who must be with you", "arm_title", "Alex is with us - arm Away",
+       given=dict(ask_about=["Alex"]), finding=KID + "; the tap IS the yes"))
+A(left("two names read as a group", "arm_title", "Alex and Sam are with us - arm Away",
+       given=dict(ask_about=["Alex", "Sam"]), finding=KID))
+A(left("nobody untracked, the plain button", "arm_title", "Arm Away", given=dict(ask_about=[])))
+A(left("the arm offer asks the question", "arm_line",
+       "Is Alex with you? Arm Away only if so - no answer leaves the alarm as it is.",
+       given=dict(ask_about=["Alex"]), subs={ALARM: "'disarmed'"}, finding=KID))
+A(left("without an untracked person the offer is unchanged", "arm_line",
+       "The alarm is off. Arm Away?", given=dict(ask_about=[]), subs={ALARM: "'disarmed'"}))

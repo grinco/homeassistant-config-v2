@@ -205,6 +205,9 @@ def _literal(value):
         return repr(value)
     if value is None:
         return "none"
+    if isinstance(value, (list, tuple)):
+        # A list is a list in the automation too: HA renders "{{ [...] }}" to a native list.
+        return "[%s]" % ", ".join(_literal(v) for v in value)
     return json.dumps(str(value))
 
 
