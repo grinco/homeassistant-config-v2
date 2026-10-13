@@ -27,7 +27,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LINT = os.path.join(HERE, "lint.py")
 LIVE = os.environ.get("HA_STORAGE", "/usr/share/hassio/homeassistant/.storage")
 FILES = ("lovelace.lovelace", "lovelace.admin_panel", "core.entity_registry",
-         "core.device_registry", "core.area_registry", "lovelace_resources")
+         "core.device_registry", "core.area_registry", "lovelace_resources",
+         "core.config_entries")
 
 LOV, ADM = "lovelace.lovelace", "lovelace.admin_panel"
 
@@ -289,6 +290,42 @@ def m_room_loses_page(d):
             stack.extend(o)
     _save(d, LOV, doc)
     return "C9"
+
+
+def m_ma_device_unplaced(d):
+    """A new room's Magic Areas device left where the config flow puts it: in no
+    area. Its page's Occupancy block then generates nothing."""
+    doc = _cfg(d, "core.device_registry")
+    for dv in doc["data"]["devices"]:
+        if ["magic_areas", "magic_area_device_closet"] in (dv.get("identifiers") or []):
+            dv["area_id"] = None
+    _save(d, "core.device_registry", doc)
+    return "C27"
+
+
+def m_room_without_ma(d):
+    """A room on the Home tiles that nobody created a Magic Area for."""
+    doc = _cfg(d, "core.config_entries")
+    doc["data"]["entries"] = [e for e in doc["data"]["entries"]
+                              if not (e.get("domain") == "magic_areas"
+                                      and e["data"].get("id") == "closet")]
+    _save(d, "core.config_entries", doc)
+    return "C27"
+
+
+def m_silent_unsaid(d):
+    """Needs attention forgets the silent-sensor branch: a dead smoke alarm says nothing."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            if (sec.get("cards") or [{}])[0].get("heading") != "Needs attention":
+                continue
+            for c in sec.get("visibility") or []:
+                if c.get("condition") == "or":
+                    c["conditions"] = [b for b in c["conditions"]
+                                       if b.get("entity") != "sensor.any_safety_sensor_silent"]
+    _save(d, LOV, doc)
+    return "C28"
 
 
 def m_rule_names_wrong_area(d):
@@ -644,6 +681,9 @@ MUTATIONS = [
     ("a room page loses its lights rule", m_room_loses_lights),
     ("a room rule names the wrong area", m_rule_names_wrong_area),
     ("a tiled room loses its styled page", m_room_loses_page),
+    ("a room's Magic Areas device has no area", m_ma_device_unplaced),
+    ("a tiled room has no Magic Area", m_room_without_ma),
+    ("Needs attention ignores a silent safety sensor", m_silent_unsaid),
     ("a label using variables nothing defines", m_clobbered_label),
     ("a card taller than its content", m_tall_cards),
     ("a card off the column ladder", m_off_ladder_columns),

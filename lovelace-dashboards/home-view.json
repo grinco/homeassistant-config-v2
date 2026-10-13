@@ -71,6 +71,21 @@
      "type": "custom:auto-entities"
     },
     {
+     "content": "{% set l = states('sensor.any_safety_sensor_silent') %}**Not reporting** — {% for e in l.split(', ') %}{{ state_attr(e, 'friendly_name') or e }}{{ ' (' ~ area_name(e) ~ ')' if area_name(e) }}{{ ', ' if not loop.last }}{% endfor %}. Check its battery and that it is still paired: an alarm that cannot report cannot warn.",
+     "type": "markdown",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "sensor.any_safety_sensor_silent",
+       "state_not": [
+        "none",
+        "unavailable",
+        "unknown"
+       ]
+      }
+     ]
+    },
+    {
      "color": "red",
      "entity": "alarm_control_panel.home",
      "features": [
@@ -157,6 +172,15 @@
        "condition": "state",
        "entity": "binary_sensor.any_safety_alarm",
        "state": "on"
+      },
+      {
+       "condition": "state",
+       "entity": "sensor.any_safety_sensor_silent",
+       "state_not": [
+        "none",
+        "unavailable",
+        "unknown"
+       ]
       }
      ]
     }

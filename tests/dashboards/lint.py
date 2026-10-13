@@ -150,6 +150,17 @@ Checks, each one written because something it catches actually shipped:
                          of Home, Climate and Energy was empty (2026-10-12). The frontend
                          sizes each section in 56 px rows, so dense placement fills the
                          holes with whatever fits.
+  C27 room-magic-area    every room with a Home tile has a Magic Areas entry, and that
+                         entry's own device sits in the room. The page's Occupancy tile
+                         and the tile's "Someone here" both come from it. The config
+                         flow leaves the device without an area, so a new room's page
+                         rendered empty until it was assigned by hand (Tea Room,
+                         2026-10-14).
+  C28 silent-safety      Home's Needs attention also opens when a safety sensor has
+                         stopped reporting (`sensor.any_safety_sensor_silent` is not
+                         `none`), and a card in it names which. The corridor smoke/CO
+                         alarm was unavailable for two days and nothing said so: the
+                         roll-up rightly ignores an unavailable alarm (2026-10-14).
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -221,6 +232,7 @@ ENV_ID_RE = re.compile(r"_voc_index$")
 
 # C21: the classes that make the house unsafe, and the sensor that rolls them up.
 SAFETY_CLASSES = ("moisture", "smoke", "gas", "carbon_monoxide", "safety")
+SILENT_ROLLUP = "sensor.any_safety_sensor_silent"
 SAFETY_ROLLUP = "binary_sensor.any_safety_alarm"
 
 # Sections that list devices and must therefore be generated (C13):
@@ -748,6 +760,24 @@ def main():
                 fail("C9", "%s: %d room(s) get a Home tile but no styled page, so the "
                            "tile opens Home Assistant's own area page" % (label, len(unstyled)),
                      unstyled)
+
+            # C27 - a tiled room has a Magic Area, and its device is in the room.
+            ma_ids = {e["data"].get("id") for e in _store("core.config_entries", "entries")
+                      if e.get("domain") == "magic_areas"}
+            ma_dev = {}
+            for dv in _store("core.device_registry", "devices"):
+                for dom, ident in dv.get("identifiers") or []:
+                    if dom == "magic_areas" and ident.startswith("magic_area_device_"):
+                        ma_dev[ident[len("magic_area_device_"):]] = dv.get("area_id")
+            no_ma = []
+            for a in sorted(a for a in areas if a in tiled and floors.get(a) in covered):
+                if a not in ma_ids:
+                    no_ma.append("%s has no Magic Areas entry" % a)
+                elif ma_dev.get(a) != a:
+                    no_ma.append("%s: its Magic Areas device is in %r" % (a, ma_dev.get(a)))
+            if no_ma:
+                fail("C27", "%s: %d room(s) cannot show occupancy - no Magic Area, or "
+                            "its device is outside the room" % (label, len(no_ma)), no_ma)
             by_path = {v.get("path"): v for v in views}
             allv = set().union(*variants.values()) if variants else set()
             short = sorted("%s lacks %d screen variant(s)" % (f, len(allv - v))
@@ -1061,6 +1091,22 @@ def main():
                         problems.append("%s hand-lists %s" % (path, named))
             if problems:
                 fail("C21", "%s: Needs attention would miss a safety alarm" % label, problems)
+
+            # C28 - a safety sensor that stopped reporting is said, and named.
+            silent = []
+            for sec in na:
+                vis = sec.get("visibility") or []
+                quiet = {"condition": "state", "entity": SILENT_ROLLUP,
+                         "state_not": ["none", "unavailable", "unknown"]}
+                shown = [c for c in vis if c == quiet] + [
+                    b for c in vis if c.get("condition") == "or" and len(vis) == 1
+                    for b in (c.get("conditions") or []) if b == quiet]
+                if not shown:
+                    silent.append("the section is not shown while %s names a sensor" % SILENT_ROLLUP)
+                if SILENT_ROLLUP not in json.dumps(sec.get("cards") or []):
+                    silent.append("no card in the section says which sensor is silent")
+            if silent:
+                fail("C28", "%s: a dead safety sensor would go unmentioned" % label, silent)
 
         # C22 - one definition of night.
         stale = [path for path, card in found
