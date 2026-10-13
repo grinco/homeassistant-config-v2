@@ -274,6 +274,23 @@ def m_room_loses_lights(d):
     return "C9"
 
 
+def m_room_loses_page(d):
+    """A room on the Home tiles with no page in the room map - its tile falls
+    back to Home Assistant's own area page, which is how Tea Room first shipped."""
+    doc = _cfg(d, LOV)
+    stack = [doc["data"]["config"]]
+    while stack:
+        o = stack.pop()
+        if isinstance(o, dict):
+            if isinstance(o.get("rooms"), dict):
+                o["rooms"].pop("closet", None)
+            stack.extend(o.values())
+        elif isinstance(o, list):
+            stack.extend(o)
+    _save(d, LOV, doc)
+    return "C9"
+
+
 def m_rule_names_wrong_area(d):
     """Copy-paste between two room pages - the rule is present and well-formed,
     it just populates from the wrong room. Nothing renders an error."""
@@ -626,6 +643,7 @@ MUTATIONS = [
     ("the Rooms section is renamed away", m_rooms_section_renamed),
     ("a room page loses its lights rule", m_room_loses_lights),
     ("a room rule names the wrong area", m_rule_names_wrong_area),
+    ("a tiled room loses its styled page", m_room_loses_page),
     ("a label using variables nothing defines", m_clobbered_label),
     ("a card taller than its content", m_tall_cards),
     ("a card off the column ladder", m_off_ladder_columns),

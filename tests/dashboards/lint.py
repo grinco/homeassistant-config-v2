@@ -301,6 +301,21 @@ def area_members():
     return out
 
 
+def tile_areas():
+    """Areas whose Home tile renders: Jinja's area_entities(a) | count > 0.
+
+    area_entities counts an entity in the area, or one without an area whose
+    device is there, whatever its domain, category or hidden state.
+    """
+    devices = {d["id"]: d for d in _store("core.device_registry", "devices")}
+    out = set()
+    for e in _store("core.entity_registry", "entities"):
+        area = e.get("area_id") or (devices.get(e.get("device_id")) or {}).get("area_id")
+        if area:
+            out.add(area)
+    return out
+
+
 def registry_entities():
     """Every enabled entity with the fields an auto-entities rule can test."""
     devices = {d["id"]: d for d in _store("core.device_registry", "devices")}
@@ -719,9 +734,20 @@ def main():
                      % (label, len(unknown)), unknown)
 
             # C9 - every room is reachable, and a styled page accounts for its area.
-            # Driven from the AREA REGISTRY. An area with no map entry is legal: its
-            # tile opens Home Assistant's own area page until it is given a styled one.
+            # Driven from the AREA REGISTRY. An area with no page in the room map
+            # used to be legal, its tile opening Home Assistant's own area page;
+            # the operator ruled that page out of place (2026-10-14, Tea Room), so
+            # a room that gets a tile must also get a styled page.
             members = area_members()
+            # The tile's own filter is area_entities(a) | count > 0 - ANY entity,
+            # not just the ones a room page is owed - so mirror that, not members.
+            tiled = tile_areas()
+            unstyled = sorted(a for a in areas if a in tiled and floors.get(a) in covered
+                              and a not in tile_area)
+            if unstyled:
+                fail("C9", "%s: %d room(s) get a Home tile but no styled page, so the "
+                           "tile opens Home Assistant's own area page" % (label, len(unstyled)),
+                     unstyled)
             by_path = {v.get("path"): v for v in views}
             allv = set().union(*variants.values()) if variants else set()
             short = sorted("%s lacks %d screen variant(s)" % (f, len(allv - v))
