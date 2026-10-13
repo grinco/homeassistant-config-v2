@@ -17,11 +17,21 @@ anything.
 ## 1. This repository is public and the instance is a family home
 
 The live instance is named after the people who live there — **including children**. Real
-entity ids and friendly names therefore contain given names, surnames and, in at least one case,
-a full name in a `person.*` entity.
+entity ids and friendly names therefore contain given names, surnames and full names in
+`person.*` entities.
 
-**None of that may ever be committed.** Exports are anonymised: rooms and people appear under
-neutral placeholders, and the published files intentionally do not match the live instance.
+**What is scrubbed, and what is not.** The operator decided this, and the line is deliberate:
+
+- **The children are never committed**, in any form: room names, `person.*` entities, devices
+  named after them, or anything else that identifies them.
+- **The address is never committed** either (see rule 5 below).
+- **The two adults' names are an accepted risk** (operator, 2026-10-14). They are public anyway,
+  so an adult's `person.*` entity in an export is not a leak. Do not flag it, do not propose a
+  history rewrite for it, and do not add it to the scrub terms. Where a placeholder costs
+  nothing, such as a phone's `notify.*` target in a new export, a neutral name is still fine.
+
+Exports are anonymised accordingly: the children's rooms and the address appear under neutral
+placeholders, and the published files intentionally do not match the live instance.
 
 ### The substitution map is not in this repo, by design
 
@@ -54,7 +64,7 @@ Exports are produced by reading the live instance (`automations.yaml`, `.storage
    evidence that it is complete now.
 5. **Scan for more than room names.** `person.*` entities, `notify.*` targets and sensor names
    derived from a person's device or desk all carry names. So do `device_tracker.*` and anything
-   named after a phone.
+   named after a phone. A child's name in any of those is a leak; an adult's is accepted (section 1).
    **The address counts too.** The home zone is named after the street, and Home Assistant
    copies that name into the forecast weather entity and every Home Connect appliance id.
    Those are scrubbed like the rooms, and the tests reach their live ids through the local map.
