@@ -29,6 +29,7 @@
    "type": "entity"
   }
  ],
+ "dense_section_placement": true,
  "icon": "mdi:stove",
  "max_columns": 3,
  "path": "appliances",

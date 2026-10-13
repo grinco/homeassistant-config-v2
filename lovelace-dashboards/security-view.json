@@ -1,5 +1,6 @@
 {
  "badges": [],
+ "dense_section_placement": true,
  "icon": "mdi:shield-home",
  "max_columns": 3,
  "path": "security",

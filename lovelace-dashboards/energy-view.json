@@ -36,8 +36,9 @@
    ]
   }
  ],
+ "dense_section_placement": true,
  "icon": "mdi:lightning-bolt",
- "max_columns": 4,
+ "max_columns": 3,
  "path": "energy",
  "sections": [
   {
@@ -213,7 +214,7 @@
      }
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -427,7 +428,7 @@
      "type": "custom:auto-entities"
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -620,7 +621,7 @@
      ]
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -744,7 +745,7 @@
      }
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   }
  ],

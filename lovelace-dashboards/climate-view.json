@@ -29,6 +29,7 @@
    "type": "entity"
   }
  ],
+ "dense_section_placement": true,
  "icon": "mdi:thermometer",
  "max_columns": 3,
  "path": "climate",
@@ -111,6 +112,126 @@
       "navigation_path": "/lovelace/climate-advanced"
      },
      "type": "button"
+    },
+    {
+     "heading": "Floors",
+     "icon": "mdi:home-floor-l",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.downstairs_temperature",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:thermometer",
+     "name": "Downstairs",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.upstairs_temperature",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:thermometer",
+     "name": "Upstairs",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.downstairs_humidity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:water-percent",
+     "name": "Downstairs",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.upstairs_humidity",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:water-percent",
+     "name": "Upstairs",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entities": [
+      {
+       "color": "#ff9800",
+       "entity": "sensor.downstairs_temperature",
+       "name": "Downstairs"
+      },
+      {
+       "color": "#ff5722",
+       "entity": "sensor.upstairs_temperature",
+       "name": "Upstairs"
+      },
+      {
+       "color": "#4caf50",
+       "entity": "sensor.climate_temp_outdoor",
+       "name": "Outside"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": "auto"
+     },
+     "height": 180,
+     "hours_to_show": 72,
+     "line_width": 2,
+     "name": "Temperature",
+     "points_per_hour": 1,
+     "show": {
+      "fill": false,
+      "icon": false,
+      "labels": true,
+      "legend": true,
+      "name": true,
+      "state": false
+     },
+     "type": "custom:mini-graph-card",
+     "unit": "°C"
+    },
+    {
+     "entities": [
+      {
+       "color": "#00bcd4",
+       "entity": "sensor.downstairs_humidity",
+       "name": "Downstairs"
+      },
+      {
+       "color": "#009688",
+       "entity": "sensor.upstairs_humidity",
+       "name": "Upstairs"
+      }
+     ],
+     "grid_options": {
+      "columns": "full",
+      "rows": "auto"
+     },
+     "height": 180,
+     "hours_to_show": 72,
+     "line_width": 2,
+     "name": "Humidity",
+     "points_per_hour": 1,
+     "show": {
+      "fill": false,
+      "icon": false,
+      "labels": true,
+      "legend": true,
+      "name": true,
+      "state": false
+     },
+     "type": "custom:mini-graph-card",
+     "unit": "%"
     }
    ],
    "column_span": 1,
@@ -217,6 +338,7 @@
      "unique": "entity"
     }
    ],
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -468,7 +590,13 @@
      "name": "O₃",
      "template": "vg_stat",
      "type": "custom:button-card"
-    },
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
     {
      "heading": "Air quality — indoors",
      "heading_style": "title",
@@ -717,7 +845,7 @@
      "type": "custom:mini-graph-card"
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -773,7 +901,7 @@
      "type": "custom:auto-entities"
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -829,133 +957,7 @@
      "type": "custom:auto-entities"
     }
    ],
-   "column_span": 2,
-   "type": "grid"
-  },
-  {
-   "cards": [
-    {
-     "heading": "Floors",
-     "icon": "mdi:home-floor-l",
-     "type": "heading"
-    },
-    {
-     "entity": "sensor.downstairs_temperature",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:thermometer",
-     "name": "Downstairs",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.upstairs_temperature",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:thermometer",
-     "name": "Upstairs",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.downstairs_humidity",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:water-percent",
-     "name": "Downstairs",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.upstairs_humidity",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:water-percent",
-     "name": "Upstairs",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#ff9800",
-       "entity": "sensor.downstairs_temperature",
-       "name": "Downstairs"
-      },
-      {
-       "color": "#ff5722",
-       "entity": "sensor.upstairs_temperature",
-       "name": "Upstairs"
-      },
-      {
-       "color": "#4caf50",
-       "entity": "sensor.climate_temp_outdoor",
-       "name": "Outside"
-      }
-     ],
-     "grid_options": {
-      "columns": "full",
-      "rows": "auto"
-     },
-     "height": 180,
-     "hours_to_show": 72,
-     "line_width": 2,
-     "name": "Temperature",
-     "points_per_hour": 1,
-     "show": {
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": true,
-      "state": false
-     },
-     "type": "custom:mini-graph-card",
-     "unit": "°C"
-    },
-    {
-     "entities": [
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.downstairs_humidity",
-       "name": "Downstairs"
-      },
-      {
-       "color": "#009688",
-       "entity": "sensor.upstairs_humidity",
-       "name": "Upstairs"
-      }
-     ],
-     "grid_options": {
-      "columns": "full",
-      "rows": "auto"
-     },
-     "height": 180,
-     "hours_to_show": 72,
-     "line_width": 2,
-     "name": "Humidity",
-     "points_per_hour": 1,
-     "show": {
-      "fill": false,
-      "icon": false,
-      "labels": true,
-      "legend": true,
-      "name": true,
-      "state": false
-     },
-     "type": "custom:mini-graph-card",
-     "unit": "%"
-    }
-   ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   },
   {
@@ -1081,7 +1083,7 @@
      "type": "custom:mushroom-climate-card"
     }
    ],
-   "column_span": 2,
+   "column_span": 1,
    "type": "grid"
   }
  ],
