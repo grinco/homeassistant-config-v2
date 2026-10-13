@@ -1,0 +1,573 @@
+{
+ "actions": [
+  {
+   "if": [
+    {
+     "condition": "trigger",
+     "id": "start"
+    }
+   ],
+   "then": [
+    {
+     "delay": "00:01:00"
+    }
+   ]
+  },
+  {
+   "variables": {
+    "a_next": "{{ state_attr('alarm_control_panel.home', 'next_state') }}",
+    "a_now": "{{ states('alarm_control_panel.home') }}",
+    "e_now": "{{ states('alarm_control_panel.evo192_partition_paradox_alarm') }}",
+    "prev": "{{ trigger.from_state.state if trigger.id != 'start' and trigger.from_state else 'none' }}",
+    "src": "{{ trigger.id }}"
+   }
+  },
+  {
+   "variables": {
+    "want": "{{ a_next if a_now == 'arming' else a_now }}"
+   }
+  },
+  {
+   "variables": {
+    "e_before": "{{ e_now }}",
+    "follow_mode": "{{ {'armed_home': 'home', 'armed_away': 'away', 'armed_night': 'night'}.get(e_now, 'none') }}",
+    "label": "{{ {'armed_home': 'Home (Stay)', 'armed_away': 'Away', 'armed_night': 'Night', 'disarmed': 'Disarmed'}.get(want, want) }}",
+    "ok_states": "{{ [want, 'armed_home'] if want == 'armed_night' else [want] }}",
+    "panel_cmd": "{{ {'armed_home': 'arm_stay', 'armed_away': 'arm', 'armed_night': 'arm_stay', 'disarmed': 'disarm'}.get(want, 'none') }}",
+    "plan": "{% set modes = ['armed_home', 'armed_away', 'armed_night'] %}{% set ok = [want, 'armed_home'] if want == 'armed_night' else [want] %}{% if src == 'alarmo' %}{% if want not in modes + ['disarmed', 'triggered'] %}none{% elif prev == 'triggered' and want in modes %}none{% elif e_now in ok or (want in modes and e_now == 'arming') %}none{% elif e_now in ['unavailable', 'unknown'] %}{{ 'disarm_offline' if want == 'disarmed' else 'fail' }}{% elif want == 'triggered' %}panic{% elif want == 'disarmed' %}disarm_panel{% else %}arm_panel{% endif %}{% elif e_now not in modes + ['disarmed', 'triggered'] %}none{% elif e_now in ok %}none{% elif a_now == 'triggered' and e_now in modes %}none{% elif e_now == 'triggered' %}trigger_alarmo{% elif e_now == 'disarmed' %}disarm_alarmo{% else %}arm_alarmo{% endif %}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'arm_panel' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "mqtt.publish",
+       "alias": "Command the panel",
+       "data": {
+        "payload": "{{ panel_cmd }}",
+        "topic": "paradox/control/partitions/Paradox_Alarm"
+       }
+      },
+      {
+       "continue_on_timeout": true,
+       "timeout": "00:00:20",
+       "wait_template": "{{ states('alarm_control_panel.evo192_partition_paradox_alarm') in ok_states + ['arming'] }}"
+      },
+      {
+       "variables": {
+        "may_retry": "{% set ready = is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_ready', 'on') if want == 'armed_away' else is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_stay_instant_ready', 'on') %}{{ not wait.completed and e_before in ['armed_home', 'armed_away', 'armed_night'] and states('alarm_control_panel.evo192_partition_paradox_alarm') == e_before and ready }}"
+       }
+      },
+      {
+       "if": [
+        {
+         "alias": "Panel stayed in its other armed mode: disarm, then arm",
+         "condition": "template",
+         "value_template": "{{ may_retry }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "mqtt.publish",
+         "data": {
+          "payload": "disarm",
+          "topic": "paradox/control/partitions/Paradox_Alarm"
+         }
+        },
+        {
+         "continue_on_timeout": true,
+         "timeout": "00:00:15",
+         "wait_template": "{{ is_state('alarm_control_panel.evo192_partition_paradox_alarm', 'disarmed') }}"
+        },
+        {
+         "action": "mqtt.publish",
+         "data": {
+          "payload": "{{ panel_cmd }}",
+          "topic": "paradox/control/partitions/Paradox_Alarm"
+         }
+        },
+        {
+         "continue_on_timeout": true,
+         "timeout": "00:00:20",
+         "wait_template": "{{ states('alarm_control_panel.evo192_partition_paradox_alarm') in ok_states + ['arming'] }}"
+        },
+        {
+         "if": [
+          {
+           "alias": "Still not armed: put the panel back in the mode it had",
+           "condition": "template",
+           "value_template": "{{ not wait.completed and is_state('alarm_control_panel.evo192_partition_paradox_alarm', 'disarmed') }}"
+          }
+         ],
+         "then": [
+          {
+           "action": "mqtt.publish",
+           "data": {
+            "payload": "{{ {'armed_home': 'arm_stay', 'armed_away': 'arm', 'armed_night': 'arm_stay'}[e_before] }}",
+            "topic": "paradox/control/partitions/Paradox_Alarm"
+           }
+          },
+          {
+           "continue_on_timeout": true,
+           "timeout": "00:00:20",
+           "wait_template": "{{ is_state('alarm_control_panel.evo192_partition_paradox_alarm', e_before) }}"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": [
+        {
+         "alias": "The panel did not arm",
+         "condition": "template",
+         "value_template": "{{ states('alarm_control_panel.evo192_partition_paradox_alarm') not in ok_states + ['arming'] }}"
+        }
+       ],
+       "then": [
+        {
+         "variables": {
+          "revert_to": "{% set e = states('alarm_control_panel.evo192_partition_paradox_alarm') %}{{ e if e in ['disarmed', 'armed_home', 'armed_away', 'armed_night'] else prev }}",
+          "why": "{% set e = states('alarm_control_panel.evo192_partition_paradox_alarm') %}{% set pai = states('sensor.evo192_pai_status') %}{% set ready = is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_ready', 'on') if want == 'armed_away' else is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_stay_instant_ready', 'on') %}{% set zones = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\.evo192_zone_.*_open$') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 Zone ', '') | map('replace', ' Open', '') | list %}{% set troubles = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | list %}{% set r = [] %}{% if e in ['unavailable', 'unknown'] or pai != 'online' %}{% set r = r + ['the panel is offline (PAI ' ~ pai ~ ')'] %}{% elif not ready %}{% set r = r + ['the panel is not ready to arm' ~ ((' - open zones: ' ~ zones | join(', ')) if zones else '')] %}{% endif %}{% if troubles and r %}{% set r = r + ['it also reports: ' ~ troubles | join(', ')] %}{% elif troubles %}{% set r = r + ['the panel reports: ' ~ troubles | join(', ')] %}{% endif %}{{ r | join('; ') if r else 'the panel did not confirm in time - check the keypad' }}"
+         }
+        },
+        {
+         "alias": "Alarmo fails too: back to where the panel is",
+         "choose": [
+          {
+           "conditions": [
+            {
+             "condition": "template",
+             "value_template": "{{ revert_to == 'disarmed' }}"
+            }
+           ],
+           "sequence": [
+            {
+             "action": "alarm_control_panel.alarm_disarm",
+             "target": {
+              "entity_id": "alarm_control_panel.home"
+             }
+            }
+           ]
+          },
+          {
+           "conditions": [
+            {
+             "condition": "template",
+             "value_template": "{{ revert_to in ['armed_home', 'armed_away', 'armed_night'] }}"
+            }
+           ],
+           "sequence": [
+            {
+             "action": "alarmo.arm",
+             "data": {
+              "entity_id": "alarm_control_panel.home",
+              "force": true,
+              "mode": "{{ revert_to | replace('armed_', '') }}",
+              "skip_delay": true
+             }
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "action": "notify.mobile_app_adult_phone_1",
+         "data": {
+          "data": {
+           "push": {
+            "interruption-level": "time-sensitive"
+           },
+           "tag": "alarm-sync"
+          },
+          "message": "{{ why | capitalize }}. Both alarms stay {{ revert_to | replace('armed_', '') | replace('home', 'Home (Stay)') }}.",
+          "title": "Alarm not set to {{ label }}"
+         }
+        },
+        {
+         "action": "notify.mobile_app_adult_phone_2",
+         "data": {
+          "data": {
+           "push": {
+            "interruption-level": "time-sensitive"
+           },
+           "tag": "alarm-sync"
+          },
+          "message": "{{ why | capitalize }}. Both alarms stay {{ revert_to | replace('armed_', '') | replace('home', 'Home (Stay)') }}.",
+          "title": "Alarm not set to {{ label }}"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'disarm_panel' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "mqtt.publish",
+       "data": {
+        "payload": "disarm",
+        "topic": "paradox/control/partitions/Paradox_Alarm"
+       }
+      },
+      {
+       "continue_on_timeout": true,
+       "timeout": "00:00:20",
+       "wait_template": "{{ is_state('alarm_control_panel.evo192_partition_paradox_alarm', 'disarmed') }}"
+      },
+      {
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ not wait.completed }}"
+        }
+       ],
+       "then": [
+        {
+         "variables": {
+          "revert_to": "{% set e = states('alarm_control_panel.evo192_partition_paradox_alarm') %}{{ e if e in ['disarmed', 'armed_home', 'armed_away', 'armed_night'] else prev }}"
+         }
+        },
+        {
+         "if": [
+          {
+           "condition": "template",
+           "value_template": "{{ revert_to in ['armed_home', 'armed_away', 'armed_night'] }}"
+          }
+         ],
+         "then": [
+          {
+           "action": "alarmo.arm",
+           "data": {
+            "entity_id": "alarm_control_panel.home",
+            "force": true,
+            "mode": "{{ revert_to | replace('armed_', '') }}",
+            "skip_delay": true
+           }
+          }
+         ]
+        },
+        {
+         "action": "notify.mobile_app_adult_phone_1",
+         "data": {
+          "data": {
+           "push": {
+            "interruption-level": "time-sensitive"
+           },
+           "tag": "alarm-sync"
+          },
+          "message": "The EVO192 did not confirm the disarm (panel: {{ states('alarm_control_panel.evo192_partition_paradox_alarm') }}, PAI: {{ states('sensor.evo192_pai_status') }}). Use the keypad.",
+          "title": "Physical alarm did not disarm"
+         }
+        },
+        {
+         "action": "notify.mobile_app_adult_phone_2",
+         "data": {
+          "data": {
+           "push": {
+            "interruption-level": "time-sensitive"
+           },
+           "tag": "alarm-sync"
+          },
+          "message": "The EVO192 did not confirm the disarm (panel: {{ states('alarm_control_panel.evo192_partition_paradox_alarm') }}, PAI: {{ states('sensor.evo192_pai_status') }}). Use the keypad.",
+          "title": "Physical alarm did not disarm"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'fail' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "variables": {
+        "revert_to": "{{ prev if prev in ['disarmed', 'armed_home', 'armed_away', 'armed_night'] else 'disarmed' }}"
+       }
+      },
+      {
+       "choose": [
+        {
+         "conditions": [
+          {
+           "condition": "template",
+           "value_template": "{{ revert_to == 'disarmed' }}"
+          }
+         ],
+         "sequence": [
+          {
+           "action": "alarm_control_panel.alarm_disarm",
+           "target": {
+            "entity_id": "alarm_control_panel.home"
+           }
+          }
+         ]
+        }
+       ],
+       "default": [
+        {
+         "action": "alarmo.arm",
+         "data": {
+          "entity_id": "alarm_control_panel.home",
+          "force": true,
+          "mode": "{{ revert_to | replace('armed_', '') }}",
+          "skip_delay": true
+         }
+        }
+       ]
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "alarm-sync"
+        },
+        "message": "The physical alarm is offline (PAI: {{ states('sensor.evo192_pai_status') }}). The house alarm stays {{ revert_to | replace('armed_', '') }}.",
+        "title": "Alarm not set to {{ label }}"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "alarm-sync"
+        },
+        "message": "The physical alarm is offline (PAI: {{ states('sensor.evo192_pai_status') }}). The house alarm stays {{ revert_to | replace('armed_', '') }}.",
+        "title": "Alarm not set to {{ label }}"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'panic' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "mqtt.publish",
+       "alias": "Sound the physical alarm (PAI panic, emergency type)",
+       "data": {
+        "payload": "1",
+        "topic": "paradox/panic/emergency/Paradox_Alarm"
+       }
+      },
+      {
+       "continue_on_timeout": true,
+       "timeout": "00:00:20",
+       "wait_template": "{{ is_state('alarm_control_panel.evo192_partition_paradox_alarm', 'triggered') }}"
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "critical"
+         },
+         "tag": "alarm-triggered"
+        },
+        "message": "{{ 'The physical alarm is sounding too.' if wait.completed else 'The physical alarm did NOT confirm the panic - check the keypad.' }}",
+        "title": "ALARM: {{ (state_attr('alarm_control_panel.home', 'open_sensors') or {}) | list | map('state_attr', 'friendly_name') | join(', ') or 'house alarm triggered' }}"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "critical"
+         },
+         "tag": "alarm-triggered"
+        },
+        "message": "{{ 'The physical alarm is sounding too.' if wait.completed else 'The physical alarm did NOT confirm the panic - check the keypad.' }}",
+        "title": "ALARM: {{ (state_attr('alarm_control_panel.home', 'open_sensors') or {}) | list | map('state_attr', 'friendly_name') | join(', ') or 'house alarm triggered' }}"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'arm_alarmo' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "alarmo.arm",
+       "data": {
+        "entity_id": "alarm_control_panel.home",
+        "force": true,
+        "mode": "{{ follow_mode }}",
+        "skip_delay": true
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'disarm_alarmo' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "alarm_control_panel.alarm_disarm",
+       "target": {
+        "entity_id": "alarm_control_panel.home"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'trigger_alarmo' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "alarm_control_panel.alarm_trigger",
+       "target": {
+        "entity_id": "alarm_control_panel.home"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "critical"
+         },
+         "tag": "alarm-triggered"
+        },
+        "message": "The EVO192 was triggered. Disarm on the keypad or in the app.",
+        "title": "ALARM: the physical alarm is going off"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "critical"
+         },
+         "tag": "alarm-triggered"
+        },
+        "message": "The EVO192 was triggered. Disarm on the keypad or in the app.",
+        "title": "ALARM: the physical alarm is going off"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ plan == 'disarm_offline' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "alarm-sync"
+        },
+        "message": "The house is disarmed, but the EVO192 could not be told (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
+        "title": "Physical alarm offline"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "alarm-sync"
+        },
+        "message": "The house is disarmed, but the EVO192 could not be told (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
+        "title": "Physical alarm offline"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "House — alarm sync (Alarmo ⇄ EVO192)",
+ "conditions": [],
+ "description": "Keeps the virtual alarm (Alarmo, alarm_control_panel.home) and the physical Paradox EVO192 (PAI) in step, both ways (2026-10-13, operator). Home = Stay, Night = Stay too (operator 2026-10-13: night is a house mode; the panel does not switch at 22:00/06:00 and keeps its entry delay), Away = Away. Stay therefore satisfies Night in both directions (ok_states). Commands go straight to PAI's control topic (PAI's entity sends arm_sleep, which an EVO does not have). If the panel does not arm, Alarmo is put back where the panel is and both adults are told WHY. Alarmo triggered (a leak) sends the panel an emergency panic; the panel going off triggers Alarmo. The physical panel is the truth after a restart. Queued, and every run re-reads live state, so its own echoes find nothing to do. Tests: tests/climate/cases.py (alarm sync). A disarm asked for while the panel is offline is honoured (review 2026-10-13 F2). Alarmo has no codes: if a disarm code is ever set in Alarmo, every alarm_disarm here needs it (review F10), or Alarmo will stay armed over a disarmed panel.",
+ "id": "1790400000001",
+ "max": 25,
+ "max_exceeded": "warning",
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": "alarm_control_panel.home",
+   "id": "alarmo",
+   "not_from": [
+    "unavailable",
+    "unknown"
+   ],
+   "to": [
+    "disarmed",
+    "armed_home",
+    "armed_away",
+    "armed_night",
+    "arming",
+    "triggered"
+   ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": "alarm_control_panel.evo192_partition_paradox_alarm",
+   "id": "evo",
+   "to": [
+    "disarmed",
+    "armed_home",
+    "armed_away",
+    "armed_night",
+    "triggered"
+   ],
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "id": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

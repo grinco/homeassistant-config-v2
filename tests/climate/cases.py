@@ -1754,3 +1754,181 @@ A(hr("a valve shut by Tado's open-window detection still counts", "True", {},
      {RAD_E: "'off'", RAD_W: "true"}, "no hot air into an open window"))
 A(hr("a room with no valve has no radiator", "False", {"rad_entity": "", "rad_window": ""},
      {RAD_E: "'unknown'", RAD_W: "false"}, "v6: the office"))
+
+
+# ---------------------------------------------------------------- alarm sync: Alarmo <-> EVO192 (2026-10-13)
+# Operator, 2026-10-13: one automation keeps the virtual alarm (Alarmo, alarm_control_panel.home)
+# and the physical Paradox EVO192 (via PAI) in step, both ways. Mapping: Home = Stay, Night = the
+# EVO's instant arm (it has no sleep arm), Away = Away. If the panel will not arm, Alarmo does not
+# either, and both adults are told WHY. A leak that triggers Alarmo triggers the panel too.
+# The physical panel is the truth after a restart and whenever the two disagree after a failure.
+SYNC = "1790400000001"
+EVO_NOW = "states('alarm_control_panel.evo192_partition_paradox_alarm')"
+PAI_NOW = "states('sensor.evo192_pai_status')"
+BS = "states.binary_sensor"
+
+
+def sync(name, expr, expect, given, finding, subs=None):
+    return dict(name="alarm sync: " + name, automation=SYNC, expr=expr, expect=expect,
+                given=given, subs=subs or {}, finding=finding)
+
+
+def plan(name, expect, src, a_now, e_now, prev="armed_home", a_next=None, finding=""):
+    g = dict(src=src, a_now=a_now, e_now=e_now, prev=prev, a_next=a_next or a_now)
+    g["want"] = g["a_next"] if a_now == "arming" else a_now
+    return sync(name, "plan", expect, g, finding)
+
+
+OP = "2026-10-13 operator: one automation syncs both ways"
+# Alarmo moved (the HA interface, the night schedule, a leak).
+A(plan("Home on Alarmo arms the panel in Stay", "arm_panel", "alarmo", "armed_home", "disarmed",
+       prev="disarmed", finding=OP))
+A(plan("Away with an exit delay arms the panel at once", "arm_panel", "alarmo", "arming",
+       "armed_home", a_next="armed_away", finding="the panel runs its own exit delay"))
+A(plan("the panel's own echo is not sent back", "none", "alarmo", "armed_night", "armed_night",
+       finding="no command when the panel is already there - the loop breaker"))
+A(plan("a panel still in its exit delay is not re-commanded", "none", "alarmo", "armed_away",
+       "arming", prev="arming", finding="Alarmo's 60 s exit delay ends while the panel's runs on"))
+A(plan("disarming during the panel's exit delay cancels it", "disarm_panel", "alarmo", "disarmed",
+       "arming", prev="arming", finding="'arming' is in progress, not done"))
+A(plan("an offline panel fails the arm", "fail", "alarmo", "armed_home", "unavailable",
+       prev="disarmed", finding="2026-10-13 operator: if EVO fails to arm, Alarmo fails too"))
+A(plan("a leak on Alarmo triggers the panel", "panic", "alarmo", "triggered", "disarmed",
+       prev="disarmed", finding="2026-10-13 operator: leaks trigger both alarms"))
+A(plan("Alarmo ending its own alarm does not re-arm the panel", "none", "alarmo", "armed_home",
+       "triggered", prev="triggered",
+       finding="the panel's bell has its own timer; a re-arm command mid-alarm is undefined"))
+A(plan("disarming a triggered Alarmo silences the panel", "disarm_panel", "alarmo", "disarmed",
+       "triggered", prev="triggered", finding="either side's disarm ends the alarm"))
+A(plan("Alarmo's entry delay is not a command", "none", "alarmo", "pending", "armed_away",
+       prev="armed_away", finding="only settled states are mirrored"))
+# The panel moved (the keypad, or the panel itself).
+A(plan("Away on the keypad arms Alarmo away", "arm_alarmo", "evo", "armed_home", "armed_away",
+       finding="2026-10-13 operator: leaving = arm EVO away, the house follows"))
+A(plan("a keypad disarm disarms Alarmo", "disarm_alarmo", "evo", "armed_night", "disarmed",
+       finding=OP))
+A(plan("the panel going off triggers Alarmo", "trigger_alarmo", "evo", "armed_home", "triggered",
+       finding=OP))
+A(plan("the panel re-arming after its bell does not cut a leak alarm", "none", "evo",
+       "triggered", "armed_home", finding="Alarmo's alarm ends by disarm or its own timer"))
+A(plan("the panel's exit delay is not mirrored", "none", "evo", "armed_home", "arming",
+       finding="wait for the settled state"))
+A(plan("an offline panel changes nothing", "none", "evo", "armed_night", "unavailable",
+       finding="PAI dropping off must not disarm the house"))
+A(plan("after a restart Alarmo follows the panel", "arm_alarmo", "start", "armed_home",
+       "armed_night", prev="none", finding="the physical panel is the truth"))
+A(plan("Alarmo arming toward the panel's state is left alone", "none", "evo", "arming",
+       "armed_away", a_next="armed_away", finding="no re-arm that would restart Alarmo's delay"))
+
+A(sync("what Alarmo is arming toward is what it wants", "want", "armed_away",
+       dict(a_now="arming", a_next="armed_away"), "Alarmo's state is 'arming' during an exit delay"))
+A(sync("Night is Stay on the panel", "panel_cmd", "arm_stay", dict(want="armed_night"),
+       "2026-10-13 operator: home and night both mean Stay on the EVO (no nightly mode switch, "
+       "entry delay kept); PAI's arm_sleep does not exist on an EVO"))
+A(sync("Home is Stay", "panel_cmd", "arm_stay", dict(want="armed_home"),
+       "2026-10-13 operator: armed home = stay on EVO"))
+A(sync("Away is a full arm", "panel_cmd", "arm", dict(want="armed_away"), OP))
+A(sync("Disarm is disarm", "panel_cmd", "disarm", dict(want="disarmed"), OP))
+A(sync("a keypad Night arms Alarmo night", "follow_mode", "night", dict(e_now="armed_night"), OP))
+
+
+def _z(eid, state, name):
+    return {"entity_id": eid, "state": state, "name": name}
+
+
+ZONES_OK = [_z("binary_sensor.evo192_zone_bedroom_open", "off", "EVO192 Zone Bedroom Open")]
+TAMPER = _z("binary_sensor.evo192_zone_tamper_open", "on", "EVO192 Zone Tamper Open")
+READY = "is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_ready', 'on')"
+STAY_READY = "is_state('binary_sensor.corridor_evo192_partition_paradox_alarm_stay_instant_ready', 'on')"
+
+
+def why(name, expect, want, finding, evo="'disarmed'", pai="'online'", ready="true",
+        stay_ready="true", sensors=()):
+    return sync(name, "why", expect, dict(want=want), finding,
+                subs={EVO_NOW: evo, PAI_NOW: pai, READY: ready, STAY_READY: stay_ready,
+                      BS: repr(ZONES_OK + list(sensors))})
+
+
+A(why("WHY names the open zones when the panel is not ready", "the panel is not ready to arm - "
+      "open zones: Tamper, Entrance Door", "armed_away",
+      "2026-10-13 operator: a notification WHY it failed", ready="false",
+      sensors=[TAMPER, _z("binary_sensor.evo192_zone_tamper_tamper", "on", "EVO192 Zone Tamper Tamper"),
+               _z("binary_sensor.evo192_zone_entrance_door_open", "on",
+                  "EVO192 Zone Entrance Door Open")]))
+A(why("Stay and Night read the stay readiness, not the full one", "the panel is not ready to arm - "
+      "open zones: Tamper", "armed_night", "EVO: stay/instant can arm with interior zones open",
+      ready="true", stay_ready="false", sensors=[TAMPER]))
+A(why("an open zone the panel ignores is not blamed", "the panel did not confirm in time - "
+      "check the keypad", "armed_home",
+      "2026-10-13: the Tamper zone reads open yet the panel is ready", sensors=[TAMPER]))
+A(why("WHY adds panel troubles, not the summary flag", "the panel reports: Battery Failure Trouble",
+      "armed_home", "the generic 'System Trouble' only repeats the specific one",
+      sensors=[_z("binary_sensor.evo192_system_troubles_system_trouble", "on",
+                  "EVO192 System troubles System Trouble"),
+               _z("binary_sensor.evo192_system_troubles_battery_failure_trouble", "on",
+                  "EVO192 System troubles Battery Failure Trouble")]))
+A(why("WHY says the panel is offline", "the panel is offline (PAI offline)", "armed_home",
+      "PAI or the HW-622 bridge down", evo="'unavailable'", pai="'offline'"))
+
+A(sync("a failed arm leaves Alarmo where the panel is", "revert_to", "armed_home",
+       dict(prev="disarmed"), "2026-10-13 operator: Alarmo fails to arm as well",
+       subs={EVO_NOW: "'armed_home'"}))
+A(sync("with the panel offline Alarmo goes back where it was", "revert_to", "disarmed",
+       dict(prev="disarmed"), "no panel state to follow", subs={EVO_NOW: "'unavailable'"}))
+A(sync("a triggered panel is not copied as a revert target", "revert_to", "armed_home",
+       dict(prev="armed_home"), "revert restores a mode, it never sets off an alarm",
+       subs={EVO_NOW: "'triggered'"}))
+
+# The "disarm, then arm" fallback, for a panel that will not move between armed modes. It opens a
+# window with the physical alarm off, so it runs only when the panel says it COULD take the target.
+WAIT_DONE = "wait.completed"
+
+
+def retry(name, expect, want, finding, done="false", e="'armed_home'", ready="true", stay="true"):
+    return sync(name, "may_retry", expect, dict(want=want, e_before="armed_home"), finding,
+                subs={WAIT_DONE: done, EVO_NOW: e, READY: ready, STAY_READY: stay})
+
+
+A(retry("a panel stuck in Stay is retried via disarm when ready for Away", "True", "armed_away",
+        "the EVO may refuse a direct Stay -> Away change"))
+A(retry("no disarm window when the panel is not ready for Away", "False", "armed_away",
+        "review 2026-10-13: an open interior zone makes the retry a pointless disarm",
+        ready="false"))
+A(retry("Night retry reads the stay readiness", "False", "armed_night",
+        "instant arm uses the stay set of zones", ready="true", stay="false"))
+A(retry("no retry once the panel has moved", "False", "armed_away",
+        "it accepted the command", done="true", e="'arming'"))
+A(retry("no retry when the panel left the old mode some other way", "False", "armed_away",
+        "someone disarmed at the keypad meanwhile", e="'disarmed'"))
+
+# Review 2026-10-13 (companion): F2 - a disarm asked for while the panel is offline must not be
+# undone; the house honours it and the adults are told to use the keypad. F7 - a restart with PAI
+# still reconnecting must not touch Alarmo.
+A(plan("a disarm with the panel offline is honoured", "disarm_offline", "alarmo", "disarmed",
+       "unavailable", prev="armed_away",
+       finding="review 2026-10-13 F2: never re-arm the house against an explicit disarm"))
+A(plan("arming with the panel offline still fails", "fail", "alarmo", "armed_night", "unknown",
+       prev="armed_home", finding="2026-10-13 operator: if EVO fails to arm, Alarmo fails too"))
+A(plan("a restart with PAI not back yet changes nothing", "none", "start", "armed_night",
+       "unavailable", prev="none",
+       finding="review 2026-10-13 F7 (disproved, locked): start never disarms on a slow PAI"))
+
+
+# Operator, 2026-10-13 (later): Home and Night both mean Stay on the panel. Night is a house mode
+# (climate, lights) layered on a panel that does not change, so Stay must SATISFY Night in both
+# directions, or the sync would flip the house back to day every evening.
+NIGHT = "2026-10-13 operator: night = Stay on the EVO"
+A(plan("22:00 Night does not touch a panel already in Stay", "none", "alarmo", "armed_night",
+       "armed_home", prev="armed_home", finding=NIGHT))
+A(plan("a panel in Stay does not pull a Night house back to Home", "none", "evo", "armed_night",
+       "armed_home", finding=NIGHT + " - the echo that would undo night every evening"))
+A(plan("Night from a disarmed panel arms it (in Stay)", "arm_panel", "alarmo", "armed_night",
+       "disarmed", prev="disarmed", finding=NIGHT))
+A(plan("Stay on the keypad from Disarmed is Home", "arm_alarmo", "evo", "disarmed", "armed_home",
+       finding="Stay alone does not mean night"))
+A(plan("06:00 Home over a panel in Stay is a no-op", "none", "alarmo", "armed_home", "armed_home",
+       prev="armed_night", finding=NIGHT))
+A(sync("Night is satisfied by Stay or a keypad Sleep", "ok_states", "['armed_night', 'armed_home']",
+       dict(want="armed_night"), NIGHT))
+A(sync("Away is satisfied by Away only", "ok_states", "['armed_away']", dict(want="armed_away"),
+       "Stay is not Away"))

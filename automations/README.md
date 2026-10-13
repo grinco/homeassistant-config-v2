@@ -24,6 +24,18 @@ Two rules for whoever does it:
 - **Verify by canary**, not by eye. Count those words before and after; if any count changed,
   the replacement was too greedy. Then grep the result for the originals and expect zero hits.
 
+## `house-alarm-sync.json`
+
+Keeps Alarmo (`alarm_control_panel.home`) and the Paradox EVO192 panel (through the Paradox Alarm
+Interface add-on over MQTT) in step, both ways, so the house can be armed from Home Assistant or
+the keypad. Home and Night both map to Stay on the panel, because night is a house mode rather than
+a different level of protection, and Away maps to Away. When the panel refuses to arm, Alarmo is put
+back where the panel is and both adults are told why: open zones, a trouble, or the panel being
+offline. An Alarmo trigger (leak sensors, once they are added) sends the panel a panic.
+
+It is **disabled** on the instance until a supervised first run at the keypad. The panic mapping in
+particular is untested against the panel. The notification targets are neutral placeholders.
+
 ## `house-night-mode.json`
 
 The alarm is the house's day/night switch (2026-10-11). `alarm_control_panel.home` in `armed_night`
