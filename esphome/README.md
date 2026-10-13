@@ -21,6 +21,15 @@ and re-adding the device.
 |---|---|
 | `lr-bt-proxy.yaml` | Bluetooth proxy. Three rooms read their SwitchBot meters through it |
 | `geiger-counter-ble-proxy.yaml` | Bluetooth proxy **and** a J305 Geiger-Müller tube on GPIO13 |
+| `hw-622.yaml` | Serial-to-TCP bridge for the Paradox EVO192 alarm panel (HW-622 relay board, ESP8266) |
+
+## The alarm bridge
+
+`hw-622` exposes the panel's serial port on TCP port 10000 (`stream_server`), and the Paradox
+Alarm Interface app connects to it. Serial logging is off (`logger: baud_rate: 0`) because UART 0 *is*
+the panel link. Only one client can hold the port, so nothing else may connect to 10000 while PAI
+runs. Flashing it takes the alarm integration offline until PAI reconnects, and while it is down
+the alarm sync reports the panel offline and does not arm.
 
 Both use the upstream `esphome/bluetooth-proxies` package, so the proxy half is not configured
 here — only what is added on top.
