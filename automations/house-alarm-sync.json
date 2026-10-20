@@ -31,10 +31,10 @@
    "variables": {
     "e_before": "{{ e_now }}",
     "follow_mode": "{{ {'armed_home': 'home', 'armed_away': 'away', 'armed_night': 'night'}.get(e_now, 'none') }}",
-    "label": "{{ {'armed_home': 'Home (Stay)', 'armed_away': 'Away', 'armed_night': 'Night', 'disarmed': 'Disarmed'}.get(want, want) }}",
-    "ok_states": "{{ [want, 'armed_home'] if want == 'armed_night' else [want] }}",
-    "panel_cmd": "{{ {'armed_home': 'arm_stay', 'armed_away': 'arm', 'armed_night': 'arm_stay', 'disarmed': 'disarm'}.get(want, 'none') }}",
-    "plan": "{% set modes = ['armed_home', 'armed_away', 'armed_night'] %}{% set ok = [want, 'armed_home'] if want == 'armed_night' else [want] %}{% if src == 'alarmo' %}{% if want not in modes + ['disarmed', 'triggered'] %}none{% elif prev == 'triggered' and want in modes %}none{% elif e_now in ok or (want in modes and e_now == 'arming') %}none{% elif e_now in ['unavailable', 'unknown'] %}{{ 'disarm_offline' if want == 'disarmed' else 'fail' }}{% elif want == 'triggered' %}panic{% elif want == 'disarmed' %}disarm_panel{% else %}arm_panel{% endif %}{% elif e_now not in modes + ['disarmed', 'triggered'] %}none{% elif e_now in ok %}none{% elif a_now == 'triggered' and e_now in modes %}none{% elif e_now == 'triggered' %}trigger_alarmo{% elif e_now == 'disarmed' %}disarm_alarmo{% else %}arm_alarmo{% endif %}"
+    "label": "{{ {'armed_home': 'Home', 'armed_away': 'Away', 'armed_night': 'Night', 'disarmed': 'Disarmed'}.get(want, want) }}",
+    "ok_states": "{{ ['disarmed', 'armed_home', 'armed_night'] if want in ['armed_home', 'armed_night'] else [want] }}",
+    "panel_cmd": "{{ {'armed_home': 'disarm', 'armed_away': 'arm', 'armed_night': 'disarm', 'disarmed': 'disarm'}.get(want, 'none') }}",
+    "plan": "{% set modes = ['armed_home', 'armed_away', 'armed_night'] %}{% set ok = ['disarmed', 'armed_home', 'armed_night'] if want in ['armed_home', 'armed_night'] else [want] %}{% if src == 'alarmo' %}{% if want not in modes + ['disarmed', 'triggered'] %}none{% elif prev == 'triggered' and want in modes %}none{% elif e_now in ok or (want in modes and e_now == 'arming') %}none{% elif e_now in ['unavailable', 'unknown'] %}{{ 'fail' if want == 'armed_away' else ('disarm_offline' if want == 'disarmed' or prev == 'armed_away' else 'none') }}{% elif want == 'triggered' %}panic{% elif want == 'armed_away' %}arm_panel{% else %}disarm_panel{% endif %}{% elif e_now not in modes + ['disarmed', 'triggered'] %}none{% elif e_now in ok %}none{% elif a_now == 'triggered' and e_now in modes %}none{% elif e_now == 'triggered' %}trigger_alarmo{% elif e_now == 'disarmed' %}disarm_alarmo{% else %}arm_alarmo{% endif %}"
    }
   },
   {
@@ -505,7 +505,7 @@
          },
          "tag": "alarm-sync"
         },
-        "message": "The house is disarmed, but the EVO192 could not be told (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
+        "message": "The EVO192 could not be told to disarm (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
         "title": "Physical alarm offline"
        }
       },
@@ -518,7 +518,7 @@
          },
          "tag": "alarm-sync"
         },
-        "message": "The house is disarmed, but the EVO192 could not be told (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
+        "message": "The EVO192 could not be told to disarm (PAI: {{ states('sensor.evo192_pai_status') }}). Disarm it at the keypad.",
         "title": "Physical alarm offline"
        }
       }
@@ -529,7 +529,7 @@
  ],
  "alias": "House — alarm sync (Alarmo ⇄ EVO192)",
  "conditions": [],
- "description": "Keeps the virtual alarm (Alarmo, alarm_control_panel.home) and the physical Paradox EVO192 (PAI) in step, both ways (2026-10-13, operator). Home = Stay, Night = Stay too (operator 2026-10-13: night is a house mode; the panel does not switch at 22:00/06:00 and keeps its entry delay), Away = Away. Stay therefore satisfies Night in both directions (ok_states). Commands go straight to PAI's control topic (PAI's entity sends arm_sleep, which an EVO does not have). If the panel does not arm, Alarmo is put back where the panel is and both adults are told WHY. Alarmo triggered (a leak) sends the panel an emergency panic; the panel going off triggers Alarmo. The physical panel is the truth after a restart. Queued, and every run re-reads live state, so its own echoes find nothing to do. Tests: tests/climate/cases.py (alarm sync). A disarm asked for while the panel is offline is honoured (review 2026-10-13 F2). Alarmo has no codes: if a disarm code is ever set in Alarmo, every alarm_disarm here needs it (review F10), or Alarmo will stay armed over a disarmed panel.",
+ "description": "Keeps the virtual alarm (Alarmo, alarm_control_panel.home) and the physical Paradox EVO192 (PAI) in step, both ways (2026-10-13, operator). Away only (operator 2026-10-15, after the first live run: Stay went off seconds after arming). Away = Away; Home and Night ask only that the panel is not in Away, so a disarmed panel or a keypad Stay satisfies them (ok_states) and the panel is disarmed only when the house leaves Away. An explicit Disarm still disarms the panel. Revisit Home/Night = Stay once the panel's Stay zones are set up. Commands go straight to PAI's control topic (PAI's entity sends arm_sleep, which an EVO does not have). If the panel does not arm, Alarmo is put back where the panel is and both adults are told WHY. Alarmo triggered (a leak) sends the panel an emergency panic; the panel going off triggers Alarmo. The physical panel is the truth after a restart. Queued, and every run re-reads live state, so its own echoes find nothing to do. Tests: tests/climate/cases.py (alarm sync). A disarm asked for while the panel is offline is honoured (review 2026-10-13 F2). Alarmo has no codes: if a disarm code is ever set in Alarmo, every alarm_disarm here needs it (review F10), or Alarmo will stay armed over a disarmed panel.",
  "id": "1790400000001",
  "max": 25,
  "max_exceeded": "warning",

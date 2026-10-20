@@ -33,7 +33,7 @@
   "badges_position": "bottom",
   "badges_wrap": "scroll",
   "card": {
-   "content": "{% set h = now().hour %}# {% if h < 5 %}Good night{% elif h < 12 %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good evening{% endif %}\n{% set w = states('weather.house') %}{% set words = {'clear-night': 'clear', 'cloudy': 'cloudy', 'fog': 'foggy', 'hail': 'hail', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'partlycloudy': 'partly cloudy', 'pouring': 'pouring rain', 'rainy': 'rain', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'sunny': 'sunny', 'windy': 'windy', 'windy-variant': 'windy'} %}{% set o = states('sensor.climate_temp_outdoor') | float(-999) %}**{{ now().strftime('%A %-d %B') }}** · {% if o > -900 %}{{ o | round(0) | int }}° outside, {% endif %}{{ words.get(w, w) }}",
+   "content": "{% set h = now().hour %}# {% if h < 5 %}Good night{% elif h < 12 %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good evening{% endif %}\n{% set w = states('weather.home') %}{% set words = {'clear-night': 'clear', 'cloudy': 'cloudy', 'fog': 'foggy', 'hail': 'hail', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'partlycloudy': 'partly cloudy', 'pouring': 'pouring rain', 'rainy': 'rain', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'sunny': 'sunny', 'windy': 'windy', 'windy-variant': 'windy'} %}{% set o = states('sensor.climate_temp_outdoor') | float(-999) %}**{{ now().strftime('%A %-d %B') }}** · {% if o > -900 %}{{ o | round(0) | int }}° outside, {% endif %}{{ words.get(w, w) }}",
    "text_only": true,
    "type": "markdown"
   },
@@ -641,7 +641,7 @@
      "type": "heading"
     },
     {
-     "entity": "weather.house",
+     "entity": "weather.home",
      "forecast_type": "daily",
      "grid_options": {
       "columns": "full"

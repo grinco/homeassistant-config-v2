@@ -1215,6 +1215,14 @@ and 15 is the precedence question the air-filter feature raises.
 
 - **A11** — one `ac_sensor_offset` is applied to three units that were never individually
   calibrated. Unchanged; it is a single number standing in for three measurements.
+- **Accepted risk (operator, 2026-10-15): a room whose meter is lost on both paths falls
+  straight to the AC probe.** Observed in the office that day: the Matter copy of its meter was
+  down, so each routine BLE dropout (one to eight minutes, every half hour or so) left only the
+  probe. The probe read 22, the offset made it 20.0 against a real 25 °C, and the AC heated for
+  4–7 minutes three times in an hour before the meter came back. The automation decided
+  correctly on what it was given. The gap is that a single brief dropout reaches the probe with
+  no hold on the last good reading. The operator chose more air-quality sensors around the house
+  over a hold. Do not reopen it as an oversight; revisit if it recurs once those are in.
 - **M6** — the TRV-setpoint invariant cannot be enforced while zero TRV entities exist.
 - **A7** — a safety fight is now alerted hourly rather than once, which is better than v3 but
   still not an escalation.
@@ -2696,9 +2704,20 @@ night `quiet` preset still applies). Only while the schedule itself is on — a 
 morning edge, a manual day has already ended the night.
 
 **Known, recorded:**
-- The bedroom has no room meter: with its radiator now hot more often, its resolved temperature
-  falls back from the valve (gated on a cold radiator) to the AC probe + offset more often. A meter
-  in the bedroom would fix it.
+- ~~The bedroom has no room meter~~ — **resolved 2026-10-20**: an IKEA VINDSTYRKA (Zigbee, free air,
+  away from the AC discharge and the radiator) is now the bedroom's primary temperature and humidity
+  source, uncorrected; the valve (cold radiator, TRV offset) and the AC probe (+ offset) stay as the
+  second and third tiers in their old order. It reports **whole degrees**, against the valve's
+  0.01 °C, so the bedroom's reading moves in 1 °C steps against a 0.5 °C deadband — watch for coarser
+  cycling; if it shows, check Zigbee2MQTT's precision option for the device before demoting it.
+  Tests: the *bedroom* sensor cases (each tier distinct, both offsets non-zero so a wrongly applied
+  offset shows; a sensor still `unknown` after pairing falls through) and three mutations.
+- **Matter bridge re-announcing a meter (2026-10-18, a kid's room).** The SwitchBot hub re-exposed
+  a meter under new endpoint ids; the old entities stayed `restored` (unavailable) and the room's
+  Matter tier silently read a dead entity while BLE carried the room. Fixed by deleting the dead
+  entities and renaming the live ones back to the ids the templates read, so no template changed.
+  `wiring.py` only checks that a named entity EXISTS, so it stayed green; a check for templates that
+  read a `restored` entity is a gap worth closing.
 - The radiators do not pre-condition; they move at the alarm's edges. The AC does the warm-up.
 - **Future (operator, 2026-10-11): geofencing** — use "approaching home" as a boost trigger. The
   natural hook is the same one as warm-up: a per-room or house-wide window in which the AC may heat

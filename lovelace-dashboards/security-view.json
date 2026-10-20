@@ -29,9 +29,143 @@
      "states": {},
      "type": "custom:alarmo-card",
      "use_code_dialog": false
+    },
+    {
+     "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Physical panel",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Ready to arm",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.evo192_pai_status",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:lan-connect",
+     "name": "Panel link",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.evo192_system_power_battery",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:car-battery",
+     "name": "Backup battery",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
+     "grid_options": {
+      "columns": "full"
+     },
+     "text_only": true,
+     "type": "markdown",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_trouble",
+       "state": "on"
+      }
+     ]
     }
    ],
    "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Front door",
+     "icon": "mdi:door",
+     "type": "heading"
+    },
+    {
+     "entity": "lock.lock_ultra_max_7b06",
+     "features": [
+      {
+       "type": "lock-commands"
+      }
+     ],
+     "grid_options": {
+      "columns": "full"
+     },
+     "name": "Lock",
+     "type": "tile"
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Door",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.lock_ultra_max_7b06_battery",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Lock battery",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Left unlocked",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Left open",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+       "state": "on"
+      }
+     ]
+    }
+   ],
    "type": "grid"
   },
   {

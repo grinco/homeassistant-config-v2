@@ -1,0 +1,309 @@
+substitutions:
+  name: office-bt-proxy
+  friendly_name: Office BT proxy
+
+  # The SwitchBot front-door lock, reached through this proxy.
+  lock_entity: lock.lock_ultra_max_7b06
+
+# LilyGO TTGO T-Display: ESP32, 4 MB flash, no PSRAM, ST7789V 135x240 IPS.
+# Buttons on GPIO0 (BOOT) and GPIO35; both just wake the screen.
+#
+# Intended home: the corridor. That area is closed in by concrete on every
+# side, which is why the proxies in the rooms around it hear the front-door
+# lock at -92 dBm or not at all.
+#
+# The screen is dark unless the corridor presence sensor sees someone, so it
+# adds no light to the corridor at night. Without Wi-Fi it stays lit and shows
+# the MAC address instead, for the access point's MAC allow-list.
+
+packages:
+  esphome.bluetooth-proxy: "github://esphome/bluetooth-proxies/esp32-generic/esp32-generic.yaml@main"
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on: backlight
+
+api:
+  encryption:
+    key: !secret office_bt_proxy_api_key
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  on_connect:
+    - script.execute: wake
+  on_disconnect:
+    - script.stop: wake
+    - light.turn_on:
+        id: backlight
+        brightness: 0.8
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+sensor:
+  # The outdoor sensor the climate automation uses, not the forecast's.
+  - platform: homeassistant
+    id: outdoor_temp
+    entity_id: sensor.climate_temp_outdoor
+    internal: true
+  - platform: homeassistant
+    id: feels_like
+    entity_id: weather.home
+    attribute: apparent_temperature
+    internal: true
+  - platform: homeassistant
+    id: outdoor_humidity
+    entity_id: weather.home
+    attribute: humidity
+    internal: true
+  - platform: homeassistant
+    id: wind
+    entity_id: weather.home
+    attribute: wind_speed
+    internal: true
+
+text_sensor:
+  - platform: homeassistant
+    id: condition
+    entity_id: weather.home
+    internal: true
+  - platform: homeassistant
+    id: alarm_state
+    entity_id: alarm_control_panel.home
+    internal: true
+  - platform: homeassistant
+    id: lock_state
+    entity_id: ${lock_entity}
+    internal: true
+
+binary_sensor:
+  - platform: homeassistant
+    id: corridor_presence
+    entity_id: binary_sensor.corridor_presence_presence
+    internal: true
+    on_press:
+      - script.execute: wake
+  - platform: homeassistant
+    id: entrance_door_open
+    entity_id: binary_sensor.evo192_zone_entrance_door_open
+    internal: true
+
+  - platform: gpio
+    id: button_left
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+      ignore_strapping_warning: true
+    internal: true
+    on_press:
+      - script.execute: wake
+  - platform: gpio
+    id: button_right
+    pin:
+      number: GPIO35
+      inverted: true
+    internal: true
+    on_press:
+      - script.execute: wake
+
+script:
+  # Light the screen while the corridor is occupied, then 30 s longer.
+  # Dimmer while the house is in night mode. Never dark without Wi-Fi.
+  - id: wake
+    mode: restart
+    then:
+      - light.turn_on:
+          id: backlight
+          brightness: !lambda 'return id(alarm_state).state == "armed_night" ? 0.15 : 0.8;'
+      - component.update: screen
+      - wait_until:
+          condition:
+            binary_sensor.is_off: corridor_presence
+      - delay: 30s
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - light.turn_off:
+                id: backlight
+                transition_length: 1s
+
+output:
+  - platform: ledc
+    pin: GPIO4
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Backlight
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0.3s
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+font:
+  - file: "gfonts://Roboto"
+    id: f_small
+    size: 15
+    glyphsets: [GF_Latin_Core]
+  - file: "gfonts://Roboto@500"
+    id: f_mid
+    size: 20
+    glyphsets: [GF_Latin_Core]
+  - file: "gfonts://Roboto@700"
+    id: f_big
+    size: 52
+    glyphs: "0123456789-°"
+
+display:
+  - platform: mipi_spi
+    id: screen
+    model: T-DISPLAY
+    reset_pin: GPIO23
+    rotation: 90
+    # 8-bit colour halves the frame buffer; this board has no PSRAM and the
+    # Bluetooth stack needs the heap.
+    color_depth: 8
+    update_interval: 5s
+    lambda: |-
+      if (!id(backlight).current_values.is_on()) return;
+
+      const Color grey(150, 150, 150);
+      const Color dim(60, 60, 60);
+      const Color white(240, 240, 240);
+      const Color amber(208, 138, 46);   // the dashboard theme's seed colour
+      const Color green(80, 190, 110);
+      const Color blue(90, 140, 230);
+      const Color red(230, 70, 60);
+      const Color cloudc(185, 190, 200);
+
+      const int W = it.get_width();     // 240
+      const int H = it.get_height();    // 135
+
+      it.fill(Color::BLACK);
+
+      // ---- no Wi-Fi: say so, and show the MAC for the allow-list ----
+      if (!wifi::global_wifi_component->is_connected()) {
+        it.print(W / 2, 14, id(f_mid), red, TextAlign::TOP_CENTER, "No Wi-Fi");
+        it.print(W / 2, 52, id(f_small), grey, TextAlign::TOP_CENTER, "MAC address");
+        it.print(W / 2, 72, id(f_mid), white, TextAlign::TOP_CENTER,
+                 get_mac_address_pretty().c_str());
+        return;
+      }
+
+      auto now = id(ha_time).now();
+
+      // ---- top bar: clock, alarm ----
+      if (now.is_valid())
+        it.strftime(6, 4, id(f_mid), white, "%H:%M", now);
+
+      std::string a = id(alarm_state).state;
+      const char *alabel = "";
+      Color ac = grey;
+      if (a == "disarmed")             { alabel = "disarmed"; ac = green; }
+      else if (a == "armed_home")      { alabel = "home";     ac = amber; }
+      else if (a == "armed_night")     { alabel = "night";    ac = blue; }
+      else if (a == "armed_away")      { alabel = "away";     ac = red; }
+      else if (a == "arming")          { alabel = "arming";   ac = amber; }
+      else if (a == "pending")         { alabel = "entry";    ac = red; }
+      else if (a == "triggered")       { alabel = "ALARM";    ac = red; }
+      if (*alabel) {
+        int x1, y1, w, h;
+        it.get_text_bounds(W - 6, 4, alabel, id(f_mid), TextAlign::TOP_RIGHT, &x1, &y1, &w, &h);
+        it.filled_circle(x1 - 10, 15, 5, ac);
+        it.print(W - 6, 4, id(f_mid), ac, TextAlign::TOP_RIGHT, alabel);
+      }
+
+      // ---- weather icon, drawn ----
+      std::string c = id(condition).state;
+      const int ix = 40, iy = 66;
+      auto sun = [&](int x, int y, int r) {
+        it.filled_circle(x, y, r, amber);
+        for (int i = 0; i < 8; i++) {
+          float t = i * 0.785398f;
+          it.line(x + cosf(t) * (r + 4), y + sinf(t) * (r + 4),
+                  x + cosf(t) * (r + 9), y + sinf(t) * (r + 9), amber);
+        }
+      };
+      auto cloud = [&](int x, int y, Color col) {
+        it.filled_circle(x - 12, y + 4, 10, col);
+        it.filled_circle(x + 2, y - 4, 14, col);
+        it.filled_circle(x + 16, y + 4, 10, col);
+        it.filled_rectangle(x - 12, y + 4, 28, 11, col);
+      };
+      bool wet = c == "rainy" || c == "pouring" || c == "lightning-rainy" ||
+                 c == "snowy-rainy";
+      bool snow = c == "snowy" || c == "snowy-rainy" || c == "hail";
+      if (c == "sunny") {
+        sun(ix, iy, 14);
+      } else if (c == "clear-night") {
+        it.filled_circle(ix, iy, 16, cloudc);
+        it.filled_circle(ix + 8, iy - 6, 14, Color::BLACK);
+      } else if (c == "partlycloudy") {
+        sun(ix - 8, iy - 8, 10);
+        cloud(ix + 4, iy + 6, cloudc);
+      } else if (c == "fog") {
+        for (int i = 0; i < 4; i++)
+          it.filled_rectangle(ix - 22, iy - 12 + i * 9, 44, 4, cloudc);
+      } else if (!c.empty() && c != "unavailable" && c != "unknown") {
+        // cloudy, windy, rain, snow, storm: a cloud, plus what falls from it
+        cloud(ix, iy - 6, (wet || c == "lightning") ? grey : cloudc);
+        if (wet)
+          for (int i = -1; i <= 1; i++)
+            it.line(ix + i * 10, iy + 14, ix + i * 10 - 4, iy + 24, blue);
+        if (snow)
+          for (int i = -1; i <= 1; i++)
+            it.filled_circle(ix + i * 10 + 3, iy + 20, 2, white);
+        if (c == "lightning" || c == "lightning-rainy")
+          it.filled_triangle(ix + 2, iy + 8, ix - 6, iy + 22, ix + 4, iy + 18, amber);
+        if (c == "windy" || c == "windy-variant")
+          for (int i = 0; i < 2; i++)
+            it.line(ix - 20, iy + 16 + i * 6, ix + 16 - i * 10, iy + 16 + i * 6, white);
+      }
+
+      // ---- temperature, feels like, humidity, wind ----
+      const int tx = 84;
+      float t = id(outdoor_temp).state;
+      if (std::isnan(t)) it.print(tx, 26, id(f_big), grey, "-");
+      else               it.printf(tx, 26, id(f_big), white, "%.0f°", t);
+
+      float fl = id(feels_like).state;
+      if (!std::isnan(fl) && !std::isnan(t) && fabsf(fl - t) >= 1.5f)
+        it.printf(W - 6, 34, id(f_small), grey, TextAlign::TOP_RIGHT, "feels %.0f°", fl);
+
+      char buf[32] = "";
+      float hum = id(outdoor_humidity).state, ws = id(wind).state;
+      if (!std::isnan(hum) && !std::isnan(ws))
+        snprintf(buf, sizeof buf, "%.0f%%  ·  %.0f km/h", hum, ws);
+      else if (!std::isnan(hum))
+        snprintf(buf, sizeof buf, "%.0f%%", hum);
+      it.print(tx, 84, id(f_small), grey, buf);
+
+      // ---- bottom bar: front door ----
+      it.line(0, H - 26, W, H - 26, dim);
+      const char *dlabel = "lock -";
+      Color dc = grey;
+      std::string l = id(lock_state).state;
+      if (id(entrance_door_open).state) { dlabel = "door open"; dc = red; }
+      else if (l == "locked")           { dlabel = "locked";    dc = green; }
+      else if (l == "unlocked")         { dlabel = "unlocked";  dc = amber; }
+      else if (l == "open")             { dlabel = "unlatched"; dc = amber; }
+      else if (l == "jammed")           { dlabel = "jammed";    dc = red; }
+      else if (l == "locking" || l == "unlocking" || l == "opening")
+                                        { dlabel = "...";       dc = amber; }
+      it.print(6, H - 4, id(f_small), grey, TextAlign::BOTTOM_LEFT, "front door");
+      it.print(W - 6, H - 4, id(f_mid), dc, TextAlign::BOTTOM_RIGHT, dlabel);

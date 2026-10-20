@@ -21,6 +21,7 @@ and re-adding the device.
 |---|---|
 | `lr-bt-proxy.yaml` | Bluetooth proxy. Three rooms read their SwitchBot meters through it |
 | `geiger-counter-ble-proxy.yaml` | Bluetooth proxy **and** a J305 Geiger-Müller tube on GPIO13 |
+| `office-bt-proxy.yaml` | Bluetooth proxy for the front-door SwitchBot lock, on a TTGO T-Display showing outdoor weather, alarm and lock state |
 | `hw-622.yaml` | Serial-to-TCP bridge for the Paradox EVO192 alarm panel (HW-622 relay board, ESP8266) |
 
 ## The alarm bridge

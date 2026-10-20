@@ -427,7 +427,7 @@
     },
     {
      "color": "light-blue",
-     "entity": "weather.house",
+     "entity": "weather.home",
      "features": [
       {
        "forecast_type": "hourly",
@@ -450,7 +450,7 @@
     },
     {
      "color": "light-blue",
-     "entity": "weather.house",
+     "entity": "weather.home",
      "features": [
       {
        "days_to_show": 7,

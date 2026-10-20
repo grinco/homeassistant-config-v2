@@ -414,6 +414,10 @@ TRV_HEAT = "states('sensor.bedroom_trv_bedroom_trv_heating')"
 TRV_TEMP = "states('sensor.bedroom_trv_bedroom_trv_temperature')"
 AC_OFF = "states('input_number.climate_ac_sensor_offset')"
 TRV_OFF = "states('input_number.climate_trv_sensor_offset')"
+# 2026-10-20: an IKEA VINDSTYRKA on the Zigbee mesh, in free air, away from both the AC
+# discharge and the radiator. It is now the primary bedroom source; the TRV and the AC probe
+# stay as fallbacks in their old order. The cases above set it dead so they still test those.
+BED_VS = "states('sensor.bedroom_air_quality_sensor_temperature')"
 
 
 def sensor_case(name, expect, subs, finding="", sensor=BED):
@@ -423,33 +427,75 @@ def sensor_case(name, expect, subs, finding="", sensor=BED):
 A(sensor_case(
     "a correct large AC offset is honoured, not overridden", "21.0",
     {AC_OFF: "'-4.0'", TRV_OK: "false", TRV_HEAT: "'0'", TRV_TEMP: "'0'",
-     PROBE: "'25.0'", TRV_OFF: "'0'"},
+     BED_VS: "'unavailable'", PROBE: "'25.0'", TRV_OFF: "'0'"},
     finding="F-1.1: v5.5 substituted -2 here and under-corrected by 2C, failing COLD"))
 A(sensor_case(
     "an AC offset at the helper minimum is still honoured", "21.0",
     {AC_OFF: "'-4.0'", TRV_OK: "false", TRV_HEAT: "'0'", TRV_TEMP: "'0'",
-     PROBE: "'25.0'", TRV_OFF: "'0'"},
+     BED_VS: "'unavailable'", PROBE: "'25.0'", TRV_OFF: "'0'"},
     finding="F-1.1: honouring fails WARM, which is the safe direction"))
 A(sensor_case(
     "an implausible TRV offset is ignored, not applied", "24.0",
     {AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'0'", TRV_TEMP: "'24.0'",
-     PROBE: "'25.0'", TRV_OFF: "'-5.0'"},
+     BED_VS: "'unavailable'", PROBE: "'25.0'", TRV_OFF: "'-5.0'"},
     finding="R8-4: a new input_number comes up at its MINIMUM (-5), inside its own range"))
 A(sensor_case(
     "the TRV is distrusted while the radiator is driving", "23.0",
     {AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'65'", TRV_TEMP: "'26.0'",
-     PROBE: "'25.0'", TRV_OFF: "'0'"},
+     BED_VS: "'unavailable'", PROBE: "'25.0'", TRV_OFF: "'0'"},
     finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
 A(sensor_case(
     "an offline TRV falls back to the corrected probe", "23.0",
     {AC_OFF: "'-2.0'", TRV_OK: "false", TRV_HEAT: "'0'", TRV_TEMP: "'24.0'",
-     PROBE: "'25.0'", TRV_OFF: "'0'"},
+     BED_VS: "'unavailable'", PROBE: "'25.0'", TRV_OFF: "'0'"},
     finding="v5"))
 A(sensor_case(
     "every source down yields nothing, never a fabricated number", "",
     {AC_OFF: "'-2.0'", TRV_OK: "false", TRV_HEAT: "'0'", TRV_TEMP: "'unavailable'",
-     PROBE: "'unavailable'", TRV_OFF: "'0'"},
+     BED_VS: "'unavailable'", PROBE: "'unavailable'", TRV_OFF: "'0'"},
     finding="R7-9: resolves to the skip sentinel and the blackout alert speaks"))
+
+
+# Every tier carries a DIFFERENT value and both offsets are non-zero, so the expected
+# output names exactly one tier and shows whether an offset was (wrongly) applied.
+A(sensor_case(
+    "bedroom temperature prefers the air quality sensor, uncorrected", "20.0",
+    {BED_VS: "'20'", AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'0'",
+     TRV_TEMP: "'22.5'", PROBE: "'25.0'", TRV_OFF: "'1.0'"},
+    finding="2026-10-20: the free-air sensor is primary; it needs neither offset"))
+A(sensor_case(
+    "a dead bedroom air quality sensor falls to the TRV, not the probe", "23.5",
+    {BED_VS: "'unavailable'", AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'0'",
+     TRV_TEMP: "'22.5'", PROBE: "'25.0'", TRV_OFF: "'1.0'"},
+    finding="2026-10-20: the TRV keeps its place as the second tier"))
+A(sensor_case(
+    "a bedroom air quality sensor still booting is not a reading", "23.0",
+    {BED_VS: "'unknown'", AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'65'",
+     TRV_TEMP: "'26.0'", PROBE: "'25.0'", TRV_OFF: "'0'"},
+    finding="z2m reports unknown right after a re-pair (seen 2026-10-20 14:05)"))
+
+BED_H = "Climate humidity bedroom"
+BED_H_VS = "states('sensor.bedroom_air_quality_sensor_humidity')"
+BED_H_TRV = "states('sensor.bedroom_trv_bedroom_trv_humidity')"
+BED_H_AC = "states('sensor.master_bedroom_bedroom_ac_humidity')"
+
+A(sensor_case(
+    "bedroom humidity prefers the air quality sensor", "52.0",
+    {BED_H_VS: "'52'", TRV_OK: "true", BED_H_TRV: "'49.5'", BED_H_AC: "'60'"},
+    sensor=BED_H, finding="2026-10-20: the free-air sensor is primary"))
+A(sensor_case(
+    "a dead bedroom air quality sensor falls to the TRV humidity", "49.5",
+    {BED_H_VS: "'unavailable'", TRV_OK: "true", BED_H_TRV: "'49.5'", BED_H_AC: "'60'"},
+    sensor=BED_H, finding="2026-10-20: the TRV keeps its place as the second tier"))
+A(sensor_case(
+    "bedroom humidity with the sensor and TRV down falls to the AC", "60.0",
+    {BED_H_VS: "'unavailable'", TRV_OK: "false", BED_H_TRV: "'49.5'", BED_H_AC: "'60'"},
+    sensor=BED_H, finding="humidity carries no calibration offset"))
+A(sensor_case(
+    "every bedroom humidity source down yields nothing", "",
+    {BED_H_VS: "'unavailable'", TRV_OK: "false", BED_H_TRV: "'unavailable'",
+     BED_H_AC: "'unavailable'"},
+    sensor=BED_H, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 
 # ---------------------------------------------------------------- the suite guarding itself
@@ -461,7 +507,7 @@ A(sensor_case(
 A(sensor_case(
     "a source reporting 'unavailable' still reaches the skip sentinel", "",
     {AC_OFF: "'-2.0'", TRV_OK: "true", TRV_HEAT: "'unavailable'",
-     TRV_TEMP: "'unavailable'", PROBE: "'unavailable'", TRV_OFF: "'0'"},
+     TRV_TEMP: "'unavailable'", BED_VS: "'unavailable'", PROBE: "'unavailable'", TRV_OFF: "'0'"},
     finding="R13 3c: only passes if states() is substituted as a STRING"))
 
 
@@ -1235,38 +1281,56 @@ A(sensor_case("kid 1: a whole-degree air-quality reading passes through", "24.0"
               sensor=K1_T, finding="review 2026-10-07 A5: the instrument's real resolution"))
 
 
-# ---------------------------------------------------------------- open-space darkness: outdoors wins
-# 2026-10-12, operator: "kitchen and living room report being dark - while it's bright outside".
-# The FP2 sits in the dim half of the room and read 58-167 lx all morning while the terrace sensor
-# read 16000+, so a darkness judged by the FP2 alone called a sunny noon dark.  Outdoor daylight
-# (`binary_sensor.lighting_daylight`, already hysteretic) now overrides the indoor reading: if it is
-# bright outside the open space is bright, whatever the FP2 says.  The indoor reading still decides
-# when it is NOT bright outside (evening, overcast dusk, a closed-curtain afternoon is not handled
-# on purpose: the FP2 mean covers it).  Every case pins both inputs, and each pair straddles.
-OUT_BRIGHT = "is_state('binary_sensor.lighting_daylight','on')"
-IN_BRIGHT = "is_state('binary_sensor.open_space_indoor_bright','on')"
-IN_DARK = "is_state('binary_sensor.open_space_indoor_dark','on')"
+# ---------------------------------------------------------------- open-space darkness: the room decides
+# 2026-10-20, operator: the living room "was very dark before the lights turned on".  It was occupied
+# and the FP2 read 150 lx at 16:49 and ~50 lx by 17:13, but the terrace read 1469 lx, and the
+# 2026-10-12 rule "bright outside = bright inside" held the lamps off until the terrace fell below
+# 400 lx at 17:40.  Fifty-one minutes in a dark room.  A 10-minute mean of the FP2 added more lag.
+#
+# Simplified: `Lighting living room bright` reads the FP2 itself (real time) against the indoor
+# slider, dark below it, bright above twice it, held in between.  The one-second dips the mean used
+# to absorb (83 lx for a second at 16:10) are absorbed by the helper's native delay_off (1 min);
+# delay_on (5 min) keeps a sunbeam from switching an occupied room's lamps off.  Outdoors is only
+# the fallback for a dead FP2.  `Lighting kitchen dark` is the exact inverse - one decision for one
+# open space.  The 2026-10-12 case (FP2 dim at a sunny noon) is now the slider's job, not outdoors'.
 LRB = "Lighting living room bright"
 KD = "Lighting kitchen dark"
+FP2 = "states('sensor.living_room_livingroom_fp2_light_sensor_light_level')"
+SLIDER = "states('input_number.lighting_indoor_dark_below_lux')"
+OUT_BRIGHT = "is_state('binary_sensor.lighting_daylight','on')"
+LRB_ON = "is_state('binary_sensor.living_room_bright','off')"
 
-A(sensor_case("open space: bright outside is bright inside, whatever the FP2 says", "True",
-              {OUT_BRIGHT: "true", IN_BRIGHT: "false"}, sensor=LRB,
-              finding="2026-10-12: the living room read DARK at noon with 16000 lx outside"))
-A(sensor_case("open space: dark outside and a dim FP2 is dark", "False",
-              {OUT_BRIGHT: "false", IN_BRIGHT: "false"}, sensor=LRB,
-              finding="the indoor reading must still decide at dusk"))
-A(sensor_case("open space: dark outside and a bright FP2 is bright", "True",
-              {OUT_BRIGHT: "false", IN_BRIGHT: "true"}, sensor=LRB,
-              finding="lamps or a lit kitchen must still read as light; outdoors must not be the only vote"))
-A(sensor_case("open space: kitchen is not dark when it is bright outside", "False",
-              {OUT_BRIGHT: "true", IN_DARK: "true"}, sensor=KD,
-              finding="2026-10-12: gallery and beam would light at noon"))
-A(sensor_case("open space: kitchen is dark when both are dark", "True",
-              {OUT_BRIGHT: "false", IN_DARK: "true"}, sensor=KD,
-              finding="the kitchen still lights its accents in the evening"))
-A(sensor_case("open space: kitchen is not dark when the FP2 is in its hysteresis band", "False",
-              {OUT_BRIGHT: "false", IN_DARK: "false"}, sensor=KD,
-              finding="the indoor sensor's own hysteresis must be respected"))
+
+def _lr(expect, lux, slider, was, out="false", finding=""):
+    A(sensor_case("open space: FP2 %s, slider %s, was %s, outdoor %s" % (lux, slider, was, out),
+                  expect, {FP2: repr(lux), SLIDER: repr(slider), WAS: repr(was), OUT_BRIGHT: out},
+                  sensor=LRB, finding=finding))
+
+
+_lr("False", "80", "150", "on", out="true",
+    finding="2026-10-20: a dark room is dark, however bright the terrace (51 min of darkness)")
+_lr("True", "301", "150", "off", finding="just above twice the slider is bright")
+_lr("False", "300", "150", "off", finding="the upper edge is exclusive")
+_lr("True", "299", "150", "on", finding="held: a bright room stays bright inside the band")
+_lr("False", "299", "150", "off", finding="held: a dark room stays dark inside the band")
+_lr("False", "149", "150", "on", finding="just below the slider is dark")
+_lr("True", "150", "150", "on", finding="the lower edge is exclusive")
+_lr("True", "250", "100", "off", finding="the slider moves the edge: 250 is bright above 2x100")
+_lr("False", "250", "300", "off", finding="and the other way: 250 is inside the band at 300")
+_lr("True", "301", "unavailable", "off", finding="a missing slider falls back to 150")
+_lr("False", "250", "0", "off",
+    finding="a slider at 0 is not a threshold of 0 (new helpers start at the minimum)")
+_lr("True", "unavailable", "150", "off", out="true",
+    finding="a dead FP2 by day defers to outdoors: no lamps at noon")
+_lr("False", "unknown", "150", "on", out="false",
+    finding="a dead FP2 at dusk defers to outdoors: the lamps may come on")
+_lr("False", "0", "150", "on", finding="0 lx is a reading, not a dead sensor")
+_lr("False", "250", "150", "unknown", finding="a first evaluation inside the band starts dark")
+
+A(sensor_case("open space: the kitchen is dark when the living room is not bright", "True",
+              {LRB_ON: "true"}, sensor=KD, finding="2026-10-20: one decision for one open space"))
+A(sensor_case("open space: the kitchen is not dark when the living room is bright", "False",
+              {LRB_ON: "false"}, sensor=KD, finding="gallery and beam stay off by day"))
 
 
 # ---------------------------------------------------------------- any safety alarm (Home: Needs attention)
@@ -1315,50 +1379,46 @@ A(sensor_case("safety: the roll-up never counts itself", "False",
               sensor=SAFE, finding="a roll-up in its own class would latch on forever"))
 
 
-# ---------------------------------------------------------------- the indoor level is a slider
-# 2026-10-12, operator: "it's overhead to change code to adjust such values".  The FP2's 10-minute mean
-# is judged against ONE number, `input_number.lighting_indoor_dark_below_lux` (admin panel): dark below
-# it, bright above TWICE it, held in between - the same rule as the outdoor sensor.  150 lx is the
-# default and the fallback, which reproduces the old 150/300 thresholds.  A new input_number starts at
-# its MINIMUM, so a slider that is missing, unavailable or <= 0 must fall back, not mean "always bright".
-# Every pair straddles: changing the slider must change the verdict at the same reading.
-IND_B = "Lighting indoor bright"
-IND_D = "Lighting indoor dark"
-FP2_MEAN = "states('sensor.living_room_light_level')"
-SLIDER = "states('input_number.lighting_indoor_dark_below_lux')"
+# ---------------------------------------------------------------- the hallway gets a darkness gate
+# 2026-10-20, operator: the upstairs hallway lit "even when it's a lot of sun outside and in the room".
+# It had no dark entity (Magic Areas then assumes dark around the clock).  It now gets the living-room
+# rule on its OWN sensor, the FP300's lux, against `input_number.lighting_hallway_dark_below_lux`:
+# dark below it, bright above TWICE it, held in between.  The 2026-10-12 objection - the sensor sits
+# near the bulb - is measured, not assumed: the lamp adds 10-20 lx at the sensor (06:27 0->11,
+# 17:39 12->32), so with the band at 2x a floor of 20 lx the lamp cannot carry a dark hallway
+# across the upper edge and have Magic Areas switch it off under someone.  The floor is in the
+# template, not only in the helper's bounds.  A dead FP300 defers to the outdoor daylight sensor.
+HW_B = "Lighting hallway bright"
+HW_LUX = "states('sensor.hallway_presence_illuminance')"
+HW_SL = "states('input_number.lighting_hallway_dark_below_lux')"
+HW_OUT = "is_state('binary_sensor.lighting_daylight','on')"
 
 
-def _ind(sensor, expect, mean, slider, was, finding):
-    A(sensor_case("indoor %s: mean %s, slider %s, was %s" % (sensor.split()[-1], mean, slider, was),
-                  expect, {FP2_MEAN: repr(mean), SLIDER: repr(slider), WAS: repr(was)},
-                  sensor=sensor, finding=finding))
+def _hw(expect, lux, slider, was, out="false", finding=""):
+    A(sensor_case("hallway: lux %s, slider %s, was %s, outdoor %s" % (lux, slider, was, out),
+                  expect, {HW_LUX: repr(lux), HW_SL: repr(slider), WAS: repr(was), HW_OUT: out},
+                  sensor=HW_B, finding=finding))
 
 
-_ind(IND_B, "True", "301", "150", "off", "2026-10-12: just above twice the slider is bright")
-_ind(IND_B, "False", "300", "150", "off", "the upper edge is exclusive")
-_ind(IND_B, "True", "299", "150", "on", "held: a bright room stays bright inside the band")
-_ind(IND_B, "False", "299", "150", "off", "held: a dark room stays dark inside the band")
-_ind(IND_B, "False", "149", "150", "on", "just below the slider is dark")
-_ind(IND_B, "True", "150", "150", "on", "the lower edge is exclusive")
-_ind(IND_B, "True", "250", "100", "off", "the slider moves the edge: 250 is bright above 2x100")
-_ind(IND_B, "False", "250", "300", "off", "and the other way: 250 is inside the band at 300")
-_ind(IND_B, "True", "301", "unavailable", "off", "a missing slider falls back to 150")
-_ind(IND_B, "False", "250", "0", "off", "a slider at 0 is not a threshold of 0 (new helpers start at the minimum)")
-_ind(IND_B, "False", "250", "-5", "off", "a negative slider falls back too")
-_ind(IND_B, "False", "unavailable", "150", "on", "a dead FP2 is not evidence of light: the lamps may come on")
-_ind(IND_B, "False", "0", "150", "on", "0 lx is a reading")
-_ind(IND_B, "False", "250", "150", "unknown", "a first evaluation inside the band starts dark")
-
-_ind(IND_D, "True", "149", "150", "off", "just below the slider is dark")
-_ind(IND_D, "False", "151", "150", "off", "held: not dark stays not dark inside the band")
-_ind(IND_D, "True", "151", "150", "on", "held: dark stays dark inside the band")
-_ind(IND_D, "False", "301", "150", "on", "above twice the slider is not dark")
-_ind(IND_D, "True", "300", "150", "on", "the upper edge is exclusive")
-_ind(IND_D, "False", "120", "100", "off", "the slider moves the edge: 120 is inside the band at 100")
-_ind(IND_D, "True", "120", "150", "off", "and with the default it is dark")
-_ind(IND_D, "True", "149", "unavailable", "off", "a missing slider falls back to 150")
-_ind(IND_D, "False", "unavailable", "150", "on", "a dead FP2 leaves the kitchen's accents off")
-_ind(IND_D, "False", "151", "150", "unknown", "a first evaluation inside the band starts not-dark")
+_hw("True", "61", "30", "off", finding="2026-10-20: just above twice the slider is bright")
+_hw("False", "60", "30", "off", finding="the upper edge is exclusive")
+_hw("True", "59", "30", "on", finding="held: a bright hallway stays bright inside the band")
+_hw("False", "59", "30", "off", finding="held: a dark hallway stays dark inside the band")
+_hw("False", "29", "30", "on", finding="just below the slider is dark")
+_hw("True", "30", "30", "on", finding="the lower edge is exclusive")
+_hw("False", "49", "30", "off",
+    finding="the lamp itself (+20 lx on a 29 lx hallway) does not make it bright")
+_hw("True", "250", "100", "off", finding="the slider moves the edge: 250 is bright above 2x100")
+_hw("False", "150", "100", "off", finding="and 150 is inside the band at 100")
+_hw("True", "61", "unavailable", "off", finding="a missing slider falls back to 30")
+_hw("False", "35", "10", "off",
+    finding="a slider under the 20 lx floor is raised to it: at 10 the lamp alone would read bright")
+_hw("True", "unavailable", "30", "off", out="true",
+    finding="a dead FP300 by day defers to outdoors: no lamp at noon")
+_hw("False", "unknown", "30", "on", out="false",
+    finding="a dead FP300 at night defers to outdoors: the lamp may come on")
+_hw("False", "0", "30", "on", finding="0 lx is a reading, not a dead sensor")
+_hw("False", "45", "30", "unknown", finding="a first evaluation inside the band starts dark")
 
 
 # ---------------------------------------------------------------- batteries and lights left on
@@ -1430,6 +1490,12 @@ A(sensor_case("left on: a lamp that is on is named by entity id", "light.lamp",
 A(sensor_case("left on: a group light is skipped, its members are listed", "light.gallery_left",
               _left(_light("light.gallery", "on", group=True), _light("light.gallery_left", "on")),
               sensor=LEFT, finding="a group would list every lamp twice and turn it off twice"))
+A(sensor_case("left on: a Zigbee2MQTT group is skipped, its bulbs are listed", "light.lr1",
+              _left({"entity_id": "light.living_room_main", "state": "on",
+                     "attributes": {"group_entities": ["light.lr1"]}},
+                    _light("light.lr1", "on")), sensor=LEFT,
+              finding="2026-10-14: Living Room Main and Gallery became Zigbee groups, which list "
+                      "members as group_entities, not entity_id - each lamp was named twice"))
 A(sensor_case("left on: a switch LED is an indicator", "none",
               _left(_light("light.rack_switch_led", "on")), sensor=LEFT,
               finding="UniFi switch LEDs are always on and are not lighting"))
@@ -1780,9 +1846,14 @@ def plan(name, expect, src, a_now, e_now, prev="armed_home", a_next=None, findin
 
 
 OP = "2026-10-13 operator: one automation syncs both ways"
+# Operator, 2026-10-15, after the first live run: Stay on the panel went off seconds after arming,
+# so until the panel's Stay zones are set up the sync carries Away only. Home and Night ask nothing
+# of the panel except that it is not in Away; a panel disarmed or in a keypad Stay satisfies them.
+# An explicit Disarm on Alarmo still disarms the panel.
+AWAY_ONLY = "2026-10-15 operator: sync only Away; everything else is disarm (Stay went off on arming)"
 # Alarmo moved (the HA interface, the night schedule, a leak).
-A(plan("Home on Alarmo arms the panel in Stay", "arm_panel", "alarmo", "armed_home", "disarmed",
-       prev="disarmed", finding=OP))
+A(plan("Home on Alarmo leaves a disarmed panel alone", "none", "alarmo", "armed_home", "disarmed",
+       prev="disarmed", finding=AWAY_ONLY))
 A(plan("Away with an exit delay arms the panel at once", "arm_panel", "alarmo", "arming",
        "armed_home", a_next="armed_away", finding="the panel runs its own exit delay"))
 A(plan("the panel's own echo is not sent back", "none", "alarmo", "armed_night", "armed_night",
@@ -1791,7 +1862,7 @@ A(plan("a panel still in its exit delay is not re-commanded", "none", "alarmo", 
        "arming", prev="arming", finding="Alarmo's 60 s exit delay ends while the panel's runs on"))
 A(plan("disarming during the panel's exit delay cancels it", "disarm_panel", "alarmo", "disarmed",
        "arming", prev="arming", finding="'arming' is in progress, not done"))
-A(plan("an offline panel fails the arm", "fail", "alarmo", "armed_home", "unavailable",
+A(plan("an offline panel fails the arm", "fail", "alarmo", "armed_away", "unavailable",
        prev="disarmed", finding="2026-10-13 operator: if EVO fails to arm, Alarmo fails too"))
 A(plan("a leak on Alarmo triggers the panel", "panic", "alarmo", "triggered", "disarmed",
        prev="disarmed", finding="2026-10-13 operator: leaks trigger both alarms"))
@@ -1805,7 +1876,9 @@ A(plan("Alarmo's entry delay is not a command", "none", "alarmo", "pending", "ar
 # The panel moved (the keypad, or the panel itself).
 A(plan("Away on the keypad arms Alarmo away", "arm_alarmo", "evo", "armed_home", "armed_away",
        finding="2026-10-13 operator: leaving = arm EVO away, the house follows"))
-A(plan("a keypad disarm disarms Alarmo", "disarm_alarmo", "evo", "armed_night", "disarmed",
+A(plan("a keypad disarm leaves a Night house alone", "none", "evo", "armed_night", "disarmed",
+       finding=AWAY_ONLY))
+A(plan("a keypad disarm after Away disarms Alarmo", "disarm_alarmo", "evo", "armed_away", "disarmed",
        finding=OP))
 A(plan("the panel going off triggers Alarmo", "trigger_alarmo", "evo", "armed_home", "triggered",
        finding=OP))
@@ -1815,18 +1888,15 @@ A(plan("the panel's exit delay is not mirrored", "none", "evo", "armed_home", "a
        finding="wait for the settled state"))
 A(plan("an offline panel changes nothing", "none", "evo", "armed_night", "unavailable",
        finding="PAI dropping off must not disarm the house"))
-A(plan("after a restart Alarmo follows the panel", "arm_alarmo", "start", "armed_home",
-       "armed_night", prev="none", finding="the physical panel is the truth"))
+A(plan("after a restart Alarmo follows a panel in Away", "arm_alarmo", "start", "armed_home",
+       "armed_away", prev="none", finding="the physical panel is the truth"))
 A(plan("Alarmo arming toward the panel's state is left alone", "none", "evo", "arming",
        "armed_away", a_next="armed_away", finding="no re-arm that would restart Alarmo's delay"))
 
 A(sync("what Alarmo is arming toward is what it wants", "want", "armed_away",
        dict(a_now="arming", a_next="armed_away"), "Alarmo's state is 'arming' during an exit delay"))
-A(sync("Night is Stay on the panel", "panel_cmd", "arm_stay", dict(want="armed_night"),
-       "2026-10-13 operator: home and night both mean Stay on the EVO (no nightly mode switch, "
-       "entry delay kept); PAI's arm_sleep does not exist on an EVO"))
-A(sync("Home is Stay", "panel_cmd", "arm_stay", dict(want="armed_home"),
-       "2026-10-13 operator: armed home = stay on EVO"))
+A(sync("Night is disarm on the panel", "panel_cmd", "disarm", dict(want="armed_night"), AWAY_ONLY))
+A(sync("Home is disarm on the panel", "panel_cmd", "disarm", dict(want="armed_home"), AWAY_ONLY))
 A(sync("Away is a full arm", "panel_cmd", "arm", dict(want="armed_away"), OP))
 A(sync("Disarm is disarm", "panel_cmd", "disarm", dict(want="disarmed"), OP))
 A(sync("a keypad Night arms Alarmo night", "follow_mode", "night", dict(e_now="armed_night"), OP))
@@ -1907,7 +1977,9 @@ A(retry("no retry when the panel left the old mode some other way", "False", "ar
 A(plan("a disarm with the panel offline is honoured", "disarm_offline", "alarmo", "disarmed",
        "unavailable", prev="armed_away",
        finding="review 2026-10-13 F2: never re-arm the house against an explicit disarm"))
-A(plan("arming with the panel offline still fails", "fail", "alarmo", "armed_night", "unknown",
+A(plan("Night with the panel offline changes nothing", "none", "alarmo", "armed_night", "unknown",
+       prev="armed_home", finding=AWAY_ONLY + " - the 22:00 edge must not fail the house"))
+A(plan("Away with the panel offline still fails", "fail", "alarmo", "armed_away", "unknown",
        prev="armed_home", finding="2026-10-13 operator: if EVO fails to arm, Alarmo fails too"))
 A(plan("a restart with PAI not back yet changes nothing", "none", "start", "armed_night",
        "unavailable", prev="none",
@@ -1922,14 +1994,37 @@ A(plan("22:00 Night does not touch a panel already in Stay", "none", "alarmo", "
        "armed_home", prev="armed_home", finding=NIGHT))
 A(plan("a panel in Stay does not pull a Night house back to Home", "none", "evo", "armed_night",
        "armed_home", finding=NIGHT + " - the echo that would undo night every evening"))
-A(plan("Night from a disarmed panel arms it (in Stay)", "arm_panel", "alarmo", "armed_night",
-       "disarmed", prev="disarmed", finding=NIGHT))
+A(plan("Night over a disarmed panel leaves it disarmed", "none", "alarmo", "armed_night",
+       "disarmed", prev="armed_home", finding=AWAY_ONLY))
 A(plan("Stay on the keypad from Disarmed is Home", "arm_alarmo", "evo", "disarmed", "armed_home",
        finding="Stay alone does not mean night"))
 A(plan("06:00 Home over a panel in Stay is a no-op", "none", "alarmo", "armed_home", "armed_home",
        prev="armed_night", finding=NIGHT))
-A(sync("Night is satisfied by Stay or a keypad Sleep", "ok_states", "['armed_night', 'armed_home']",
-       dict(want="armed_night"), NIGHT))
+A(sync("Night is satisfied by any panel state but Away", "ok_states",
+       "['disarmed', 'armed_home', 'armed_night']", dict(want="armed_night"), AWAY_ONLY))
+A(sync("Home is satisfied by any panel state but Away", "ok_states",
+       "['disarmed', 'armed_home', 'armed_night']", dict(want="armed_home"), AWAY_ONLY))
+A(sync("Disarm is satisfied by a disarmed panel only", "ok_states", "['disarmed']",
+       dict(want="disarmed"), "an explicit disarm disarms a keypad Stay too"))
+# 2026-10-15: leaving Away is the only time Home or Night commands the panel.
+A(plan("Home from Away disarms the panel", "disarm_panel", "alarmo", "armed_home", "armed_away",
+       prev="armed_away", finding=AWAY_ONLY))
+A(plan("Night from Away disarms the panel", "disarm_panel", "alarmo", "armed_night", "armed_away",
+       prev="armed_away", finding=AWAY_ONLY))
+A(plan("Home after Away with the panel offline tells the adults", "disarm_offline", "alarmo",
+       "armed_home", "unavailable", prev="armed_away",
+       finding=AWAY_ONLY + " - an armed panel nobody could disarm is waiting at the door"))
+A(plan("Night after Away with the panel offline tells the adults", "disarm_offline", "alarmo",
+       "armed_night", "unavailable", prev="armed_away",
+       finding=AWAY_ONLY + " - review 2026-10-15: the Night side of the same exit"))
+A(plan("Home after Night with the panel offline is silent", "none", "alarmo", "armed_home",
+       "unavailable", prev="armed_night", finding="the 06:00 edge asks nothing of the panel"))
+A(plan("an explicit Disarm still disarms a keypad Stay", "disarm_panel", "alarmo", "disarmed",
+       "armed_home", prev="armed_home", finding=AWAY_ONLY))
+A(plan("Away arms the panel", "arm_panel", "alarmo", "armed_away", "disarmed", prev="armed_home",
+       finding=AWAY_ONLY))
+A(plan("a keypad Stay under an Away house brings it Home", "arm_alarmo", "evo", "armed_away",
+       "armed_home", finding="someone is in, and armed Stay at the keypad"))
 A(sync("Away is satisfied by Away only", "ok_states", "['armed_away']", dict(want="armed_away"),
        "Stay is not Away"))
 

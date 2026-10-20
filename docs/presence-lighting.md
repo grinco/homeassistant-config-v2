@@ -14,7 +14,9 @@ control* switch is on. Only rooms with a real presence sensor take part — a ro
 |---|---|---|---|---|
 | Closet | Closet Motion (Zigbee motion) | Closet Light | none — windowless, lit at any hour | **on** (2026-10-11) |
 | Corridor | Corridor Presence (mmWave, moved from the living room 2026-10-10) | **day:** entrance + corridor light; **night:** corridor light only | none — interior | **on**. Night = Magic Areas *sleep* state from `binary_sensor.lighting_night` = the alarm in Night mode (the house's one night, set by the schedule or by hand). The front-door camera PIR is EXCLUDED: it sees the doorstep |
-| Living room | none since the mmWave moved — only TV/Shield media players | The Moon, Aurora | `lighting_daylight` | waiting for a new presence sensor (operator, 2026-10-11). Until it arrives, playing the TV after dark lights the lamps and they go off ~1 min after playback stops |
+| Living room | FP2 (zones) + kitchen motion, since 2026-10-11 | The Moon, Aurora (+ Beam Lights accent) | `living_room_bright` — the FP2 itself, real time (2026-10-20) | **on** |
+| Kitchen | FP2 zones + kitchen motion | see the 2026-10-11 and 2026-10-14 sections | accent gate `kitchen_dark` = NOT `living_room_bright` | **on** |
+| Hallway | Hallway Presence (FP300) | Hallway | `lighting_hallway_bright` — the FP300 lux (2026-10-20) | **on** |
 | Guest room | Bebecam motion/person | — | — | not wired: a baby monitor must never switch a light on |
 
 **The symptom of a room that is not set up:** Magic Areas switches its lights OFF when the room
@@ -132,6 +134,8 @@ separated by the bar", and "the current amount of light is already a little too 
 
 ### Outdoors wins; worktop and kitchen motion switch the Workarea (2026-10-12)
 
+*Outdoors-wins was removed on 2026-10-20 — see the last section.*
+
 The operator: kitchen and living room "dark" while it was bright outside. The FP2 sits in the dim
 half of the space (58–167 lx all morning against 16 000+ lx on the terrace), so a darkness judged by
 the FP2 alone called a sunny noon dark.
@@ -145,6 +149,7 @@ the FP2 alone called a sunny noon dark.
 - **Workarea** (`light.h1ab2_2`, on/off): `automation.kitchen_workarea_on_with_worktop_presence`
   turns it on when FP2 zone 6 (worktop) or `binary_sensor.kitchen_motion_occupancy` goes on. Not the
   kitchen area state, the dining-table sensor or FP2 zone 5. Off stays with Magic Areas (task group).
+  *Superseded 2026-10-14, see below: Workarea follows the counter only.*
   Not testable by the suite (actuation); the trigger entities were checked against live state.
 - Room pages open with an **Occupancy** tile (Magic Areas sensor: state and time since), tap = more-info
   with the active sensors and history. Lint C23.
@@ -153,7 +158,7 @@ the FP2 alone called a sunny noon dark.
 
 - **Hallway presence lighting.** The FP300 ("Hallway Presence", Aqara, Z2M) is the hallway's only presence
   sensor. Magic Areas: `overhead_lights` = `light.hallway`, state `occupied`, light control ON, no dark
-  entity — lit at any hour, like the corridor. A dark entity was deliberately not added: the sensor's
+  entity — lit at any hour, like the corridor (*a dark entity was added on 2026-10-20, see the last section*). A dark entity was deliberately not added: the sensor's
   lux is noisy (60–210 lx at noon) and sits near the bulb it would switch, so the lamp itself could
   read the room BRIGHT and switch it off under someone. **The bulb is on a wall switch.** With the switch
   off the bulb is `unavailable` and Home Assistant cannot light it; presence lighting only works while
@@ -164,7 +169,8 @@ the FP2 alone called a sunny noon dark.
   09:00 daily and the moment the first sensor drops under 20 %. An unavailable battery is a different
   alert and is NOT listed (a dead smoke/CO alarm battery reads unavailable today).
 - **`sensor.lighting_left_on`**: entity ids of the lights still on, `none` otherwise; group lights
-  (they carry an `entity_id` attribute) and the UniFi `*_led` indicators are skipped.
+  (Home Assistant groups carry `entity_id`, Zigbee2MQTT groups `group_entities`) and the UniFi
+  `*_led` indicators are skipped.
   `automation.lights_left_on_when_everyone_leaves`: `zone.home` below 1 for 10 minutes -> both adults'
   phones get "Still on: …" with a **Turn them off** button; the button is honoured for two hours and
   turns off whatever the sensor lists at that moment. Nothing is switched without the tap.
@@ -173,6 +179,8 @@ the FP2 alone called a sunny noon dark.
   checked by rendering their message templates against live state, never by `automation.trigger`.
 
 ### The indoor level is a slider (2026-10-12)
+
+*The slider stays; the 10-minute mean and the two indoor helpers were removed on 2026-10-20 — see the last section.*
 
 The operator: changing a light level should not need a code change. The living-room and kitchen
 darkness decision is now `binary_sensor.open_space_indoor_bright` / `_dark` (template helpers, with the
@@ -185,3 +193,82 @@ This replaced two native `threshold` helpers: those only take literal limits, so
 slider. The cost is two templates where there were two helpers; the band is no longer independent of
 the slider. The old helpers' held state was lost in the swap: inside the band a first evaluation
 starts dark / not-dark. The hallway has no darkness check and no slider.
+
+## Zigbee groups, the counter, and a Magic Areas bug (2026-10-14)
+
+- **Living Room Main and Gallery are Zigbee2MQTT groups** (ids 1 and 2), not Home Assistant groups.
+  A Home Assistant group sends one command per bulb, so the bulbs switched one after another; a
+  Zigbee group is one broadcast, so they switch together. Each took over the old entity id
+  (`light.living_room_main`, `light.gallery`), so Magic Areas, Adaptive Lighting, the dashboards and
+  Alexa needed no edits. The member bulbs are hidden.
+- **Beam Lights belong to the living room** (operator: they hang between the two rooms and the
+  living-room side is used more): living-room accent group, states occupied/extended. The kitchen's
+  dark-only accent group is Kitchen Top alone.
+- **Workarea follows the counter.** It left the kitchen task group; the counter automation turns it
+  on with FP2 zone 6 or kitchen motion and off once both have been clear for 5 minutes.
+- **Magic Areas 4.4.2 leaks listeners on reload.** Its light groups and presence sensor subscribe to
+  area-state changes without registering the unsubscribe, so every reload (any options change, and
+  every registry edit with `reload_on_registry_change`) left the previous objects running with their
+  old configuration. The kitchen had five overhead groups, one of them still turning the gallery on
+  by day after it had been set to dark-only. Fixed upstream (jseidl/magic-areas #635) but not yet
+  released; the same two-line fix is applied locally and a restart cleared the leftovers. Do not
+  re-download 4.4.2 from HACS: it would restore the bug.
+- **A bulb switched off at the wall is not an alarm.** Wall-switched bulbs read `unavailable`;
+  nothing alerts on that, by the operator's decision.
+
+## The room decides: real-time darkness with a fallback (2026-10-20)
+
+The operator: the upstairs hallway lit "even when it's a lot of sun outside and in the room", and the
+living room "was very dark before the lights turned on". Asked to simplify the set-up and use
+real-time data where there is any, with a fallback.
+
+**Why the living room stayed dark.** It was occupied and the FP2 read 150 lx at 16:49 and about 50 lx
+by 17:13 — dark by the room's own slider. The terrace still read 1469 lx, and the 2026-10-12 rule
+"bright outside is bright inside" held the lamps off until the terrace fell below 400 lx at 17:40:57.
+Fifty-one minutes in a dark room. The 10-minute mean of the FP2 would have added lag on top. The kitchen
+motion sensors (which report light only on motion or at an interval) were not involved: they had not
+fed the open space's darkness since 2026-10-11.
+
+**One rule, used by every room that has a light sensor.** A template binary sensor, *Show as: Light*
+(the only class Magic Areas accepts as a dark entity), on = bright:
+
+- the room's own lux, as reported — no statistics in between;
+- bright above TWICE the room's slider, dark below it, held in between;
+- native `delay_off` 1 min: a dip has to last a minute before lamps come on. The FP2 dips for single
+  seconds (83 lx for one second at 16:10 between readings of 220–260); the 10-minute mean used to
+  absorb that, the delay now does, without the lag;
+- native `delay_on` 5 min: Magic Areas switches an OCCUPIED room's lights off when it turns bright, so
+  a passing sunbeam must not do that;
+- the sensor dead or unknown -> outdoor `binary_sensor.lighting_daylight` decides. Outdoors is only
+  the fallback now, never an override.
+
+| room | dark entity | sensor | slider (default) |
+|---|---|---|---|
+| Living room | `binary_sensor.living_room_bright` | FP2 light level | `input_number.lighting_indoor_dark_below_lux` (150 -> bright above 300) |
+| Kitchen | accent gate `binary_sensor.kitchen_dark` = NOT `living_room_bright` | — one decision for one open space | — |
+| Hallway | `binary_sensor.lighting_hallway_bright` | FP300 illuminance | `input_number.lighting_hallway_dark_below_lux` (30 -> bright above 60) |
+| Bedroom | `binary_sensor.lighting_daylight` | outdoor (the new air-quality sensor has no lux) | `input_number.lighting_dark_below_lux` |
+
+**The hallway's 2026-10-12 objection, measured.** A dark entity was left out because the FP300 sits
+near the bulb it switches. Measured: the lamp adds 10–20 lx at the sensor (06:27 0 -> 11 lx, 17:39
+12 -> 32 lx), while the hallway reads 30–500 lx by day and the lamp had been switching on at 126–250
+lx. With the band at twice the slider, the lamp alone cannot carry a dark hallway past the upper edge.
+That only holds while the slider is at least 20 lx, so the template raises anything lower to 20 —
+the floor is in the logic, not just in the helper's bounds.
+
+**Removed:** `binary_sensor.open_space_indoor_bright` / `_dark` (folded into the two room sensors).
+`sensor.living_room_light_level` (the 10-minute mean) and `sensor.kitchen_light_level` are no longer
+read by anything; deleting them was left to the operator. The admin panel's *Lighting levels* section
+shows the FP2 reading live and has the hallway slider and reading.
+
+**Accepted:** a closed-curtain afternoon now reads dark in the living room (the FP2 sees the room as it
+is), so the lamps come on behind drawn curtains — that is the point of measuring indoors. The open
+space still has one light sensor; when it dies, outdoors decides for both halves.
+
+Tests: `tests/climate/cases.py` — *open space:* and *hallway:* cases straddle both edges, the held band
+in both directions, the slider moving the edge, a missing or too-low slider, the dead-sensor fallback
+by day and by night, and the 17:40 case itself (FP2 80 lx, terrace bright -> dark). `mutate.py`
+reintroduces outdoors-wins, the missing floor, no hysteresis, a dead sensor reading dark, an ignored
+slider and a kitchen that stops mirroring; each is caught by a case failing on its value. The delays
+are native helper options and are not reachable by the suite; they were read back from the live
+config entries.
