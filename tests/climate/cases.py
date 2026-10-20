@@ -1424,7 +1424,10 @@ _hw("False", "45", "30", "unknown", finding="a first evaluation inside the band 
 # ---------------------------------------------------------------- batteries and lights left on
 # 2026-10-12.  Two roll-ups that feed notifications.  `Any low battery` lists the house's battery
 # sensors under 20 % so a leak sensor at 15 % is not found by it failing.  Phones, the car and the
-# robot vacuums are charged by people, not replaced, so they are skipped by integration.
+# robot vacuums are charged by people, not replaced, so they are skipped: phones and the car by
+# integration, vacuums by DEVICE - every entity of a device that has a `vacuum.*`.  Audit 2026-10-20:
+# the Roborock is also bridged over Matter, and that copy of its battery belongs to no `roborock`
+# entry, so skipping by integration would nag about the vacuum the day it ran low.
 # `Lighting left on` lists the lights still on when everyone has left.  Group lights (they carry an
 # `entity_id` attribute: Magic Areas, Gallery) would list every lamp twice, and the UniFi switch
 # LEDs are indicators, not lighting.  Both answer `none` when there is nothing to say, never "".
@@ -1434,7 +1437,8 @@ ALL_S = "states.sensor"
 ALL_L = "states.light"
 SKIP_MA = "integration_entities('mobile_app')"
 SKIP_VO = "integration_entities('volvo')"
-SKIP_RO = "integration_entities('roborock')"
+SKIP_VAC = ("states.vacuum | map(attribute='entity_id') | map('device_id') | reject('none') "
+            "| map('device_entities') | sum(start=[])")
 
 
 def _bat(eid, state, name=None):
@@ -1442,9 +1446,9 @@ def _bat(eid, state, name=None):
             "attributes": {"device_class": "battery", "friendly_name": name or eid}}
 
 
-def _lowb(*sensors, skip_ma=(), skip_vo=(), skip_ro=()):
+def _lowb(*sensors, skip_ma=(), skip_vo=(), skip_vac=()):
     return {ALL_S: repr(list(sensors)), SKIP_MA: repr(list(skip_ma)), SKIP_VO: repr(list(skip_vo)),
-            SKIP_RO: repr(list(skip_ro))}
+            SKIP_VAC: "(%r)" % list(skip_vac)}
 
 
 A(sensor_case("battery: a sensor under 20 % is named with its level", "Leak 15%",
@@ -1464,12 +1468,27 @@ A(sensor_case("battery: a phone at 5 % is not a replaceable battery", "none",
               sensor=LOWB, finding="phones are charged; they would nag every evening"))
 A(sensor_case("battery: the car and the vacuum are skipped too", "none",
               _lowb(_bat("sensor.car_battery", "5"), _bat("sensor.vac_battery", "5"),
-                    skip_vo=["sensor.car_battery"], skip_ro=["sensor.vac_battery"]),
+                    skip_vo=["sensor.car_battery"], skip_vac=["sensor.vac_battery"]),
               sensor=LOWB, finding="same reason, other integrations"))
+A(sensor_case("battery: the vacuum seen through Matter is skipped too", "none",
+              _lowb(_bat("sensor.robotic_vacuum_cleaner_battery", "5"),
+                    skip_vac=["vacuum.robotic_vacuum_cleaner", "sensor.robotic_vacuum_cleaner_battery"]),
+              sensor=LOWB, finding="audit 2026-10-20: the Matter bridge's copy is no roborock entity"))
+A(sensor_case("battery: a sensor on a device with no vacuum is still listed", "Leak 5%",
+              _lowb(_bat("sensor.leak_battery", "5", "Leak"),
+                    skip_vac=["vacuum.robotic_vacuum_cleaner", "sensor.robotic_vacuum_cleaner_battery"]),
+              sensor=LOWB, finding="audit 2026-10-20: the vacuum rule skips the vacuum, not Matter"))
 A(sensor_case("battery: several are listed together", "A 10%, B 3%",
               _lowb(_bat("sensor.a", "10", "A"), _bat("sensor.ok", "80", "OK"),
                     _bat("sensor.b", "3.4", "B")), sensor=LOWB,
               finding="one message, every low battery, healthy ones left out"))
+# Audit 2026-10-20: a state over 255 characters is rejected and reads `unknown`, which hides Home's
+# note exactly when the most batteries are low.  The list stops before 240 and says how many more.
+_many = [_bat("sensor.s%02d" % i, "5", "Sensor %02d" % i) for i in range(1, 31)]
+A(sensor_case("battery: a long list is cut short and says how many more",
+              ", ".join("Sensor %02d 5%%" % i for i in range(1, 18)) + " +13 more",
+              _lowb(*_many), sensor=LOWB,
+              finding="audit 2026-10-20: 30 low batteries would exceed HA's 255-character state"))
 A(sensor_case("battery: nothing low is the word none, not empty", "none",
               _lowb(_bat("sensor.a", "80")), sensor=LOWB,
               finding="an empty state reads unknown and would trigger the notification"))
@@ -1520,15 +1539,18 @@ SCHED_ON = "is_state('schedule.climate_night','on')"
 # Review 2026-10-11 (F12): while the ALARM ITSELF is unavailable/unknown (an Alarmo reload, a
 # restart) "not armed_night" is not evidence of day - the loop would compute DAY targets at night.
 # Only then does the schedule stand in.  Every case pins both reads.
-for _who, _kind, _key in (("climate", "expr", "night"), ("lights", "sensor", "Lighting night"),
-                          ("adaptive lighting", "house", "sleep_on")):
-    def _c(name, expect, alarm, sched, finding, _who=_who, _kind=_kind, _key=_key):
+# Audit 2026-10-20: the same definition is copied into every consumer (harness.NIGHT_CONSUMERS says
+# why it is not read from one helper), and the radiators' copy had no case at all.  Every copy runs
+# the same table, and wiring.py fails on a copy that is not in the list.
+for _who, _where, _key in harness.NIGHT_CONSUMERS:
+    def _c(name, expect, alarm, sched, finding, _who=_who, _where=_where, _key=_key):
         subs = {ALARM: alarm, SCHED_ON: sched}
-        if _kind == "expr":
-            return case("%s: %s" % (_who, name), _key, expect, {}, subs, finding=finding)
-        if _kind == "sensor":
+        if _where == "sensor":
             return sensor_case("%s: %s" % (_who, name), expect, subs, finding=finding, sensor=_key)
-        return dict(name="%s: %s" % (_who, name), automation="1790200000001", expr=_key,
+        if _where == harness.AUTOMATION_ID:
+            # No `automation` key: mutate.py's "expr" kind mutates this default set in place.
+            return case("%s: %s" % (_who, name), _key, expect, {}, subs, finding=finding)
+        return dict(name="%s: %s" % (_who, name), automation=_where, expr=_key,
                     expect=expect, given={}, subs=subs, finding=finding)
     A(_c("night is the alarm's night mode", "True", "'armed_night'", "false",
          "2026-10-11: the alarm is the source of truth, even outside the schedule"))

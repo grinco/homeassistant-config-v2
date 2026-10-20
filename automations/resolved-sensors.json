@@ -1,421 +1,442 @@
 {
-  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the low-battery helper. Reference only; entity ids are anonymised. NOTE on 'Any battery low': its threshold is duplicated in the dashboard card that renders the list -- the helper decides whether the card is visible, the card decides what goes in it. Change both together or the card appears saying '0 low batteries'. 2026-10-07: 'Lighting daylight' (on = bright enough, no lights) is the dark entity Magic Areas reads before switching a room's lights on; the bathroom's and shower's readings are Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's Needs attention; it excludes itself so it cannot latch. 2026-10-20: 'Lighting living room bright', 'Lighting kitchen dark' and 'Lighting hallway bright' are the dark entities Magic Areas reads for the open space and the hallway: the room's own lux in real time, with outdoor daylight only as the fallback (docs/presence-lighting.md).",
-  "entries": [
-    {
-      "domain": "min_max",
-      "title": "Indoor Temperature",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_temp_living_room",
-          "sensor.climate_temp_office",
-          "sensor.climate_temp_corridor",
-          "sensor.climate_temp_bedroom",
-          "sensor.climate_temp_kid1",
-          "sensor.climate_temp_kid2"
-        ],
-        "name": "Indoor Temperature",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
+ "entries": [
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_temp_living_room",
+     "sensor.climate_temp_office",
+     "sensor.climate_temp_corridor",
+     "sensor.climate_temp_bedroom",
+     "sensor.climate_temp_kid1",
+     "sensor.climate_temp_kid2"
+    ],
+    "name": "Indoor Temperature",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Indoor Temperature"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_humidity_living_room",
+     "sensor.climate_humidity_office",
+     "sensor.climate_humidity_corridor",
+     "sensor.climate_humidity_bedroom",
+     "sensor.climate_humidity_kid1",
+     "sensor.climate_humidity_kid2"
+    ],
+    "name": "Indoor Humidity",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Indoor Humidity"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_temp_living_room",
+     "sensor.climate_temp_office",
+     "sensor.climate_temp_corridor"
+    ],
+    "name": "Downstairs Temperature",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Downstairs Temperature"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_humidity_living_room",
+     "sensor.climate_humidity_office",
+     "sensor.climate_humidity_corridor"
+    ],
+    "name": "Downstairs Humidity",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Downstairs Humidity"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_temp_bedroom",
+     "sensor.climate_temp_kid1",
+     "sensor.climate_temp_kid2"
+    ],
+    "name": "Upstairs Temperature",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Upstairs Temperature"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.climate_humidity_bedroom",
+     "sensor.climate_humidity_kid1",
+     "sensor.climate_humidity_kid2"
+    ],
+    "name": "Upstairs Humidity",
+    "round_digits": 1.0,
+    "type": "mean"
+   },
+   "title": "Upstairs Humidity"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Any low battery",
+    "state": "{% set skip = integration_entities('mobile_app') + integration_entities('volvo') + (states.vacuum | map(attribute='entity_id') | map('device_id') | reject('none') | map('device_entities') | sum(start=[])) %}{% set ns = namespace(l=[], more=0) %}{% for s in states.sensor if s.attributes.device_class == 'battery' and s.entity_id not in skip and is_number(s.state) and (s.state | float) < 20 %}{% set item = (s.attributes.friendly_name | default(s.entity_id)) ~ ' ' ~ (s.state | float | round(0) | int) ~ '%' %}{% if (ns.l + [item]) | join(', ') | length <= 240 %}{% set ns.l = ns.l + [item] %}{% else %}{% set ns.more = ns.more + 1 %}{% endif %}{% endfor %}{{ (ns.l | join(', ') ~ (' +' ~ ns.more ~ ' more' if ns.more else '')) if ns.l else 'none' }}",
+    "template_type": "sensor"
+   },
+   "title": "Any low battery"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.living_room_livingroom_ac_power",
+     "sensor.office_guest_room_office_ac_power",
+     "sensor.master_bedroom_bedroom_ac_power",
+     "sensor.kid1_room_ac_power",
+     "sensor.kid2_room_ac_power"
+    ],
+    "name": "AC power total",
+    "round_digits": 0.0,
+    "type": "sum"
+   },
+   "title": "AC power total"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "availability": "{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(n=0) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}{%- set ents = device_entities(d) -%}\n{%- if (ents | select('match','switch\\.') | list) and not (ents | select('match','climate\\.') | list) and is_number(states(p)) -%}{%- set ns.n = ns.n + 1 -%}{%- endif -%}{%- endif -%}\n{%- endfor -%}\n{{ ns.n > 0 }}"
     },
-    {
-      "domain": "min_max",
-      "title": "Indoor Humidity",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_humidity_living_room",
-          "sensor.climate_humidity_office",
-          "sensor.climate_humidity_corridor",
-          "sensor.climate_humidity_bedroom",
-          "sensor.climate_humidity_kid1",
-          "sensor.climate_humidity_kid2"
-        ],
-        "name": "Indoor Humidity",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
+    "device_class": "power",
+    "name": "Socket power total",
+    "state": "{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(t=0, n=0) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}{%- set ents = device_entities(d) -%}\n{%- if (ents | select('match','switch\\.') | list) and not (ents | select('match','climate\\.') | list) and is_number(states(p)) -%}\n{%- set ns.t = ns.t + states(p) | float -%}{%- set ns.n = ns.n + 1 -%}\n{%- endif -%}{%- endif -%}\n{%- endfor -%}\n{{ ns.t | round(0) if ns.n else none }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "W"
+   },
+   "title": "Socket power total"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp living room",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_b5be_temperature') | float(-999) %}{% set m = states('sensor.living_room_meter_pro_co2_be_temperature') | float(-999) %}{% set f = states('sensor.living_room_livingroom_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp living room"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp office",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_5fe9_temperature') | float(-999) %}{% set m = states('sensor.meter_pro_co2_e9_temperature') | float(-999) %}{% set f = states('sensor.office_guest_room_office_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp office"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp bedroom",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set v = states('sensor.bedroom_air_quality_sensor_temperature') | float(-999) %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') %}{% set cold = (states('sensor.bedroom_trv_bedroom_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}{% if v > -900 %}{{ v | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp bedroom"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp kid1",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_228b_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_8b_temperature') | float(-999) %}{% set q = states('sensor.kid1_air_quality_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid1_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp kid1"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp kid2",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_5291_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_91_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid2_room_trv_kid2_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid2_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp kid2"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity living room",
+    "state": "{% set b = states('sensor.meter_pro_co2_b5be_humidity') | float(-1) %}{% set m = states('sensor.living_room_meter_pro_co2_be_humidity') | float(-1) %}{% set f = states('sensor.living_room_livingroom_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity living room"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity office",
+    "state": "{% set b = states('sensor.meter_pro_co2_5fe9_humidity') | float(-1) %}{% set m = states('sensor.meter_pro_co2_e9_humidity') | float(-1) %}{% set f = states('sensor.office_guest_room_office_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity office"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity bedroom",
+    "state": "{% set v = states('sensor.bedroom_air_quality_sensor_humidity') | float(-1) %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.master_bedroom_bedroom_ac_humidity') | float(-1) %}{% if v >= 0 %}{{ v | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity bedroom"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity kid1",
+    "state": "{% set b = states('sensor.indoor_outdoor_meter_228b_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_8b_humidity') | float(-1) %}{% set q = states('sensor.kid1_air_quality_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid1_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif q >= 0 %}{{ q | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity kid1"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity kid2",
+    "state": "{% set b = states('sensor.indoor_outdoor_meter_5291_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_91_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid2_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity kid2"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "problem",
+    "name": "Climate health risk",
+    "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% set c = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% if c >= 1400 %}{% set ns.risk = true %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Climate health risk"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "temperature",
+    "name": "Climate temp corridor",
+    "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_temperature') | float(-999) %}{% if p > -900 %}{{ p | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp corridor"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "availability": "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 or states('sensor.house_temperature') | float(-999) > -900 }}"
     },
-    {
-      "domain": "min_max",
-      "title": "Downstairs Temperature",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_temp_living_room",
-          "sensor.climate_temp_office",
-          "sensor.climate_temp_corridor"
-        ],
-        "name": "Downstairs Temperature",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
+    "device_class": "temperature",
+    "name": "Climate temp outdoor",
+    "state": "{% set t = states('sensor.outdoor_motion_temperature') | float(-999) %}{% set w = states('sensor.house_temperature') | float(-999) %}{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "°C"
+   },
+   "title": "Climate temp outdoor"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "humidity",
+    "name": "Climate humidity corridor",
+    "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_humidity') | float(-1) %}{% if p >= 0 %}{{ p | round(1) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "%"
+   },
+   "title": "Climate humidity corridor"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "carbon_dioxide",
+    "name": "Climate co2 living room",
+    "state": "{% set p = states('sensor.meter_pro_co2_b5be_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "ppm"
+   },
+   "title": "Climate co2 living room"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "carbon_dioxide",
+    "name": "Climate co2 office",
+    "state": "{% set p = states('sensor.meter_pro_co2_5fe9_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "ppm"
+   },
+   "title": "Climate co2 office"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "availability": "{{ states('sensor.background_radiation_cpm') | float(-1) >= 1 }}"
     },
-    {
-      "domain": "min_max",
-      "title": "Downstairs Humidity",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_humidity_living_room",
-          "sensor.climate_humidity_office",
-          "sensor.climate_humidity_corridor"
-        ],
-        "name": "Downstairs Humidity",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
+    "name": "Radiation dose rate",
+    "state": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set k = states('input_number.radiation_usv_per_cpm') | float(0.00332) %}{{ (c * k) | round(3) }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "µSv/h"
+   },
+   "title": "Radiation dose rate"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "light",
+    "name": "Lighting daylight",
+    "state": "{% set lux = states('sensor.outdoor_motion_illuminance') | float(-1) %}{% set dark = states('input_number.lighting_dark_below_lux') | float(400) %}{% set was_bright = this.state == 'on' %}{% if lux >= 0 %}{{ lux >= (dark if was_bright else dark * 2) }}{% else %}{{ (state_attr('sun.sun','elevation') | float(0)) > (6 if was_bright else 12) }}{% endif %}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Lighting daylight"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "safety",
+    "name": "Any safety alarm",
+    "state": "{{ states.binary_sensor | rejectattr('entity_id','eq','binary_sensor.any_safety_alarm') | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in',['moisture','smoke','gas','carbon_monoxide','safety']) | selectattr('state','eq','on') | list | count > 0 }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Any safety alarm"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Any safety sensor silent",
+    "state": "{% set cut = as_timestamp(now()) - 1800 %}{% set ns = namespace(l=[]) %}{% for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in',['moisture','smoke','gas','carbon_monoxide','safety']) | selectattr('state','in',['unavailable','unknown']) %}{% if not s.entity_id.startswith('binary_sensor.any_') and as_timestamp(s.last_changed, 0) < cut %}{% set ns.l = ns.l + [s.entity_id] %}{% endif %}{% endfor %}{{ ns.l | join(', ') if ns.l else 'none' }}",
+    "template_type": "sensor"
+   },
+   "title": "Any safety sensor silent"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Lighting night",
+    "state": "{% set a = states('alarm_control_panel.home') %}{{ a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Lighting night"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Lighting left on",
+    "state": "{% set ns = namespace(l=[]) %}{% for s in states.light if s.state == 'on' and s.attributes.entity_id is not defined and s.attributes.group_entities is not defined and not s.entity_id.endswith('_led') %}{% set ns.l = ns.l + [s.entity_id] %}{% endfor %}{{ ns.l | join(', ') if ns.l else 'none' }}",
+    "template_type": "sensor"
+   },
+   "title": "Lighting left on"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "delay_off": {
+      "hours": 0,
+      "minutes": 1,
+      "seconds": 0
+     },
+     "delay_on": {
+      "hours": 0,
+      "minutes": 5,
+      "seconds": 0
+     }
     },
-    {
-      "domain": "min_max",
-      "title": "Upstairs Temperature",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_temp_bedroom",
-          "sensor.climate_temp_kid1",
-          "sensor.climate_temp_kid2"
-        ],
-        "name": "Upstairs Temperature",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
+    "device_class": "light",
+    "name": "Lighting living room bright",
+    "state": "{% set t = states('input_number.lighting_indoor_dark_below_lux') %}{% set raw = states('sensor.living_room_livingroom_fp2_light_sensor_light_level') %}{% set low = (t | float) if is_number(t) and (t | float) > 0 else 150.0 %}{% if not is_number(raw) %}{{ is_state('binary_sensor.lighting_daylight','on') }}{% elif (raw | float) > 2 * low %}{{ True }}{% elif (raw | float) < low %}{{ False }}{% else %}{{ this.state == 'on' }}{% endif %}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Lighting living room bright"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Lighting kitchen dark",
+    "state": "{{ is_state('binary_sensor.living_room_bright','off') }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Lighting kitchen dark"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "delay_off": {
+      "hours": 0,
+      "minutes": 1,
+      "seconds": 0
+     },
+     "delay_on": {
+      "hours": 0,
+      "minutes": 5,
+      "seconds": 0
+     }
     },
-    {
-      "domain": "min_max",
-      "title": "Upstairs Humidity",
-      "options": {
-        "entity_ids": [
-          "sensor.climate_humidity_bedroom",
-          "sensor.climate_humidity_kid1",
-          "sensor.climate_humidity_kid2"
-        ],
-        "name": "Upstairs Humidity",
-        "round_digits": 1.0,
-        "type": "mean"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Any battery low",
-      "options": {
-        "device_class": "battery",
-        "name": "Any battery low",
-        "state": "{{ states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','battery') | rejectattr('entity_id','search','volvo') | rejectattr('state','in',['unknown','unavailable']) | map(attribute='state') | map('float', 101) | select('lt', 15) | list | count > 0 }}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "min_max",
-      "title": "AC power total",
-      "options": {
-        "entity_ids": [
-          "sensor.living_room_livingroom_ac_power",
-          "sensor.office_guest_room_office_ac_power",
-          "sensor.master_bedroom_bedroom_ac_power",
-          "sensor.kid1_room_ac_power",
-          "sensor.kid2_room_ac_power"
-        ],
-        "name": "AC power total",
-        "round_digits": 0.0,
-        "type": "sum"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Socket power total",
-      "options": {
-        "additional_options": {
-          "availability": "{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(n=0) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}{%- set ents = device_entities(d) -%}\n{%- if (ents | select('match','switch\\.') | list) and not (ents | select('match','climate\\.') | list) and is_number(states(p)) -%}{%- set ns.n = ns.n + 1 -%}{%- endif -%}{%- endif -%}\n{%- endfor -%}\n{{ ns.n > 0 }}"
-        },
-        "device_class": "power",
-        "name": "Socket power total",
-        "state": "{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(t=0, n=0) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}{%- set ents = device_entities(d) -%}\n{%- if (ents | select('match','switch\\.') | list) and not (ents | select('match','climate\\.') | list) and is_number(states(p)) -%}\n{%- set ns.t = ns.t + states(p) | float -%}{%- set ns.n = ns.n + 1 -%}\n{%- endif -%}{%- endif -%}\n{%- endfor -%}\n{{ ns.t | round(0) if ns.n else none }}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "W"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp living room",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp living room",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_b5be_temperature') | float(-999) %}{% set m = states('sensor.living_room_meter_pro_co2_be_temperature') | float(-999) %}{% set f = states('sensor.living_room_livingroom_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp office",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp office",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_5fe9_temperature') | float(-999) %}{% set m = states('sensor.meter_pro_co2_e9_temperature') | float(-999) %}{% set f = states('sensor.office_guest_room_office_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp bedroom",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp bedroom",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set v = states('sensor.bedroom_air_quality_sensor_temperature') | float(-999) %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') %}{% set cold = (states('sensor.bedroom_trv_bedroom_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}{% if v > -900 %}{{ v | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp kid1",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp kid1",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_228b_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_8b_temperature') | float(-999) %}{% set q = states('sensor.kid1_air_quality_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid1_room_trv_kid1_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid1_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp kid2",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp kid2",
-        "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set tv = states('input_number.climate_trv_sensor_offset') | float(0) %}{% set tv_eff = tv if (tv | abs) <= 3 else 0 %}{% set b = states('sensor.indoor_outdoor_meter_5291_temperature') | float(-999) %}{% set m = states('sensor.outdoor_meter_91_temperature') | float(-999) %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') %}{% set cold = (states('sensor.kid2_room_trv_kid2_room_trv_heating') | float(100)) == 0 %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_temperature') | float(-999)) if (live and cold) else -999 %}{% set f = states('sensor.kid2_room_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity living room",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity living room",
-        "state": "{% set b = states('sensor.meter_pro_co2_b5be_humidity') | float(-1) %}{% set m = states('sensor.living_room_meter_pro_co2_be_humidity') | float(-1) %}{% set f = states('sensor.living_room_livingroom_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity office",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity office",
-        "state": "{% set b = states('sensor.meter_pro_co2_5fe9_humidity') | float(-1) %}{% set m = states('sensor.meter_pro_co2_e9_humidity') | float(-1) %}{% set f = states('sensor.office_guest_room_office_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity bedroom",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity bedroom",
-        "state": "{% set v = states('sensor.bedroom_air_quality_sensor_humidity') | float(-1) %}{% set live = is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on') %}{% set p = (states('sensor.bedroom_trv_bedroom_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.master_bedroom_bedroom_ac_humidity') | float(-1) %}{% if v >= 0 %}{{ v | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity kid1",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity kid1",
-        "state": "{% set b = states('sensor.indoor_outdoor_meter_228b_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_8b_humidity') | float(-1) %}{% set q = states('sensor.kid1_air_quality_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid1_room_trv_kid1_room_trv_connectivity','on') %}{% set p = (states('sensor.kid1_room_trv_kid1_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid1_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif q >= 0 %}{{ q | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity kid2",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity kid2",
-        "state": "{% set b = states('sensor.indoor_outdoor_meter_5291_humidity') | float(-1) %}{% set m = states('sensor.outdoor_meter_91_humidity') | float(-1) %}{% set live = is_state('binary_sensor.kid2_room_trv_kid2_room_trv_connectivity','on') %}{% set p = (states('sensor.kid2_room_trv_kid2_room_trv_humidity') | float(-1)) if live else -1 %}{% set f = states('sensor.kid2_room_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif m >= 0 %}{{ m | round(1) }}{% elif p >= 0 %}{{ p | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate health risk",
-      "options": {
-        "device_class": "problem",
-        "name": "Climate health risk",
-        "state": "{% set ns = namespace(risk=false) %}{% for r in ['living_room','office','bedroom','kid1','kid2'] %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% set c = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% if h >= 65 or h < 30 or t < 16 %}{% set ns.risk = true %}{% endif %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% if (t - dp) < 3 %}{% set ns.risk = true %}{% endif %}{% endif %}{% if c >= 1400 %}{% set ns.risk = true %}{% endif %}{% endfor %}{% if states('sensor.outside_openweathermap_air_quality_index') | int(0) >= 4 %}{% set ns.risk = true %}{% endif %}{{ ns.risk }}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp corridor",
-      "options": {
-        "device_class": "temperature",
-        "name": "Climate temp corridor",
-        "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_temperature') | float(-999) %}{% if p > -900 %}{{ p | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate temp outdoor",
-      "options": {
-        "additional_options": {
-          "availability": "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 or states('sensor.house_temperature') | float(-999) > -900 }}"
-        },
-        "device_class": "temperature",
-        "name": "Climate temp outdoor",
-        "state": "{% set t = states('sensor.outdoor_motion_temperature') | float(-999) %}{% set w = states('sensor.house_temperature') | float(-999) %}{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "°C"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate humidity corridor",
-      "options": {
-        "device_class": "humidity",
-        "name": "Climate humidity corridor",
-        "state": "{% set p = states('sensor.corridor_xiaomi_air_purifier_humidity') | float(-1) %}{% if p >= 0 %}{{ p | round(1) }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "%"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate co2 living room",
-      "options": {
-        "device_class": "carbon_dioxide",
-        "name": "Climate co2 living room",
-        "state": "{% set p = states('sensor.meter_pro_co2_b5be_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "ppm"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Climate co2 office",
-      "options": {
-        "device_class": "carbon_dioxide",
-        "name": "Climate co2 office",
-        "state": "{% set p = states('sensor.meter_pro_co2_5fe9_carbon_dioxide') | float(-1) %}{% if p >= 0 %}{{ p | round(0) | int }}{% endif %}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "ppm"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Radiation dose rate",
-      "options": {
-        "additional_options": {
-          "availability": "{{ states('sensor.background_radiation_cpm') | float(-1) >= 1 }}"
-        },
-        "name": "Radiation dose rate",
-        "state": "{% set c = states('sensor.background_radiation_cpm') | float(-1) %}{% set k = states('input_number.radiation_usv_per_cpm') | float(0.00332) %}{{ (c * k) | round(3) }}",
-        "state_class": "measurement",
-        "template_type": "sensor",
-        "unit_of_measurement": "µSv/h"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Lighting daylight",
-      "options": {
-        "device_class": "light",
-        "name": "Lighting daylight",
-        "state": "{% set lux = states('sensor.outdoor_motion_illuminance') | float(-1) %}{% set dark = states('input_number.lighting_dark_below_lux') | float(400) %}{% set was_bright = this.state == 'on' %}{% if lux >= 0 %}{{ lux >= (dark if was_bright else dark * 2) }}{% else %}{{ (state_attr('sun.sun','elevation') | float(0)) > (6 if was_bright else 12) }}{% endif %}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Any safety alarm",
-      "options": {
-        "device_class": "safety",
-        "name": "Any safety alarm",
-        "state": "{{ states.binary_sensor | rejectattr('entity_id','eq','binary_sensor.any_safety_alarm') | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in',['moisture','smoke','gas','carbon_monoxide','safety']) | selectattr('state','eq','on') | list | count > 0 }}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Lighting night",
-      "options": {
-        "name": "Lighting night",
-        "state": "{% set a = states('alarm_control_panel.home') %}{{ a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) }}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Lighting living room bright",
-      "options": {
-        "device_class": "light",
-        "name": "Lighting living room bright",
-        "state": "{% set t = states('input_number.lighting_indoor_dark_below_lux') %}{% set raw = states('sensor.living_room_livingroom_fp2_light_sensor_light_level') %}{% set low = (t | float) if is_number(t) and (t | float) > 0 else 150.0 %}{% if not is_number(raw) %}{{ is_state('binary_sensor.lighting_daylight','on') }}{% elif (raw | float) > 2 * low %}{{ True }}{% elif (raw | float) < low %}{{ False }}{% else %}{{ this.state == 'on' }}{% endif %}",
-        "delay_on": {
-          "hours": 0,
-          "minutes": 5,
-          "seconds": 0
-        },
-        "delay_off": {
-          "hours": 0,
-          "minutes": 1,
-          "seconds": 0
-        },
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Lighting kitchen dark",
-      "options": {
-        "name": "Lighting kitchen dark",
-        "state": "{{ is_state('binary_sensor.living_room_bright','off') }}",
-        "template_type": "binary_sensor"
-      }
-    },
-    {
-      "domain": "template",
-      "title": "Lighting hallway bright",
-      "options": {
-        "device_class": "light",
-        "name": "Lighting hallway bright",
-        "state": "{% set t = states('input_number.lighting_hallway_dark_below_lux') %}{% set raw = states('sensor.hallway_presence_illuminance') %}{% set low = ([t | float, 20.0] | max) if is_number(t) else 30.0 %}{% if not is_number(raw) %}{{ is_state('binary_sensor.lighting_daylight','on') }}{% elif (raw | float) > 2 * low %}{{ True }}{% elif (raw | float) < low %}{{ False }}{% else %}{{ this.state == 'on' }}{% endif %}",
-        "delay_on": {
-          "hours": 0,
-          "minutes": 5,
-          "seconds": 0
-        },
-        "delay_off": {
-          "hours": 0,
-          "minutes": 1,
-          "seconds": 0
-        },
-        "template_type": "binary_sensor"
-      }
-    }
-  ]
+    "device_class": "light",
+    "name": "Lighting hallway bright",
+    "state": "{% set t = states('input_number.lighting_hallway_dark_below_lux') %}{% set raw = states('sensor.hallway_presence_illuminance') %}{% set low = ([t | float, 20.0] | max) if is_number(t) else 30.0 %}{% if not is_number(raw) %}{{ is_state('binary_sensor.lighting_daylight','on') }}{% elif (raw | float) > 2 * low %}{{ True }}{% elif (raw | float) < low %}{{ False }}{% else %}{{ this.state == 'on' }}{% endif %}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Lighting hallway bright"
+  }
+ ],
+ "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the roll-ups Home's Needs attention reads. Reference only; entity ids are anonymised. Exported by tests/dashboards/export.py. 2026-10-07: 'Lighting daylight' (on = bright enough, no lights) is the dark entity Magic Areas reads before switching a room's lights on; the bathroom's and shower's readings are Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's Needs attention; it excludes itself so it cannot latch. 2026-10-12: 'Any low battery' names every battery under 20 % that a person replaces (phones, the car and vacuums are skipped), 'Lighting left on' the lights still on; both say 'none' when there is nothing to say. 2026-10-14: 'Any safety sensor silent' names a safety sensor unavailable for 30 minutes. 2026-10-20: 'Lighting living room bright', 'Lighting kitchen dark' and 'Lighting hallway bright' are the dark entities Magic Areas reads for the open space and the hallway: the room's own lux in real time, with outdoor daylight only as the fallback (docs/presence-lighting.md). 2026-10-20: 'Any low battery' is the ONE battery list; the binary 'Any battery low' and the Home card's own copy (15 %, a volvo substring skip) are gone (lint C29). 'Lighting night' is the helper dashboards read for night; the automations keep their own copy of the same expression (tests/climate/harness.py NIGHT_CONSUMERS)."
 }

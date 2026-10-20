@@ -574,6 +574,61 @@ def m_night_from_schedule(d):
     return "C22"
 
 
+def m_night_inline(d):
+    """A card carries its own copy of today's definition of night (audit 2026-10-20)."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Automatic climate").append(
+        {"type": "markdown", "content": "{% set a = states('alarm_control_panel.home') %}{{ 'Night' if a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) else 'Day' }}"})
+    _save(d, LOV, doc)
+    return "C22"
+
+
+def m_night_schedule_by_states(d):
+    """The pre-v5.12 bug in another spelling: night from the schedule via states() ==."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Automatic climate").append(
+        {"type": "markdown", "content": "{{ 'Night' if states('schedule.climate_night') == 'on' else 'Day' }}"})
+    _save(d, LOV, doc)
+    return "C22"
+
+
+def m_battery_by_name(d):
+    """A card lists batteries by entity id instead of device class."""
+    doc = _cfg(d, LOV)
+    _needs_attention(doc)["cards"].append(
+        {"type": "markdown", "content": "{{ states.sensor | selectattr('entity_id','search','_battery$') | list | count }}"})
+    _save(d, LOV, doc)
+    return "C29"
+
+
+def m_battery_hand_computed(d):
+    """The Home note computes its own battery list again - the 15 % volvo-substring copy."""
+    doc = _cfg(d, LOV)
+    _needs_attention(doc)["cards"].append(
+        {"type": "markdown", "content": "{{ states.sensor | selectattr('attributes.device_class','eq','battery') | rejectattr('entity_id','search','volvo') | map(attribute='state') | map('float', 101) | select('lt', 15) | list | count }}"})
+    _save(d, LOV, doc)
+    return "C29"
+
+
+def m_battery_gate_dropped(d):
+    """Needs attention no longer opens for a low battery: the 2026-10-20 leak sensor at 15 %."""
+    doc = _cfg(d, LOV)
+    gate = _needs_attention(doc)["visibility"][0]["conditions"]
+    gate[:] = [c for c in gate if c.get("entity") != "sensor.any_low_battery"]
+    _save(d, LOV, doc)
+    return "C29"
+
+
+def m_battery_note_ungated(d):
+    """The note renders whenever the section is open, saying 'none' under a smoke alarm."""
+    doc = _cfg(d, LOV)
+    for c in _needs_attention(doc)["cards"]:
+        if "sensor.any_low_battery" in json.dumps(c):
+            c.pop("visibility", None)
+    _save(d, LOV, doc)
+    return "C29"
+
+
 def _occ_cards(v):
     return [c for sec in v["sections"] for c in sec["cards"]
             if c.get("type") == "custom:auto-entities"
@@ -648,6 +703,12 @@ def m_home_four_columns(d):
 MUTATIONS = [
     ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
     ("a card computes night from the schedule", m_night_from_schedule),
+    ("a card carries its own copy of night", m_night_inline),
+    ("night from the schedule in another spelling", m_night_schedule_by_states),
+    ("a card lists batteries by entity id", m_battery_by_name),
+    ("the battery note computes its own list", m_battery_hand_computed),
+    ("Needs attention ignores a low battery", m_battery_gate_dropped),
+    ("the battery note is shown without a battery", m_battery_note_ungated),
     ("Needs attention gate becomes AND", m_safety_gate_and),
     ("Needs attention gates on the roll-up being off", m_safety_gate_wrong_state),
     ("a safety sensor is hand-listed in Needs attention", m_safety_hand_listed),

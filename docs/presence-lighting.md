@@ -164,8 +164,14 @@ the FP2 alone called a sunny noon dark.
   off the bulb is `unavailable` and Home Assistant cannot light it; presence lighting only works while
   the switch is left ON (manual control then needs a battery button/dimmer, or a relay behind the switch).
 - **`sensor.any_low_battery`**: names every battery sensor under 20 % (state `none` when there is
-  nothing to say). Phones (`mobile_app`), the car (`volvo`) and the vacuums (`roborock`) are skipped by
-  integration: they are charged, not replaced. `automation.battery_watchdog` notifies Vadim's phone at
+  nothing to say). Phones (`mobile_app`) and the car (`volvo`) are skipped by
+  integration, and the vacuums by device (every entity of a device that has a `vacuum.*`): they are
+  charged, not replaced. *Audit 2026-10-20: the Roborock is also bridged over Matter, and that copy of
+  its battery belongs to no `roborock` entry, so skipping it by integration missed it.* This is the
+  only battery list: Home's Needs attention opens on it and renders it (lint C29). The binary
+  `Any battery low` and the card's own copy (15 %, a `volvo` substring skip) were retired the same
+  day, after a leak sensor at 15 % was named by this sensor and hidden on Home. The list stops before 240
+  characters and ends `+N more`: Home Assistant rejects a longer state, and `unknown` would hide the note. `automation.battery_watchdog` notifies Vadim's phone at
   09:00 daily and the moment the first sensor drops under 20 %. An unavailable battery is a different
   alert and is NOT listed (a dead smoke/CO alarm battery reads unavailable today).
 - **`sensor.lighting_left_on`**: entity ids of the lights still on, `none` otherwise; group lights
@@ -174,6 +180,9 @@ the FP2 alone called a sunny noon dark.
   `automation.lights_left_on_when_everyone_leaves`: `zone.home` below 1 for 10 minutes -> both adults'
   phones get "Still on: …" with a **Turn them off** button; the button is honoured for two hours and
   turns off whatever the sensor lists at that moment. Nothing is switched without the tap.
+  *(2026-10-14: that automation was folded into House — everyone left,
+  `automations/house-everyone-left.json`, which carries the same list in its one note. The battery
+  watchdog is exported as `automations/battery-watchdog.json`.)*
 - Not reachable by tests: the notifications and the button. Both roll-ups' expressions are covered in
   tests/climate (`battery:` and `left on:` cases, mutations in mutate.py); the automations were
   checked by rendering their message templates against live state, never by `automation.trigger`.

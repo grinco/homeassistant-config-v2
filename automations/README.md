@@ -24,6 +24,33 @@ Two rules for whoever does it:
 - **Verify by canary**, not by eye. Count those words before and after; if any count changed,
   the replacement was too greedy. Then grep the result for the originals and expect zero hits.
 
+## Run modes
+
+Three overload strategies are used, on purpose, and each follows from what a run does:
+
+- **`single`, `max_exceeded: silent`: the climate loop.** Every run re-reads the whole house
+  and decides from scratch, so a trigger that lands during a run loses nothing: the next state
+  change or the 10-minute tick decides the same thing. Runs take about 0.1 s (traces,
+  2026-10-20), and the only waits are the per-room preset `wait_template`s, 10 s each with
+  `continue_on_timeout`, so even the worst case is under a minute and cannot swallow a tick.
+  `silent` keeps the log free of a warning for an event that is not a fault.
+- **`queued`: the alarm sync, Away, the night mode and the radiators.** Each run acts on a
+  *transition* (an arm, an edge of the schedule, a target change), and a dropped transition
+  is a missed command. Queued runs re-read live state at the start, so a queued echo of the
+  automation's own write does nothing. The alarm sync allows 25 and warns when that is
+  exceeded, because a queue that deep means two systems are writing to each other in a loop,
+  which is a fault worth a log line.
+- **`restart`: the purifier and everyone-left.** A newer trigger replaces the older run's
+  intent: a new litter-box visit restarts the 30-minute run, and someone arriving cuts short
+  the run that is still waiting for the Arm Away button, so the arrival can clear the offer.
+  Stacking those would give two runs fighting over one purifier or one notification.
+
+## `battery-watchdog.json`
+
+Sends `sensor.any_low_battery` (in `resolved-sensors.json`) to one adult's phone at 09:00, and
+again the moment the list stops being `none`. All the logic is in the sensor, which is also what
+Home's Needs attention shows, so the notification and the dashboard cannot disagree.
+
 ## `house-alarm-sync.json`
 
 Keeps Alarmo (`alarm_control_panel.home`) and the Paradox EVO192 panel (through the Paradox Alarm

@@ -148,6 +148,16 @@ BUGS = [
   lambda t: t.replace("integration_entities('mobile_app') + ", "")),
  ("battery: the car is listed", "sensor", "Any low battery",
   lambda t: t.replace(" + integration_entities('volvo')", "")),
+ ("battery: the vacuum is skipped by integration again (Matter copy listed)", "sensor",
+  "Any low battery",
+  lambda t: t.replace("(states.vacuum | map(attribute='entity_id') | map('device_id') | reject('none') "
+                      "| map('device_entities') | sum(start=[]))", "integration_entities('roborock')")),
+ ("battery: the vacuum rule skips every sensor", "sensor", "Any low battery",
+  lambda t: t.replace("s.entity_id not in skip", "s.entity_id not in skip and false")),
+ ("battery: the list is no longer capped (255-character state reads unknown)", "sensor",
+  "Any low battery", lambda t: t.replace("| length <= 240", "| length <= 100000")),
+ ("battery: the cut is silent (no '+N more')", "sensor", "Any low battery",
+  lambda t: t.replace("(' +' ~ ns.more ~ ' more' if ns.more else '')", "''")),
  ("battery: nothing low renders empty", "sensor", "Any low battery",
   lambda t: t.replace("else 'none'", "else ''")),
  ("battery: an unavailable sensor is read as a number", "sensor", "Any low battery",
@@ -200,6 +210,11 @@ BUGS = [
   lambda t: t.replace("a == 'armed_night'", "a == 'armed_home'"), "1790200000001"),
  ("house: Adaptive Lighting loses the unavailable-alarm fallback", "expr2", "sleep_on",
   lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", ""), "1790200000001"),
+ # Audit 2026-10-20: the radiators' copy of night had no case at all.
+ ("radiators: night is inverted", "expr2", "night",
+  lambda t: t.replace("a == 'armed_night'", "a == 'armed_home'"), "1790300000001"),
+ ("radiators: lose the unavailable-alarm fallback", "expr2", "night",
+  lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", ""), "1790300000001"),
  ("house: the sleep-switch finder takes every Adaptive Lighting switch", "expr2", "sleep_switches",
   lambda t: t.replace("_.*_sleep_mode$", "_"), "1790200000001"),
  # 2026-10-13: the Alarmo <-> EVO192 sync. Each is a way to arm the wrong thing, loop, or lie.

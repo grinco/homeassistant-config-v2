@@ -125,7 +125,10 @@ Checks, each one written because something it catches actually shipped:
                          OR alarm". Since 2026-10-11 the alarm's armed_night IS
                          night; the schedule only moves the alarm. A card still
                          reading the schedule says "Night targets" after the
-                         operator switched to day by hand.
+                         operator switched to day by hand. Nor the current way
+                         inline: a card that needs night reads
+                         `binary_sensor.lighting_night` (audit 2026-10-20 found two
+                         Climate cards carrying their own copy).
   C23 occupancy-shown    every room page opens with a tile for the room's Magic
                          Areas occupancy sensor (`device_class: occupancy`), and
                          tapping it opens the sensor's own details (more-info:
@@ -161,6 +164,13 @@ Checks, each one written because something it catches actually shipped:
                          `none`), and a card in it names which. The corridor smoke/CO
                          alarm was unavailable for two days and nothing said so: the
                          roll-up rightly ignores an unavailable alarm (2026-10-14).
+  C29 one-battery-list   Home's low-battery note opens when `sensor.any_low_battery`
+                         names a battery and renders that sensor; no card on the
+                         household dashboard computes its own battery list. Until
+                         2026-10-20 the card and a binary helper each carried a
+                         15 % copy with a `volvo` substring skip while the sensor
+                         said 20 % by integration: a leak sensor at 15 % was named
+                         by the sensor and hidden on Home.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -234,6 +244,11 @@ ENV_ID_RE = re.compile(r"_voc_index$")
 SAFETY_CLASSES = ("moisture", "smoke", "gas", "carbon_monoxide", "safety")
 SILENT_ROLLUP = "sensor.any_safety_sensor_silent"
 SAFETY_ROLLUP = "binary_sensor.any_safety_alarm"
+# C29: the one list of batteries to replace.
+BATTERY_ROLLUP = "sensor.any_low_battery"
+BATTERY_LIST_RE = re.compile(r"device_class['\"]?\s*(?:,\s*['\"]eq['\"]\s*,|==)\s*['\"]battery['\"]")
+# C22: a template that defines night itself, rather than reading the helper.
+NIGHT_HELPER = "binary_sensor.lighting_night"
 
 # Sections that list devices and must therefore be generated (C13):
 # (dashboard, view path, first heading of the section, or None for every section).
@@ -461,6 +476,11 @@ def generated(view):
 def resources():
     with io.open(os.path.join(STORAGE, "lovelace_resources"), encoding="utf-8") as fh:
         return " ".join(r["url"] for r in json.load(fh)["data"]["items"])
+
+
+def own_text(card):
+    """A card's own configuration as JSON, without the cards nested inside it."""
+    return json.dumps({k: v for k, v in card.items() if k not in ("cards", "card", "sections", "views")})
 
 
 def cards(node, path="", out=None):
@@ -1108,12 +1128,44 @@ def main():
             if silent:
                 fail("C28", "%s: a dead safety sensor would go unmentioned" % label, silent)
 
+            # C29 - one list of low batteries, said on Home.
+            bat = []
+            low = {"condition": "state", "entity": BATTERY_ROLLUP,
+                   "state_not": ["none", "unavailable", "unknown"]}
+            for sec in na:
+                vis = sec.get("visibility") or []
+                shown = [c for c in vis if c == low] + [
+                    b for c in vis if c.get("condition") == "or" and len(vis) == 1
+                    for b in (c.get("conditions") or []) if b == low]
+                if not shown:
+                    bat.append("the section is not shown while %s names a battery" % BATTERY_ROLLUP)
+                said = [c for _p, c in cards(sec.get("cards") or [])
+                        if BATTERY_ROLLUP in json.dumps(c) and low in (c.get("visibility") or [])]
+                if not said:
+                    bat.append("no card in the section, shown on the same condition, renders %s"
+                               % BATTERY_ROLLUP)
+            for path, card in found:
+                text = own_text(card)
+                if card.get("type") != "custom:auto-entities" and (
+                        BATTERY_LIST_RE.search(text)
+                        or ("states.sensor" in text and "battery" in text.lower())):
+                    bat.append("%s computes its own battery list" % path)
+            if bat:
+                fail("C29", "%s: the low-battery note and the roll-up can disagree" % label, bat)
+
         # C22 - one definition of night.
+        # Audit 2026-10-20: the alarm-first definition was copied inline into two Climate cards.
+        # A card has no trigger race, so it reads the helper; any template naming both the
+        # alarm's night and the schedule is a copy that can drift from the automations'.
+        # Review 2026-10-20: matching a spelling ("is_state(...) or") let `states(...) == 'on'`
+        # through. No card template names the schedule at all; a tile of the schedule is fine.
         stale = [path for path, card in found
-                 if "is_state('schedule.climate_night','on') or" in json.dumps(card)
-                 and card.get("type") not in ("custom:auto-entities",)]
+                 if card.get("type") not in ("custom:auto-entities",)
+                 and "schedule.climate_night" in own_text(card)
+                 and ("{{" in own_text(card) or "{%" in own_text(card))]
         if stale:
-            fail("C22", "%s: %d card(s) still compute night from the schedule" % (label, len(stale)),
+            fail("C22", "%s: %d card(s) compute night themselves instead of reading %s"
+                 % (label, len(stale), NIGHT_HELPER),
                  stale)
 
         # C16 - auto-entities matchers are strings.

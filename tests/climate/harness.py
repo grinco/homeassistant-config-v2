@@ -72,6 +72,70 @@ def load_expressions(automation_id=AUTOMATION_ID):
     return found
 
 
+# Every copy of the house's definition of night: (who, automation id or "sensor", key).  cases.py
+# runs the same truth table against each, and wiring.py fails on a live copy missing from here.
+# The automations keep their own copy rather than reading `binary_sensor.lighting_night`: they
+# trigger on the alarm changing, and a template entity re-renders on that same state change, so a
+# run reading the helper can see the night before the edge (audit 2026-10-20).  Dashboard cards
+# have no such race and read the helper (lint C22).
+NIGHT_CONSUMERS = (
+    ("climate", AUTOMATION_ID, "night"),
+    ("radiators", "1790300000001", "night"),
+    ("adaptive lighting", "1790200000001", "sleep_on"),
+    ("lights", "sensor", "Lighting night"),
+)
+NIGHT_HELPER = "binary_sensor.lighting_night"
+
+
+def night_definitions():
+    """Every live template that defines night: names the alarm's armed_night AND the schedule.
+
+    Yields (where, key) in the same shape as NIGHT_CONSUMERS.  An expression that only reads the
+    schedule (the preheat window) or only the alarm (Away, the alarm sync) is not a definition.
+    """
+    import yaml
+
+    def defines(tpl):
+        # Bare substrings, so neither quote style nor is_state() vs states() == hides a copy.
+        return "armed_night" in tpl and "schedule.climate_night" in tpl
+
+    with io.open(AUTOMATIONS, encoding="utf-8") as fh:
+        autos = yaml.safe_load(fh)
+    for auto in autos:
+        aid = str(auto.get("id"))
+        found = {}
+        for part in ("actions", "conditions"):
+            stack = [auto.get(part) or []]
+            while stack:
+                node = stack.pop()
+                if isinstance(node, dict):
+                    block = node.get("variables")
+                    if isinstance(block, dict):
+                        for name, tpl in block.items():
+                            if isinstance(tpl, str) and defines(tpl):
+                                found[name] = True
+                    if isinstance(node.get("value_template"), str) and defines(node["value_template"]):
+                        found[node.get("alias") or "<unnamed condition>"] = True
+                    # Any other template (a message, a target, a service field) defining night is a
+                    # copy too, and has no name the truth table could run: report it as such.
+                    for k, v in node.items():
+                        if (k not in ("variables", "value_template") and isinstance(v, str)
+                                and defines(v)):
+                            found["<template in %s>" % k] = True
+                    stack.extend(v for k, v in node.items() if k != "variables")
+                elif isinstance(node, list):
+                    stack.extend(node)
+        for key in found:
+            yield aid, key
+    # Every template helper, not only the prefixes the suite reaches: a copy hiding in a helper the
+    # suite never loads is the one that drifts unnoticed.
+    with io.open(ENTRIES, encoding="utf-8") as fh:
+        entries = json.load(fh)["data"]["entries"]
+    for entry in entries:
+        if entry.get("domain") == "template" and defines(json.dumps(entry.get("options") or {})):
+            yield "sensor", entry.get("title") or ""
+
+
 # Template sensors the suite is allowed to reach. The prefix filter is what keeps
 # an unrelated template helper elsewhere in the instance from being swept in.
 SENSOR_PREFIXES = ("Climate ", "Radiation ", "Lighting ", "Any ")

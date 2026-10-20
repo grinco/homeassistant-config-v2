@@ -63,10 +63,45 @@ AUTOS = {
     "1790400000001": "house-alarm-sync.json",
     "1790500000001": "house-away.json",
     "1791800830017": "house-everyone-left.json",
+    "1791800829345": "battery-watchdog.json",
 }
-# `automations/resolved-sensors.json` is NOT re-exported here. It is a curated
-# selection of config-flow helpers rather than a whole-file dump, and nothing in
-# this change touched a template sensor. Left for whoever next changes one.
+# `automations/resolved-sensors.json` is a curated selection of config-flow helpers
+# rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
+# scrub). Until 2026-10-20 it was edited by hand, and the audit of that day found three
+# helpers the dashboards and automations read that it did not carry.
+RESOLVED = "resolved-sensors.json"
+RESOLVED_TITLES = (
+    "Indoor Temperature", "Indoor Humidity", "Downstairs Temperature", "Downstairs Humidity",
+    "Upstairs Temperature", "Upstairs Humidity", "Any low battery", "AC power total",
+    "Socket power total", "Climate temp living room", "Climate temp office",
+    "Climate temp bedroom", "Climate temp kid1", "Climate temp kid2",
+    "Climate humidity living room", "Climate humidity office", "Climate humidity bedroom",
+    "Climate humidity kid1", "Climate humidity kid2", "Climate health risk",
+    "Climate temp corridor", "Climate temp outdoor", "Climate humidity corridor",
+    "Climate co2 living room", "Climate co2 office", "Radiation dose rate", "Lighting daylight",
+    "Any safety alarm", "Any safety sensor silent", "Lighting night", "Lighting left on",
+    "Lighting living room bright", "Lighting kitchen dark", "Lighting hallway bright",
+)
+RESOLVED_NOTE = (
+    "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
+    "the climate health-risk binary sensor, and the roll-ups Home's Needs attention reads. "
+    "Reference only; entity ids are anonymised. Exported by tests/dashboards/export.py. "
+    "2026-10-07: 'Lighting daylight' (on = bright enough, no lights) is the dark entity Magic "
+    "Areas reads before switching a room's lights on; the bathroom's and shower's readings are "
+    "Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any "
+    "safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's "
+    "Needs attention; it excludes itself so it cannot latch. 2026-10-12: 'Any low battery' names "
+    "every battery under 20 % that a person replaces (phones, the car and vacuums are skipped), "
+    "'Lighting left on' the lights still on; both say 'none' when there is nothing to say. "
+    "2026-10-14: 'Any safety sensor silent' names a safety sensor unavailable for 30 minutes. "
+    "2026-10-20: 'Lighting living room bright', 'Lighting kitchen dark' and 'Lighting hallway "
+    "bright' are the dark entities Magic Areas reads for the open space and the hallway: the "
+    "room's own lux in real time, with outdoor daylight only as the fallback "
+    "(docs/presence-lighting.md). 2026-10-20: 'Any low battery' is the ONE battery list; the "
+    "binary 'Any battery low' and the Home card's own copy (15 %, a volvo substring skip) are "
+    "gone (lint C29). 'Lighting night' is the helper dashboards read for night; the automations "
+    "keep their own copy of the same expression (tests/climate/harness.py NIGHT_CONSUMERS)."
+)
 
 # Ordinary English that contains one of the stems. If a count moves, the
 # pattern reached into prose and the export is wrong.
@@ -143,6 +178,24 @@ def main():
             print("   %s" % m)
 
     payload.update(auto_payload)
+
+    # the curated helpers: scrubbed before matching, because the list holds published titles
+    with io.open(os.path.join(STORAGE, "core.config_entries"), encoding="utf-8") as fh:
+        entries = json.load(fh)["data"]["entries"]
+    by_title = {}
+    for e in entries:
+        pub = scrub(e.get("title") or "", specific, general)
+        if pub in RESOLVED_TITLES and e.get("domain") in ("template", "min_max"):
+            by_title[pub] = {"domain": e["domain"], "title": e.get("title"),
+                             "options": e.get("options") or {}}
+    gone = [t for t in RESOLVED_TITLES if t not in by_title]
+    if gone:
+        print("WARNING - these curated helpers are no longer on the instance:")
+        for t in gone:
+            print("   %s" % t)
+    payload[RESOLVED] = {"note": RESOLVED_NOTE,
+                         "entries": [by_title[t] for t in RESOLVED_TITLES if t in by_title]}
+
     raw = json.dumps(payload, ensure_ascii=False, indent=1, sort_keys=True)
     before = dict((w, raw.count(w)) for w in CANARIES)
     clean = scrub(raw, specific, general)
@@ -168,7 +221,7 @@ def main():
     out = json.loads(clean)
     written = []
     for fname, data in sorted(out.items()):
-        target = os.path.join(AUTO_OUT if fname in AUTOS.values() else OUT, fname)
+        target = os.path.join(AUTO_OUT if fname in AUTOS.values() or fname == RESOLVED else OUT, fname)
         body = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
         if check_only:
             existing = ""

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Does every entity the templates NAME actually exist?
+"""Does every entity the templates NAME actually exist? And is every copy of night tested?
 
 The scenario suite cannot answer this. It substitutes each impure read with a
 literal before evaluating, which is what makes it a decision oracle -- and also
@@ -73,7 +73,30 @@ def probe(ids):
     return out
 
 
+def night_copies():
+    """Every live definition of night that the truth table in cases.py does not run.
+
+    The definition is copied into each consumer on purpose (harness.NIGHT_CONSUMERS says why),
+    so the hazard is a copy nobody tests: edited in one place, it drifts from the rest.
+    """
+    known = {(where, key) for _who, where, key in harness.NIGHT_CONSUMERS}
+    found = set(harness.night_definitions())
+    return sorted(found - known), sorted(known - found)
+
+
 def main():
+    stray, gone = night_copies()
+    for where, key in stray:
+        print("  UNTESTED NIGHT  %s / %s defines night but is not in harness.NIGHT_CONSUMERS"
+              % (where, key))
+    for where, key in gone:
+        print("  STALE NIGHT     %s / %s is in harness.NIGHT_CONSUMERS but defines no night"
+              % (where, key))
+    if stray or gone:
+        print("\nEvery copy of the night definition must run the same truth table.")
+        return 1
+    print("  all %d definitions of night are under the truth table" % len(harness.NIGHT_CONSUMERS))
+
     refs, skipped = referenced()
     if not refs:
         print("SUITE ERROR: no entity references found -- the extractor is broken",

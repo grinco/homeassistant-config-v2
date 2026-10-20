@@ -1,0 +1,45 @@
+{
+ "actions": [
+  {
+   "action": "notify.mobile_app_adult_phone_1",
+   "data": {
+    "data": {
+     "tag": "battery-watchdog"
+    },
+    "message": "{{ states('sensor.any_low_battery') }}",
+    "title": "Batteries to replace"
+   }
+  }
+ ],
+ "alias": "Battery watchdog",
+ "conditions": [
+  {
+   "condition": "not",
+   "conditions": [
+    {
+     "condition": "state",
+     "entity_id": "sensor.any_low_battery",
+     "state": [
+      "none",
+      "unavailable",
+      "unknown"
+     ]
+    }
+   ]
+  }
+ ],
+ "description": "A daily notice (09:00), and one the moment the first battery drops under 20 %, listing every low battery sensor. Phones, the car and the vacuums are excluded by the sensor itself (Any low battery). To Vadim's phone only.",
+ "id": "1791800829345",
+ "mode": "single",
+ "triggers": [
+  {
+   "at": "09:00:00",
+   "trigger": "time"
+  },
+  {
+   "entity_id": "sensor.any_low_battery",
+   "from": "none",
+   "trigger": "state"
+  }
+ ]
+}

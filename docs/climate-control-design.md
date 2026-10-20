@@ -327,7 +327,14 @@ The same alarm state drives the lights (`binary_sensor.lighting_night`) and Adap
 sleep mode, so the whole house agrees on one night. Tests: *night is the alarm's night mode*,
 *the schedule alone no longer makes it night*, and the *House* cases. While the alarm ITSELF is unavailable or unknown (an Alarmo reload, a restart), and only then,
 the schedule stands in — otherwise a reload at night computed DAY targets (review 2026-10-11, F12);
-the climate loop, the lights and Adaptive Lighting share that one expression. By design and
+the climate loop, the lights and Adaptive Lighting share that one expression. *Audit 2026-10-20:*
+it is one expression in four copies (climate, radiators, Adaptive Lighting, `Lighting night`),
+deliberately: the automations trigger on the alarm changing, and a template helper re-renders on
+that same state change, so a run that read the helper could still see the old night. The
+hazard copies bring is drift, and that is now tested: every copy runs the same truth table, and
+`tests/climate/wiring.py` fails on a live definition missing from `harness.NIGHT_CONSUMERS` (the
+radiators' copy had no case until then). Dashboard cards have no trigger race, so they read
+`binary_sensor.lighting_night` (lint C22). By design and
 recorded: a restart does not re-sync the alarm to the schedule, a missed edge stays missed, and
 coming back from Away in the small hours gives day mode until the operator sets Night — all of
 them "manual wins until the next edge", which is what the operator asked for. Away is unchanged:
