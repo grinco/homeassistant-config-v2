@@ -2250,3 +2250,150 @@ A(left("the arm offer asks the question", "arm_line",
        given=dict(ask_about=["Alex"]), subs={ALARM: "'disarmed'"}, finding=KID))
 A(left("without an untracked person the offer is unchanged", "arm_line",
        "The alarm is off. Arm Away?", given=dict(ask_about=[]), subs={ALARM: "'disarmed'"}))
+
+
+# ---------------------------------------------------------------- front door while away (issue #7, 2026-10-20)
+# The door is an EVO192 zone, but the Alarmo -> EVO sync is disabled, so arming Away from Home
+# Assistant (the everyone-left offer) leaves the panel disarmed and nothing watching the door. Tell
+# both adults when the SwitchBot lock unlocks or the door opens while the house is Away - unless the
+# panel itself is armed Away, which raises its own alarm (and, once the sync runs, its own push).
+DOOR = "1792000000001"
+EVO = "states('alarm_control_panel.evo192_partition_paradox_alarm')"
+DW = "issue #7: the door is unwatched while the house is Away and the panel is not armed"
+
+
+ZONE_HOME = "states('zone.home')"
+
+
+def door(name, expr, expect, subs, finding=DW):
+    # Review 2026-10-20: every return home opened the door while still Away, a time-sensitive push
+    # on every arrival. A tracked phone at home means someone is back; only an empty house is told.
+    if expr == "tell":
+        subs = dict({ZONE_HOME: "'0'"}, **subs)
+    return dict(name="front door: " + name, automation=DOOR, expr=expr, expect=expect, given={},
+                subs=subs, finding=finding)
+
+
+A(door("opened while Away, panel disarmed, says so", "tell", "True",
+       {ALARM: "'armed_away'", EVO: "'disarmed'"}))
+A(door("an offline panel watches nothing either", "tell", "True",
+       {ALARM: "'armed_away'", EVO: "'unavailable'"}))
+for _e in ("armed_away", "triggered", "pending", "arming"):
+    A(door("the panel armed Away (%s) raises its own alarm" % _e, "tell", "False",
+           {ALARM: "'armed_away'", EVO: "'%s'" % _e}, finding=DW + "; no second alarm"))
+for _a in ("armed_home", "armed_night", "disarmed", "triggered"):
+    A(door("a house that is not Away (%s) is not told" % _a, "tell", "False",
+           {ALARM: "'%s'" % _a, EVO: "'disarmed'"}, finding=DW + "; people are home"))
+A(door("a phone already home: someone is back, not told", "tell", "False",
+       {ALARM: "'armed_away'", EVO: "'disarmed'", ZONE_HOME: "'1'"},
+       finding="review 2026-10-20: the arrival itself was the commonest trigger"))
+A(door("an unreadable zone is not taken as someone home", "tell", "True",
+       {ALARM: "'armed_away'", EVO: "'disarmed'", ZONE_HOME: "'unknown'"},
+       finding="review 2026-10-20: when in doubt, tell"))
+A(door("an unlock says unlocked", "what", "unlocked", {TRIG: "'unlock'"}))
+A(door("the door contact says opened", "what", "opened", {TRIG: "'door'"}))
+A(door("a jammed lock says so: the door may not be locked", "what", "left jammed",
+       {TRIG: "'jammed'"}, finding=DW + "; the lock has reported jammed 3 times in 10 days"))
+
+
+# ---------------------------------------------------------------- energy: yesterday's digest (issue #8, 2026-10-20)
+# There is no whole-house meter, so the digest says what the METERED devices used: the Energy
+# dashboard's own device list, summed from the same long-term statistics it draws, read with
+# recorder.get_statistics just after midnight. The AC share is the meters whose id ends
+# `_ac_energy`. A meter with no statistics for the day (offline) is left out and counted out.
+DIGEST = "1792100000001"
+EN = "issue #8: one line a day from the meters the house already has"
+
+
+def _st(**changes):
+    return {"statistics": {k.replace("__", "."): [{"change": v}] for k, v in changes.items()}}
+
+
+def digest(name, expr, expect, given, finding=EN):
+    return dict(name="energy: " + name, automation=DIGEST, expr=expr, expect=expect,
+                given=given, subs={}, finding=finding)
+
+
+_IDS = ["sensor.tv_energy", "sensor.room_ac_energy", "sensor.other_ac_energy"]
+A(digest("every reported meter is summed", "total", "4.75",
+         dict(ids=_IDS, stats=_st(sensor__tv_energy=1.5, sensor__room_ac_energy=2.25,
+                                  sensor__other_ac_energy=1.0))))
+A(digest("the AC share is the AC meters only", "ac", "3.25",
+         dict(ids=_IDS, stats=_st(sensor__tv_energy=1.5, sensor__room_ac_energy=2.25,
+                                  sensor__other_ac_energy=1.0))))
+A(digest("an offline meter is left out, not counted as zero use", "reported", "2",
+         dict(ids=_IDS, stats=_st(sensor__tv_energy=1.5, sensor__room_ac_energy=2.25))))
+A(digest("an offline meter does not break the sum", "total", "3.75",
+         dict(ids=_IDS, stats=_st(sensor__tv_energy=1.5, sensor__room_ac_energy=2.25))))
+A(digest("a meter outside the list is ignored", "total", "1.5",
+         dict(ids=["sensor.tv_energy"], stats=_st(sensor__tv_energy=1.5, sensor__stray_energy=9.0))))
+A(digest("a bucket with no change is offline, not zero use", "reported", "1",
+         dict(ids=_IDS, stats={"statistics": {"sensor.tv_energy": [{"change": 1.5}],
+                                              "sensor.room_ac_energy": [{"change": None}]}}),
+         finding="review 2026-10-20: a meter with metadata but no data in the window"))
+A(digest("a bucket with no change adds nothing", "total", "1.5",
+         dict(ids=_IDS, stats={"statistics": {"sensor.tv_energy": [{"change": 1.5}],
+                                              "sensor.room_ac_energy": [{"change": None}]}})))
+A(digest("a day with no data at all says zero meters", "reported", "0",
+         dict(ids=_IDS, stats={"statistics": {}})))
+
+
+# ---------------------------------------------------------------- morning briefing (issue #6, 2026-10-20)
+# One message assembled from the roll-ups the house already has. It READS them and derives
+# nothing: a second copy of a threshold is how the battery card drifted (audit 2026-10-20, 1-3).
+# Optional and off by default. Home's Needs attention is the on-screen surface for the same facts.
+BRIEF = "1792200000001"
+BR = "issue #6: one line of 'here is the house', from the roll-ups, never re-derived"
+B_LOW = "states('sensor.any_low_battery')"
+B_SIL = "states('sensor.any_safety_sensor_silent')"
+B_LEFT = "states('sensor.lighting_left_on')"
+B_RISK = "is_state('binary_sensor.climate_health_risk', 'on')"
+B_NAME = "state_attr(e, 'friendly_name')"
+B_LVL = "states(e)"
+E_T = "states('input_number.energy_yesterday')"
+E_A = "states('input_number.energy_yesterday_ac')"
+E_M = "states('input_number.energy_yesterday_meters')"
+QUIET = {B_LOW: "'none'", B_SIL: "'none'", B_LEFT: "'none'", B_RISK: "false",
+         B_NAME: "none", B_LVL: "'0'"}
+
+
+def brief(name, expr, expect, subs=None, given=None, finding=BR):
+    # Every read in `attention` is pinned: the quiet house, then what the case changes.
+    s = dict(QUIET) if expr == "attention" else {}
+    s.update(subs or {})
+    return dict(name="briefing: " + name, automation=BRIEF, expr=expr, expect=expect,
+                given=given or {}, subs=s, finding=finding)
+
+
+_NAMES = "{'sensor.leak_battery': 'Leak Battery', 'binary_sensor.smoke': 'Smoke', 'light.lamp': 'Lamp'}.get(e)"
+A(brief("a quiet house says nothing needs attention", "attention", "[]"))
+A(brief("a low battery is named with its level", "attention", "['Batteries to replace: Leak 15%']",
+        {B_LOW: "'sensor.leak_battery'", B_NAME: _NAMES,
+         B_LVL: "'15'"}))
+A(brief("the battery list's '+N more' is passed through", "attention",
+        "['Batteries to replace: Leak 15%, +3 more']",
+        {B_LOW: "'sensor.leak_battery, +3 more'", B_NAME: _NAMES,
+         B_LVL: "'15'"}))
+A(brief("a silent safety sensor is named", "attention", "['Not reporting: Smoke']",
+        {B_SIL: "'binary_sensor.smoke'", B_NAME: _NAMES}))
+A(brief("lights left on overnight are named", "attention", "['Lights on: Lamp']",
+        {B_LEFT: "'light.lamp'", B_NAME: _NAMES}))
+A(brief("the health roll-up is pointed to, not re-derived", "attention",
+        "['Damp, health or air-quality risk: see Home']", {B_RISK: "true"}))
+for _s in ("unknown", "unavailable", ""):
+    A(brief("a roll-up that is %r says nothing" % _s, "attention", "[]",
+            {B_LOW: "'%s'" % _s, B_SIL: "'%s'" % _s, B_LEFT: "'%s'" % _s}))
+A(brief("yesterday's energy with the AC share", "energy",
+        "Yesterday the metered devices used 6.85 kWh, the ACs 32% of it.",
+        {E_T: "'6.85'", E_A: "'2.2'", E_M: "'14.0'"}))
+A(brief("no meter reported: no energy line", "energy", "",
+        {E_T: "'0.0'", E_A: "'0.0'", E_M: "'0.0'"}, finding=BR + "; a zero is not a measurement"))
+A(brief("nothing used at all: no division by zero", "energy",
+        "Yesterday the metered devices used 0.0 kWh.", {E_T: "'0.0'", E_A: "'0.0'", E_M: "'3.0'"}))
+A(brief("the message leads with what needs doing", "message",
+        "Batteries to replace: Leak 15%\nYesterday the metered devices used 6.85 kWh.",
+        given=dict(attention=["Batteries to replace: Leak 15%"],
+                   energy="Yesterday the metered devices used 6.85 kWh.")))
+A(brief("a quiet house says so", "message",
+        "Nothing needs attention.\nYesterday the metered devices used 6.85 kWh.",
+        given=dict(attention=[], energy="Yesterday the metered devices used 6.85 kWh.")))

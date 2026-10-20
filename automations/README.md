@@ -51,6 +51,21 @@ Sends `sensor.any_low_battery` (in `resolved-sensors.json`) to one adult's phone
 again the moment the list stops being `none`. All the logic is in the sensor, which is also what
 Home's Needs attention shows, so the notification and the dashboard cannot disagree.
 
+## `energy-digest.json`
+
+At 00:10, yesterday's consumption over the Energy dashboard's own meters, from the same
+long-term statistics, into three helpers: the total, the AC share, and how many meters
+reported. There is no whole-house meter, so it is "the metered devices", never "the house".
+The meter list must match the Energy dashboard's (`tests/climate/wiring.py`). No anomaly flag:
+ten days of history did not support a threshold (`docs/energy-digest.md`). (Issue #8.)
+
+## `house-morning-briefing.json`
+
+One push at `input_datetime.house_briefing_time`, only while `input_boolean.house_briefing_push`
+is on. The helper is created off. It reads the roll-ups (batteries, silent safety sensors,
+lights on, the health risk, yesterday's energy) and derives nothing (`docs/house-briefing.md`).
+(Issue #6.)
+
 ## `house-alarm-sync.json`
 
 Keeps Alarmo (`alarm_control_panel.home`) and the Paradox EVO192 panel (through the Paradox Alarm
@@ -72,6 +87,19 @@ nothing. Then every indoor light and media player is switched off, and a minute 
 get one note naming anything still open or on. The corridor keeps its presence lighting, because
 it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms
 that were paused. Climate is not here: the climate loop already has its own away band.
+
+## `house-front-door-away.json`
+
+The front door is a zone of the EVO192 panel, but the Alarmo → EVO sync is still disabled, so
+arming Away from Home Assistant (the everyone-left offer) leaves the panel disarmed and nothing
+watching the door. This tells both adults, time-sensitive, when the SwitchBot lock unlocks or jams (a
+jammed lock may have left the door unlocked) or the door opens (the lock's own contact or the panel's entrance zone) while the house is armed Away.
+It stays quiet when the panel itself is armed Away, because the panel raises its own alarm, and
+while a tracked phone is home: someone coming back opens the door before disarming, and that
+was the commonest trigger by far (review 2026-10-20). An
+offline panel watches nothing, so that case is told. It only notifies. A returning person whose
+phone has not yet reached the home zone still gets the note, and it says so: "If that is you,
+disarm". (Issue #7.)
 
 ## `house-everyone-left.json`
 

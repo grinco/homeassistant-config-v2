@@ -1,0 +1,58 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "attention": "{% set ns = namespace(l=[], b=[], s=[], o=[]) %}{% set b = states('sensor.any_low_battery') %}{% if b not in ['none', 'unknown', 'unavailable', ''] %}{% for e in b.split(', ') %}{% set ns.b = ns.b + [e if e.startswith('+') else ((state_attr(e, 'friendly_name') or e) | replace(' Battery', '')) ~ ' ' ~ (states(e) | float(0) | round(0) | int) ~ '%'] %}{% endfor %}{% set ns.l = ns.l + ['Batteries to replace: ' ~ ns.b | join(', ')] %}{% endif %}{% set s = states('sensor.any_safety_sensor_silent') %}{% if s not in ['none', 'unknown', 'unavailable', ''] %}{% for e in s.split(', ') %}{% set ns.s = ns.s + [state_attr(e, 'friendly_name') or e] %}{% endfor %}{% set ns.l = ns.l + ['Not reporting: ' ~ ns.s | join(', ')] %}{% endif %}{% set lo = states('sensor.lighting_left_on') %}{% if lo not in ['none', 'unknown', 'unavailable', ''] %}{% for e in lo.split(', ') %}{% set ns.o = ns.o + [state_attr(e, 'friendly_name') or e] %}{% endfor %}{% set ns.l = ns.l + ['Lights on: ' ~ ns.o | join(', ')] %}{% endif %}{% if is_state('binary_sensor.climate_health_risk', 'on') %}{% set ns.l = ns.l + ['Damp, health or air-quality risk: see Home'] %}{% endif %}{{ ns.l }}",
+    "energy": "{% set m = states('input_number.energy_yesterday_meters') | float(0) %}{% set t = states('input_number.energy_yesterday') | float(0) %}{% set a = states('input_number.energy_yesterday_ac') | float(0) %}{% if m > 0 %}Yesterday the metered devices used {{ t }} kWh{{ ', the ACs ' ~ (100 * a / t) | round(0) | int ~ '% of it' if t > 0 and a > 0 else '' }}.{% endif %}"
+   }
+  },
+  {
+   "variables": {
+    "message": "{{ (attention | join('\\n') if attention else 'Nothing needs attention.') ~ ('\\n' ~ energy if energy else '') }}"
+   }
+  },
+  {
+   "parallel": [
+    {
+     "action": "notify.mobile_app_adult_phone_1",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "house-briefing"
+      },
+      "message": "{{ message }}",
+      "title": "The house this morning"
+     }
+    },
+    {
+     "action": "notify.mobile_app_adult_phone_2",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "house-briefing"
+      },
+      "message": "{{ message }}",
+      "title": "The house this morning"
+     }
+    }
+   ]
+  }
+ ],
+ "alias": "House — morning briefing",
+ "conditions": [
+  {
+   "condition": "state",
+   "entity_id": "input_boolean.house_briefing_push",
+   "state": "on"
+  }
+ ],
+ "description": "Issue #6 (2026-10-20). One push at input_datetime.house_briefing_time, only while input_boolean.house_briefing_push is on (off by default). It assembles the roll-ups and derives nothing: sensor.any_low_battery, sensor.any_safety_sensor_silent, sensor.lighting_left_on, binary_sensor.climate_health_risk and yesterday's energy digest (input_number.energy_yesterday*). Home's Needs attention shows the same facts on screen.",
+ "id": "1792200000001",
+ "mode": "single",
+ "triggers": [
+  {
+   "at": "input_datetime.house_briefing_time",
+   "trigger": "time"
+  }
+ ]
+}

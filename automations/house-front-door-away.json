@@ -1,0 +1,76 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "tell": "{{ states('alarm_control_panel.home') == 'armed_away' and states('alarm_control_panel.evo192_partition_paradox_alarm') not in ['armed_away', 'triggered', 'pending', 'arming'] and states('zone.home') | int(0) == 0 }}",
+    "what": "{{ {'unlock': 'unlocked', 'jammed': 'left jammed'}.get(trigger.id, 'opened') }}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ tell }}"
+  },
+  {
+   "parallel": [
+    {
+     "action": "notify.mobile_app_adult_phone_1",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "push": {
+        "interruption-level": "time-sensitive"
+       },
+       "tag": "door-while-away"
+      },
+      "message": "The front door was {{ what }} at {{ now().strftime('%H:%M') }} while the house is armed Away. If that is you, disarm.",
+      "title": "Front door {{ what }}"
+     }
+    },
+    {
+     "action": "notify.mobile_app_adult_phone_2",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "push": {
+        "interruption-level": "time-sensitive"
+       },
+       "tag": "door-while-away"
+      },
+      "message": "The front door was {{ what }} at {{ now().strftime('%H:%M') }} while the house is armed Away. If that is you, disarm.",
+      "title": "Front door {{ what }}"
+     }
+    }
+   ]
+  }
+ ],
+ "alias": "House — front door while away",
+ "conditions": [],
+ "description": "Issue #7 (2026-10-20). The front door is an EVO192 zone, but the Alarmo -> EVO sync is disabled, so arming Away from Home Assistant leaves the panel disarmed and the door unwatched. When the SwitchBot lock unlocks or jams (the door may then not be locked), or the door opens (the lock's own contact or the EVO entrance zone), while the house is armed Away and no tracked phone is home, both adults are told (a phone at home means someone is back: review 2026-10-20). Queued, so an unlock and the door opening a second later are both said; the shared tag keeps one note on the phone. Not when the panel itself is armed Away: it raises its own alarm. Notify only; it actuates nothing.",
+ "id": "1792000000001",
+ "max": 3,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": "lock.lock_ultra_max_7b06",
+   "id": "unlock",
+   "to": "unlocked",
+   "trigger": "state"
+  },
+  {
+   "entity_id": "lock.lock_ultra_max_7b06",
+   "id": "jammed",
+   "to": "jammed",
+   "trigger": "state"
+  },
+  {
+   "entity_id": [
+    "binary_sensor.lock_ultra_max_7b06",
+    "binary_sensor.evo192_zone_entrance_door_open"
+   ],
+   "from": "off",
+   "id": "door",
+   "to": "on",
+   "trigger": "state"
+  }
+ ]
+}

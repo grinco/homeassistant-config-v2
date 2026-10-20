@@ -1,0 +1,86 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "ids": [
+     "sensor.living_room_livingroom_ac_energy",
+     "sensor.office_guest_room_office_ac_energy",
+     "sensor.master_bedroom_bedroom_ac_energy",
+     "sensor.kid1_room_ac_energy",
+     "sensor.kid2_room_ac_energy",
+     "sensor.downstairs_toilet_energy",
+     "sensor.upstairs_toilet_energy",
+     "sensor.living_room_vacuum_socket_total_energy",
+     "sensor.living_room_tv_socket_total_energy",
+     "sensor.media_corner_energy",
+     "sensor.all_lights_energy",
+     "sensor.mini_rack_energy",
+     "sensor.unifi_poe_network_energy",
+     "sensor.jankas_desk_energy"
+    ]
+   }
+  },
+  {
+   "action": "recorder.get_statistics",
+   "data": {
+    "end_time": "{{ (today_at() - timedelta(minutes=1)).isoformat() }}",
+    "period": "day",
+    "start_time": "{{ (today_at() - timedelta(days=1)).isoformat() }}",
+    "statistic_ids": "{{ ids }}",
+    "types": [
+     "change"
+    ]
+   },
+   "response_variable": "stats"
+  },
+  {
+   "variables": {
+    "ac": "{% set ns = namespace(t=0) %}{% for id in ids | select('search', '_ac_energy$') %}{% set r = stats.statistics.get(id, []) %}{% if r and r[0].change is number %}{% set ns.t = ns.t + r[0].change %}{% endif %}{% endfor %}{{ ns.t | round(2) }}",
+    "reported": "{% set ns = namespace(n=0) %}{% for id in ids %}{% set r = stats.statistics.get(id, []) %}{% if r and r[0].change is number %}{% set ns.n = ns.n + 1 %}{% endif %}{% endfor %}{{ ns.n }}",
+    "total": "{% set ns = namespace(t=0) %}{% for id in ids %}{% set r = stats.statistics.get(id, []) %}{% if r and r[0].change is number %}{% set ns.t = ns.t + r[0].change %}{% endif %}{% endfor %}{{ ns.t | round(2) }}"
+   }
+  },
+  {
+   "action": "input_number.set_value",
+   "data": {
+    "value": "{{ total }}"
+   },
+   "target": {
+    "entity_id": "input_number.energy_yesterday"
+   }
+  },
+  {
+   "action": "input_number.set_value",
+   "data": {
+    "value": "{{ ac }}"
+   },
+   "target": {
+    "entity_id": "input_number.energy_yesterday_ac"
+   }
+  },
+  {
+   "action": "input_number.set_value",
+   "data": {
+    "value": "{{ reported }}"
+   },
+   "target": {
+    "entity_id": "input_number.energy_yesterday_meters"
+   }
+  }
+ ],
+ "alias": "Energy — yesterday's digest",
+ "conditions": [],
+ "description": "Issue #8 (2026-10-20). Just after midnight, sums yesterday's consumption over the Energy dashboard's device list (the same long-term statistics it draws; there is no whole-house meter) into input_number.energy_yesterday, the AC share into energy_yesterday_ac, and how many meters reported into energy_yesterday_meters. Also at Home Assistant start, so a restart over 00:10 does not leave the day before yesterday's figures standing (it recomputes the same day; review 2026-10-20). A bucket with no change counts as offline. Read-only: it writes three helpers and nothing else. `ids` must equal the Energy dashboard's device_consumption list (tests/climate/wiring.py checks). No anomaly flag: ten days of history did not support one (docs/energy-digest.md).",
+ "id": "1792100000001",
+ "mode": "single",
+ "triggers": [
+  {
+   "at": "00:10:00",
+   "trigger": "time"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

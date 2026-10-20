@@ -49,6 +49,42 @@
      "type": "heading"
     },
     {
+     "entity": "input_number.energy_yesterday",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:lightning-bolt",
+     "name": "Metered yesterday",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "input_number.energy_yesterday_meters"
+      }
+     ]
+    },
+    {
+     "entity": "input_number.energy_yesterday_ac",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-conditioner",
+     "name": "ACs yesterday",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "input_number.energy_yesterday_meters"
+      }
+     ]
+    },
+    {
      "entities": [
       {
        "color": "#4caf50",

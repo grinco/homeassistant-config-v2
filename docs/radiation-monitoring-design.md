@@ -285,3 +285,107 @@ The suite tests the **conversion**, not the counting. Pulse capture, the input l
 whether GPIO13 is the right pin are all hardware facts that only the running device can
 settle. A green suite says the arithmetic is right; it says nothing
 about whether a single count ever arrives.
+
+## Alerting on a sustained elevation: measured first (issue #9, 2026-10-20)
+
+The request: notify when the level stays above background, not on one high minute. The
+threshold has to come from a measured baseline, and the measurement came first. **It found that
+the instrument is not ready to alert on**, and why.
+
+### What ten days of counts say
+
+The recorder holds per-minute counts from 2026-10-10 to 2026-10-20 (14 960 numeric readings,
+3 833 unavailable rows from proxy reconnects). Read straight from the database, read-only:
+
+| | all readings | dark readings only |
+|---|---|---|
+| mean | 57.4 CPM | **22.6 CPM** |
+| median | 28 CPM | 22 CPM |
+| variance ÷ mean | **57** | **1.1** |
+| max one-minute | 385 CPM | 46 CPM |
+| max 60-minute mean | 291 CPM | **25.7 CPM** |
+
+A GM tube in a steady field counts Poisson: variance ÷ mean ≈ 1. In the dark it does, at 1.1,
+around a background of 22.6 CPM (0.075 µSv/h at 0.00332). That is a healthy J305, and it is the
+baseline. Across the whole day the variance is 57 times the mean. That is not radiation.
+
+**The excess follows the light.** Median counts by hour (local time) are 22 CPM from 18:00 to
+07:00, then rise to 44 at 08:00, 103 at 10:00 and 154 at noon, and are back to 23 by 18:00. The
+correlation of the counts with indoor illuminance is r = +0.74 (kitchen) and +0.61 (hallway),
+against +0.20 for the hallway temperature. Taking only the minutes when the hallway reads
+below 5 lx leaves a mean of 23.1 CPM and variance ÷ mean of 1.09: the dark minutes are the
+clean ones, by any of the three measures.
+
+**The likeliest cause is light on the tube, and that is a hypothesis, not a finding.** The J305
+is a glass tube, and a GM tube's cathode can respond to light. But all the data shows is that
+the excess comes with the light. Daytime is also when the house is busy, so other causes that
+follow the day are not excluded (companion review, 2026-10-20):
+
+- **Bluetooth proxy activity.** The same ESP32 is a busy BLE proxy (3 833 reconnect rows in ten
+  days). Daytime radio traffic or reconnect replays would also be quiet at night.
+- **Mains or RF pickup** from appliances in daytime use.
+- **Board temperature.** Only the hallway's air temperature was correlated (r = +0.20); the
+  board's own temperature is not measured.
+- **Radon** is the least likely. Indoor radon usually *peaks at night*, with the windows shut
+  and no ventilation, the opposite of this curve. But radon progeny would be real radiation, so
+  it is named here rather than dismissed.
+
+**The sleeve is also the experiment.** If shading the tube flattens the daytime curve, light was
+the cause. If the curve survives shading, the next suspects are the proxy and pickup, in that
+order. That test needs a fork, not a threshold.
+
+**What a naive alert would have done.** On the whole-day data, a 60-minute mean above 1.5 ×
+the median would have fired on most sunny days, every day by noon. That is the alert this
+issue warned against shipping. The measurement caught it.
+
+### Prerequisite: shade the tube, then measure again
+
+Put the tube in the dark: an opaque sleeve or black heat-shrink over the glass, or the board in
+an opaque enclosure. Beta particles still pass a thin sleeve, and gamma passes anything this
+small. Then repeat the measurement over at least **three full days, sunny ones included**.
+
+Pass mark: variance ÷ mean ≤ 1.3 across the whole day, and no hour-of-day median more than
+20 % above the night median. Both are computed by the same read-only query as the table above.
+Until that passes, any daytime alert measures whatever the daytime excess is, not background.
+
+If it does not pass after shading, the light hypothesis was wrong: correlate the counts with the
+proxy's connection events and with appliance power next, before thinking about any threshold.
+
+### The alert, once it does
+
+Every number below is a value in a helper, not a constant, so re-tuning is never a code change.
+
+| piece | how | value from the measurement |
+|---|---|---|
+| `input_number.radiation_baseline_cpm` | the measured background | **22.6** (re-measure after shading) |
+| `input_number.radiation_alert_factor` | how far above background counts as elevated | **1.5** |
+| `sensor.radiation_cpm_mean` | native `statistics` helper, mean of `sensor.background_radiation_cpm`, `max_age` 60 min, `sampling_size` 120 | window from the table |
+| `binary_sensor.radiation_elevated` | template: mean > baseline × factor, availability needs ≥ 45 samples in the window, `delay_on` 30 min | "sustained" |
+| automation | elevated `on` → both adults, once, with the mean and the baseline; `off` → a short "back to background" | notify only |
+
+**Why these numbers.**
+- *60-minute mean.* At 22.6 CPM the Poisson standard deviation of a 60-minute mean is
+  √(22.6 / 60) ≈ 0.61 CPM. The highest dark 60-minute mean in ten days was 25.7, which is
+  +5 σ. Fluctuation alone does not leave that band.
+- *Factor 1.5* means 34 CPM, about +18 σ on the 60-minute mean: no fluctuation reaches it,
+  and a 50 % sustained rise does. The factor is a helper because what is worth a phone call is
+  the operator's judgement, not the tube's.
+- *`delay_on` 30 min on top of the 60-minute window.* The level has to stay above the line for
+  half an hour after the window first crosses it. One burst, a reconnect replaying counts, or a
+  short spike cannot fire it.
+- *Availability on sample count.* The proxy drops off now and then (3 833 unavailable rows in
+  ten days). A mean over three samples is not a 60-minute mean.
+
+The `statistics` window is a helper *option*, edited in the UI, not an `input_number`. The
+native helper takes it as configuration, and a template re-implementing a moving average to
+make it a slider would be a second copy of what `statistics` already does.
+
+**An interim option, if waiting for the sleeve is not acceptable:** evaluate only while the
+hallway is dark (`sensor.hallway_presence_illuminance` < 5 lx; those minutes are Poisson-clean,
+as above). It would catch a sustained elevation overnight and miss one that starts and ends in
+daylight. It is not built: shading the tube fixes the cause, and the gate would only hide it.
+
+### Not built yet, on purpose
+
+No helper, sensor or automation from the table exists on the instance. The design is complete.
+What is missing is a baseline that holds in daylight, and that waits for the sleeve.

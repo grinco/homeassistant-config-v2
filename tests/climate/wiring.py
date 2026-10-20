@@ -84,7 +84,46 @@ def night_copies():
     return sorted(found - known), sorted(known - found)
 
 
+ENERGY = harness.ENTRIES.replace("core.config_entries", "energy")
+
+
+def digest_meters(prefs_path=ENERGY):
+    """The energy digest's meter list against the Energy dashboard's, both ways.
+
+    The digest copies the list because an automation cannot read the Energy preferences. A meter
+    added to the dashboard and not to the digest would be missing from every daily total, silently.
+    A meter the dashboard counts inside another (`included_in_stat`) is not a separate use.
+    """
+    import io
+    import json
+    with io.open(prefs_path, encoding="utf-8") as fh:
+        prefs = json.load(fh)["data"]
+    want = [d["stat_consumption"] for d in prefs.get("device_consumption") or []
+            if not d.get("included_in_stat")]
+    ids = harness.load_expressions(DIGEST_ID).get("ids")
+    if ids is None:
+        import yaml
+        with io.open(harness.AUTOMATIONS, encoding="utf-8") as fh:
+            auto = [a for a in yaml.safe_load(fh) if str(a.get("id")) == DIGEST_ID][0]
+        ids = next(a["variables"]["ids"] for a in auto["actions"]
+                   if isinstance(a.get("variables"), dict) and "ids" in a["variables"])
+    return sorted(set(want) - set(ids)), sorted(set(ids) - set(want))
+
+
+DIGEST_ID = "1792100000001"
+
+
 def main():
+    missing, extra = digest_meters()
+    for m in missing:
+        print("  DIGEST MISSES  %s is on the Energy dashboard but not in the digest" % m)
+    for m in extra:
+        print("  DIGEST EXTRA   %s is in the digest but not on the Energy dashboard" % m)
+    if missing or extra:
+        print("\nThe energy digest must sum exactly the Energy dashboard's meters.")
+        return 1
+    print("  the energy digest sums exactly the Energy dashboard's meters")
+
     stray, gone = night_copies()
     for where, key in stray:
         print("  UNTESTED NIGHT  %s / %s defines night but is not in harness.NIGHT_CONSUMERS"

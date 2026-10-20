@@ -76,6 +76,9 @@ AUTOS = {
     "1790500000001": "house-away.json",
     "1791800830017": "house-everyone-left.json",
     "1791800829345": "battery-watchdog.json",
+    "1792000000001": "house-front-door-away.json",
+    "1792100000001": "energy-digest.json",
+    "1792200000001": "house-morning-briefing.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
