@@ -171,6 +171,21 @@ Checks, each one written because something it catches actually shipped:
                          15 % copy with a `volvo` substring skip while the sensor
                          said 20 % by integration: a leak sensor at 15 % was named
                          by the sensor and hidden on Home.
+  C30 attention-gate     every card in Home's Needs attention can actually appear:
+                         the section's own gate (a lone OR) carries each card's
+                         visibility condition as a branch. Until 2026-10-20 the
+                         damp/health card and the purifier filter were gated on
+                         their own but left out of the section's gate, so either
+                         one alone was never seen (issue #2).
+  C31 person-badges      a person badge does not pin a colour: the colour must
+                         follow the state (home or away). Until 2026-10-20 all
+                         three header badges were `color: green`, home or not
+                         (issue #4).
+  C32 links-resolve      every in-app link a markdown card builds, a literal
+                         `/lovelace/<path>` or a value of a `{% set page = {...} %}`
+                         map, names a view of the same dashboard. Home's damp and
+                         health list links each room to its page through such a
+                         map (issue #3); renaming a view would leave it dead.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1128,6 +1143,25 @@ def main():
             if silent:
                 fail("C28", "%s: a dead safety sensor would go unmentioned" % label, silent)
 
+            # C30 - nothing in Needs attention is gated out by the section itself.
+            ungated = []
+            for sec in na:
+                vis = sec.get("visibility") or []
+                branches = [b for c in vis if c.get("condition") == "or" and len(vis) == 1
+                            for b in (c.get("conditions") or [])]
+                if not branches:
+                    ungated.append("the section has no lone-OR gate to check against")
+                    continue
+                for i, c in enumerate(sec.get("cards") or []):
+                    cv = c.get("visibility")
+                    if not cv:
+                        continue
+                    if len(cv) != 1 or cv[0] not in branches:
+                        ungated.append("card %d (%s) is shown on %s, which the section gate lacks"
+                                       % (i, c.get("type"), json.dumps(cv)))
+            if ungated:
+                fail("C30", "%s: a Needs attention card can never appear" % label, ungated)
+
             # C29 - one list of low batteries, said on Home.
             bat = []
             low = {"condition": "state", "entity": BATTERY_ROLLUP,
@@ -1152,6 +1186,31 @@ def main():
                     bat.append("%s computes its own battery list" % path)
             if bat:
                 fail("C29", "%s: the low-battery note and the roll-up can disagree" % label, bat)
+
+        # C32 - in-app links in markdown land on a view that exists.
+        paths = {v.get("path") for v in views}
+        dead = []
+        for path, card in found:
+            text = card.get("content") if card.get("type") == "markdown" else None
+            if not isinstance(text, str):
+                continue
+            targets = set(re.findall(r"/%s/([a-z0-9_-]+)" % re.escape(label), text))
+            for m in re.finditer(r"set page = (\{[^}]*\})", text):
+                targets |= set(re.findall(r":\s*'([^']+)'", m.group(1)))
+            for t in sorted(targets - paths):
+                dead.append("%s links to /%s/%s, which is no view" % (path, label, t))
+        if dead:
+            fail("C32", "%s: a markdown link leads nowhere" % label, dead)
+
+        # C31 - a person badge's colour follows the person.
+        pinned = []
+        for v in views:
+            for i, b in enumerate(v.get("badges") or []):
+                if (isinstance(b, dict) and str(b.get("entity", "")).startswith("person.")
+                        and b.get("color") not in (None, "state")):
+                    pinned.append("%s badge %d %s is always %s" % (v.get("path"), i, b["entity"], b["color"]))
+        if pinned:
+            fail("C31", "%s: a person badge looks the same at home and away" % label, pinned)
 
         # C22 - one definition of night.
         # Audit 2026-10-20: the alarm-first definition was copied inline into two Climate cards.

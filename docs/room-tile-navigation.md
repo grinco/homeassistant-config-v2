@@ -1,6 +1,39 @@
 # Room tiles: one gesture model for every room
 
-*2026-09-21.*
+*2026-09-21. Superseded on 2026-09-25: see the next section. The rest is kept as the record of
+why the room tiles have one gesture model at all.*
+
+## The current model (since 2026-09-25)
+
+The family Home redesign replaced the Mushroom tiles with one button-card template,
+`vg_room_card` (`lovelace-dashboards/button-card-templates.yaml`), and with it the gestures:
+
+- **tap the card**: open the room's page (`tap_action: navigate` to `variables.page`);
+- **tap the 46 px lamp button**: lights. If anything in the room is lit, turn the room's
+  lights off, otherwise turn them on (`light.turn_off` / `light.turn_on` with
+  `target: area_id`, so the button needs no group to exist and works from the first light);
+- **no hold, no double tap.**
+
+**Why it replaced tap = lights / hold = open.** The goal of that redesign was a Home that
+elderly parents, guests and children can use. A long press is invisible: nothing on a tile says
+it exists, so "hold to open" can only be learnt by being told. The new model keeps the original
+fix, one gesture model for every room whatever it contains, and makes both actions visible.
+The whole card opens the room, the way a tile does everywhere else. The lamp is a separate
+button that looks like what it does, and it is lit amber when the room's lights are on.
+
+**It lost one thing, and that was deliberate.** The lamp button turns the whole room off or
+on. It does not toggle each light, so in a room with one lamp on and one off, a tap means "all
+off". That is the answer the old script gave too ("any on → all off").
+
+The status line no longer counts the lights (2026-10-20, issue #5). On a phone, "3 lights on"
+pushed "Someone here" off the end of the card, and the lamp button already shows the lights.
+Locked by `tests/dashboards/roomcard.py`.
+
+*`perform-action` is back on the lamp button,* the action type whose dispatch was suspected and
+never proven in *An unresolved report* below. That report concerned Mushroom tiles, which are
+gone; button-card dispatches the action itself. It was not re-tested for this note.
+
+---
 
 ## The complaint
 

@@ -157,7 +157,7 @@ BUGS = [
  ("battery: the list is no longer capped (255-character state reads unknown)", "sensor",
   "Any low battery", lambda t: t.replace("| length <= 240", "| length <= 100000")),
  ("battery: the cut is silent (no '+N more')", "sensor", "Any low battery",
-  lambda t: t.replace("(' +' ~ ns.more ~ ' more' if ns.more else '')", "''")),
+  lambda t: t.replace("(['+' ~ ns.more ~ ' more'] if ns.more else [])", "[]")),
  ("battery: nothing low renders empty", "sensor", "Any low battery",
   lambda t: t.replace("else 'none'", "else ''")),
  ("battery: an unavailable sensor is read as a number", "sensor", "Any low battery",

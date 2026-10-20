@@ -163,8 +163,9 @@ the FP2 alone called a sunny noon dark.
   read the room BRIGHT and switch it off under someone. **The bulb is on a wall switch.** With the switch
   off the bulb is `unavailable` and Home Assistant cannot light it; presence lighting only works while
   the switch is left ON (manual control then needs a battery button/dimmer, or a relay behind the switch).
-- **`sensor.any_low_battery`**: names every battery sensor under 20 % (state `none` when there is
-  nothing to say). Phones (`mobile_app`) and the car (`volvo`) are skipped by
+- **`sensor.any_low_battery`**: lists every battery sensor under 20 % by entity id (state `none` when
+  there is nothing to say; ids since 2026-10-20, issue #3, so Home shows each as a tile that opens
+  it, and the watchdog's message turns them into names and levels). Phones (`mobile_app`) and the car (`volvo`) are skipped by
   integration, and the vacuums by device (every entity of a device that has a `vacuum.*`): they are
   charged, not replaced. *Audit 2026-10-20: the Roborock is also bridged over Matter, and that copy of
   its battery belongs to no `roborock` entry, so skipping it by integration missed it.* This is the

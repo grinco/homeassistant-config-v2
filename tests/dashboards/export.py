@@ -48,6 +48,18 @@ SINGLE = {
     "security": "security-view.json",
 }
 ROOM_FILE = "room-views.json"
+# The templates every view uses. Its comment header is prose kept in the file itself; the export
+# replaces only what follows it. Exported since 2026-10-20 (issue #1 found the copy unchecked).
+TEMPLATES = "button-card-templates.yaml"
+
+
+def templates_header(path):
+    if not os.path.exists(path):
+        return ""
+    with io.open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    m = re.search(r"^button_card_templates:", text, re.M)
+    return text[:m.start()] if m else ""
 
 AUTOMATIONS_YAML = os.environ.get(
     "HA_AUTOMATIONS", "/usr/share/hassio/homeassistant/automations.yaml")
@@ -90,8 +102,9 @@ RESOLVED_NOTE = (
     "Areas reads before switching a room's lights on; the bathroom's and shower's readings are "
     "Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any "
     "safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's "
-    "Needs attention; it excludes itself so it cannot latch. 2026-10-12: 'Any low battery' names "
-    "every battery under 20 % that a person replaces (phones, the car and vacuums are skipped), "
+    "Needs attention; it excludes itself so it cannot latch. 2026-10-12: 'Any low battery' lists "
+    "every battery under 20 % that a person replaces (phones, the car and vacuums are skipped; by "
+    "entity id since 2026-10-20, so Home can make each one a tile), "
     "'Lighting left on' the lights still on; both say 'none' when there is nothing to say. "
     "2026-10-14: 'Any safety sensor silent' names a safety sensor unavailable for 30 minutes. "
     "2026-10-20: 'Lighting living room bright', 'Lighting kitchen dark' and 'Lighting hallway "
@@ -196,7 +209,11 @@ def main():
     payload[RESOLVED] = {"note": RESOLVED_NOTE,
                          "entries": [by_title[t] for t in RESOLVED_TITLES if t in by_title]}
 
-    raw = json.dumps(payload, ensure_ascii=False, indent=1, sort_keys=True)
+    # The button-card templates keep their own key order (a YAML file people read top to bottom),
+    # so they are scrubbed as a separate text under the same canary and leak checks.
+    templates = json.dumps({"button_card_templates": cfg.get("button_card_templates") or {}},
+                           ensure_ascii=False)
+    raw = json.dumps(payload, ensure_ascii=False, indent=1, sort_keys=True) + "\n" + templates
     before = dict((w, raw.count(w)) for w in CANARIES)
     clean = scrub(raw, specific, general)
     after = dict((w, clean.count(w)) for w in CANARIES)
@@ -218,11 +235,27 @@ def main():
             print("   (term withheld; index %d)" % (tokens + [s[0] for s in specific]).index(t))
         return 1
 
-    out = json.loads(clean)
+    clean_payload, clean_templates = clean.rsplit("\n", 1)
+    out = json.loads(clean_payload)
+    out[TEMPLATES] = json.loads(clean_templates)
+
+    # A child's name and room share one placeholder in the general map ("Kids room N"), which on a
+    # person badge reads as a room (issue #4). Structural, so no name is needed: a badge whose
+    # entity is an anonymised child is labelled as a person.
+    for data in out.values():
+        for view in (data if isinstance(data, list) else [data]):
+            for badge in (view.get("badges") or []) if isinstance(view, dict) else []:
+                m = re.match(r"person\.kid(\d+)_", str(badge.get("entity", "")))
+                if m and "name" in badge:
+                    badge["name"] = "Kid %s" % m.group(1)
     written = []
     for fname, data in sorted(out.items()):
         target = os.path.join(AUTO_OUT if fname in AUTOS.values() or fname == RESOLVED else OUT, fname)
-        body = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
+        if fname == TEMPLATES:
+            body = templates_header(target) + yaml.safe_dump(
+                data, sort_keys=False, allow_unicode=True, width=100)
+        else:
+            body = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
         if check_only:
             existing = ""
             if os.path.exists(target):

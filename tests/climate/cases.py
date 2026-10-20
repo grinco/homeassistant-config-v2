@@ -1451,13 +1451,15 @@ def _lowb(*sensors, skip_ma=(), skip_vo=(), skip_vac=()):
             SKIP_VAC: "(%r)" % list(skip_vac)}
 
 
-A(sensor_case("battery: a sensor under 20 % is named with its level", "Leak 15%",
+# Issue #3, 2026-10-20: the roll-up says ENTITY IDS, like `Lighting left on` and the silent-sensor
+# roll-up, so Home can make each one a tile that opens it; its consumers render name and level.
+A(sensor_case("battery: a sensor under 20 % is listed by entity id", "sensor.leak_battery",
               _lowb(_bat("sensor.leak_battery", "15", "Leak")), sensor=LOWB,
               finding="2026-10-12: a leak sensor sat at 15 % with nothing to say so"))
 A(sensor_case("battery: exactly 20 % is not yet low", "none",
               _lowb(_bat("sensor.a_battery", "20")), sensor=LOWB,
               finding="the edge: the threshold is 'under 20'"))
-A(sensor_case("battery: 19 % is low", "A 19%",
+A(sensor_case("battery: 19 % is low", "sensor.a_battery",
               _lowb(_bat("sensor.a_battery", "19", "A")), sensor=LOWB,
               finding="the edge from below"))
 A(sensor_case("battery: an unavailable battery is not a number", "none",
@@ -1474,19 +1476,20 @@ A(sensor_case("battery: the vacuum seen through Matter is skipped too", "none",
               _lowb(_bat("sensor.robotic_vacuum_cleaner_battery", "5"),
                     skip_vac=["vacuum.robotic_vacuum_cleaner", "sensor.robotic_vacuum_cleaner_battery"]),
               sensor=LOWB, finding="audit 2026-10-20: the Matter bridge's copy is no roborock entity"))
-A(sensor_case("battery: a sensor on a device with no vacuum is still listed", "Leak 5%",
+A(sensor_case("battery: a sensor on a device with no vacuum is still listed", "sensor.leak_battery",
               _lowb(_bat("sensor.leak_battery", "5", "Leak"),
                     skip_vac=["vacuum.robotic_vacuum_cleaner", "sensor.robotic_vacuum_cleaner_battery"]),
               sensor=LOWB, finding="audit 2026-10-20: the vacuum rule skips the vacuum, not Matter"))
-A(sensor_case("battery: several are listed together", "A 10%, B 3%",
+A(sensor_case("battery: several are listed together", "sensor.a, sensor.b",
               _lowb(_bat("sensor.a", "10", "A"), _bat("sensor.ok", "80", "OK"),
                     _bat("sensor.b", "3.4", "B")), sensor=LOWB,
               finding="one message, every low battery, healthy ones left out"))
 # Audit 2026-10-20: a state over 255 characters is rejected and reads `unknown`, which hides Home's
-# note exactly when the most batteries are low.  The list stops before 240 and says how many more.
+# note exactly when the most batteries are low.  The list stops before 240 and says how many more,
+# as a last item of its own so a consumer splitting on ', ' never reads it as an entity id.
 _many = [_bat("sensor.s%02d" % i, "5", "Sensor %02d" % i) for i in range(1, 31)]
 A(sensor_case("battery: a long list is cut short and says how many more",
-              ", ".join("Sensor %02d 5%%" % i for i in range(1, 18)) + " +13 more",
+              ", ".join("sensor.s%02d" % i for i in range(1, 21)) + ", +10 more",
               _lowb(*_many), sensor=LOWB,
               finding="audit 2026-10-20: 30 low batteries would exceed HA's 255-character state"))
 A(sensor_case("battery: nothing low is the word none, not empty", "none",

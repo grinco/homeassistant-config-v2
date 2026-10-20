@@ -1,7 +1,6 @@
 {
  "badges": [
   {
-   "color": "green",
    "entity": "person.vadim_grinco",
    "name": "Vadim",
    "show_entity_picture": true,
@@ -10,7 +9,6 @@
    "type": "entity"
   },
   {
-   "color": "green",
    "entity": "person.janka_grinco",
    "name": "Janka",
    "show_entity_picture": true,
@@ -19,9 +17,8 @@
    "type": "entity"
   },
   {
-   "color": "green",
    "entity": "person.kid1_grinco",
-   "name": "Kids room 1",
+   "name": "Kid 1",
    "show_entity_picture": true,
    "show_name": true,
    "show_state": false,
@@ -71,8 +68,20 @@
      "type": "custom:auto-entities"
     },
     {
-     "content": "{% set l = states('sensor.any_safety_sensor_silent') %}**Not reporting** — {% for e in l.split(', ') %}{{ state_attr(e, 'friendly_name') or e }}{{ ' (' ~ area_name(e) ~ ')' if area_name(e) }}{{ ', ' if not loop.last }}{% endfor %}. Check its battery and that it is still paired: an alarm that cannot report cannot warn.",
-     "type": "markdown",
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_safety_sensor_silent').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Not reporting — ' ~ (state_attr(e, 'friendly_name') or e) ~ (' (' ~ area_name(e) ~ ')' if area_name(e) else ''), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endfor -%}\n{{ ns.l }}"
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities",
      "visibility": [
       {
        "condition": "state",
@@ -112,8 +121,20 @@
      ]
     },
     {
-     "content": "**Batteries to replace** — {{ states('sensor.any_low_battery') | replace(' Battery ', ' ') }}",
-     "type": "markdown",
+     "card": {
+      "columns": 1,
+      "square": false,
+      "type": "grid"
+     },
+     "card_param": "cards",
+     "filter": {
+      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_low_battery').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- if e.startswith('+') -%}\n{%- set ns.l = ns.l + [{'type': 'markdown', 'content': e}] -%}\n{%- else -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Battery low — ' ~ ((state_attr(e, 'friendly_name') or e) | replace(' Battery', '')), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
+     },
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_empty": false,
+     "type": "custom:auto-entities",
      "visibility": [
       {
        "condition": "state",
@@ -127,7 +148,7 @@
      ]
     },
     {
-     "content": "{% set ns = namespace(mould=[], health=[], air=[]) %}{% set rooms = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% for name, r in rooms %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% set sp = t - dp %}{% if h >= 70 %}{% set ns.mould = ns.mould + ['**' ~ name ~ '** ' ~ h ~ '% RH — mould grows above 70%'] %}{% elif h >= 65 %}{% set ns.mould = ns.mould + ['**' ~ name ~ '** ' ~ h ~ '% RH — drifting toward mould territory'] %}{% endif %}{% if sp < 3 %}{% set ns.mould = ns.mould + ['**' ~ name ~ '** only ' ~ sp | round(1) ~ ' °C above its dew point — condensation on any cooler surface'] %}{% endif %}{% if h < 30 %}{% set ns.health = ns.health + ['**' ~ name ~ '** ' ~ h ~ '% RH — dry enough to irritate airways'] %}{% endif %}{% if t < 16 %}{% set ns.health = ns.health + ['**' ~ name ~ '** ' ~ t | round(1) ~ ' °C — cold enough to be a health risk, not just uncomfortable'] %}{% endif %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','carbon_dioxide') | list %}{% if s.state | float(0) >= 1400 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — ventilate'] %}{% elif s.state | float(0) >= 1000 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — stuffy'] %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','pm25') | rejectattr('entity_id','search','openweathermap') | list %}{% if s.state | float(0) >= 25 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' µg/m³ PM2.5'] %}{% endif %}{% endfor %}{% set aqi = states('sensor.outside_openweathermap_air_quality_index') | int(0) %}{% if aqi >= 4 %}{% set ns.air = ns.air + ['Outdoor air quality **' ~ aqi ~ '/5** — keep windows shut; do not ventilate to cool'] %}{% endif %}{% if ns.mould %}🦠 **Damp / mould risk**\n{% for x in ns.mould %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.health %}🫁 **Health**\n{% for x in ns.health %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.air %}🌫️ **Air quality**\n{% for x in ns.air %}- {{ x }}\n{% endfor %}{% endif %}",
+     "content": "{% set ns = namespace(mould=[], health=[], air=[]) %}{% set rooms = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% set page = {'living_room': 'living-room', 'office': 'guest-room', 'bedroom': 'bedroom', 'kid1': 'kid1', 'kid2': 'kid2'} %}{% for name, r in rooms %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% set sp = t - dp %}{% if h >= 70 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — mould grows above 70%'] %}{% elif h >= 65 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — drifting toward mould territory'] %}{% endif %}{% if sp < 3 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') only ' ~ sp | round(1) ~ ' °C above its dew point — condensation on any cooler surface'] %}{% endif %}{% if h < 30 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — dry enough to irritate airways'] %}{% endif %}{% if t < 16 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ t | round(1) ~ ' °C — cold enough to be a health risk, not just uncomfortable'] %}{% endif %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','carbon_dioxide') | list %}{% if s.state | float(0) >= 1400 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — ventilate'] %}{% elif s.state | float(0) >= 1000 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — stuffy'] %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','pm25') | rejectattr('entity_id','search','openweathermap') | list %}{% if s.state | float(0) >= 25 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' µg/m³ PM2.5'] %}{% endif %}{% endfor %}{% set aqi = states('sensor.outside_openweathermap_air_quality_index') | int(0) %}{% if aqi >= 4 %}{% set ns.air = ns.air + ['Outdoor air quality **' ~ aqi ~ '/5** — keep windows shut; do not ventilate to cool'] %}{% endif %}{% if ns.mould %}🦠 **Damp / mould risk**\n{% for x in ns.mould %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.health %}🫁 **Health**\n{% for x in ns.health %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.air %}🌫️ **Air quality**\n{% for x in ns.air %}- {{ x }}\n{% endfor %}{% endif %}",
      "type": "markdown",
      "visibility": [
       {
@@ -189,6 +210,16 @@
         "unavailable",
         "unknown"
        ]
+      },
+      {
+       "condition": "state",
+       "entity": "binary_sensor.climate_health_risk",
+       "state": "on"
+      },
+      {
+       "below": 15,
+       "condition": "numeric_state",
+       "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining"
       }
      ]
     }
@@ -507,7 +538,7 @@
      ],
      "features_position": "bottom",
      "grid_options": {
-      "columns": 12
+      "columns": 6
      },
      "name": "Vacuum",
      "type": "tile"
@@ -548,7 +579,7 @@
       ]
      },
      "grid_options": {
-      "columns": "full"
+      "columns": 6
      },
      "show_empty": false,
      "type": "custom:auto-entities"

@@ -101,6 +101,12 @@ CASES = [
                     st("light.magic_areas_light_groups_room_all_lights", "off"),
                     st("light.magic_areas_light_groups_room_task_lights", "off")]),
          info={"grp": "light.magic_areas_light_groups_room_all_lights"}),
+    dict(name="the status line leaves the lights to the lamp button",
+         finding="issue #5, 2026-10-20: on a phone 'N lights on' pushed 'Someone here' off the card;"
+                 " the lamp button already shows the lights",
+         room=room([ent("light.room_bulb", "hue"), ent("light.room_lamp", "hue")],
+                   [st("light.room_bulb", "on"), st("light.room_lamp", "off")]),
+         never=["light on", "lights on", "Lights off", "All lights"]),
     dict(name="a CO alarm reaches the room card",
          finding="2026-10-09: the corridor got a smoke and CO alarm",
          room=room([ent("binary_sensor.alarm_co")],

@@ -601,6 +601,34 @@ def m_battery_by_name(d):
     return "C29"
 
 
+def m_attention_gate_misses_card(d):
+    """Issue #2: the damp/health card is gated alone but missing from the section's gate."""
+    doc = _cfg(d, LOV)
+    gate = _needs_attention(doc)["visibility"][0]["conditions"]
+    gate[:] = [c for c in gate if c.get("entity") != "binary_sensor.climate_health_risk"]
+    _save(d, LOV, doc)
+    return "C30"
+
+
+def m_person_badge_pinned(d):
+    """Issue #4: a person badge is green whether or not they are home."""
+    doc = _cfg(d, LOV)
+    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
+    next(b for b in home["badges"] if b.get("entity", "").startswith("person."))["color"] = "green"
+    _save(d, LOV, doc)
+    return "C31"
+
+
+def m_room_link_stale(d):
+    """Issue #3: a room page's path changes and the health list's link map is not told."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        if v.get("path") == "guest-room":
+            v["path"] = "office"
+    _save(d, LOV, doc)
+    return "C32"
+
+
 def m_battery_hand_computed(d):
     """The Home note computes its own battery list again - the 15 % volvo-substring copy."""
     doc = _cfg(d, LOV)
@@ -706,6 +734,9 @@ MUTATIONS = [
     ("a card carries its own copy of night", m_night_inline),
     ("night from the schedule in another spelling", m_night_schedule_by_states),
     ("a card lists batteries by entity id", m_battery_by_name),
+    ("Needs attention's gate misses a card", m_attention_gate_misses_card),
+    ("a person badge pins its colour", m_person_badge_pinned),
+    ("a room page is renamed under its link", m_room_link_stale),
     ("the battery note computes its own list", m_battery_hand_computed),
     ("Needs attention ignores a low battery", m_battery_gate_dropped),
     ("the battery note is shown without a battery", m_battery_note_ungated),

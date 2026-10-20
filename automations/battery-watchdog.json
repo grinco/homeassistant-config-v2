@@ -6,7 +6,7 @@
     "data": {
      "tag": "battery-watchdog"
     },
-    "message": "{{ states('sensor.any_low_battery') }}",
+    "message": "{% for e in states('sensor.any_low_battery').split(', ') %}{{ e if e.startswith('+') else ((state_attr(e, 'friendly_name') or e) | replace(' Battery', '')) ~ ' ' ~ (states(e) | float(0) | round(0) | int) ~ '%' }}{{ ', ' if not loop.last }}{% endfor %}",
     "title": "Batteries to replace"
    }
   }
@@ -28,7 +28,7 @@
    ]
   }
  ],
- "description": "A daily notice (09:00), and one the moment the first battery drops under 20 %, listing every low battery sensor. Phones, the car and the vacuums are excluded by the sensor itself (Any low battery). To Vadim's phone only.",
+ "description": "A daily notice (09:00), and one the moment the first battery drops under 20 %, naming every low battery and its level. sensor.any_low_battery lists entity ids (and a last '+N more' item when the list is cut); this message turns them into names. Phones, the car and the vacuums are excluded by the sensor itself. To Vadim's phone only.",
  "id": "1791800829345",
  "mode": "single",
  "triggers": [
