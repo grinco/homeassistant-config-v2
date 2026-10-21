@@ -1,0 +1,78 @@
+{
+ "note": "schedule.climate_night. It does not decide night: it only moves the alarm at its edges (house-night-mode.json), and stands in for night while the alarm itself is unavailable.",
+ "schedule": {
+  "friday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "icon": "mdi:weather-night",
+  "id": "climate_night",
+  "monday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "name": "Climate night",
+  "saturday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "sunday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "thursday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "tuesday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ],
+  "wednesday": [
+   {
+    "from": "00:00:00",
+    "to": "06:00:00"
+   },
+   {
+    "from": "21:00:00",
+    "to": "24:00:00"
+   }
+  ]
+ }
+}

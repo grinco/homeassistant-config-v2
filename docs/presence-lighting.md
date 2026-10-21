@@ -282,3 +282,44 @@ reintroduces outdoors-wins, the missing floor, no hysteresis, a dead sensor read
 slider and a kitchen that stops mirroring; each is caught by a case failing on its value. The delays
 are native helper options and are not reachable by the suite; they were read back from the live
 config entries.
+
+## Night starts at 21:00; the open space stays dark towards the bedroom (2026-10-21)
+
+The operator moved `schedule.climate_night` to start at 21:00, trimmed what Magic Areas lights at
+night, and asked for two things: no bedroom lights after nine, and less light reaching the bedroom
+from the open space at night. The gallery is right in front of the bedroom's glass door; Aurora and
+the kitchen top are strong enough to see from bed.
+
+**Night is still the alarm.** At 21:00 the schedule moves the alarm to Night (from Home or Disarmed),
+and `binary_sensor.lighting_night` follows the alarm, so a manual Home/Night switch moves the lights
+and the heating together. Nothing about that changed.
+
+**Bedroom.** The lamps (Aladdin, torchère) are accent lights on `occupied`, with `lighting_night` as
+the sleep entity. `sleep` is a priority state in Magic Areas, so with the alarm in Night the bedroom's
+`occupied` is ignored and the lamps never switch on; entering Night switches them off. With night now
+starting at 21:00, that is "no bedroom lights after nine". The lamps came on at 21:13 on 2026-10-21
+only because the alarm was still Home then.
+
+**Kitchen: `accented` outranked night.** Magic Areas 4.4.2 has two priority states, `sleep` AND
+`accented`. When either is present it drops `occupied`/`extended` but keeps every priority state a
+group is assigned to. The kitchen's accent entity was `kitchen_dark`, so on a dark night the kitchen
+was `sleep` + `accented`, and the gallery and the kitchen top (both assigned `accented`) stayed
+eligible. Seen at 22:05 on 2026-10-21, with the alarm in Night: gallery, kitchen top and workarea all on.
+
+Fix: a template binary sensor `binary_sensor.lighting_kitchen_evening` ("Lighting kitchen evening")
+= `kitchen_dark` AND NOT `lighting_night`, now the kitchen's accent entity. At night the kitchen
+is only `sleep`, so the gallery and the kitchen top drop out and switch off as `accented` is lost.
+The workarea (task, `sleep` + `accented`) is the kitchen's one night light. A template, because
+neither a native group nor a threshold can express "and not". It fails towards light: an
+unavailable `lighting_night` reads as "not night".
+
+**Living room.** Aurora and Beam are accent lights on `occupied` + `extended`, so they drop out at
+night already. Only The Moon (sleep group: `occupied`, `sleep`, `extended`) lights at night. The
+Moon was also in the accent group. When night started, the accent group turned it off while the sleep
+group turned it on, and which one won depended on the order in which the event was handled. It is now only in the
+sleep group. That changes nothing by day, because the sleep group is also assigned `occupied`.
+
+Tests: `tests/climate/cases.py` *kitchen evening:* (dark by day, dark at night, bright);
+`mutate.py` drops the night term and the dark term, and both are caught. Magic Areas' own priority
+handling cannot be reached by the suite. It was read in `light.py` (`state_change_secondary`) and
+checked against the live area state, which at 22:30 was `dark, sleep, clear` with no `accented`.

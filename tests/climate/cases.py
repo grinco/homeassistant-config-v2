@@ -1332,6 +1332,22 @@ A(sensor_case("open space: the kitchen is dark when the living room is not brigh
 A(sensor_case("open space: the kitchen is not dark when the living room is bright", "False",
               {LRB_ON: "false"}, sensor=KD, finding="gallery and beam stay off by day"))
 
+# 2026-10-21, operator: the gallery (in front of the bedroom's glass door) and the kitchen top light
+# the bedroom at night.  Magic Areas treats `accented` as a PRIORITY state like `sleep`, so a group
+# assigned to `accented` stays eligible at night: the gallery and the kitchen top came on at 22:05
+# with the alarm in Night.  The kitchen's accent entity is now dark AND not night; at night the
+# kitchen has only `sleep`, which leaves the workarea as its one light.
+KE = "Lighting kitchen evening"
+KD_ON = "is_state('binary_sensor.kitchen_dark','on')"
+NIGHT_ON = "is_state('binary_sensor.lighting_night','on')"
+A(sensor_case("kitchen evening: dark and not night lights the kitchen", "True",
+              {KD_ON: "true", NIGHT_ON: "false"}, sensor=KE, finding="2026-10-21: gallery by day stays"))
+A(sensor_case("kitchen evening: dark at night does not", "False",
+              {KD_ON: "true", NIGHT_ON: "true"}, sensor=KE,
+              finding="2026-10-21: gallery and kitchen top lit the bedroom at 22:05"))
+A(sensor_case("kitchen evening: bright is never evening", "False",
+              {KD_ON: "false", NIGHT_ON: "false"}, sensor=KE, finding="no lamps by day"))
+
 
 # ---------------------------------------------------------------- any safety alarm (Home: Needs attention)
 # 2026-10-09.  A smoke and CO alarm went into the corridor, and Home's *Needs attention* section

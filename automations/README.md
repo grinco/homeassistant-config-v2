@@ -146,3 +146,11 @@ Two things in it are less obvious than they look:
 
 Guard expressions are covered by `tests/climate/`; the sequencing is not, and
 the suite's README says why.
+
+## `magic-areas.json` and `night-schedule.json`
+
+Magic Areas is configured in config entries and the night schedule in `.storage/schedule`, so
+neither appears in `automations.yaml` or a dashboard. These two files are exported so the repo shows
+which lights each area switches, in which states, and when night starts (21:00–06:00 since
+2026-10-21). The schedule only moves the alarm at its edges (`house-night-mode.json`); the alarm
+is what decides night. Reasoning: `docs/presence-lighting.md`.

@@ -96,6 +96,7 @@ RESOLVED_TITLES = (
     "Climate co2 living room", "Climate co2 office", "Radiation dose rate", "Lighting daylight",
     "Any safety alarm", "Any safety sensor silent", "Lighting night", "Lighting left on",
     "Lighting living room bright", "Lighting kitchen dark", "Lighting hallway bright",
+    "Lighting kitchen evening",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
@@ -116,7 +117,23 @@ RESOLVED_NOTE = (
     "(docs/presence-lighting.md). 2026-10-20: 'Any low battery' is the ONE battery list; the "
     "binary 'Any battery low' and the Home card's own copy (15 %, a volvo substring skip) are "
     "gone (lint C29). 'Lighting night' is the helper dashboards read for night; the automations "
-    "keep their own copy of the same expression (tests/climate/harness.py NIGHT_CONSUMERS)."
+    "keep their own copy of the same expression (tests/climate/harness.py NIGHT_CONSUMERS). "
+    "2026-10-21: 'Lighting kitchen evening' (dark AND not night) is the kitchen's Magic Areas "
+    "accent entity, so the gallery and the kitchen top stay off at night."
+)
+# Magic Areas lives in config entries and the night schedule in `.storage/schedule`; neither is
+# in a dashboard or automations.yaml, so until 2026-10-21 the repo did not show them at all.
+MAGIC_AREAS = "magic-areas.json"
+MAGIC_AREAS_NOTE = (
+    "Magic Areas options for every area, as configured on the instance (entry_ts dropped). "
+    "Reference only; entity ids and area names are anonymised. Exported by "
+    "tests/dashboards/export.py. Reasoning: docs/presence-lighting.md."
+)
+SCHEDULE = "night-schedule.json"
+SCHEDULE_ID = "climate_night"
+SCHEDULE_NOTE = (
+    "schedule.climate_night. It does not decide night: it only moves the alarm at its edges "
+    "(house-night-mode.json), and stands in for night while the alarm itself is unavailable."
 )
 
 # Ordinary English that contains one of the stems. If a count moves, the
@@ -212,6 +229,23 @@ def main():
     payload[RESOLVED] = {"note": RESOLVED_NOTE,
                          "entries": [by_title[t] for t in RESOLVED_TITLES if t in by_title]}
 
+    areas = []
+    for e in entries:
+        if e.get("domain") == "magic_areas":
+            opts = dict(e.get("options") or {})
+            opts.pop("entity_ts", None)
+            areas.append({"title": e.get("title"), "options": opts})
+    payload[MAGIC_AREAS] = {"note": MAGIC_AREAS_NOTE,
+                            "areas": sorted(areas, key=lambda a: a["options"].get("id", ""))}
+
+    with io.open(os.path.join(STORAGE, "schedule"), encoding="utf-8") as fh:
+        schedules = json.load(fh)["data"]["items"]
+    night = [x for x in schedules if x.get("id") == SCHEDULE_ID]
+    if not night:
+        print("WARNING - schedule.%s is no longer on the instance" % SCHEDULE_ID)
+    else:
+        payload[SCHEDULE] = {"note": SCHEDULE_NOTE, "schedule": night[0]}
+
     # The button-card templates keep their own key order (a YAML file people read top to bottom),
     # so they are scrubbed as a separate text under the same canary and leak checks.
     templates = json.dumps({"button_card_templates": cfg.get("button_card_templates") or {}},
@@ -253,7 +287,8 @@ def main():
                     badge["name"] = "Kid %s" % m.group(1)
     written = []
     for fname, data in sorted(out.items()):
-        target = os.path.join(AUTO_OUT if fname in AUTOS.values() or fname == RESOLVED else OUT, fname)
+        to_auto = fname in AUTOS.values() or fname in (RESOLVED, MAGIC_AREAS, SCHEDULE)
+        target = os.path.join(AUTO_OUT if to_auto else OUT, fname)
         if fname == TEMPLATES:
             body = templates_header(target) + yaml.safe_dump(
                 data, sort_keys=False, allow_unicode=True, width=100)

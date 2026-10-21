@@ -591,6 +591,27 @@
   {
    "cards": [
     {
+     "heading": "Weather",
+     "icon": "mdi:weather-partly-cloudy",
+     "type": "heading"
+    },
+    {
+     "entity": "weather.home",
+     "forecast_type": "daily",
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_current": true,
+     "show_forecast": true,
+     "type": "weather-forecast"
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
      "heading": "Around the house",
      "icon": "mdi:paw",
      "type": "heading"
@@ -667,27 +688,6 @@
      },
      "type": "custom:auto-entities",
      "unique": "entity"
-    }
-   ],
-   "column_span": 1,
-   "type": "grid"
-  },
-  {
-   "cards": [
-    {
-     "heading": "Weather",
-     "icon": "mdi:weather-partly-cloudy",
-     "type": "heading"
-    },
-    {
-     "entity": "weather.home",
-     "forecast_type": "daily",
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_current": true,
-     "show_forecast": true,
-     "type": "weather-forecast"
     }
    ],
    "column_span": 1,
