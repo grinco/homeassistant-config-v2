@@ -1294,11 +1294,9 @@ A(sensor_case("kid 1: a whole-degree air-quality reading passes through", "24.0"
 # the fallback for a dead FP2.  `Lighting kitchen dark` is the exact inverse - one decision for one
 # open space.  The 2026-10-12 case (FP2 dim at a sunny noon) is now the slider's job, not outdoors'.
 LRB = "Lighting living room bright"
-KD = "Lighting kitchen dark"
 FP2 = "states('sensor.living_room_livingroom_fp2_light_sensor_light_level')"
 SLIDER = "states('input_number.lighting_indoor_dark_below_lux')"
 OUT_BRIGHT = "is_state('binary_sensor.lighting_daylight','on')"
-LRB_ON = "is_state('binary_sensor.living_room_bright','off')"
 
 
 def _lr(expect, lux, slider, was, out="false", finding=""):
@@ -1327,26 +1325,29 @@ _lr("False", "unknown", "150", "on", out="false",
 _lr("False", "0", "150", "on", finding="0 lx is a reading, not a dead sensor")
 _lr("False", "250", "150", "unknown", finding="a first evaluation inside the band starts dark")
 
-A(sensor_case("open space: the kitchen is dark when the living room is not bright", "True",
-              {LRB_ON: "true"}, sensor=KD, finding="2026-10-20: one decision for one open space"))
-A(sensor_case("open space: the kitchen is not dark when the living room is bright", "False",
-              {LRB_ON: "false"}, sensor=KD, finding="gallery and beam stay off by day"))
+# 2026-10-21: the kitchen needs no darkness of its own.  Every kitchen group is gated on dark, so it
+# reads `living_room_bright` natively as its Magic Areas dark entity (one open space), and night is
+# Magic Areas' own `sleep` priority.  `Lighting kitchen dark` is read by nothing now.
 
-# 2026-10-21, operator: the gallery (in front of the bedroom's glass door) and the kitchen top light
-# the bedroom at night.  Magic Areas treats `accented` as a PRIORITY state like `sleep`, so a group
-# assigned to `accented` stays eligible at night: the gallery and the kitchen top came on at 22:05
-# with the alarm in Night.  The kitchen's accent entity is now dark AND not night; at night the
-# kitchen has only `sleep`, which leaves the workarea as its one light.
-KE = "Lighting kitchen evening"
-KD_ON = "is_state('binary_sensor.kitchen_dark','on')"
+# 2026-10-21, operator: "i sleep in, and don't want lights to turn on automatically at 6 - while it's
+# still dark outside and i simply turn in the bed".  At 06:00 the alarm leaves Night, the bedroom
+# loses `sleep`, and the PIR lit the lamps.  The bedroom's sleep entity is its own: night, or any
+# time before noon.  The evening (before night) still lights the lamps.
+BS = "Lighting bedroom sleep"
 NIGHT_ON = "is_state('binary_sensor.lighting_night','on')"
-A(sensor_case("kitchen evening: dark and not night lights the kitchen", "True",
-              {KD_ON: "true", NIGHT_ON: "false"}, sensor=KE, finding="2026-10-21: gallery by day stays"))
-A(sensor_case("kitchen evening: dark at night does not", "False",
-              {KD_ON: "true", NIGHT_ON: "true"}, sensor=KE,
-              finding="2026-10-21: gallery and kitchen top lit the bedroom at 22:05"))
-A(sensor_case("kitchen evening: bright is never evening", "False",
-              {KD_ON: "false", NIGHT_ON: "false"}, sensor=KE, finding="no lamps by day"))
+HOUR = "now().hour"
+
+
+def _bs(expect, night, hour, finding=""):
+    A(sensor_case("bedroom sleep: night %s at %s:00" % (night, hour), expect,
+                  {NIGHT_ON: night, HOUR: hour}, sensor=BS, finding=finding))
+
+
+_bs("True", "true", "22", finding="night is sleep")
+_bs("True", "false", "6", finding="2026-10-21: the alarm left Night at 06:00; the operator is asleep")
+_bs("True", "false", "11", finding="the last morning hour still sleeps")
+_bs("False", "false", "12", finding="noon ends the morning")
+_bs("False", "false", "20", finding="the evening before night lights the lamps")
 
 
 # ---------------------------------------------------------------- any safety alarm (Home: Needs attention)

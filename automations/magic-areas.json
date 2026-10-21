@@ -228,7 +228,7 @@
        "state"
       ],
       "accent_lights_states": [
-       "accented"
+       "occupied"
       ],
       "overhead_lights": [
        "light.gallery"
@@ -238,7 +238,7 @@
        "state"
       ],
       "overhead_lights_states": [
-       "accented"
+       "occupied"
       ],
       "sleep_lights": [],
       "sleep_lights_act_on": [
@@ -254,8 +254,8 @@
        "state"
       ],
       "task_lights_states": [
-       "sleep",
-       "accented"
+       "occupied",
+       "sleep"
       ]
      }
     },
@@ -273,8 +273,8 @@
     ],
     "reload_on_registry_change": true,
     "secondary_states": {
-     "accent_entity": "binary_sensor.lighting_kitchen_evening",
-     "dark_entity": "",
+     "accent_entity": "",
+     "dark_entity": "binary_sensor.living_room_bright",
      "extended_time": 5,
      "extended_timeout": 10,
      "sleep_entity": "binary_sensor.lighting_night",
@@ -400,7 +400,7 @@
      "dark_entity": "binary_sensor.lighting_daylight",
      "extended_time": 5,
      "extended_timeout": 10,
-     "sleep_entity": "binary_sensor.lighting_night",
+     "sleep_entity": "binary_sensor.lighting_bedroom_sleep",
      "sleep_timeout": 1
     },
     "type": "interior"
