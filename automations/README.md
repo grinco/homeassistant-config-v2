@@ -154,3 +154,11 @@ neither appears in `automations.yaml` or a dashboard. These two files are export
 which lights each area switches, in which states, and when night starts (21:00–06:00 since
 2026-10-21). The schedule only moves the alarm at its edges (`house-night-mode.json`); the alarm
 is what decides night. Reasoning: `docs/presence-lighting.md`.
+
+## `hot-water-schedule.json` (not exported yet)
+
+The Tado hot-water zone's active timetable, as set in the Tado app. Until the first run, the
+schedule is recorded in `docs/hot-water.md`. Home Assistant cannot read
+Tado schedules, so `tests/tado/export.py` reads it from the Tado API. The script signs in with its
+own device login, because Tado's refresh tokens rotate and borrowing Home Assistant's would log
+the integration out. Run it after changing the schedule in the app. Reasoning: `docs/hot-water.md`.
