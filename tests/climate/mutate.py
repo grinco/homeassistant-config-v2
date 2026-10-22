@@ -103,24 +103,23 @@ BUGS = [
   lambda t: t.replace("{% if c >= 1400 %}", "{% if c < 1400 %}")),
  ("health risk: CO2 check swallows the humidity check", "sensor", "Climate health risk",
   lambda t: t.replace("{% if h >= 65 or h < 30 or t < 16 %}", "{% if false %}")),
- # BLE over the Matter bridge -- the tier ORDER is the whole point, and a chain
- # that quietly collapses back to two tiers still satisfies the happy path.
- ("source order: the Matter bridge outranks BLE again", "sensor", "Climate temp living room",
-  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}",
-                      "{% if m > -900 %}{{ m | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
- ("source order: the Matter tier is dropped, not demoted", "sensor", "Climate humidity office",
-  lambda t: t.replace("{% elif m >= 0 %}{{ m | round(1) }}", "")),
+ # The living room and office meters: the AC probe is the fallback, never the first choice.
+ ("source order: the AC probe outranks the room meter", "sensor", "Climate temp living room",
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}",
+                      "{% if f > -900 %}{{ (f + ac) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
+ ("source order: the room meter is dropped", "sensor", "Climate humidity office",
+  lambda t: t.replace("{% if b >= 0 %}{{ b | round(1) }}{% elif f >= 0 %}", "{% if f >= 0 %}")),
  # A real meter in a kid's room. The offset traps are the point: the meter is correctly
  # placed, so a correction applied to it injects the very error the correction removes.
  ("kid1: the TRV outranks the room meter again", "sensor", KID1_T,
-  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}",
-                      "{% if p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}")),
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif q > -900 %}{{ q | round(2) }}{% elif p > -900 %}",
+                      "{% if p > -900 %}{{ (p + tv_eff) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif q > -900 %}")),
  # 2026-10-07: the air-quality sensor is the third tier -- below the meter, above the TRV.
  ("kid1: the air-quality tier is dropped", "sensor", KID1_T,
   lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "")),
  ("kid1: the air-quality sensor outranks the meter", "sensor", KID1_T,
-  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}",
-                      "{% if q > -900 %}{{ q | round(2) }}{% elif b > -900 %}{{ b | round(2) }}{% elif m > -900 %}{{ m | round(2) }}")),
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif q > -900 %}{{ q | round(2) }}",
+                      "{% if q > -900 %}{{ q | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
  ("kid1: the air-quality sensor gets the TRV offset", "sensor", KID1_T,
   lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "{% elif q > -900 %}{{ (q + tv_eff) | round(2) }}")),
  ("kid1: humidity loses the air-quality tier", "sensor", KID1_H,
@@ -387,9 +386,6 @@ BUGS = [
   lambda t: t.replace("selectattr('state','eq','on')", "rejectattr('state','eq','off')")),
  ("daylight: the sun fallback loses its hysteresis", "sensor", "Lighting daylight",
   lambda t: t.replace("> (6 if was_bright else 12)", "> 6")),
- ("kid1: the air-quality sensor outranks the Matter path", "sensor", KID1_T,
-  lambda t: t.replace("{% elif m > -900 %}{{ m | round(2) }}{% elif q > -900 %}{{ q | round(2) }}",
-                      "{% elif q > -900 %}{{ q | round(2) }}{% elif m > -900 %}{{ m | round(2) }}")),
  ("kid1: the air-quality sensor gets the AC offset", "sensor", KID1_T,
   lambda t: t.replace("{% elif q > -900 %}{{ q | round(2) }}", "{% elif q > -900 %}{{ (q + ac) | round(2) }}")),
  ("kid1: the room meter gets the AC offset applied to it", "sensor", KID1_T,
@@ -437,7 +433,7 @@ BUGS = [
   lambda t: t.replace("active and mode_ok and", "active and")),
  # Kids room 2 gained its meter on 2026-09-25; the chain must not quietly revert.
  ("kid 2: the room meter dropped from the chain", "sensor", KID2_T,
-  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif m > -900 %}", "{% if m > -900 %}")),
+  lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif p > -900 %}", "{% if p > -900 %}")),
  # Outdoor temperature, 2026-09-25: terrace sensor first, forecast second.
  ("outdoor: the forecast outranks the terrace again", "sensor", "Climate temp outdoor",
   lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",

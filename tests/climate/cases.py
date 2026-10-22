@@ -537,103 +537,74 @@ A(sensor_case("a dead corridor humidity source yields nothing", "",
 
 
 
-# ---------------------------------------------------------------- BLE over the Matter bridge
-# 2026-09-21.  The living room and the office each have a SwitchBot Meter Pro CO2
-# that reaches HA twice: over the SwitchBot Hub Mini's Matter bridge, and directly
-# over BLE through the Bluetooth proxy.  Same physical sensor, two paths.  BLE is
-# measurably the fresher of the two (living room 7.4 min vs 17.6, office 4.8 vs
-# 9.1) and is already the source the CO2 sensors read, so the resolved temperature
-# and humidity now prefer it.
-#
-# Matter is DEMOTED, not removed: it stays as the middle tier so that a proxy or
-# BLE stack failure lands on the same physical instrument over another transport
-# instead of dropping the room to its AC probe.  The probe is the last tier for a
-# reason -- it needs the calibration offset and reports in whole degrees, which is
-# the A11 problem.  Tier order is the whole point of these cases; a chain that
-# quietly collapses to two tiers still passes case 1.
+# ---------------------------------------------------------------- the living room and office meters
+# The living room and the office each have a SwitchBot Meter Pro CO2, read over BLE through
+# the Bluetooth proxies; it is also the source the CO2 sensors read.  When it is down the
+# room falls to its AC probe, which needs the calibration offset and reports in whole
+# degrees (the A11 problem).  Tier order is the whole point of these cases.
 LR_T = "Climate temp living room"
 LR_H = "Climate humidity living room"
 OF_T = "Climate temp office"
 OF_H = "Climate humidity office"
 
 LR_T_BLE = "states('sensor.meter_pro_co2_b5be_temperature')"
-LR_T_MAT = "states('sensor.living_room_meter_pro_co2_be_temperature')"
 LR_T_AC = "states('sensor.living_room_livingroom_ac_temperature')"
 LR_H_BLE = "states('sensor.meter_pro_co2_b5be_humidity')"
-LR_H_MAT = "states('sensor.living_room_meter_pro_co2_be_humidity')"
 LR_H_AC = "states('sensor.living_room_livingroom_ac_humidity')"
 
 OF_T_BLE = "states('sensor.meter_pro_co2_5fe9_temperature')"
-OF_T_MAT = "states('sensor.meter_pro_co2_e9_temperature')"
 OF_T_AC = "states('sensor.office_guest_room_office_ac_temperature')"
 OF_H_BLE = "states('sensor.meter_pro_co2_5fe9_humidity')"
-OF_H_MAT = "states('sensor.meter_pro_co2_e9_humidity')"
 OF_H_AC = "states('sensor.office_guest_room_office_ac_humidity')"
 
 # Every tier carries a DIFFERENT value in these cases, so the expected output
 # names exactly one tier.  Giving two tiers the same reading would let a wrong
 # precedence pass.
 A(sensor_case(
-    "living room temperature prefers BLE over the Matter bridge", "23.4",
-    {LR_T_BLE: "'23.4'", LR_T_MAT: "'22.1'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
-    sensor=LR_T, finding="BLE is the fresher path to the same instrument"))
+    "living room temperature reads its BLE meter", "23.4",
+    {LR_T_BLE: "'23.4'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead BLE meter falls to Matter, not to the AC probe", "22.1",
-    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'22.1'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
-    sensor=LR_T, finding="Matter is demoted to the middle tier, not removed"))
-A(sensor_case(
-    "both meter paths down fall to the corrected AC probe", "23.0",
-    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'unavailable'", LR_T_AC: "'25.0'",
+    "a dead meter falls to the corrected AC probe", "23.0",
+    {LR_T_BLE: "'unavailable'", LR_T_AC: "'25.0'",
      AC_OFF: "'-2.0'"},
     sensor=LR_T, finding="the probe still needs its offset applied"))
 A(sensor_case(
     "every living room temperature source down yields nothing", "",
-    {LR_T_BLE: "'unavailable'", LR_T_MAT: "'unavailable'", LR_T_AC: "'unavailable'",
+    {LR_T_BLE: "'unavailable'", LR_T_AC: "'unavailable'",
      AC_OFF: "'-2.0'"},
     sensor=LR_T, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 A(sensor_case(
-    "office temperature prefers BLE over the Matter bridge", "21.7",
-    {OF_T_BLE: "'21.7'", OF_T_MAT: "'20.4'", OF_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
-    sensor=OF_T, finding="BLE is the fresher path to the same instrument"))
+    "office temperature reads its BLE meter", "21.7",
+    {OF_T_BLE: "'21.7'", OF_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=OF_T, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead office BLE meter falls to Matter, not to the AC probe", "20.4",
-    {OF_T_BLE: "'unavailable'", OF_T_MAT: "'20.4'", OF_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
-    sensor=OF_T, finding="Matter is demoted to the middle tier, not removed"))
-A(sensor_case(
-    "both office meter paths down fall to the corrected AC probe", "23.0",
-    {OF_T_BLE: "'unavailable'", OF_T_MAT: "'unavailable'", OF_T_AC: "'25.0'",
+    "a dead office meter falls to the corrected AC probe", "23.0",
+    {OF_T_BLE: "'unavailable'", OF_T_AC: "'25.0'",
      AC_OFF: "'-2.0'"},
     sensor=OF_T, finding="the probe still needs its offset applied"))
 
 A(sensor_case(
-    "living room humidity prefers BLE over the Matter bridge", "47.0",
-    {LR_H_BLE: "'47'", LR_H_MAT: "'52'", LR_H_AC: "'60'"},
-    sensor=LR_H, finding="BLE is the fresher path to the same instrument"))
+    "living room humidity reads its BLE meter", "47.0",
+    {LR_H_BLE: "'47'", LR_H_AC: "'60'"},
+    sensor=LR_H, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead BLE humidity reading falls to Matter", "52.0",
-    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'52'", LR_H_AC: "'60'"},
-    sensor=LR_H, finding="Matter is demoted to the middle tier, not removed"))
-A(sensor_case(
-    "both humidity meter paths down fall to the AC probe", "60.0",
-    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'unavailable'", LR_H_AC: "'60'"},
+    "a dead humidity meter falls to the AC probe", "60.0",
+    {LR_H_BLE: "'unavailable'", LR_H_AC: "'60'"},
     sensor=LR_H, finding="humidity carries no calibration offset"))
 A(sensor_case(
     "every living room humidity source down yields nothing", "",
-    {LR_H_BLE: "'unavailable'", LR_H_MAT: "'unavailable'", LR_H_AC: "'unavailable'"},
+    {LR_H_BLE: "'unavailable'", LR_H_AC: "'unavailable'"},
     sensor=LR_H, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 A(sensor_case(
-    "office humidity prefers BLE over the Matter bridge", "44.0",
-    {OF_H_BLE: "'44'", OF_H_MAT: "'49'", OF_H_AC: "'60'"},
-    sensor=OF_H, finding="BLE is the fresher path to the same instrument"))
+    "office humidity reads its BLE meter", "44.0",
+    {OF_H_BLE: "'44'", OF_H_AC: "'60'"},
+    sensor=OF_H, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead office BLE humidity reading falls to Matter", "49.0",
-    {OF_H_BLE: "'unavailable'", OF_H_MAT: "'49'", OF_H_AC: "'60'"},
-    sensor=OF_H, finding="Matter is demoted to the middle tier, not removed"))
-A(sensor_case(
-    "both office humidity paths down fall to the AC probe", "60.0",
-    {OF_H_BLE: "'unavailable'", OF_H_MAT: "'unavailable'", OF_H_AC: "'60'"},
+    "a dead office humidity meter falls to the AC probe", "60.0",
+    {OF_H_BLE: "'unavailable'", OF_H_AC: "'60'"},
     sensor=OF_H, finding="humidity carries no calibration offset"))
 
 
@@ -644,11 +615,10 @@ A(sensor_case(
 # slatted ceiling blows its own output onto the TRV's thermometer, so the TRV has been
 # reporting the unit's discharge air rather than the room.
 #
-# The room therefore gains a FOUR-tier chain.  Tier order, worst-case first:
+# The room therefore gains a THREE-tier chain.  Tier order, worst-case first:
 #   1. the meter over BLE          -- a real thermometer, correctly placed, no offset needed
-#   2. the same meter over Matter  -- second transport, same instrument (see the living room)
-#   3. the TRV, only when live AND the radiator is cold, plus the TRV offset
-#   4. the AC internal probe, plus the global AC offset
+#   2. the TRV, only when live AND the radiator is cold, plus the TRV offset
+#   3. the AC internal probe, plus the global AC offset
 #
 # The meter takes NO calibration offset.  That is the single most important thing these
 # cases pin: the offsets exist to correct instruments that sit in the wrong air, and
@@ -661,14 +631,12 @@ K1_T = "Climate temp " + K1["title"]
 K1_H = "Climate humidity " + K1["title"]
 
 K1_B_T = "states('%s')" % K1["meter_temp"]
-K1_M_T = "states('%s')" % K1["matter_temp"]
 K1_V_T = "states('%s')" % K1["trv_temp"]
 K1_A_T = "states('%s')" % K1["ac_temp"]
 K1_CONN = "is_state('%s','on')" % K1["trv_conn"]
 K1_HEAT = "states('%s')" % K1["trv_heat"]
 
 K1_B_H = "states('%s')" % K1["meter_hum"]
-K1_M_H = "states('%s')" % K1["matter_hum"]
 K1_V_H = "states('%s')" % K1["trv_hum"]
 K1_A_H = "states('%s')" % K1["ac_hum"]
 # 2026-10-07: a Zigbee air-quality sensor joined the room (see the block after these cases).
@@ -681,22 +649,17 @@ K1_Q_H = "states('%s')" % K1["aq_hum"]
 # correction is visible in the result rather than hidden behind a matching number.
 A(sensor_case(
     "the room meter outranks the TRV that the AC blows on", "23.4",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
      K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="R8-2/A11: the TRV reads the unit's discharge, not the room"))
 A(sensor_case(
     "a correctly placed meter takes NO calibration offset", "23.4",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'", K1_A_T: "'25.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'23.4'", K1_V_T: "'unavailable'", K1_A_T: "'25.0'",
      K1_CONN: "false", K1_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
     sensor=K1_T, finding="offsets correct instruments in the wrong air; this one is not"))
 A(sensor_case(
-    "a dead BLE meter falls to the same meter over Matter", "23.5",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
-     K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
-    sensor=K1_T, finding="second transport to one instrument, as in the living room"))
-A(sensor_case(
-    "both meter paths down fall to the TRV, offset and all", "23.0",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
+    "a dead meter falls to the TRV, offset and all", "23.0",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_V_T: "'22.0'", K1_A_T: "'25.0'",
      K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="the TRV keeps its place as the only INDEPENDENT fallback"))
 # The probe reads 24.0 here, NOT 25.0: with the AC offset at -2 a 25.0 probe resolves to
@@ -704,135 +667,114 @@ A(sensor_case(
 # paths would have been indistinguishable and the case would have passed either way.
 A(sensor_case(
     "a hot radiator still disqualifies the TRV, even as third tier", "22.0",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'26.0'", K1_A_T: "'24.0'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_V_T: "'26.0'", K1_A_T: "'24.0'",
      K1_CONN: "true", K1_HEAT: "'65'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
 A(sensor_case(
     "every source down yields nothing, never a fabricated number", "",
-    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
+    {K1_Q_T: "'unavailable'", K1_B_T: "'unavailable'", K1_V_T: "'unavailable'",
      K1_A_T: "'unavailable'", K1_CONN: "false", K1_HEAT: "'0'",
      AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 A(sensor_case(
     "room humidity prefers the meter over the TRV", "39.0",
-    {K1_Q_H: "'unavailable'", K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
+    {K1_Q_H: "'unavailable'", K1_B_H: "'39'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
     sensor=K1_H, finding="same instrument ranking as temperature"))
 A(sensor_case(
-    "a dead BLE humidity reading falls to Matter", "44.0",
-    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'", K1_CONN: "true"},
-    sensor=K1_H, finding="Matter is demoted, not removed"))
-A(sensor_case(
-    "both meter paths down fall to the TRV humidity", "46.0",
-    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+    "a dead meter falls to the TRV humidity", "46.0",
+    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
      K1_CONN: "true"},
     sensor=K1_H, finding="the TRV humidity has no radiator gate -- only a liveness one"))
 A(sensor_case(
     "an offline TRV drops humidity to the AC probe", "31.0",
-    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
+    {K1_Q_H: "'unavailable'", K1_B_H: "'unavailable'", K1_V_H: "'46'", K1_A_H: "'31'",
      K1_CONN: "false"},
     sensor=K1_H, finding="liveness gates the TRV in both resolved sensors"))
 
 
 # ---------------------------------------------------------------- a third instrument in kid 1's room
 # 2026-10-07.  A Zigbee air-quality sensor (temperature, humidity, PM2.5, VOC) went into Kids
-# room 1.  It is a second, INDEPENDENT thermometer in the room's air, so it ranks below both paths
-# to the meter (the better-characterised instrument) and above the TRV and the AC probe, which sit
+# room 1.  It is a second, INDEPENDENT thermometer in the room's air, so it ranks below the meter
+# (the better-characterised instrument) and above the TRV and the AC probe, which sit
 # in the wrong air and need offsets.  Like the meter it takes NO offset.
 A(sensor_case(
-    "kid 1: both meter paths down fall to the air-quality sensor, not the TRV", "22.6",
-    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'",
+    "kid 1: a dead meter falls to the air-quality sensor, not the TRV", "22.6",
+    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_V_T: "'22.0'",
      K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="2026-10-07: an independent thermometer in the room's air outranks the TRV"))
 A(sensor_case(
     "kid 1: the air-quality sensor takes NO calibration offset", "22.6",
-    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'unavailable'",
+    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_V_T: "'unavailable'",
      K1_A_T: "'25.0'", K1_CONN: "false", K1_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
     sensor=K1_T, finding="offsets correct instruments in the wrong air; this one is not"))
 A(sensor_case(
     "kid 1: the meter still outranks the air-quality sensor", "23.4",
-    {K1_Q_T: "'22.6'", K1_B_T: "'23.4'", K1_M_T: "'23.5'", K1_V_T: "'22.0'",
+    {K1_Q_T: "'22.6'", K1_B_T: "'23.4'", K1_V_T: "'22.0'",
      K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K1_T, finding="the meter is the better-characterised instrument"))
 A(sensor_case(
-    "kid 1: the meter over Matter still outranks the air-quality sensor", "23.5",
-    {K1_Q_T: "'22.6'", K1_B_T: "'unavailable'", K1_M_T: "'23.5'", K1_V_T: "'22.0'",
-     K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
-    sensor=K1_T, finding="same instrument over a second transport beats a second instrument"))
-A(sensor_case(
     "kid 1: humidity falls to the air-quality sensor before the TRV", "41.0",
-    {K1_Q_H: "'41'", K1_B_H: "'unavailable'", K1_M_H: "'unavailable'", K1_V_H: "'46'",
+    {K1_Q_H: "'41'", K1_B_H: "'unavailable'", K1_V_H: "'46'",
      K1_A_H: "'31'", K1_CONN: "true"},
     sensor=K1_H, finding="same instrument ranking as temperature"))
 A(sensor_case(
     "kid 1: humidity still prefers the meter over the air-quality sensor", "39.0",
-    {K1_Q_H: "'41'", K1_B_H: "'39'", K1_M_H: "'44'", K1_V_H: "'46'", K1_A_H: "'31'",
+    {K1_Q_H: "'41'", K1_B_H: "'39'", K1_V_H: "'46'", K1_A_H: "'31'",
      K1_CONN: "true"},
     sensor=K1_H, finding="same instrument ranking as temperature"))
 
 
 # ---------------------------------------------------------------- a real meter in the second kid's room
 # 2026-09-25.  The operator moved the second SwitchBot Meter Pro (the one that sat unplaced on the
-# admin page) into Kids room 2, which gains the same four-tier chain as Kids room 1 above: the meter
-# over BLE, the same meter over Matter, the TRV (live AND cold, plus its offset), the AC probe (plus
-# the AC offset). Same rules, so the same cases - a room whose chain quietly differs from its twin's
+# admin page) into Kids room 2, which gains the same chain as Kids room 1 above: the meter
+# over BLE, the TRV (live AND cold, plus its offset), the AC probe (plus the AC offset). Same rules, so the same cases - a room whose chain quietly differs from its twin's
 # is how one of them ends up reading the radiator.
 K2 = harness.load_rooms()["kid2"]
 K2_T = "Climate temp " + K2["title"]
 K2_H = "Climate humidity " + K2["title"]
 K2_B_T = "states('%s')" % K2["meter_temp"]
-K2_M_T = "states('%s')" % K2["matter_temp"]
 K2_V_T = "states('%s')" % K2["trv_temp"]
 K2_A_T = "states('%s')" % K2["ac_temp"]
 K2_CONN = "is_state('%s','on')" % K2["trv_conn"]
 K2_HEAT = "states('%s')" % K2["trv_heat"]
 K2_B_H = "states('%s')" % K2["meter_hum"]
-K2_M_H = "states('%s')" % K2["matter_hum"]
 K2_V_H = "states('%s')" % K2["trv_hum"]
 K2_A_H = "states('%s')" % K2["ac_hum"]
 
 A(sensor_case(
     "kid 2: the room meter outranks the TRV", "23.4",
-    {K2_B_T: "'23.4'", K2_M_T: "'23.5'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
+    {K2_B_T: "'23.4'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
      K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K2_T, finding="2026-09-25: the meter moved in; it is the instrument in the room's air"))
 A(sensor_case(
     "kid 2: a correctly placed meter takes NO calibration offset", "23.4",
-    {K2_B_T: "'23.4'", K2_M_T: "'unavailable'", K2_V_T: "'unavailable'", K2_A_T: "'25.0'",
+    {K2_B_T: "'23.4'", K2_V_T: "'unavailable'", K2_A_T: "'25.0'",
      K2_CONN: "false", K2_HEAT: "'0'", AC_OFF: "'-4.0'", TRV_OFF: "'-5.0'"},
     sensor=K2_T, finding="offsets correct instruments in the wrong air; this one is not"))
 A(sensor_case(
-    "kid 2: a dead BLE meter falls to the same meter over Matter", "23.5",
-    {K2_B_T: "'unavailable'", K2_M_T: "'23.5'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
-     K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
-    sensor=K2_T, finding="second transport to one instrument"))
-A(sensor_case(
-    "kid 2: both meter paths down fall to the TRV, offset and all", "23.0",
-    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
+    "kid 2: a dead meter falls to the TRV, offset and all", "23.0",
+    {K2_B_T: "'unavailable'", K2_V_T: "'22.0'", K2_A_T: "'25.0'",
      K2_CONN: "true", K2_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K2_T, finding="the TRV keeps its place as the only INDEPENDENT fallback"))
 A(sensor_case(
     "kid 2: a hot radiator still disqualifies the TRV", "22.0",
-    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'26.0'", K2_A_T: "'24.0'",
+    {K2_B_T: "'unavailable'", K2_V_T: "'26.0'", K2_A_T: "'24.0'",
      K2_CONN: "true", K2_HEAT: "'65'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K2_T, finding="v5: a valve on a hot radiator reads high by an unmeasured amount"))
 A(sensor_case(
     "kid 2: every source down yields nothing", "",
-    {K2_B_T: "'unavailable'", K2_M_T: "'unavailable'", K2_V_T: "'unavailable'",
+    {K2_B_T: "'unavailable'", K2_V_T: "'unavailable'",
      K2_A_T: "'unavailable'", K2_CONN: "false", K2_HEAT: "'0'",
      AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
     sensor=K2_T, finding="R7-9: the skip sentinel, never a fabricated number"))
 A(sensor_case(
     "kid 2: room humidity prefers the meter over the TRV", "39.0",
-    {K2_B_H: "'39'", K2_M_H: "'44'", K2_V_H: "'46'", K2_A_H: "'31'", K2_CONN: "true"},
+    {K2_B_H: "'39'", K2_V_H: "'46'", K2_A_H: "'31'", K2_CONN: "true"},
     sensor=K2_H, finding="same instrument ranking as temperature"))
 A(sensor_case(
-    "kid 2: a dead BLE humidity reading falls to Matter", "44.0",
-    {K2_B_H: "'unavailable'", K2_M_H: "'44'", K2_V_H: "'46'", K2_A_H: "'31'", K2_CONN: "true"},
-    sensor=K2_H, finding="Matter is demoted, not removed"))
-A(sensor_case(
-    "kid 2: both meter paths down fall to the TRV humidity", "46.0",
-    {K2_B_H: "'unavailable'", K2_M_H: "'unavailable'", K2_V_H: "'46'", K2_A_H: "'31'",
+    "kid 2: a dead meter falls to the TRV humidity", "46.0",
+    {K2_B_H: "'unavailable'", K2_V_H: "'46'", K2_A_H: "'31'",
      K2_CONN: "true"},
     sensor=K2_H, finding="the TRV humidity has no radiator gate -- only a liveness one"))
 
@@ -1032,10 +974,8 @@ A(guard("an idle purifier is ours to start", "already_running", "False",
 
 
 # ---------------------------------------------------------------- CO2 (SwitchBot BLE)
-# The same two Meter Pro CO2 devices are exposed twice: Matter gives temperature and
-# humidity (what the climate loop already uses), the SwitchBot BLE proxy adds carbon
-# dioxide. Room mapping was PROVEN by cross-checking both platforms' readings, not by
-# the entity-id suffix: living room = b5be, office = 5fe9.
+# The two Meter Pro CO2 devices report carbon dioxide over BLE. Room mapping was PROVEN by
+# cross-checking readings, not by the entity-id suffix: living room = b5be, office = 5fe9.
 CO2_LR = "Climate co2 living room"
 CO2_OF = "Climate co2 office"
 CO2_LR_SRC = "states('sensor.meter_pro_co2_b5be_carbon_dioxide')"
@@ -1276,7 +1216,7 @@ A(sensor_case("daylight: no lux and no sun elevation is dark", "False",
 # Review 2026-10-07 (A5): the air-quality sensor reports WHOLE degrees. Pin a real whole-degree input,
 # so the case data matches the instrument - this tier is a 1 deg C degraded mode, by design.
 A(sensor_case("kid 1: a whole-degree air-quality reading passes through", "24.0",
-              {K1_Q_T: "'24'", K1_B_T: "'unavailable'", K1_M_T: "'unavailable'", K1_V_T: "'22.0'",
+              {K1_Q_T: "'24'", K1_B_T: "'unavailable'", K1_V_T: "'22.0'",
                K1_A_T: "'25.0'", K1_CONN: "true", K1_HEAT: "'0'", AC_OFF: "'-2.0'", TRV_OFF: "'1.0'"},
               sensor=K1_T, finding="review 2026-10-07 A5: the instrument's real resolution"))
 

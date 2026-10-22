@@ -186,6 +186,17 @@ Checks, each one written because something it catches actually shipped:
                          map, names a view of the same dashboard. Home's damp and
                          health list links each room to its page through such a
                          map (issue #3); renaming a view would leave it dead.
+  C33 one-tile-per-probe a room's Environment block shows each physical probe in the
+                         room once, and every probe that measures the room. Fails on
+                         (a) a raw reading from the probe that a resolved room reading
+                         (`on_room_page`) names first; (b) a chip temperature
+                         (`_device_temperature`); (c) a reading labelled
+                         `not_on_room_pages` that is neither (a) nor an appliance's
+                         own probe (a device with a climate, fan, ... entity, or a
+                         Home Connect appliance). On 2026-10-22 a kid's room showed
+                         its SwitchBot twice and hid the air-quality meter's
+                         temperature and humidity, the one reading taken somewhere
+                         else in the room.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -371,6 +382,55 @@ def registry_entities():
             labels=e.get("labels") or [], integration=e.get("platform"),
             device_class=e.get("device_class") or e.get("original_device_class"),
             entity_category=e.get("entity_category"), hidden_by=e.get("hidden_by")))
+    return out
+
+
+# C33: a device with one of these is an appliance; its own temperature probe
+# measures the appliance, not the room. Not `switch`: a presence sensor or a plug
+# carries one too (review 2026-10-22). Home Connect devices (the oven) are
+# appliances by integration, since they expose no such domain.
+APPLIANCE_DOMAINS = ("climate", "fan", "water_heater", "vacuum", "humidifier")
+APPLIANCE_INTEGRATIONS = ("home_connect",)
+CHIP_TEMP_RE = re.compile(r"_device_temperature$")
+TEMPLATE_REF_RE = re.compile(r"""['"](sensor\.[a-z0-9_]+)['"]""")
+
+
+def probe_keys():
+    """entity_id -> the probe (device) it reads, and entity_id -> is it an appliance's."""
+    ents = [e for e in _store("core.entity_registry", "entities") if not e.get("disabled_by")]
+    doms = {}
+    for e in ents:
+        if not e.get("entity_category"):
+            doms.setdefault(e.get("device_id"), set()).add(e["entity_id"].split(".")[0])
+    probe, is_app = {}, {}
+    for e in ents:
+        did = e.get("device_id")
+        probe[e["entity_id"]] = did or e["entity_id"]
+        is_app[e["entity_id"]] = (e.get("platform") in APPLIANCE_INTEGRATIONS
+                                  or bool(did and doms.get(did, set()) & set(APPLIANCE_DOMAINS)))
+    return probe, is_app
+
+
+def template_sources():
+    """Template sensor entity_id -> the sensors its state names, in order of first mention.
+
+    That stands in for read order because every resolved room template here sets its
+    sources in priority order before the if-chain that tests them.
+    """
+    by_entry = {}
+    for entry in _store("core.config_entries", "entries"):
+        if entry.get("domain") == "template":
+            state = (entry.get("options") or {}).get("state")
+            if isinstance(state, str):
+                by_entry[entry["entry_id"]] = state
+    out = {}
+    for e in _store("core.entity_registry", "entities"):
+        if e.get("platform") == "template" and e.get("config_entry_id") in by_entry:
+            seen = []
+            for ref in TEMPLATE_REF_RE.findall(by_entry[e["config_entry_id"]]):
+                if ref not in seen:
+                    seen.append(ref)
+            out[e["entity_id"]] = seen
     return out
 
 
@@ -1045,6 +1105,57 @@ def main():
             if doubled:
                 fail("C19", "%s: %d fixed tile name(s) are given to more than one entity"
                      % (label, len(doubled)), sorted(doubled))
+
+            # C33 - each probe in the room once, and every probe that measures the room.
+            probe, is_app = probe_keys()
+            sources = template_sources()
+            by_id = {e["entity_id"]: e for e in ents}
+            twice, chip, hidden = [], [], []
+            for v in rooms:
+                gens = generators(v)
+                page_areas = set(str(r["area"]) for _, inc, _ in gens for r in inc if r.get("area"))
+                here = [e for e in ents if e["area"] is not None and e["domain"] == "sensor"
+                        and (e["area"] in page_areas or area_name_of.get(e["area"]) in page_areas)
+                        and not e["entity_category"] and not e["hidden_by"]
+                        and (e["device_class"] in ENV_CLASSES or ENV_ID_RE.search(e["entity_id"]))]
+                # (area-local) device class -> the probe each resolved reading takes first.
+                first = {}
+                for e in here:
+                    if ROOM_SHOW_LABEL not in e["labels"]:
+                        continue
+                    if e["integration"] == "magic_areas":
+                        srcs = [x["entity_id"] for x in here if x["integration"] != "magic_areas"
+                                and x["device_class"] == e["device_class"]]
+                    else:
+                        srcs = [x for x in sources.get(e["entity_id"], [])
+                                if (by_id.get(x) or {}).get("device_class") == e["device_class"]][:1]
+                    for x in srcs:
+                        first.setdefault(e["device_class"], set()).add(probe.get(x, x))
+                for e in here:
+                    if ROOM_SHOW_LABEL in e["labels"]:
+                        continue
+                    dup = probe.get(e["entity_id"]) in first.get(e["device_class"], ())
+                    where = "%-14s %s" % (v.get("path"), e["entity_id"])
+                    if ROOM_HIDDEN_LABEL in e["labels"]:
+                        if not (dup or is_app.get(e["entity_id"]) or CHIP_TEMP_RE.search(e["entity_id"])):
+                            hidden.append(where)
+                        continue
+                    shown = any(
+                        any(rule_matches(r, e, area_name_of) for r in inc)
+                        and not any(rule_matches(x, e, area_name_of) for x in exc)
+                        for _, inc, exc in gens)
+                    if not shown:
+                        continue
+                    if CHIP_TEMP_RE.search(e["entity_id"]):
+                        chip.append(where)
+                    elif dup:
+                        twice.append(where)
+            problems = (["shown twice (its resolved reading already takes this probe): " + x for x in sorted(twice)]
+                        + ["a chip temperature, not the room's: " + x for x in sorted(chip)]
+                        + ["hidden, but the only reading from this probe: " + x for x in sorted(hidden)])
+            if problems:
+                fail("C33", "%s: a room's Environment block shows a probe twice, or hides one"
+                     % label, problems)
 
         # C23 - the room's occupancy is a tile that opens its details.
         if label == "lovelace":

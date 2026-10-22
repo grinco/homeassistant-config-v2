@@ -37,8 +37,8 @@ here — only what is added on top.
 
 Installing either takes that proxy offline for the duration of the flash. For
 `geiger-counter-ble-proxy` that matters more than it looks: the living room, office and Kids
-room 1 resolve their temperature through BLE first, and fall back to the Matter bridge while it
-is down. See `docs/climate-control-design.md`.
+room 1 read their meters through it, and fall back to a worse instrument (the air-quality
+sensor, the TRV or the AC probe) while it is down. See `docs/climate-control-design.md`.
 
 ## The Geiger counter
 

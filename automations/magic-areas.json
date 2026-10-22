@@ -96,9 +96,7 @@
        "state"
       ],
       "accent_lights_states": [],
-      "overhead_lights": [
-       "light.entrance_light"
-      ],
+      "overhead_lights": [],
       "overhead_lights_act_on": [
        "occupancy",
        "state"
@@ -113,7 +111,8 @@
       ],
       "sleep_lights_states": [],
       "task_lights": [
-       "light.corridor_light"
+       "light.corridor_light",
+       "light.entrance_light"
       ],
       "task_lights_act_on": [
        "occupancy",

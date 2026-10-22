@@ -36,7 +36,6 @@
       "enable": "input_boolean.climate_room_living_room",
       "ext": "input_datetime.climate_external_last_living_room",
       "fails": "counter.climate_fail_living_room",
-      "fallback": "sensor.living_room_livingroom_ac_temperature",
       "filter": "input_boolean.climate_air_filter_living_room",
       "manual": "input_datetime.climate_manual_until_living_room",
       "name": "Living room",
@@ -46,7 +45,6 @@
       "rad_window": "binary_sensor.livingroom_thermostat_livingroom_thermostat_window",
       "reason": "input_select.climate_hold_reason_living_room",
       "resolved": "sensor.climate_temp_living_room",
-      "sensor": "sensor.living_room_meter_pro_co2_be_temperature",
       "trv_watch": ""
      },
      {
@@ -58,7 +56,6 @@
       "enable": "input_boolean.climate_room_office",
       "ext": "input_datetime.climate_external_last_office",
       "fails": "counter.climate_fail_office",
-      "fallback": "sensor.office_guest_room_office_ac_temperature",
       "filter": "input_boolean.climate_air_filter_office",
       "manual": "input_datetime.climate_manual_until_office",
       "name": "Office",
@@ -68,7 +65,6 @@
       "rad_window": "",
       "reason": "input_select.climate_hold_reason_office",
       "resolved": "sensor.climate_temp_office",
-      "sensor": "sensor.meter_pro_co2_e9_temperature",
       "trv_watch": ""
      },
      {
@@ -80,7 +76,6 @@
       "enable": "input_boolean.climate_room_bedroom",
       "ext": "input_datetime.climate_external_last_bedroom",
       "fails": "counter.climate_fail_bedroom",
-      "fallback": "sensor.master_bedroom_bedroom_ac_temperature",
       "filter": "input_boolean.climate_air_filter_bedroom",
       "manual": "input_datetime.climate_manual_until_bedroom",
       "name": "Bedroom",
@@ -90,7 +85,6 @@
       "rad_window": "binary_sensor.bedroom_trv_bedroom_trv_window",
       "reason": "input_select.climate_hold_reason_bedroom",
       "resolved": "sensor.climate_temp_bedroom",
-      "sensor": "sensor.bedroom_trv_bedroom_trv_temperature",
       "trv_watch": "climate.bedroom_trv_bedroom_trv"
      },
      {
@@ -102,7 +96,6 @@
       "enable": "input_boolean.climate_room_kid1",
       "ext": "input_datetime.climate_external_last_kid1",
       "fails": "counter.climate_fail_kid1",
-      "fallback": "sensor.kid1_room_ac_temperature",
       "filter": "input_boolean.climate_air_filter_kid1",
       "manual": "input_datetime.climate_manual_until_kid1",
       "name": "Kids room 1",
@@ -112,7 +105,6 @@
       "rad_window": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
       "reason": "input_select.climate_hold_reason_kid1",
       "resolved": "sensor.climate_temp_kid1",
-      "sensor": "sensor.kid1_room_trv_kid1_room_trv_temperature",
       "trv_watch": "climate.kid1_room_trv_kid1_room_trv"
      },
      {
@@ -124,7 +116,6 @@
       "enable": "input_boolean.climate_room_kid2",
       "ext": "input_datetime.climate_external_last_kid2",
       "fails": "counter.climate_fail_kid2",
-      "fallback": "sensor.kid2_room_ac_temperature",
       "filter": "input_boolean.climate_air_filter_kid2",
       "manual": "input_datetime.climate_manual_until_kid2",
       "name": "Kids room 2",
@@ -134,7 +125,6 @@
       "rad_window": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
       "reason": "input_select.climate_hold_reason_kid2",
       "resolved": "sensor.climate_temp_kid2",
-      "sensor": "sensor.kid2_room_trv_kid2_room_trv_temperature",
       "trv_watch": "climate.kid2_room_trv_kid2_room_trv"
      }
     ],

@@ -114,17 +114,16 @@ The cost today is that a unit the automation starts runs in its previous preset 
 | Kids room 1 | `sensor.indoor_outdoor_meter_228b_temperature` | SwitchBot Meter Pro over **BLE**, far corner — good |
 | Kids room 2 | `sensor.kid2_room_ac_temperature` | AC internal (room unused) |
 
-Each room carries a `sensor` and a `fallback`; the fallback is the AC's own sensor. Where no
-dedicated meter exists the two are the same entity. Resolution:
-
-```jinja
-{{ states(r.sensor) | float(states(r.fallback) | float(-999)) }}
-```
+Each room reads ONE resolved template sensor, `r.resolved` (`sensor.climate_temp_<room>`), which
+owns source priority and per-source corrections. (The per-room `sensor` and `fallback` keys that
+predate it were deleted on 2026-10-22; nothing had read them since v5.1.)
 
 `-999` is a sentinel meaning *no usable reading*, which resolves to mode `skip` — the room is
 left alone rather than actuated on a default.
 
 #### Two transports to one instrument — BLE first, Matter second (v5.10, 2026-09-21)
+
+*Superseded 2026-10-22: the Matter bridge was decommissioned (§ "v6.1 — the Matter bridge decommissioned").*
 
 The living room and the office each hold a **SwitchBot Meter Pro CO2**, and that one physical
 instrument reaches HA over **two independent transports**: directly over **BLE** through the
@@ -169,6 +168,8 @@ class over again, so they should be *deleted* rather than re-pointed. That delet
 the next automation write instead of reloading a heating automation to correct a comment.
 
 #### A real instrument in Kids room 1 (v5.11, 2026-09-21)
+
+*Tier 2 (Matter) removed 2026-10-22 (§ "v6.1 — the Matter bridge decommissioned").*
 
 The 3 °C swing measured in this room on 2026-09-21 was never a control problem. The operator
 diagnosed the geometry: the AC is mounted **directly above the radiator**, and the slatted
@@ -2641,6 +2642,8 @@ The raw terrace reading carries `not_on_room_pages`, as every resolved room's in
 
 ## 34. v5.11 (cont.) — a real meter in Kids room 2
 
+*The Matter tier was removed 2026-10-22 (§ "v6.1 — the Matter bridge decommissioned").*
+
 On 2026-09-25 the operator moved the second SwitchBot Meter Pro — the one that had sat unplaced on
 the admin page — into Kids room 2. The room's resolved sensors now use the same four-tier chain as
 Kids room 1 (§ "A real instrument in Kids room 1"): the meter over BLE, the same meter over Matter
@@ -2733,3 +2736,30 @@ morning edge, a manual day has already ended the night.
 Tests: `tests/climate/cases.py` — *radiator room …*, *radiator: …*, *warm-up: …*; `mutate.py` has a
 mutation for each rule above. The radiator automation was created DISABLED and is enabled only after
 review and a dry run against live state.
+
+## v6.1 — the Matter bridge decommissioned (2026-10-22)
+
+The SwitchBot meters in the living room, office and both kids' rooms used to reach HA twice: over
+BLE, and over the SwitchBot hub's Matter bridge. v5.10 kept Matter as the middle tier on the grounds
+that it was *the same instrument arriving late over another radio*. On 2026-10-22 that turned out
+to be false. The living-room meter went silent (its BLE proxy was down and the meter itself
+stopped advertising). BLE correctly went `unavailable`, but the Matter entities kept a value that
+had not changed for two hours and kept reporting it. The hub was serving its cache. Because of the
+chain, the climate loop ran the living room on that cached number instead of falling to the AC probe.
+
+A tier that hides an instrument's death is worse than no tier. The operator decided to
+decommission the bridge rather than paper over it with a freshness gate:
+
+- the eight resolved temperature and humidity templates no longer read the Matter entities. The
+  living room and office are two-tier (meter, then corrected AC probe); Kids room 1 is meter →
+  air-quality sensor → TRV → AC probe; Kids room 2 is meter → TRV → AC probe;
+- the dead `sensor` / `fallback` room keys were deleted from the climate automation;
+- `cases.py` lost every Matter input and the "falls to Matter" cases. The cases that now prove a
+  dead meter lands on the next real tier failed against the old templates (they read the live
+  Matter value) before the change. `mutate.py` swapped its two Matter-order mutations for
+  meter-order ones;
+- the Matter entities were disabled in HA, and they are being un-exposed on the hub.
+
+If a meter's BLE path is lost now, the room drops to its next real instrument, which is the
+behaviour v5.10 argued against. The trade is deliberate: a worse but live reading beats a good
+but frozen one.

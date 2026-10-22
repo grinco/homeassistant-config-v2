@@ -13,7 +13,7 @@ control* switch is on. Only rooms with a real presence sensor take part — a ro
 | room | presence sensor | on-group | dark gate | state |
 |---|---|---|---|---|
 | Closet | Closet Motion (Zigbee motion) | Closet Light | none — windowless, lit at any hour | **on** (2026-10-11) |
-| Corridor | Corridor Presence (mmWave, moved from the living room 2026-10-10) | **day:** entrance + corridor light; **night:** corridor light only | none — interior | **on**. Night = Magic Areas *sleep* state from `binary_sensor.lighting_night` = the alarm in Night mode (the house's one night, set by the schedule or by hand). The front-door camera PIR is EXCLUDED: it sees the doorstep |
+| Corridor | Corridor Presence (mmWave, moved from the living room 2026-10-10) | entrance + corridor light, day and night (since 2026-10-22) | none — interior | **on**. Night = Magic Areas *sleep* state from `binary_sensor.lighting_night` = the alarm in Night mode (the house's one night, set by the schedule or by hand). The front-door camera PIR is EXCLUDED: it sees the doorstep |
 | Living room | FP2 (zones) + kitchen motion, since 2026-10-11 | The Moon, Aurora (+ Beam Lights accent) | `living_room_bright` — the FP2 itself, real time (2026-10-20) | **on** |
 | Kitchen | FP2 zones + kitchen motion | see the 2026-10-11 and 2026-10-14 sections | accent gate `kitchen_dark` = NOT `living_room_bright` | **on** |
 | Hallway | Hallway Presence (FP300) | Hallway | `lighting_hallway_bright` — the FP300 lux (2026-10-20) | **on** |
@@ -61,7 +61,11 @@ inverted, sun hysteresis removed, 0 lx treated as dead, no sun fallback, bright 
 - Night walks through the living room switch the lamps on at their last brightness. If that is
   unwanted, a *sleep* entity and *sleep_lights* are the native fix.
 
-## Day and night in the corridor (2026-10-11)
+## Day and night in the corridor (2026-10-11; both lights at night since 2026-10-22)
+
+*2026-10-22 (operator): both corridor lights now come on at night too. The entrance light moved
+from* overhead *into* task *beside the corridor light, so it has the `sleep` state as well;*
+overhead *is empty. The original split is kept below for the reasoning.*
 
 Two Magic Areas light groups: *overhead* = entrance light, state `occupied`; *task* = corridor
 light, states `occupied` + `sleep`. Under `sleep` (a priority state) MA drops the non-priority

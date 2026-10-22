@@ -140,7 +140,6 @@ To run the suite on a fresh checkout, write that file first:
   "kid1": {
     "title": "<live room token>",
     "meter_temp": "sensor.…", "meter_hum": "sensor.…",
-    "matter_temp": "sensor.…", "matter_hum": "sensor.…",
     "trv_temp": "sensor.…", "trv_hum": "sensor.…",
     "trv_conn": "binary_sensor.…", "trv_heat": "sensor.…",
     "ac_temp": "sensor.…", "ac_hum": "sensor.…"

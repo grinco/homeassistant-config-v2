@@ -504,6 +504,49 @@ def m_second_sensor_in_aggregated_room(d):
     return "C20"
 
 
+def _relabel(d, pick, change):
+    """Apply `change` to every registry entity `pick` accepts; there must be one."""
+    path = os.path.join(d, "core.entity_registry")
+    with io.open(path, encoding="utf-8") as fh:
+        reg = json.load(fh)
+    hit = [e for e in reg["data"]["entities"] if pick(e)]
+    assert hit, "mutation found nothing to change"
+    for e in hit:
+        change(e)
+    with io.open(path, "w", encoding="utf-8") as fh:
+        json.dump(reg, fh)
+
+
+def m_primary_probe_shown(d):
+    """2026-10-22: a room meter back on its page beside the resolved reading it feeds."""
+    _relabel(d, lambda e: e["entity_id"].startswith("sensor.indoor_outdoor_meter_")
+             and "not_on_room_pages" in (e.get("labels") or []),
+             lambda e: e["labels"].remove("not_on_room_pages"))
+    return "C33"
+
+
+def m_unique_probe_hidden(d):
+    """2026-10-22: an air-quality meter's temperature hidden as if it were a duplicate."""
+    _relabel(d, lambda e: e["entity_id"].endswith("_air_quality_temperature")
+             and "not_on_room_pages" not in (e.get("labels") or []),
+             lambda e: e.setdefault("labels", []).append("not_on_room_pages"))
+    return "C33"
+
+
+def m_presence_probe_hidden(d):
+    """Review 2026-10-22 F1: a presence sensor with a switch is not an appliance; its humidity is the room's."""
+    _relabel(d, lambda e: e["entity_id"] == "sensor.hallway_presence_humidity",
+             lambda e: e.setdefault("labels", []).append("not_on_room_pages"))
+    return "C33"
+
+
+def m_chip_temperature_shown(d):
+    """A motion sensor's chip temperature loses its diagnostic category."""
+    _relabel(d, lambda e: e["entity_id"].endswith("_device_temperature"),
+             lambda e: e.update(entity_category=None))
+    return "C33"
+
+
 def _needs_attention(cfg):
     home = [v for v in cfg["data"]["config"]["views"] if v.get("path") == "home"][0]
     return [x for x in home["sections"] if (x.get("cards") or [{}])[0].get("heading") == "Needs attention"][0]
@@ -746,6 +789,10 @@ MUTATIONS = [
     ("Needs attention ignores the safety roll-up", m_safety_gate_dropped),
     ("a heating zone gets a hand-made card", m_heating_hand_listed),
     ("a second sensor joins an aggregated room", m_second_sensor_in_aggregated_room),
+    ("a room meter shown beside the reading it feeds", m_primary_probe_shown),
+    ("a probe measuring elsewhere in the room hidden", m_unique_probe_hidden),
+    ("a chip temperature reaches a room page", m_chip_temperature_shown),
+    ("a presence sensor's room humidity hidden as an appliance's", m_presence_probe_hidden),
     ("a camera gets a hand-listed card", m_camera_hand_listed),
     ("the room card takes any Magic Areas group", m_room_card_any_group),
     ("room pages lose the occupancy tile", m_occupancy_tile_dropped),
