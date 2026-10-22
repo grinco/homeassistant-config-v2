@@ -135,7 +135,7 @@
    "options": {
     "device_class": "temperature",
     "name": "Climate temp living room",
-    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_b5be_temperature') | float(-999) %}{% set f = states('sensor.living_room_livingroom_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
+    "state": "{% set ac = states('input_number.climate_ac_sensor_offset') | float(-2) %}{% set b = states('sensor.meter_pro_co2_b5be_temperature') | float(-999) %}{% set w = states('sensor.livingroom_thermostat_livingroom_thermostat_temperature') | float(-999) %}{% set f = states('sensor.living_room_livingroom_ac_temperature') | float(-999) %}{% if b > -900 %}{{ b | round(2) }}{% elif w > -900 %}{{ w | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}{% endif %}",
     "state_class": "measurement",
     "template_type": "sensor",
     "unit_of_measurement": "°C"
@@ -195,7 +195,7 @@
    "options": {
     "device_class": "humidity",
     "name": "Climate humidity living room",
-    "state": "{% set b = states('sensor.meter_pro_co2_b5be_humidity') | float(-1) %}{% set f = states('sensor.living_room_livingroom_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
+    "state": "{% set b = states('sensor.meter_pro_co2_b5be_humidity') | float(-1) %}{% set w = states('sensor.livingroom_thermostat_livingroom_thermostat_humidity') | float(-1) %}{% set f = states('sensor.living_room_livingroom_ac_humidity') | float(-1) %}{% if b >= 0 %}{{ b | round(1) }}{% elif w >= 0 %}{{ w | round(1) }}{% elif f >= 0 %}{{ f | round(1) }}{% endif %}",
     "state_class": "measurement",
     "template_type": "sensor",
     "unit_of_measurement": "%"

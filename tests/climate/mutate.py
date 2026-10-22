@@ -104,9 +104,17 @@ BUGS = [
  ("health risk: CO2 check swallows the humidity check", "sensor", "Climate health risk",
   lambda t: t.replace("{% if h >= 65 or h < 30 or t < 16 %}", "{% if false %}")),
  # The living room and office meters: the AC probe is the fallback, never the first choice.
- ("source order: the AC probe outranks the room meter", "sensor", "Climate temp living room",
+ ("source order: the AC probe outranks the room meter", "sensor", "Climate temp office",
   lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}",
                       "{% if f > -900 %}{{ (f + ac) | round(2) }}{% elif b > -900 %}{{ b | round(2) }}")),
+ # 2026-10-22: the living room's wired wall thermostat is the second tier, uncorrected.
+ ("living room: the AC probe outranks the wall thermostat", "sensor", "Climate temp living room",
+  lambda t: t.replace("{% elif w > -900 %}{{ w | round(2) }}{% elif f > -900 %}{{ (f + ac) | round(2) }}",
+                      "{% elif f > -900 %}{{ (f + ac) | round(2) }}{% elif w > -900 %}{{ w | round(2) }}")),
+ ("living room: the wall thermostat gets the AC offset", "sensor", "Climate temp living room",
+  lambda t: t.replace("{% elif w > -900 %}{{ w | round(2) }}", "{% elif w > -900 %}{{ (w + ac) | round(2) }}")),
+ ("living room: the wall thermostat humidity tier is dropped", "sensor", "Climate humidity living room",
+  lambda t: t.replace("{% elif w >= 0 %}{{ w | round(1) }}", "")),
  ("source order: the room meter is dropped", "sensor", "Climate humidity office",
   lambda t: t.replace("{% if b >= 0 %}{{ b | round(1) }}{% elif f >= 0 %}", "{% if f >= 0 %}")),
  # A real meter in a kid's room. The offset traps are the point: the meter is correctly

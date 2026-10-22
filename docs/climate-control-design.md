@@ -2751,7 +2751,9 @@ A tier that hides an instrument's death is worse than no tier. The operator deci
 decommission the bridge rather than paper over it with a freshness gate:
 
 - the eight resolved temperature and humidity templates no longer read the Matter entities. The
-  living room and office are two-tier (meter, then corrected AC probe); Kids room 1 is meter →
+  office is two-tier (meter, then corrected AC probe). The living room is meter → Tado wall
+  thermostat → corrected AC probe: the thermostat is wired, out of the AC's air and not on the
+  radiator, so like the meter it takes no offset (operator, same day); Kids room 1 is meter →
   air-quality sensor → TRV → AC probe; Kids room 2 is meter → TRV → AC probe;
 - the dead `sensor` / `fallback` room keys were deleted from the climate automation;
 - `cases.py` lost every Matter input and the "falls to Matter" cases. The cases that now prove a

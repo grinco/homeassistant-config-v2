@@ -540,16 +540,20 @@ A(sensor_case("a dead corridor humidity source yields nothing", "",
 # ---------------------------------------------------------------- the living room and office meters
 # The living room and the office each have a SwitchBot Meter Pro CO2, read over BLE through
 # the Bluetooth proxies; it is also the source the CO2 sensors read.  When it is down the
-# room falls to its AC probe, which needs the calibration offset and reports in whole
-# degrees (the A11 problem).  Tier order is the whole point of these cases.
+# office falls to its AC probe, which needs the calibration offset and reports in whole
+# degrees (the A11 problem).  The living room falls to its Tado wall thermostat first
+# (2026-10-22, operator): wired, out of the AC's air and away from the radiator, so like the
+# meter it takes NO offset.  Tier order is the whole point of these cases.
 LR_T = "Climate temp living room"
 LR_H = "Climate humidity living room"
 OF_T = "Climate temp office"
 OF_H = "Climate humidity office"
 
 LR_T_BLE = "states('sensor.meter_pro_co2_b5be_temperature')"
+LR_T_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_temperature')"
 LR_T_AC = "states('sensor.living_room_livingroom_ac_temperature')"
 LR_H_BLE = "states('sensor.meter_pro_co2_b5be_humidity')"
+LR_H_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_humidity')"
 LR_H_AC = "states('sensor.living_room_livingroom_ac_humidity')"
 
 OF_T_BLE = "states('sensor.meter_pro_co2_5fe9_temperature')"
@@ -562,16 +566,24 @@ OF_H_AC = "states('sensor.office_guest_room_office_ac_humidity')"
 # precedence pass.
 A(sensor_case(
     "living room temperature reads its BLE meter", "23.4",
-    {LR_T_BLE: "'23.4'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    {LR_T_BLE: "'23.4'", LR_T_WALL: "'22.6'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
     sensor=LR_T, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead meter falls to the corrected AC probe", "23.0",
-    {LR_T_BLE: "'unavailable'", LR_T_AC: "'25.0'",
+    "a dead living room meter falls to the wall thermostat, not the AC probe", "22.6",
+    {LR_T_BLE: "'unavailable'", LR_T_WALL: "'22.6'", LR_T_AC: "'25.0'", AC_OFF: "'-2.0'"},
+    sensor=LR_T, finding="2026-10-22: the wired thermostat is out of the AC's air and off the radiator"))
+A(sensor_case(
+    "the wall thermostat takes NO calibration offset", "22.6",
+    {LR_T_BLE: "'unavailable'", LR_T_WALL: "'22.6'", LR_T_AC: "'25.0'", AC_OFF: "'-4.0'"},
+    sensor=LR_T, finding="offsets correct instruments in the wrong air; this one is not"))
+A(sensor_case(
+    "meter and thermostat down fall to the corrected AC probe", "23.0",
+    {LR_T_BLE: "'unavailable'", LR_T_WALL: "'unavailable'", LR_T_AC: "'25.0'",
      AC_OFF: "'-2.0'"},
     sensor=LR_T, finding="the probe still needs its offset applied"))
 A(sensor_case(
     "every living room temperature source down yields nothing", "",
-    {LR_T_BLE: "'unavailable'", LR_T_AC: "'unavailable'",
+    {LR_T_BLE: "'unavailable'", LR_T_WALL: "'unavailable'", LR_T_AC: "'unavailable'",
      AC_OFF: "'-2.0'"},
     sensor=LR_T, finding="R7-9: the skip sentinel, never a fabricated number"))
 
@@ -587,15 +599,19 @@ A(sensor_case(
 
 A(sensor_case(
     "living room humidity reads its BLE meter", "47.0",
-    {LR_H_BLE: "'47'", LR_H_AC: "'60'"},
+    {LR_H_BLE: "'47'", LR_H_WALL: "'52'", LR_H_AC: "'60'"},
     sensor=LR_H, finding="the meter is the instrument in the room's air"))
 A(sensor_case(
-    "a dead humidity meter falls to the AC probe", "60.0",
-    {LR_H_BLE: "'unavailable'", LR_H_AC: "'60'"},
+    "a dead living room humidity meter falls to the wall thermostat", "52.0",
+    {LR_H_BLE: "'unavailable'", LR_H_WALL: "'52'", LR_H_AC: "'60'"},
+    sensor=LR_H, finding="2026-10-22: same instrument ranking as temperature"))
+A(sensor_case(
+    "meter and thermostat humidity down fall to the AC probe", "60.0",
+    {LR_H_BLE: "'unavailable'", LR_H_WALL: "'unavailable'", LR_H_AC: "'60'"},
     sensor=LR_H, finding="humidity carries no calibration offset"))
 A(sensor_case(
     "every living room humidity source down yields nothing", "",
-    {LR_H_BLE: "'unavailable'", LR_H_AC: "'unavailable'"},
+    {LR_H_BLE: "'unavailable'", LR_H_WALL: "'unavailable'", LR_H_AC: "'unavailable'"},
     sensor=LR_H, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 A(sensor_case(
