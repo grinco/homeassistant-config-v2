@@ -16,13 +16,19 @@ wifi:
 logger:
   baud_rate: 0
 # Enable Home Assistant API
+
 api:
   encryption:
     key: !secret hw_622_api_key
 
+ota:
+  platform: esphome
+  password: !secret ota_password
+    
 external_components:
   # switch back to oxan once the PR71 is merged
   - source: github://grob6000/esphome-stream-server
+
 uart:
   id: uart_bus
   # add further configuration for the UART here
@@ -34,11 +40,6 @@ stream_server:
     uart_id: uart_bus
     port: 10000
 
-ota:
-  platform: esphome
-  password: !secret ota_password
-
-    
 # Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
 status_led:
   pin:

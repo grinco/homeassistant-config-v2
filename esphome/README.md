@@ -22,7 +22,7 @@ and re-adding the device.
 | `livingroom-br-proxy.yaml` | Bluetooth proxy in the living room (replaced `lr-bt-proxy` on 2026-10-24, which kept dropping off Wi-Fi) |
 | `corridor-bt-repeater.yaml` | Bluetooth proxy in the corridor (device name `corridor-bt-proxy`) |
 | `geiger-counter-ble-proxy.yaml` | Bluetooth proxy **and** a J305 Geiger-Müller tube on GPIO13 |
-| `office-bt-proxy.yaml` | Bluetooth proxy for the front-door SwitchBot lock, on a TTGO T-Display showing outdoor weather, alarm and lock state |
+| `office-bt-proxy.yaml` | Bluetooth proxy for the front-door SwitchBot lock, on a TTGO T-Display. The unit is out of sight with the backlight off, so the screen (outdoor weather, alarm and lock state) goes unused |
 | `hw-622.yaml` | Serial-to-TCP bridge for the Paradox EVO192 alarm panel (HW-622 relay board, ESP8266) |
 
 ## The alarm bridge
