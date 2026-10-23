@@ -336,3 +336,40 @@ covers 06:00 with the alarm out of Night. `mutate.py` moves the noon edge both w
 is caught by a case failing on its value. The Magic Areas side cannot be reached by the suite: the
 priority handling was read in `light.py` (`state_change_secondary`), and the options were read back
 from the live config entries.
+
+## Pets at night: sensitivity first, then observe (2026-10-23)
+
+The animals (all under 8 kg) were switching lights on around the house at night and early in the
+morning. Three nights of history (2026-10-20 to 10-23) were read for every sensor that lights a
+room at night. A **lone** trigger means a sensor fired at night (23:30–05:30) with no other sensor
+firing within 3 minutes. A person walking somewhere trips a chain of sensors along the way; an
+animal moving around one spot does not.
+
+| Sensor | Lights | Night triggers | Lone | Setting |
+|---|---|---|---|---|
+| Corridor FP1 (mmWave) | corridor + entrance | 21 | **9** | sensitivity medium → **low** (confirmed by the device) |
+| Living room FP2, zones 4–6 (mmWave) | moon lamp, kitchen top | ~80 | 5 | already **low** in the Aqara app (only settable there; HomeKit exposes occupancy only) |
+| Living room Reolink camera, motion | moon lamp | 5 | 0, but re-lit the lamp 5 times in 5 min with the corridor | was already at the least sensitive setting (HA's 1–50 is `51 − sensDef`, so 1 = least). **Disabled** with its sensitivity entity, which takes it out of Magic Areas |
+| Hallway FP300 (mmWave + PIR) | hallway | 15 | 1 | sensitivity medium → **low requested, not yet applied**: a battery device, and Zigbee2MQTT reported `INDIRECT_TRANSACTION_EXPIRY` twice. Wake it with its button and resend |
+| Kitchen, dining Aqara PIRs | kitchen top | 21 | **0** | no setting; fine |
+| Paradox entrance / bedroom PIRs | corridor, bedroom | 21 | **0** | pet-immune in practice |
+| Bedroom Aqara PIR | none at night | 74 | 59 | people moving in bed; it lights nothing at night, so harmless |
+
+**What the data rules out.** A delay filter (presence must hold N seconds) would not help. Lone
+corridor detections last a median 20 s, people's 14–20 s, and about half of all daytime FP2
+detections are 15 s or shorter. A cat crossing the open space also trips several FP2 zones in a
+row, which looks just like a person. mmWave cannot tell an animal from a person; the PIRs, in
+practice, can.
+
+**Decision (operator): change nothing further, observe.** The lower sensitivities get a few nights
+before anything structural is tried. To measure them, rerun the same lone-trigger count over the
+new nights and compare against the table above.
+
+**In reserve, not built,** in the order they would be tried:
+1. Kitchen at night reacts only to the kitchen/dining PIRs, not FP2 zones 5–6. Magic Areas cannot
+   change its presence sources by state, so this needs a small night-gated presence helper. That is
+   the documented reason a template would be justified over the native option here.
+2. Living room dark at night: drop the moon lamp's `sleep` state. The room has no PIR to gate on.
+3. Corridor at night needs the FP1 **and** a recent Paradox entrance PIR. Only worth doing if that
+   PIR actually sees the night route.
+4. Keep every trigger, but hold night lights at the lowest sleep brightness.
