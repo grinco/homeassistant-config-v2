@@ -36,8 +36,9 @@ stream_server:
 
 ota:
   platform: esphome
-  password: !secret hw_622_ota_password
+  password: !secret ota_password
 
+    
 # Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
 status_led:
   pin:
@@ -62,3 +63,7 @@ binary_sensor:
         pullup: true
     name: "alarm_input"
     device_class: problem
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 60s

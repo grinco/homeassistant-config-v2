@@ -351,13 +351,43 @@ Until that passes, any daytime alert measures whatever the daytime excess is, no
 If it does not pass after shading, the light hypothesis was wrong: correlate the counts with the
 proxy's connection events and with appliance power next, before thinking about any threshold.
 
+### Out of direct sun: the daily curve is gone (2026-10-24)
+
+The operator moved the counter to the living room, out of direct sunlight, instead of sleeving
+it. Daylight in the room is not the trigger: the counter now sees sunlit room light and stays
+flat. Direct sun on the tube was. The last daytime excess ends on 2026-10-21 at about 16:00,
+and the board was reflashed at 18:22. The measurement below starts at 18:30.
+
+Two full days followed, both sunny (outdoor maximum 13 000 and 18 500 lx), with 49 hours of
+5-minute statistics:
+
+| | before (dark only) | after the move (whole day) |
+|---|---|---|
+| mean | 22.6 CPM | **21.6 CPM** (night 21.0) |
+| max 60-minute mean | 25.7 CPM | 25.7 CPM |
+| max 5-minute mean | — | 31.0 CPM |
+| 10:00–16:00 mean | ~110 CPM at noon | 23.4 (10-22), 23.3 (10-23) |
+
+The noon peak went from about 7× the night level to about 1.1×. A small daytime residual is
+left: the hour-of-day medians run +7 to +12 % from 10:00 to 15:00, and +21 % at 14:00. That is
+about 2 CPM. Against the alert line (21.6 × 1.5 = 32.4 on a 60-minute mean) it is far below
+anything that fires.
+
+**The pass mark is not formally met yet.** 14:00 is one point over the 20 % line, the window is two
+days rather than three, and the figures come from HA's 5-minute statistics, not the per-minute
+database query the pass mark names (that query needs permission to read the recorder
+database). Scaling the 5-minute variance gives variance ÷ mean ≈ 1.9. That figure includes the
+diurnal residual and the reconnect gaps, so it is an upper bound, not a Poisson test. Rerun the
+per-minute query after a third sunny day. If 14:00 stays over the line, a sleeve on the tube
+still costs nothing.
+
 ### The alert, once it does
 
 Every number below is a value in a helper, not a constant, so re-tuning is never a code change.
 
 | piece | how | value from the measurement |
 |---|---|---|
-| `input_number.radiation_baseline_cpm` | the measured background | **22.6** (re-measure after shading) |
+| `input_number.radiation_baseline_cpm` | the measured background | **21.6** (after the move, see below; re-check with a third day) |
 | `input_number.radiation_alert_factor` | how far above background counts as elevated | **1.5** |
 | `sensor.radiation_cpm_mean` | native `statistics` helper, mean of `sensor.background_radiation_cpm`, `max_age` 60 min, `sampling_size` 120 | window from the table |
 | `binary_sensor.radiation_elevated` | template: mean > baseline × factor, availability needs ≥ 45 samples in the window, `delay_on` 30 min | "sustained" |

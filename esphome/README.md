@@ -19,7 +19,8 @@ and re-adding the device.
 
 | file | what it is |
 |---|---|
-| `lr-bt-proxy.yaml` | Bluetooth proxy. Three rooms read their SwitchBot meters through it |
+| `livingroom-br-proxy.yaml` | Bluetooth proxy in the living room (replaced `lr-bt-proxy` on 2026-10-24, which kept dropping off Wi-Fi) |
+| `corridor-bt-repeater.yaml` | Bluetooth proxy in the corridor (device name `corridor-bt-proxy`) |
 | `geiger-counter-ble-proxy.yaml` | Bluetooth proxy **and** a J305 Geiger-Müller tube on GPIO13 |
 | `office-bt-proxy.yaml` | Bluetooth proxy for the front-door SwitchBot lock, on a TTGO T-Display showing outdoor weather, alarm and lock state |
 | `hw-622.yaml` | Serial-to-TCP bridge for the Paradox EVO192 alarm panel (HW-622 relay board, ESP8266) |
@@ -32,10 +33,10 @@ the panel link. Only one client can hold the port, so nothing else may connect t
 runs. Flashing it takes the alarm integration offline until PAI reconnects, and while it is down
 the alarm sync reports the panel offline and does not arm.
 
-Both use the upstream `esphome/bluetooth-proxies` package, so the proxy half is not configured
+The Bluetooth proxies all use the upstream `esphome/bluetooth-proxies` package, so the proxy half is not configured
 here — only what is added on top.
 
-Installing either takes that proxy offline for the duration of the flash. For
+Installing any of them takes that proxy offline for the duration of the flash. For
 `geiger-counter-ble-proxy` that matters more than it looks: the living room, office and Kids
 room 1 read their meters through it, and fall back to a worse instrument (the air-quality
 sensor, the TRV or the AC probe) while it is down. See `docs/climate-control-design.md`.
