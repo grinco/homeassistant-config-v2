@@ -8,4 +8,4 @@ cd "$(git rev-parse --show-toplevel)"
 python3 tests/leakcheck.py --commits
 python3 tests/esphome_secrets.py
 docker run --rm -v "$PWD":/repo:ro ghcr.io/gitleaks/gitleaks:v8.24.3 \
-  git /repo -c /repo/.gitleaks.toml --no-banner --redact
+  git /repo -c /repo/.gitleaks.toml --no-banner --redact -v
