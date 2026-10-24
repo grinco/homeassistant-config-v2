@@ -215,7 +215,9 @@
     "clear_timeout": 1,
     "exclude_entities": [
      "light.gallery_left",
-     "light.gallery_right"
+     "light.gallery_right",
+     "light.ktl",
+     "light.ktr"
     ],
     "features": {
      "light_groups": {
@@ -239,12 +241,16 @@
       "overhead_lights_states": [
        "occupied"
       ],
-      "sleep_lights": [],
+      "sleep_lights": [
+       "light.kitchen_beams"
+      ],
       "sleep_lights_act_on": [
        "occupancy",
        "state"
       ],
-      "sleep_lights_states": [],
+      "sleep_lights_states": [
+       "sleep"
+      ],
       "task_lights": [
        "light.h1ab2_2"
       ],

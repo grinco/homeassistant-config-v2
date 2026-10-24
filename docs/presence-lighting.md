@@ -210,7 +210,8 @@ starts dark / not-dark. The hallway has no darkness check and no slider.
 
 ## Zigbee groups, the counter, and a Magic Areas bug (2026-10-14)
 
-- **Living Room Main and Gallery are Zigbee2MQTT groups** (ids 1 and 2), not Home Assistant groups.
+- **Living Room Main and Gallery are Zigbee2MQTT groups** (ids 1 and 2; Kitchen Beams joined as 3 on
+  2026-10-24), not Home Assistant groups.
   A Home Assistant group sends one command per bulb, so the bulbs switched one after another; a
   Zigbee group is one broadcast, so they switch together. Each took over the old entity id
   (`light.living_room_main`, `light.gallery`), so Magic Areas, Adaptive Lighting, the dashboards and
@@ -314,7 +315,12 @@ The accent entity was a 2026-10-11 workaround for a kitchen that had one ungated
 kitchen group is gated on dark, so the kitchen uses Magic Areas' own dark entity instead, the same
 `binary_sensor.living_room_bright` the living room reads (one open space). Kitchen top and gallery
 are assigned `occupied`, and the workarea `occupied` + `sleep`. At night, `sleep` drops `occupied`,
-so the workarea is the kitchen's one night light. The accent entity is cleared. `kitchen_dark`
+so the workarea is the kitchen's one night light. The accent entity is cleared.
+
+**Kitchen Beams (2026-10-24, operator).** Two Hue GU10s, KTL and KTR, are Zigbee2MQTT group 3,
+`light.kitchen_beams`, with the members hidden and excluded from the area. They are the kitchen's sleep
+group, state `sleep` only: they light with presence at night (alarm in Night) and never in the
+evening or by day. The workarea stays the task group (`occupied` + `sleep`). `kitchen_dark`
 (NOT `living_room_bright`) is read by nothing; deleting it was left to the operator.
 
 **Bedroom mornings.** The operator sleeps in: at 06:00 the alarm leaves Night, the bedroom lost
