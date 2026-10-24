@@ -1,0 +1,42 @@
+# What can run without the live instance. The climate and dashboard suites read
+# the running Home Assistant and stay local (AGENTS.md); so does the child-name
+# leak check, whose terms never leave the operator's machine. Those run in
+# .githooks/pre-push instead, which is the gate that stops a leak BEFORE it is
+# public. This workflow is the backstop.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks, full history
+        run: >
+          docker run --rm -v "$PWD":/repo:ro ghcr.io/gitleaks/gitleaks:v8.24.3
+          git /repo -c /repo/.gitleaks.toml --no-banner --redact -v
+
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: every ESPHome !secret is listed in the example
+        run: python3 tests/esphome_secrets.py
+      - name: every JSON export parses
+        run: |
+          git ls-files '*.json' | while read -r f; do
+            python3 -m json.tool "$f" > /dev/null || { echo "::error file=$f::invalid JSON"; exit 1; }
+          done
+      - name: every test script compiles
+        run: python3 -m compileall -q tests

@@ -95,6 +95,12 @@ python3 tests/dashboards/mutate.py   # can that lint still fail?
 It reads the terms from `tests/climate/rooms.local.json` (gitignored) and scans every tracked
 file plus every unpushed commit and commit message. Run it before any push.
 
+`.githooks/pre-push` runs it automatically, along with a gitleaks secret scan of the whole history
+(`.gitleaks.toml`: the default rules plus inline ESPHome keys and YAML passwords) and
+`tests/esphome_secrets.py`. Enable it once per clone with `git config core.hooksPath .githooks`.
+CI (`.github/workflows/ci.yml`) repeats the secret scan and the offline checks on every push, but it
+runs after the push and cannot see the child-name terms. The hook is the gate; CI is the backstop.
+
 **Word boundaries are not enough, and this is not theoretical.** `\b` does not fire between
 `_` and a letter, because `_` is a word character — so `\bNAME\b`-style patterns silently fail
 to match `..._NAME_room_area_state`. On 2026-09-21 a dashboard export carrying a Magic Areas

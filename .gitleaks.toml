@@ -1,0 +1,22 @@
+# Secret scan for this repository: gitleaks' default rules plus the leaks this
+# repo can actually make. Run by CI on every push and by .githooks/pre-push.
+
+[extend]
+useDefault = true
+
+# An ESPHome API encryption key written inline instead of `key: !secret ...`.
+[[rules]]
+id = "esphome-inline-api-key"
+description = "ESPHome API encryption key inline; use !secret"
+regex = '''(?m)^\s*key:\s*["']?([A-Za-z0-9+/]{43}=)["']?\s*$'''
+secretGroup = 1
+
+# Any YAML `*password:` with a literal value. `!secret` references are the only
+# accepted form; the example secrets file holds placeholders on purpose.
+[[rules]]
+id = "yaml-inline-password"
+description = "YAML password with a literal value; use !secret"
+regex = '''(?mi)^\s*[a-z_]*password:\s*["']?([^!\s"'#][^"'\n#]*)'''
+secretGroup = 1
+[[rules.allowlists]]
+paths = ['''esphome/secrets\.yaml\.example$''']
