@@ -14,7 +14,6 @@
     "features": {
      "light_groups": {
       "accent_lights": [
-       "light.living_room_aurora",
        "light.h70c4"
       ],
       "accent_lights_act_on": [
@@ -34,7 +33,8 @@
       ],
       "overhead_lights_states": [],
       "sleep_lights": [
-       "light.the_moon"
+       "light.the_moon",
+       "light.living_room_aurora"
       ],
       "sleep_lights_act_on": [
        "occupancy",
@@ -671,7 +671,8 @@
       ],
       "accent_lights_states": [],
       "overhead_lights": [
-       "light.hallway"
+       "light.hallway",
+       "light.stairs"
       ],
       "overhead_lights_act_on": [
        "occupancy",
