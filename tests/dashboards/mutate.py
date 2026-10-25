@@ -43,12 +43,13 @@ def _save(d, f, doc):
         json.dump(doc, fh, ensure_ascii=False)
 
 
-def _first_button(cfg):
+def _first_button(cfg, template=None):
     """Path to the first grid-positioned button-card, as (view, section, index)."""
     for vi, v in enumerate(cfg["data"]["config"].get("views", [])):
         for si, sec in enumerate(v.get("sections", []) or []):
             for ci, c in enumerate(sec.get("cards", []) or []):
-                if isinstance(c, dict) and c.get("type") == "custom:button-card":
+                if (isinstance(c, dict) and c.get("type") == "custom:button-card"
+                        and template in (None, c.get("template"))):
                     return vi, si, ci
     raise SystemExit("no button-card found to mutate")
 
@@ -121,9 +122,12 @@ def m_scratch_key(d):
 
 
 def m_tall_cards(d):
-    """rows:2 under two lines of content - the dead space the operator saw."""
+    """rows:2 under two lines of content - the dead space the operator saw.
+
+    Picks a vg_stat by name: since 2026-10-25 Home opens with Quick actions,
+    whose vg_action buttons are not two-line cards, and rows:2 on one is fine."""
     doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
+    vi, si, ci = _first_button(doc, "vg_stat")
     doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["grid_options"]["rows"] = 2
     _save(d, LOV, doc)
     return "C7"
@@ -771,7 +775,55 @@ def m_home_four_columns(d):
     return "C26"
 
 
+def _comfort_template(cfg):
+    for c in _section(cfg, "home", "Comfort"):
+        if c.get("type") == "custom:auto-entities":
+            return c["filter"]
+    raise SystemExit("no Comfort generator to mutate")
+
+
+def m_comfort_hand_listed(d):
+    """The living room's target gets its own card - every other room is forgotten."""
+    doc = _cfg(d, LOV)
+    _section(doc, "home", "Comfort").append(
+        {"type": "tile", "entity": "input_number.climate_target_day_living_room"})
+    _save(d, LOV, doc)
+    return "C13"
+
+
+def m_comfort_names_room(d):
+    """The generator iterates a hand-kept room list instead of the automation's switches."""
+    doc = _cfg(d, LOV)
+    f = _comfort_template(doc)
+    f["template"] = f["template"].replace("climate_room_", "climate_rooom_") + \
+        "{# input_number.climate_target_day_living_room #}"
+    _save(d, LOV, doc)
+    return "C34"
+
+
+def m_comfort_own_night(d):
+    """The Comfort section decides night itself from the alarm."""
+    doc = _cfg(d, LOV)
+    f = _comfort_template(doc)
+    f["template"] = f["template"].replace("binary_sensor.lighting_night", "alarm_control_panel.home")
+    _save(d, LOV, doc)
+    return "C34"
+
+
+def m_comfort_day_only(d):
+    """At night the section still offers the day target, which the automation ignores."""
+    doc = _cfg(d, LOV)
+    f = _comfort_template(doc)
+    f["template"] = f["template"].replace("climate_target_night_", "climate_target_day_")
+    _save(d, LOV, doc)
+    return "C34"
+
+
 MUTATIONS = [
+    ("Comfort hand-lists a room's target", m_comfort_hand_listed),
+    ("Comfort walks its own room list", m_comfort_names_room),
+    ("Comfort computes night itself", m_comfort_own_night),
+    ("Comfort offers only the day target", m_comfort_day_only),
     ("a room temperature tile is hand-listed", m_room_temperature_hand_listed),
     ("a card computes night from the schedule", m_night_from_schedule),
     ("a card carries its own copy of night", m_night_inline),

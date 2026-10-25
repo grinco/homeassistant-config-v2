@@ -41,6 +41,55 @@
  "path": "home",
  "sections": [
   {
+   "cards": [
+    {
+     "heading": "Quick actions",
+     "icon": "mdi:gesture-tap",
+     "type": "heading"
+    },
+    {
+     "grid_options": {
+      "columns": 6,
+      "rows": "auto"
+     },
+     "icon": "mdi:lightbulb-group-off-outline",
+     "label": "[[[ var n = 0; for (var id in states) { if (id.indexOf('light.') !== 0) continue; var e = hass.entities[id]; if (!e || e.hidden || e.entity_category || e.platform === 'magic_areas') continue; if (!e.area_id && !(e.device_id && hass.devices[e.device_id] && hass.devices[e.device_id].area_id)) continue; if (states[id].attributes.entity_id) continue; if (states[id].state === 'on') n++; } return n ? n + (n === 1 ? ' light is on' : ' lights are on') : 'Everything is off'; ]]]",
+     "name": "All lights off",
+     "tap_action": {
+      "action": "perform-action",
+      "confirmation": {
+       "text": "Turn off every light in the house?"
+      },
+      "perform_action": "light.turn_off",
+      "target": {
+       "floor_id": [
+        "lower_floor",
+        "upper_floor"
+       ]
+      }
+     },
+     "template": "vg_action",
+     "type": "custom:button-card"
+    },
+    {
+     "grid_options": {
+      "columns": 6,
+      "rows": "auto"
+     },
+     "icon": "mdi:microphone-message",
+     "label": "Talk to the house",
+     "name": "Ask",
+     "tap_action": {
+      "action": "assist"
+     },
+     "template": "vg_action",
+     "type": "custom:button-card"
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
    "background": {
     "color": "red",
     "opacity": 12
@@ -483,103 +532,20 @@
   {
    "cards": [
     {
-     "heading": "Quick actions",
-     "icon": "mdi:gesture-tap",
+     "heading": "Comfort",
+     "icon": "mdi:home-thermometer-outline",
      "type": "heading"
     },
     {
-     "grid_options": {
-      "columns": 6,
-      "rows": "auto"
-     },
-     "icon": "mdi:lightbulb-group-off-outline",
-     "label": "[[[ var n = 0; for (var id in states) { if (id.indexOf('light.') !== 0) continue; var e = hass.entities[id]; if (!e || e.hidden || e.entity_category || e.platform === 'magic_areas') continue; if (!e.area_id && !(e.device_id && hass.devices[e.device_id] && hass.devices[e.device_id].area_id)) continue; if (states[id].attributes.entity_id) continue; if (states[id].state === 'on') n++; } return n ? n + (n === 1 ? ' light is on' : ' lights are on') : 'Everything is off'; ]]]",
-     "name": "All lights off",
-     "tap_action": {
-      "action": "perform-action",
-      "confirmation": {
-       "text": "Turn off every light in the house?"
-      },
-      "perform_action": "light.turn_off",
-      "target": {
-       "floor_id": [
-        "lower_floor",
-        "upper_floor"
-       ]
-      }
-     },
-     "template": "vg_action",
-     "type": "custom:button-card"
-    },
-    {
-     "grid_options": {
-      "columns": 6,
-      "rows": "auto"
-     },
-     "icon": "mdi:microphone-message",
-     "label": "Talk to the house",
-     "name": "Ask",
-     "tap_action": {
-      "action": "assist"
-     },
-     "template": "vg_action",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "vacuum.zorik",
-     "features": [
-      {
-       "commands": [
-        "start_pause",
-        "return_home"
-       ],
-       "type": "vacuum-commands"
-      }
-     ],
-     "features_position": "bottom",
-     "grid_options": {
-      "columns": 6
-     },
-     "name": "Vacuum",
-     "type": "tile"
-    },
-    {
      "card": {
-      "columns": 1,
-      "square": false,
-      "type": "grid"
+      "type": "vertical-stack"
      },
      "card_param": "cards",
      "filter": {
-      "exclude": [
-       {
-        "hidden_by": "/.+/"
-       }
-      ],
-      "include": [
-       {
-        "domain": "water_heater",
-        "options": {
-         "entity": "this.entity_id",
-         "features": [
-          {
-           "operation_modes": [
-            "auto",
-            "heat",
-            "off"
-           ],
-           "type": "water-heater-operation-modes"
-          }
-         ],
-         "features_position": "bottom",
-         "name": "Hot water",
-         "type": "tile"
-        }
-       }
-      ]
+      "template": "{%- set night = is_state('binary_sensor.lighting_night', 'on') -%}{%- set ns = namespace(r=[]) -%}{%- for s in states.input_boolean | selectattr('object_id', 'match', 'climate_room_') | selectattr('state', 'eq', 'on') -%}{%- set room = s.object_id[13:] -%}{%- set t = ('input_number.climate_target_night_' if night else 'input_number.climate_target_day_') ~ room -%}{%- if has_value(t) and not is_hidden_entity(t) -%}{%- set ns.r = ns.r + [{'a': area_name(t) or room | replace('_', ' ') | title, 't': t, 'f': 'input_boolean.climate_air_filter_' ~ room}] -%}{%- endif -%}{%- endfor -%}{%- set ns2 = namespace(t=[], f=[]) -%}{%- for r in ns.r | sort(attribute='a') -%}{%- set ns2.t = ns2.t + [{'type': 'tile', 'entity': r.t, 'name': r.a, 'icon': 'mdi:weather-night' if night else 'mdi:thermometer', 'features': [{'type': 'numeric-input', 'style': 'buttons'}], 'features_position': 'bottom'}] -%}{%- if has_value(r.f) -%}{%- set ns2.f = ns2.f + [{'type': 'tile', 'entity': r.f, 'name': r.a, 'icon': 'mdi:air-filter', 'vertical': true, 'tap_action': {'action': 'toggle'}, 'icon_tap_action': {'action': 'toggle'}}] -%}{%- endif -%}{%- endfor -%}{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': ns2.t}] if ns2.t else []) + ([{'type': 'grid', 'columns': 4, 'square': false, 'cards': ns2.f}] if ns2.f else []) }}"
      },
      "grid_options": {
-      "columns": 6
+      "columns": "full"
      },
      "show_empty": false,
      "type": "custom:auto-entities"
@@ -604,90 +570,6 @@
      "show_current": true,
      "show_forecast": true,
      "type": "weather-forecast"
-    }
-   ],
-   "column_span": 1,
-   "type": "grid"
-  },
-  {
-   "cards": [
-    {
-     "heading": "Around the house",
-     "icon": "mdi:paw",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "exclude": [
-       {
-        "hidden_by": "/.+/"
-       }
-      ],
-      "include": [
-       {
-        "domain": "button",
-        "label": "on_home_page",
-        "options": {
-         "entity": "this.entity_id",
-         "hide_state": true,
-         "icon_tap_action": {
-          "action": "perform-action",
-          "perform_action": "button.press",
-          "target": {
-           "entity_id": "this.entity_id"
-          }
-         },
-         "tap_action": {
-          "action": "perform-action",
-          "perform_action": "button.press",
-          "target": {
-           "entity_id": "this.entity_id"
-          }
-         },
-         "type": "tile",
-         "vertical": true
-        }
-       },
-       {
-        "domain": "sensor",
-        "label": "on_home_page",
-        "options": {
-         "entity": "this.entity_id",
-         "features": [
-          {
-           "hours_to_show": 168,
-           "type": "trend-graph"
-          }
-         ],
-         "features_position": "bottom",
-         "type": "tile"
-        }
-       },
-       {
-        "domain": "/^(switch|binary_sensor|input_boolean|input_number|script|scene|vacuum|fan|cover|lock)$/",
-        "label": "on_home_page",
-        "options": {
-         "entity": "this.entity_id",
-         "type": "tile"
-        }
-       }
-      ]
-     },
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_empty": false,
-     "sort": {
-      "method": "friendly_name"
-     },
-     "type": "custom:auto-entities",
-     "unique": "entity"
     }
    ],
    "column_span": 1,

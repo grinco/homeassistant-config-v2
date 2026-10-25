@@ -197,6 +197,15 @@ Checks, each one written because something it catches actually shipped:
                          its SwitchBot twice and hid the air-quality meter's
                          temperature and humidity, the one reading taken somewhere
                          else in the room.
+  C34 home-comfort       Home's Comfort section offers the target the climate
+                         automation is using now (night when `binary_sensor.lighting_night`
+                         is on, day otherwise) for every room whose automatic-climate
+                         switch is on, and that room's air-filter toggle. It walks the
+                         `climate_room_` switches and names no room's helper by id.
+                         Recorder, 2026-10-15..25: the targets and air-filter toggles
+                         were the most-used controls after lights, by all three
+                         household accounts, and lived only on room pages and the
+                         adults-only Climate tab.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -280,6 +289,7 @@ NIGHT_HELPER = "binary_sensor.lighting_night"
 # (dashboard, view path, first heading of the section, or None for every section).
 GENERATED = [
     ("lovelace", "home", "Rooms"),
+    ("lovelace", "home", "Comfort"),
     ("lovelace", "energy", "Sockets"),
     ("lovelace", "security", "Sensors"),
     ("lovelace", "security", "Cameras"),
@@ -979,6 +989,27 @@ def main():
                 fail("C13", "%s: %d hand-listed card(s) in a section the registry could "
                             "generate - every new device is another edit"
                      % (label, len(listed)), listed)
+
+        # C34 - Home's Comfort: every automated room's live target, generated.
+        if label == "lovelace":
+            home = next((v for v in views if v.get("path") == "home"), {})
+            comfort = [s for s in (home.get("sections") or [])
+                       if ((s.get("cards") or [{}])[0].get("heading") == "Comfort")]
+            text = json.dumps(comfort)
+            named = sorted(i for i in set(ENTITY_RE.findall(text))
+                           if re.match(r"input_(number|boolean)\.climate_(target|air_filter|room)_", i)
+                           and not i.endswith("_"))
+            problems = ["names %s" % i for i in named]
+            for need, why in (("climate_room_", "is not driven by the rooms' automatic-climate switches"),
+                              (NIGHT_HELPER, "does not read night from %s" % NIGHT_HELPER),
+                              ("climate_target_night_", "never offers a night target"),
+                              ("climate_target_day_", "never offers a day target"),
+                              ("climate_air_filter_", "offers no air-filter toggle")):
+                if need not in text:
+                    problems.append(why)
+            if comfort and problems:
+                fail("C34", "%s: Home's Comfort section is not the generated live targets" % label,
+                     problems)
 
         # C14 / C15 - room pages: one skeleton, and focused.
         if label == "lovelace":

@@ -305,19 +305,19 @@
        "max": 1600,
        "name": "Toilet down"
       },
+      "sensor.kitchen_kitchen_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
       "sensor.living_room_tv_socket_power": {
        "chart": "amber",
        "color": "#ffc107",
        "icon": "mdi:television-classic",
        "max": 300,
        "name": "TV"
-      },
-      "sensor.living_room_vacuum_socket_power": {
-       "chart": "deep-purple",
-       "color": "#009688",
-       "icon": "mdi:robot-vacuum",
-       "max": 1600,
-       "name": "Vacuum dock"
       },
       "sensor.lr_powerline_device_power": {
        "chart": null,
@@ -379,19 +379,19 @@
        "max": 1600,
        "name": "Toilet down"
       },
+      "sensor.kitchen_kitchen_socket_power": {
+       "chart": "deep-purple",
+       "color": "#009688",
+       "icon": "mdi:robot-vacuum",
+       "max": 1600,
+       "name": "Vacuum dock"
+      },
       "sensor.living_room_tv_socket_power": {
        "chart": "amber",
        "color": "#ffc107",
        "icon": "mdi:television-classic",
        "max": 300,
        "name": "TV"
-      },
-      "sensor.living_room_vacuum_socket_power": {
-       "chart": "deep-purple",
-       "color": "#009688",
-       "icon": "mdi:robot-vacuum",
-       "max": 1600,
-       "name": "Vacuum dock"
       },
       "sensor.lr_powerline_device_power": {
        "chart": null,
@@ -451,13 +451,13 @@
       "columns": "full"
      },
      "outlets": {
+      "switch.kitchen_kitchen_socket_magsafe_charger": {
+       "icon": "mdi:cellphone-charging",
+       "name": "MagSafe charger"
+      },
       "switch.living_room_tv_socket_switchbot_bridge": {
        "icon": "mdi:bridge",
        "name": "Switchbot bridge"
-      },
-      "switch.living_room_vacuum_socket_magsafe_charger": {
-       "icon": "mdi:cellphone-charging",
-       "name": "MagSafe charger"
       }
      },
      "show_empty": false,
