@@ -1,12 +1,15 @@
-# What can run without the live instance. The climate and dashboard suites read
-# the running Home Assistant and stay local (AGENTS.md); so does the child-name
-# leak check, whose terms never leave the operator's machine. Those run in
+# What can run without the live instance. Everything that reads the real house stays
+# local (AGENTS.md): the climate suite, the dashboard lint and its mutation proof, and the
+# child-name leak check, whose terms never leave the operator's machine. CI knows only the
+# repo and an invented house (tests/fixtures/synthetic.py). Those run in
 # .githooks/pre-push instead, which is the gate that stops a leak BEFORE it is
 # public. This workflow is the backstop.
 name: ci
 
 on:
   push:
+    # render.yml force-pushes screenshots there; nothing on that branch is a source.
+    branches-ignore: [screenshots]
   pull_request:
 
 permissions:
@@ -40,3 +43,7 @@ jobs:
           done
       - name: every test script compiles
         run: python3 -m compileall -q tests
+      - name: the synthetic house can render the dashboard (CI renders it, never the real one)
+        run: |
+          pip install -q pyyaml==6.0.2
+          python3 tests/fixtures/test_synthetic.py

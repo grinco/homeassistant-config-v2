@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# Local only: the real house, cut to an allowlist (tests/fixtures/export.py), and the
+# synthetic house's default build output. Neither is ever committed.
+tests/fixtures/real/
+tests/fixtures/synthetic/

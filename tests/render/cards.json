@@ -1,0 +1,90 @@
+{
+ "note": "Custom cards at the versions installed on the live instance (HACS version_installed, 2026-10-25). tests/render/bootstrap.py downloads each, refuses on a sha256 mismatch, and serves it where HACS would (/hacsfiles/<dir>/<file> is rewritten to /local/community/<dir>/<file>). `themes` are fetched the same way into the config's themes/ directory.",
+ "cards": [
+  {
+   "dir": "alarmo-card",
+   "file": "alarmo-card.js",
+   "url": "https://raw.githubusercontent.com/nielsfaber/alarmo-card/v1.6.9/dist/alarmo-card.js",
+   "sha256": "a18ea77d2f758319f5e9e4b78e97fd71c45c678ff6ff9ee0b77d7ceadc2ac1e9"
+  },
+  {
+   "dir": "button-card",
+   "file": "button-card.js",
+   "url": "https://github.com/custom-cards/button-card/releases/download/v7.0.1/button-card.js",
+   "sha256": "5d6e9c6afca01e8014653fa56bb5d6aa9248d832c34fb944a7f2c36329bc22d1"
+  },
+  {
+   "dir": "lovelace-auto-entities",
+   "file": "auto-entities.js",
+   "url": "https://raw.githubusercontent.com/thomasloven/lovelace-auto-entities/v1.16.1/auto-entities.js",
+   "sha256": "b7327b2fcd39f1fb859b60b53c869760d1d762ab4d4e4617b748971f528bd407"
+  },
+  {
+   "dir": "lovelace-multiple-entity-row",
+   "file": "multiple-entity-row.js",
+   "url": "https://github.com/benct/lovelace-multiple-entity-row/releases/download/v4.13.0/multiple-entity-row.js",
+   "sha256": "f987f1df3d1330a889c912e6919e207fc1f6b936545707a464691c3b1b4ab21c"
+  },
+  {
+   "dir": "lovelace-mushroom",
+   "file": "mushroom.js",
+   "url": "https://github.com/piitaya/lovelace-mushroom/releases/download/v5.2.3/mushroom.js",
+   "sha256": "631668268e474d5357e0f17f161322499ea5c93a910431477e112653d7aa456b"
+  },
+  {
+   "dir": "lovelace-slider-entity-row",
+   "file": "slider-entity-row.js",
+   "url": "https://raw.githubusercontent.com/thomasloven/lovelace-slider-entity-row/v17.5.0/slider-entity-row.js",
+   "sha256": "1d0ff89b3e095eab6954d194d5996e656847173278ee8b53ad5035ff1f8b77d0"
+  },
+  {
+   "dir": "material-you-utilities",
+   "file": "material-you-utilities.min.js",
+   "url": "https://raw.githubusercontent.com/Nerwyn/material-you-utilities/2.1.27/dist/material-you-utilities.min.js",
+   "sha256": "c83cf6e2163169e9fe8502147a4c89913b6c99d460e67d3934f5c4aa2863fd5e"
+  },
+  {
+   "dir": "mini-graph-card",
+   "file": "mini-graph-card-bundle.js",
+   "url": "https://github.com/kalkih/mini-graph-card/releases/download/v0.13.0/mini-graph-card-bundle.js",
+   "sha256": "4d8b986f3cd693c0f7771d2f5574008bc39c45ecb450aec067906150be2dfabd"
+  },
+  {
+   "dir": "mini-media-player",
+   "file": "mini-media-player-bundle.js",
+   "url": "https://github.com/kalkih/mini-media-player/releases/download/v1.16.12/mini-media-player-bundle.js",
+   "sha256": "ab3b3b71c3c69d0310cdb451ee019b5dace2b6125eb08672e896db17440b5df9"
+  },
+  {
+   "dir": "simple-thermostat",
+   "file": "simple-thermostat.js",
+   "url": "https://github.com/Wheemer/simple-thermostat/releases/download/v4.5.2/simple-thermostat.js",
+   "sha256": "1487a3f4a2eec79ced66b69a03604634cf9e828e9899b2ab65e402d423127be9"
+  },
+  {
+   "dir": "simple-weather-card",
+   "file": "simple-weather-card-bundle.js",
+   "url": "https://github.com/kalkih/simple-weather-card/releases/download/v0.8.5/simple-weather-card-bundle.js",
+   "sha256": "d0fc97ecd0855bfa06c9b931888442d2e39d8169960959565096e42ca5df2fcf"
+  },
+  {
+   "dir": "stack-in-card",
+   "file": "stack-in-card.js",
+   "url": "https://github.com/custom-cards/stack-in-card/releases/download/0.2.0/stack-in-card.js",
+   "sha256": "3eb3c890907277c5e49f0951fff787af700f04c3315be4c0d7ad948e4ef011bd"
+  },
+  {
+   "dir": "vacuum-card",
+   "file": "vacuum-card.js",
+   "url": "https://github.com/denysdovhan/vacuum-card/releases/download/v2.12.0/vacuum-card.js",
+   "sha256": "a1317490b90abda4863919c25a5ec04963030608f739dce177b36c90966062ea"
+  }
+ ],
+ "themes": [
+  {
+   "file": "material_you.yaml",
+   "url": "https://raw.githubusercontent.com/Nerwyn/material-you-theme/5.0.15/themes/material_you.yaml",
+   "sha256": "092b9239757bd3c606be297e39c0e5769c177a2888267a1a4db6f4fec243a08b"
+  }
+ ]
+}

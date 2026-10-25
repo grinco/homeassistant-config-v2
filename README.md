@@ -8,6 +8,17 @@ rooms and people replaced by neutral placeholders, so they deliberately do not m
 live instance. The exception is `esphome/`, which is flashed as-is (every secret is a
 `!secret` reference; see `esphome/secrets.yaml.example`).
 
+![Home, desktop](https://github.com/grinco/homeassistant-config-v2/raw/screenshots/home-1280.png)
+
+<p>
+<img src="https://github.com/grinco/homeassistant-config-v2/raw/screenshots/home-390.png" width="24%" alt="Home, phone">
+<img src="https://github.com/grinco/homeassistant-config-v2/raw/screenshots/living-room-390.png" width="24%" alt="Living room, phone">
+</p>
+
+Rendered by CI in a real Home Assistant, on an invented two-floor, four-room house
+(`tests/fixtures/synthetic.py`): the dashboard as it is built, not anyone's home. Both pages at both widths are on
+the [`screenshots`](https://github.com/grinco/homeassistant-config-v2/tree/screenshots) branch.
+
 ## What is here
 
 | path | what |
@@ -18,6 +29,9 @@ live instance. The exception is `esphome/`, which is flashed as-is (every secret
 | `lovelace-dashboards/` | Sanitised dashboard exports and the `button-card` templates they use |
 | `tests/climate/` | Scenario tests run against the **live** automation expressions, with mutation testing |
 | `tests/dashboards/` | Dashboard lint, mutation tests, anonymised export and a headless renderer |
+| `tests/fixtures/` | The invented house CI renders, and its completeness test |
+| `tests/render/` | End to end: Home Assistant in a container, seeded, rendered; fails on a broken card |
+| `docs/ci-dashboard-render-design.md` | How CI renders without the live instance or any real data |
 | `tests/leakcheck.py` | Scans tracked files and unpushed commits for anything the anonymisation should have removed |
 | `esphome/` | Bluetooth proxy and Geiger counter configs |
 

@@ -905,13 +905,24 @@ def main():
         return 2
     print("baseline green\n")
 
-    bad = 0
+    bad = skipped = 0
+    present = [f for f in FILES if os.path.exists(os.path.join(LIVE, f))]
+    # The committed fixtures carry no admin panel by design (CI); every other store must exist.
+    absent = sorted(set(FILES) - set(present))
+    if absent and absent != [ADM]:
+        print("missing store(s): %s" % ", ".join(absent))
+        return 2
     for name, fn in MUTATIONS:
         d = tempfile.mkdtemp(prefix="dashlint-")
         try:
-            for f in FILES:
+            for f in present:
                 shutil.copy(os.path.join(LIVE, f), os.path.join(d, f))
-            want = fn(d)
+            try:
+                want = fn(d)
+            except FileNotFoundError:
+                print("  skipped   %-44s (its dashboard is not in these stores)" % name)
+                skipped += 1
+                continue
             code, out = run_lint(d)
             if code == 0:
                 print("  SURVIVED  %-44s (expected %s)" % (name, want))
@@ -928,7 +939,8 @@ def main():
     if bad:
         print("%d mutation(s) not caught - the lint has a blind spot" % bad)
         return 1
-    print("all %d mutations caught" % len(MUTATIONS))
+    print("all %d mutations caught%s" % (len(MUTATIONS) - skipped,
+                                         (", %d skipped" % skipped) if skipped else ""))
     return 0
 
 

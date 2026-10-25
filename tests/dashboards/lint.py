@@ -224,6 +224,15 @@ import sys
 # rather than against a re-implementation of it.
 STORAGE = os.environ.get("HA_STORAGE", "/usr/share/hassio/homeassistant/.storage")
 DASHBOARDS = {"lovelace": "lovelace.lovelace", "admin-panel": "lovelace.admin_panel"}
+# CI lints the committed fixtures, which deliberately carry no admin panel (it holds Wi-Fi
+# names, firewall rules and VPN routes). Naming the dashboards to lint is explicit: a file
+# that is missing for a dashboard still selected is an error, never a silent skip.
+if os.environ.get("LINT_DASHBOARDS"):
+    _want = os.environ["LINT_DASHBOARDS"].split(",")
+    _unknown = [d for d in _want if d not in DASHBOARDS]
+    if _unknown:
+        raise SystemExit("LINT_DASHBOARDS names unknown dashboard(s): %s" % ", ".join(_unknown))
+    DASHBOARDS = {k: v for k, v in DASHBOARDS.items() if k in _want}
 
 # Options that belong to a specific card type and are silently ignored - or worse -
 # anywhere else. Extend as they bite.

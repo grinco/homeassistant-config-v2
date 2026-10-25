@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Re-export the sanitised snapshots under `lovelace-dashboards/` and `automations/`.
+"""Re-export the sanitised snapshots under `lovelace-dashboards/`, `automations/` and
+`tests/fixtures/real/` (local only, gitignored: the real house for a local render run).
 
 AGENTS.md states the rules for an export as prose. Every one of them has been
 broken at least once by someone following them carefully, so they are code here:
@@ -177,6 +178,95 @@ def scrub(text, specific, general):
     return text
 
 
+def _kid_badges(views):
+    """A child's name and room share one placeholder in the general map ("Kids room N"), which on a
+    person badge reads as a room (issue #4). Structural, so no name is needed: a badge whose
+    entity is an anonymised child is labelled as a person."""
+    for view in views:
+        for badge in (view.get("badges") or []) if isinstance(view, dict) else []:
+            m = re.match(r"person\.kid(\d+)_", str(badge.get("entity", "")))
+            if m and "name" in badge:
+                badge["name"] = "Kid %s" % m.group(1)
+
+
+def _fixtures_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "fixture_export", os.path.join(REPO, "tests", "fixtures", "export.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def export_fixtures(specific, general, tokens, check_only):
+    """tests/fixtures/real (local only): allowlisted (fixtures/export.py), scrubbed and gated here.
+
+    Returns the list of files written (or differing, with --check), or None on refusal.
+    Refuses on a moved canary, a surviving term, a privacy-check failure, or a lint failure
+    against the new fixtures.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    fx = _fixtures_module()
+    docs = fx.build(STORAGE)
+    terms = tokens + [x[0] for x in specific]
+    texts = {}
+    for name, doc in docs.items():
+        raw = fx.dumps(doc)
+        clean = scrub(raw, specific, general)
+        moved = [w for w in CANARIES if raw.count(w) != clean.count(w)]
+        if moved:
+            print("CANARY MOVED in fixture %s: %s" % (name, ", ".join(moved)))
+            return None
+        if any(anchored(t).search(clean) for t in terms):
+            print("LEAK - an original term survived the scrub in fixture %s (term withheld)" % name)
+            return None
+        parsed = json.loads(clean)
+        if name == "lovelace.lovelace":
+            _kid_badges(parsed["data"]["config"]["views"])
+        texts[name] = fx.dumps(parsed)
+
+    before = fx.committed_vocabulary()
+    after = fx.vocabulary({n: json.loads(t) for n, t in texts.items()})
+    if before is not None:
+        new = sorted(after - before)
+        if new:
+            print("NEW WORDS in fixture names since the committed fixture - read them; a person's")
+            print("name here means the substitution map needs a new entry before this ships:")
+            print("   " + ", ".join(new))
+
+    tmp = tempfile.mkdtemp(prefix="fixtures-")
+    try:
+        for name, text in texts.items():
+            with io.open(os.path.join(tmp, name), "w", encoding="utf-8") as fh:
+                fh.write(text)
+        env = dict(os.environ, HA_STORAGE=tmp, FIXTURE_STORAGE=tmp, LINT_DASHBOARDS="lovelace")
+        for script in (os.path.join(REPO, "tests", "fixtures", "check.py"),
+                       os.path.join(REPO, "tests", "dashboards", "lint.py")):
+            p = subprocess.run([sys.executable, script], env=env, capture_output=True, text=True)
+            if p.returncode != 0:
+                print("REFUSING to write fixtures: %s fails on them\n%s" % (
+                    os.path.relpath(script, REPO), p.stdout[-3000:] + p.stderr[-2000:]))
+                return None
+        changed = []
+        os.makedirs(fx.OUT, exist_ok=True)
+        for name, text in sorted(texts.items()):
+            target = os.path.join(fx.OUT, name)
+            existing = None
+            if os.path.exists(target):
+                with io.open(target, encoding="utf-8") as fh:
+                    existing = fh.read()
+            if existing == text:
+                continue
+            changed.append("fixtures/" + name + ("  (differs)" if check_only else ""))
+            if not check_only:
+                shutil.copy(os.path.join(tmp, name), target)
+        return changed
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     check_only = "--check" in sys.argv
     rooms = load_rooms()
@@ -277,15 +367,8 @@ def main():
     out = json.loads(clean_payload)
     out[TEMPLATES] = json.loads(clean_templates)
 
-    # A child's name and room share one placeholder in the general map ("Kids room N"), which on a
-    # person badge reads as a room (issue #4). Structural, so no name is needed: a badge whose
-    # entity is an anonymised child is labelled as a person.
     for data in out.values():
-        for view in (data if isinstance(data, list) else [data]):
-            for badge in (view.get("badges") or []) if isinstance(view, dict) else []:
-                m = re.match(r"person\.kid(\d+)_", str(badge.get("entity", "")))
-                if m and "name" in badge:
-                    badge["name"] = "Kid %s" % m.group(1)
+        _kid_badges(data if isinstance(data, list) else [data])
     written = []
     for fname, data in sorted(out.items()):
         to_auto = fname in AUTOS.values() or fname in (RESOLVED, MAGIC_AREAS, SCHEDULE)
@@ -308,6 +391,10 @@ def main():
         written.append(fname)
 
     print("canaries unmoved (%d words), zero original terms in the output" % len(CANARIES))
+    fixtures_result = export_fixtures(specific, general, tokens, check_only)
+    if fixtures_result is None:
+        return 1
+    written.extend(fixtures_result)
     if check_only:
         if written:
             print("%d file(s) are out of date:" % len(written))

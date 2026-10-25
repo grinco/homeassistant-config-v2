@@ -1,0 +1,131 @@
+# End-to-end: start Home Assistant on an INVENTED house (tests/fixtures/synthetic.py: two
+# floors, four rooms, nothing from the real one), render the dashboard's Home and room page
+# at phone and desktop width, and fail on any broken card. On master, publish the
+# screenshots to the `screenshots` branch for the README.
+# Design: docs/ci-dashboard-render-design.md (Parts 3 and 4).
+#
+# Loop protection: the publish job never touches master; it force-pushes one orphan commit
+# to `screenshots`, which no workflow triggers on (ci.yml ignores that branch, this one
+# only runs on master), and a push made with GITHUB_TOKEN starts no workflow anyway.
+name: render
+
+on:
+  pull_request:
+    paths:
+      - lovelace-dashboards/**
+      - tests/fixtures/synthetic.py
+      - tests/render/**/*.py
+      - tests/render/**/*.json
+      - tests/render/**/*.txt
+      - tests/dashboards/render.py
+      - .github/workflows/render.yml
+  push:
+    branches: [master]
+    paths:
+      - lovelace-dashboards/**
+      - tests/fixtures/synthetic.py
+      - tests/render/**/*.py
+      - tests/render/**/*.json
+      - tests/render/**/*.txt
+      - tests/dashboards/render.py
+      - .github/workflows/render.yml
+  workflow_dispatch:
+
+concurrency:
+  group: render-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HA_IMAGE: ghcr.io/home-assistant/home-assistant:2026.10.3@sha256:407b89cd11a8cb67d388d21739a226c74acbbebe1ac59e3b83b11b43ce76b98f
+  HA_URL: http://localhost:8123
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: tools
+        run: |
+          pip install -r tests/render/requirements.txt
+          python -m playwright install --with-deps chromium-headless-shell
+      - name: build the synthetic house, and check it is complete
+        run: |
+          python3 tests/fixtures/synthetic.py "$RUNNER_TEMP/house"
+          python3 tests/fixtures/test_synthetic.py
+          echo "FIXTURE_STORAGE=$RUNNER_TEMP/house/storage" >> "$GITHUB_ENV"
+      - name: prepare the config dir (cards checked against their pinned sha256)
+        run: python3 tests/render/bootstrap.py prepare "$RUNNER_TEMP/hacfg"
+      - name: start Home Assistant
+        run: docker run -d --name ci-ha -p 8123:8123 -v "$RUNNER_TEMP/hacfg":/config "$HA_IMAGE"
+      - name: onboard, strip onboarding's own integrations
+        run: python3 tests/render/bootstrap.py onboard "$HA_URL" "$RUNNER_TEMP/hacfg"
+      - name: the registry survived start-up, exactly
+        run: python3 tests/render/bootstrap.py verify "$HA_URL" "$RUNNER_TEMP/hacfg"
+      - name: seed placeholder states
+        run: python3 tests/render/seed.py "$HA_URL" "$RUNNER_TEMP/hacfg" "$RUNNER_TEMP/house/states.json"
+      - name: render; fail on any broken card
+        run: python3 tests/render/shoot.py "$HA_URL" "$RUNNER_TEMP/hacfg" shots
+      - name: Home Assistant log
+        if: failure()
+        run: docker logs ci-ha 2>&1 | tail -200
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: shots/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  publish:
+    needs: render
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: shots
+      - name: publish to the screenshots branch, only when an image changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -eu
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          mkdir pub && cd pub
+          git init -q
+          if git fetch -q --depth 1 "$remote" screenshots 2>/dev/null; then
+            git checkout -q FETCH_HEAD -- . 2>/dev/null || true
+            old=$(ls *.png 2>/dev/null | sort | xargs -r sha256sum)
+          else
+            old=""
+          fi
+          new=$(cd ../shots && ls *.png | sort | xargs sha256sum)
+          if [ "$old" = "$new" ]; then
+            echo "screenshots unchanged; nothing to publish"
+            exit 0
+          fi
+          git rm -q -rf --cached . 2>/dev/null || true
+          rm -f ./*.png README.md
+          cp ../shots/*.png .
+          printf '%s\n' \
+            "Rendered by .github/workflows/render.yml from ${SHA}." \
+            "An invented house (tests/fixtures/synthetic.py), not a real one." \
+            "This branch is force-pushed as a single commit; nothing here is a source." > README.md
+          git checkout -q --orphan screenshots
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Screenshots for ${SHA}"
+          git push -q -f "$remote" HEAD:screenshots
+          echo "published $(ls *.png | wc -l) screenshots"

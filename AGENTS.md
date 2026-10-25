@@ -69,6 +69,10 @@ Exports are produced by reading the live instance (`automations.yaml`, `.storage
    copies that name into the forecast weather entity and every Home Connect appliance id.
    Those are scrubbed like the rooms, and the tests reach their live ids through the local map.
 6. **Check the commit message too**, not just the files.
+7. **CI never sees the real house.** It renders an invented one (`tests/fixtures/synthetic.py`).
+   `tests/dashboards/export.py` also writes `tests/fixtures/real/`, which is gitignored and
+   only for running the render pipeline locally against the real house. Never commit it, and
+   never point CI at it: `docs/ci-dashboard-render-design.md` explains why.
 
 ### Where the names hide
 
