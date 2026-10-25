@@ -1,7 +1,7 @@
 # Voice: "Hey Lara", satellites, and a voice with a memory
 
-Status: design, 2026-10-25, rev 2 (companion review GREEN; its minor points and two gaps found
-after it are folded in). Nothing here is built yet.
+Status: design, 2026-10-25, rev 3 (rev 2: companion review GREEN; rev 3: aligned with what
+Vornik actually does today, see "Changes in rev 3" at the end). Nothing here is built yet.
 
 ## Summary
 
@@ -61,9 +61,13 @@ the place where approvals and private content land; anything that needs the Alex
  TTS: Piper, southern English female ──► the satellite that asked
 
  the house speaking first:
-   automations / Vornik push ──► assist_satellite.announce / start_conversation
-                                 (area-targeted, quiet at night)
+   automations ───────────────────────► assist_satellite.announce / start_conversation
+   Vornik push ──► vornik integration ─┘ (area-targeted, quiet at night)
+                   (its webhook; Vornik holds no Home Assistant token)
 ```
+
+Vornik never calls Home Assistant directly: a finished task is pushed to the integration's
+webhook, and the integration, which knows which satellite asked, does the announcing.
 
 The LLM is reached through Vornik's model endpoint as today; Vornik's own integration, when
 it ships, adds an **LLM API** ("Vornik") of tools beside the Assist API. Vornik is never put
@@ -151,6 +155,13 @@ is the accepted limit of a house with no speaker identity. It is why §7 keeps p
 content short and offers the phone instead, why nothing is ever approved by voice, and why
 memory written by voice is only a proposal (§8).
 
+**Whose mail, in which room.** "Mail and calendar" in the Lara tier means household-level
+results: the school e-mail digest, the shared calendar. A workflow over one adult's own
+mailbox or calendar is marked `private` in Vornik's design, and its result is spoken only on
+the satellite whose integration entry holds that adult's key (their bedroom or office), or
+sent to their phone; never in the living spaces. That is a separate Vornik integration entry
+with its own key, so it is a configuration fact, not a prompt instruction.
+
 **Other entry points use the preferred pipeline too:** the Home dashboard's "Ask" quick
 action and the phone app's Assist. With the family tier preferred, the dashboard button
 names the Lara pipeline explicitly (its `assist` action takes a `pipeline_id`), and each
@@ -188,11 +199,15 @@ Rules for memory, matching Vornik's design:
   is speaking.
 - Only the **Lara** tier can write. A family-tier satellite cannot, so a child cannot poison
   or read it from their room.
-- What is remembered by voice lands as an unverified note, and Lara says so ("noted, as a
-  proposal; confirm it in Vornik").
-- Lara does not silently log conversations into memory. Resuming a topic works because it
-  was remembered on purpose, or because Vornik's briefings and tasks carry their own
-  history.
+- What is remembered by voice lands as an unverified note, and Lara says so ("noted; it's
+  marked unverified"). Vornik has **no step today where a person confirms such a note**: it
+  stays labelled unverified, and recall shows the label. What does exist is listing and
+  forgetting (Vornik's memory page, the phone export). A confirm step is a gap on the Vornik
+  side, raised there; until it ships, Lara must not say "confirm it in Vornik".
+- Lara does not silently log conversations into **memory**. Resuming a topic works because
+  it was remembered on purpose, or because Vornik's briefings and tasks carry their own
+  history. That is not the same as "not recorded": Vornik keeps an audit record of every
+  LLM turn it serves (§11).
 
 ## 9. Speed and accuracy
 
@@ -209,7 +224,13 @@ pushes a room past 3 s, that room moves to option A.
 - **Exposure:** expose to Assist what people actually ask about. Curate by label, in the
   same way as the dashboards, rather than by hand-picked entity.
 - **Streaming:** Home Assistant streams LLM text into Piper sentence by sentence; keep
-  answers short so the first sentence arrives early.
+  answers short so the first sentence arrives early. The model is reached through Vornik's
+  endpoint, so Vornik is on this path and its share of the 3 s is measured, not assumed
+  (§14).
+- **Memory answers cost more.** A Vornik `recall` inside a turn took 0.5 to 2.2 s when Vornik
+  measured it (2026-10-24), and the model then needs a second pass to answer. A memory answer
+  will often miss 3 s. The target is for answers without a Vornik tool; memory answers get
+  their own number, measured in P5.
 
 ## 10. Testing (write the test first)
 
@@ -236,8 +257,10 @@ verified by hand and written down as such.
 |---|---|
 | audio | the satellite and this host only (wake word on device, STT local) |
 | a local-intent request | nowhere: decided on this host |
-| an LLM request | its text goes to Vornik and, through Vornik, to a hosted model |
-| memory, mail, calendar | Vornik; spoken only on Lara-tier satellites; approvals on the phone only |
+| an LLM request | its text goes to Vornik and, through Vornik, to a hosted model. Vornik keeps an audit record of each turn: the latest request, Lara's reply and the persona prompt, redacted, for 90 days by default (`retention.chat_audit_days`) |
+| a Vornik tool call (P5) | Vornik records each call against the key that made it |
+| memory | Vornik, until forgotten; spoken only on Lara-tier satellites |
+| mail, calendar | read by Vornik; results spoken only on Lara-tier satellites, one adult's own only on their satellite or phone (§6); approvals on the phone only |
 | recordings for training and benchmarks | local; the wake-word model is published, the recordings are not |
 
 ## 12. Phases
@@ -249,7 +272,7 @@ verified by hand and written down as such.
 | P2 | screen satellites on VACA, areas set, two pipelines | tier-isolation tests green; each device answers for its own room |
 | P3 | the Echo Dot / Echo Plus decision (§5.2) and its rollout | operator's choice made and built |
 | P4 | announcements through Lara, quiet at night | morning briefing and reminders spoken in the right rooms |
-| P5 | Vornik integration: memory, briefings, mail, calendar | resume-a-topic works on a Lara-tier satellite; family tier verified unable |
+| P5 | Vornik integration: memory, briefings, mail, calendar (Vornik's slices H0 to H9; its H0 spike and this design's §14 check the same Home Assistant facts, on one dev container) | resume-a-topic works on a Lara-tier satellite; family tier verified unable; a private result never spoken in a living space; memory-answer latency measured |
 
 ## 13. Decisions for the operator
 
@@ -268,3 +291,21 @@ verified by hand and written down as such.
   preferred pipeline (§6 relies on it; tested in P2).
 - Piper speaking-rate and noise settings that keep the `low` model intelligible at a
   distance.
+- That Home Assistant's Ollama integration streams the reply into Piper sentence by sentence
+  when the endpoint is Vornik's (Vornik's endpoint has a streaming path; the end-to-end
+  behaviour is unmeasured), and how much of the 3 s Vornik's hop takes.
+
+## Changes in rev 3 (2026-10-25)
+
+Checked against Vornik's code and its design record:
+
+- §8: Vornik has no confirm step for a voice-remembered note, so Lara no longer tells
+  people to confirm it there; the gap is raised on the Vornik side.
+- §8, §11: "not logged into memory" is kept, and the audit record Vornik keeps of every
+  LLM turn is now stated, with its retention.
+- §6, §11: one adult's own mail and calendar are spoken only on that adult's satellite or
+  sent to their phone, matching Vornik's `private` delivery rule.
+- §3: Vornik's pushes go to the integration's webhook; Vornik never holds a Home Assistant
+  token.
+- §9, §14: Vornik is on the LLM path, so its share of the latency is measured; memory
+  answers get their own budget.
