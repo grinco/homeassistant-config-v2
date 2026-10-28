@@ -11,6 +11,12 @@ that failed to load is reported rather than just looking blank.
 CI (tests/render/shoot.py) points it elsewhere with HA_URL and HA_TOKEN, freezes the
 browser clock with RENDER_FIXED_TIME (ISO 8601), and passes --strict: exit 1 on any
 broken card.
+
+It shoots only a drawn dashboard view - the launch screen gone and a view with a card in
+it - checked just before and just after the shot, because the frontend can reload itself
+back to the splash after its first draw. If no such shot is taken within
+RENDER_READY_TIMEOUT seconds (default 90) it prints NOT RENDERED and exits 2; it never
+publishes the loading screen (2026-10-28: Home was published as the splash, twice).
 """
 import os
 import sys
@@ -21,6 +27,7 @@ from playwright.sync_api import sync_playwright
 HA = os.environ.get("HA_URL", "http://localhost:8123")
 TOKEN = os.environ.get("HA_TOKEN") or open(os.path.expanduser("~/guest.key")).read().strip()
 FIXED_TIME = os.environ.get("RENDER_FIXED_TIME")
+READY_TIMEOUT = float(os.environ.get("RENDER_READY_TIMEOUT", "90"))
 
 out, path = sys.argv[1], sys.argv[2]
 width = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3].isdigit() else 390
@@ -53,6 +60,28 @@ DEEP_ERRORS = """
 }
 """
 
+# Drawn = no launch screen left, and a Lovelace view (through shadow roots) holding a card.
+DRAWN = """
+() => {
+  if (document.getElementById('ha-launch-screen')) return false;
+  const VIEWS = ['hui-sections-view', 'hui-masonry-view', 'hui-panel-view', 'hui-sidebar-view'];
+  let ok = false;
+  const walk = (root) => {
+    for (const el of root.querySelectorAll('*')) {
+      if (ok) return;
+      if (VIEWS.includes(el.tagName.toLowerCase())) {
+        const inside = el.shadowRoot || el;
+        if (inside.querySelector('hui-card, ha-card, hui-section, hui-grid-section') ||
+            el.querySelector('hui-card, ha-card, hui-section, hui-grid-section')) { ok = true; return; }
+      }
+      if (el.shadowRoot) walk(el.shadowRoot);
+    }
+  };
+  walk(document);
+  return ok;
+}
+"""
+
 with sync_playwright() as p:
     b = p.chromium.launch(args=["--no-sandbox"])
     ctx = b.new_context(viewport={"width": width, "height": height}, device_scale_factor=1,
@@ -70,11 +99,30 @@ with sync_playwright() as p:
     console = []
     page.on("console", lambda m: console.append(m.text) if m.type == "error" else None)
     page.goto(HA + path, wait_until="networkidle")
-    time.sleep(4)
-    errs = page.evaluate(DEEP_ERRORS)
-    # Charts animate; on a slow CI runner a full-page shot of Energy outran the 30 s default.
-    page.screenshot(path=out, full_page=True, animations="disabled", timeout=120000)
+    # The frontend can reload itself after its first draw, back to the splash; "it drew
+    # once" is not enough. A shot counts only when the view is drawn just before AND just
+    # after it; otherwise wait for it to draw again and retake, until the deadline.
+    deadline = time.monotonic() + READY_TIMEOUT
+    shot = False
+    while not shot and time.monotonic() < deadline:
+        try:
+            page.wait_for_function(DRAWN, timeout=max(1, deadline - time.monotonic()) * 1000, polling=500)
+        except Exception:  # Playwright's TimeoutError
+            break
+        time.sleep(4)   # cards settle (images, charts) after the view exists
+        if not page.evaluate(DRAWN):
+            continue
+        errs = page.evaluate(DEEP_ERRORS)
+        # Charts animate; on a slow CI runner a full-page shot of Energy outran the 30 s default.
+        page.screenshot(path=out, full_page=True, animations="disabled", timeout=120000)
+        shot = page.evaluate(DRAWN)
     b.close()
+    if not shot:
+        if os.path.exists(out):
+            os.remove(out)   # never leave a splash behind for a publisher to pick up
+        print("rendered", path, "at", width, "px -> nothing")
+        print("  NOT RENDERED: no stable drawn view (loading screen) within %ds" % READY_TIMEOUT)
+        sys.exit(2)
 
 print("rendered", path, "at", width, "px ->", out)
 for e in errs:

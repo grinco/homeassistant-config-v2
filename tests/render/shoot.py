@@ -41,19 +41,23 @@ def main():
     for page in PAGES:
         for w in WIDTHS:
             png = os.path.join(out, "%s-%d.png" % (page, w))
-            # render.py exits 1 for a broken card and with a traceback (Python's 1 too, so
-            # tell them apart by output) when the browser itself failed; only the latter is
-            # retried, once - a broken card is never retried away.
+            # render.py exits 1 for a broken card, 2 when the page never drew (still the
+            # loading screen), and with a traceback (Python's 1 too, so tell them apart by
+            # output) when the browser itself failed. The last two are retried, once - a
+            # broken card is never retried away.
             for attempt in (1, 2):
                 p = subprocess.run([sys.executable, RENDER, png, "/lovelace/" + page, str(w),
                                     "--strict"], env=env, capture_output=True, text=True)
                 sys.stdout.write(p.stdout)
                 sys.stderr.write(p.stderr)
+                undrawn = p.returncode == 2
                 crashed = p.returncode != 0 and "Traceback" in p.stderr
-                if not crashed or attempt == 2:
+                if not (crashed or undrawn) or attempt == 2:
                     break
-                print("  render crashed; retrying once")
-            if crashed:
+                print("  %s; retrying once" % ("page never drew" if undrawn else "render crashed"))
+            if undrawn:
+                failed.append("%s at %d px (never drew: loading screen)" % (page, w))
+            elif crashed:
                 failed.append("%s at %d px (render crashed)" % (page, w))
             elif p.returncode != 0:
                 failed.append("%s at %d px (broken card)" % (page, w))
