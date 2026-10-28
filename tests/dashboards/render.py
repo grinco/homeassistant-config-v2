@@ -11,6 +11,11 @@ that failed to load is reported rather than just looking blank.
 CI (tests/render/shoot.py) points it elsewhere with HA_URL and HA_TOKEN, freezes the
 browser clock with RENDER_FIXED_TIME (ISO 8601), and passes --strict: exit 1 on any
 broken card.
+
+It shoots only once a dashboard view has drawn: the launch screen gone and a view with a
+card in it. If that does not happen within RENDER_READY_TIMEOUT seconds (default 90) it
+prints NOT RENDERED and exits 2 - it never publishes the loading screen (2026-10-28: the
+first render after Home Assistant started was the splash, and the run passed).
 """
 import os
 import sys
@@ -21,6 +26,7 @@ from playwright.sync_api import sync_playwright
 HA = os.environ.get("HA_URL", "http://localhost:8123")
 TOKEN = os.environ.get("HA_TOKEN") or open(os.path.expanduser("~/guest.key")).read().strip()
 FIXED_TIME = os.environ.get("RENDER_FIXED_TIME")
+READY_TIMEOUT = float(os.environ.get("RENDER_READY_TIMEOUT", "90"))
 
 out, path = sys.argv[1], sys.argv[2]
 width = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3].isdigit() else 390
@@ -53,6 +59,28 @@ DEEP_ERRORS = """
 }
 """
 
+# Drawn = no launch screen left, and a Lovelace view (through shadow roots) holding a card.
+DRAWN = """
+() => {
+  if (document.getElementById('ha-launch-screen')) return false;
+  const VIEWS = ['hui-sections-view', 'hui-masonry-view', 'hui-panel-view', 'hui-sidebar-view'];
+  let ok = false;
+  const walk = (root) => {
+    for (const el of root.querySelectorAll('*')) {
+      if (ok) return;
+      if (VIEWS.includes(el.tagName.toLowerCase())) {
+        const inside = el.shadowRoot || el;
+        if (inside.querySelector('hui-card, ha-card, hui-section, hui-grid-section') ||
+            el.querySelector('hui-card, ha-card, hui-section, hui-grid-section')) { ok = true; return; }
+      }
+      if (el.shadowRoot) walk(el.shadowRoot);
+    }
+  };
+  walk(document);
+  return ok;
+}
+"""
+
 with sync_playwright() as p:
     b = p.chromium.launch(args=["--no-sandbox"])
     ctx = b.new_context(viewport={"width": width, "height": height}, device_scale_factor=1,
@@ -70,7 +98,14 @@ with sync_playwright() as p:
     console = []
     page.on("console", lambda m: console.append(m.text) if m.type == "error" else None)
     page.goto(HA + path, wait_until="networkidle")
-    time.sleep(4)
+    try:
+        page.wait_for_function(DRAWN, timeout=READY_TIMEOUT * 1000, polling=500)
+    except Exception:  # Playwright's TimeoutError
+        b.close()
+        print("rendered", path, "at", width, "px -> nothing")
+        print("  NOT RENDERED: still on the loading screen, or no view drew, after %ds" % READY_TIMEOUT)
+        sys.exit(2)
+    time.sleep(4)   # cards settle (images, charts) after the view exists
     errs = page.evaluate(DEEP_ERRORS)
     # Charts animate; on a slow CI runner a full-page shot of Energy outran the 30 s default.
     page.screenshot(path=out, full_page=True, animations="disabled", timeout=120000)
