@@ -1,7 +1,8 @@
 # Voice: "Hey Lara", satellites, and a voice with a memory
 
-Status: design, 2026-10-25, rev 3 (rev 2: companion review GREEN; rev 3: aligned with what
-Vornik actually does today, see "Changes in rev 3" at the end). Nothing here is built yet.
+Status: design, 2026-10-28, rev 4 (rev 2: companion review GREEN; rev 3: aligned with what
+Vornik actually does today; rev 4: no privacy between household members, see the change
+notes at the end). Nothing here is built yet.
 
 ## Summary
 
@@ -155,12 +156,13 @@ is the accepted limit of a house with no speaker identity. It is why §7 keeps p
 content short and offers the phone instead, why nothing is ever approved by voice, and why
 memory written by voice is only a proposal (§8).
 
-**Whose mail, in which room.** "Mail and calendar" in the Lara tier means household-level
-results: the school e-mail digest, the shared calendar. A workflow over one adult's own
-mailbox or calendar is marked `private` in Vornik's design, and its result is spoken only on
-the satellite whose integration entry holds that adult's key (their bedroom or office), or
-sent to their phone; never in the living spaces. That is a separate Vornik integration entry
-with its own key, so it is a configuration fact, not a prompt instruction.
+**Whose mail, in which room.** No privacy between household members (operator,
+2026-10-28: "we don't care about privacy in this family"). One adult's own mailbox and
+calendar are spoken on any Lara-tier satellite, like the household-level results (the school
+e-mail digest, the shared calendar). These workflows are therefore **not** marked `private`
+in Vornik, and one Vornik integration entry with one key serves every Lara-tier satellite;
+there is no per-adult entry. Vornik's `private` delivery rule stays available should that
+ever change; it would be a configuration change, not a prompt instruction.
 
 **Other entry points use the preferred pipeline too:** the Home dashboard's "Ask" quick
 action and the phone app's Assist. With the family tier preferred, the dashboard button
@@ -260,7 +262,7 @@ verified by hand and written down as such.
 | an LLM request | its text goes to Vornik and, through Vornik, to a hosted model. Vornik keeps an audit record of each turn: the latest request, Lara's reply and the persona prompt, redacted, for 90 days by default (`retention.chat_audit_days`) |
 | a Vornik tool call (P5) | Vornik records each call against the key that made it |
 | memory | Vornik, until forgotten; spoken only on Lara-tier satellites |
-| mail, calendar | read by Vornik; results spoken only on Lara-tier satellites, one adult's own only on their satellite or phone (§6); approvals on the phone only |
+| mail, calendar | read by Vornik; results spoken on any Lara-tier satellite, one adult's own included (no privacy between household members, §6); approvals on the phone only |
 | recordings for training and benchmarks | local; the wake-word model is published, the recordings are not |
 
 ## 12. Phases
@@ -309,3 +311,12 @@ Checked against Vornik's code and its design record:
   token.
 - §9, §14: Vornik is on the LLM path, so its share of the latency is measured; memory
   answers get their own budget.
+
+## Changes in rev 4 (2026-10-28)
+
+- §6, §11: no privacy between household members, by the operator's decision. One adult's
+  own mail and calendar are spoken on any Lara-tier satellite; those workflows are not
+  marked `private` in Vornik, so a single Vornik integration entry serves all Lara-tier
+  satellites. Rev 3's "only on that adult's satellite or phone" is withdrawn. Nothing
+  else changes: family-tier rooms still get no Vornik tools, and nothing is approved by
+  voice.
