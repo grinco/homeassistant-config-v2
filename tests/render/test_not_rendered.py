@@ -6,7 +6,10 @@ render after Home Assistant starts hit a cold frontend, and the broken-card chec
 nothing wrong on a splash, so the run passed. This serves two pages to render.py:
 
 - the launch screen and nothing else: render.py --strict must fail and say why;
-- a drawn view with a card in it: render.py --strict must pass (the check is not just "fail").
+- a drawn view with a card in it: render.py --strict must pass (the check is not just "fail");
+- a view that draws and then goes back to the splash, as the frontend does when it reloads
+  itself after the first load: must be refused. Seen in the PR that added this test: desktop
+  Home passed the "has drawn" wait and was still photographed as the splash.
 
     python3 tests/render/test_not_rendered.py
 """
@@ -30,6 +33,17 @@ DRAWN = b"""<!doctype html><html><body>
 <script>
   const root = document.querySelector('home-assistant').attachShadow({mode: 'open'});
   root.innerHTML = '<hui-sections-view><hui-card><ha-card>Living room</ha-card></hui-card></hui-sections-view>';
+</script></body></html>"""
+
+
+RELOADS = b"""<!doctype html><html><body>
+<home-assistant></home-assistant>
+<script>
+  const root = document.querySelector('home-assistant').attachShadow({mode: 'open'});
+  root.innerHTML = '<hui-sections-view><hui-card><ha-card>Living room</ha-card></hui-card></hui-sections-view>';
+  setTimeout(() => {
+    document.body.innerHTML = '<div id="ha-launch-screen"><div id="ha-launch-screen-info-box">Loading...</div></div>';
+  }, 1500);
 </script></body></html>"""
 
 
@@ -68,13 +82,19 @@ def main():
         print("  FAIL  the loading screen was accepted (exit %d)\n%s" % (p.returncode, p.stdout[-400:]))
     else:
         print("  ok    the loading screen is refused")
+    p = render(RELOADS)
+    if p.returncode == 0 or "NOT RENDERED" not in p.stdout:
+        bad += 1
+        print("  FAIL  a view that fell back to the splash was photographed (exit %d)\n%s" % (p.returncode, p.stdout[-400:]))
+    else:
+        print("  ok    a view that falls back to the splash is refused")
     p = render(DRAWN)
     if p.returncode != 0:
         bad += 1
         print("  FAIL  a drawn view was refused (exit %d)\n%s%s" % (p.returncode, p.stdout[-400:], p.stderr[-400:]))
     else:
         print("  ok    a drawn view is accepted")
-    print("\n%d/2 passed" % (2 - bad))
+    print("\n%d/3 passed" % (3 - bad))
     return 1 if bad else 0
 
 
