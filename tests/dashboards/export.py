@@ -97,6 +97,7 @@ RESOLVED_TITLES = (
     "Climate co2 living room", "Climate co2 office", "Radiation dose rate", "Lighting daylight",
     "Any safety alarm", "Any safety sensor silent", "Lighting night", "Lighting left on",
     "Lighting living room bright", "Lighting hallway bright", "Lighting bedroom sleep",
+    "Lighting corridor presence",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
@@ -121,7 +122,10 @@ RESOLVED_NOTE = (
     "2026-10-21: the kitchen reads 'Lighting living room bright' natively as its dark entity "
     "(one open space), so 'Lighting kitchen dark' is no longer exported or read. 'Lighting bedroom "
     "sleep' (night, or before noon) is the bedroom's sleep entity: no lamps when someone turns "
-    "over in bed after the alarm leaves Night at 06:00."
+    "over in bed after the alarm leaves Night at 06:00. 2026-10-25: 'Lighting corridor presence' "
+    "(some corridor sensor other than the stairs one sees someone) is the corridor's accent "
+    "entity: the stairs sensor lights the corridor light, and only the corridor proper lights "
+    "the entrance light."
 )
 # Magic Areas lives in config entries and the night schedule in `.storage/schedule`; neither is
 # in a dashboard or automations.yaml, so until 2026-10-21 the repo did not show them at all.

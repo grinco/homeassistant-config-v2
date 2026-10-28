@@ -13,10 +13,11 @@ control* switch is on. Only rooms with a real presence sensor take part — a ro
 | room | presence sensor | on-group | dark gate | state |
 |---|---|---|---|---|
 | Closet | Closet Motion (Zigbee motion) | Closet Light | none — windowless, lit at any hour | **on** (2026-10-11) |
-| Corridor | Corridor Presence (mmWave, moved from the living room 2026-10-10) | entrance + corridor light, day and night (since 2026-10-22) | none — interior | **on**. Night = Magic Areas *sleep* state from `binary_sensor.lighting_night` = the alarm in Night mode (the house's one night, set by the schedule or by hand). The front-door camera PIR is EXCLUDED: it sees the doorstep |
+| Corridor | Corridor Presence (mmWave, moved from the living room 2026-10-10) + the entrance PIR + the Stairs Motion sensor (2026-10-25) | corridor light for any of them; entrance light only for the corridor proper, and at night (2026-10-25, see the last section) | none — interior | **on**. Night = Magic Areas *sleep* state from `binary_sensor.lighting_night` = the alarm in Night mode (the house's one night, set by the schedule or by hand). The front-door camera PIR is EXCLUDED: it sees the doorstep |
 | Living room | FP2 (zones) + kitchen motion, since 2026-10-11 | The Moon, Aurora (+ Beam Lights accent) | `living_room_bright` — the FP2 itself, real time (2026-10-20) | **on** |
 | Kitchen | FP2 zones + kitchen motion | see the 2026-10-11 and 2026-10-14 sections | accent gate `kitchen_dark` = NOT `living_room_bright` | **on** |
 | Hallway | Hallway Presence (FP300) | Hallway | `lighting_hallway_bright` — the FP300 lux (2026-10-20) | **on** |
+| Stairs | Stairs Motion (IKEA, at the foot of the stairs) + Hallway Presence (the top) | Stairs Light | `lighting_hallway_bright`, like the hallway | **on** (2026-10-25) |
 | Guest room | Bebecam motion/person | — | — | not wired: a baby monitor must never switch a light on |
 
 **The symptom of a room that is not set up:** Magic Areas switches its lights OFF when the room
@@ -60,6 +61,11 @@ inverted, sun hysteresis removed, 0 lx treated as dead, no sun fallback, bright 
 - At sunrise an occupied room's lamps switch off (BRIGHT). That is Magic Areas' design.
 - Night walks through the living room switch the lamps on at their last brightness. If that is
   unwanted, a *sleep* entity and *sleep_lights* are the native fix.
+- **A group that reads on is not switched on.** Magic Areas skips the turn-on when its group
+  already reports `on`, and a group is on if any member is. When a Zigbee command to switch a
+  light off fails, Home Assistant keeps showing it on, and the next occupancy lights nothing in
+  that group, not even its other lights. Seen in the corridor 2026-10-25 (an OFF to the corridor
+  light failed at 11:21; at 17:04 the corridor stayed dark). The cause is the mesh, not the config.
 
 ## Day and night in the corridor (2026-10-11; both lights at night since 2026-10-22)
 
@@ -379,3 +385,49 @@ new nights and compare against the table above.
 3. Corridor at night needs the FP1 **and** a recent Paradox entrance PIR. Only worth doing if that
    PIR actually sees the night route.
 4. Keep every trigger, but hold night lights at the lowest sleep brightness.
+
+## Stairs: their own area, and the corridor light lights them (2026-10-25)
+
+The operator gave the staircase its own area and an IKEA motion sensor at its foot. The stairs are
+lit by two lamps: the stairs light (`light.stairs_light`, renamed from `light.stairs` and moved
+out of the hallway's group) and the corridor light. The corridor is long, and its mmWave and the
+alarm PIR do not cover all of it, so the stairs sensor has to light the corridor light. It should
+not light the entrance light.
+
+**Stairs area.** *overhead* = stairs light, state `occupied`, dark entity `lighting_hallway_bright`
+(as when the stairs bulb was in the hallway group). Presence = the stairs sensor plus the hallway's
+FP300 (`include_entities`), so coming down from upstairs lights the stairs before the bottom sensor
+sees you. Adaptive Lighting *Stairs* drives `light.magic_areas_light_groups_stairs_all_lights`.
+
+**Corridor area.** Magic Areas drives a light group only while its area is occupied, so the stairs
+sensor is a corridor presence sensor too (`include_entities`). The groups are told apart by
+`accented`, whose entity is `binary_sensor.lighting_corridor_presence`: some corridor presence
+sensor *other than* the stairs one sees someone (read from Magic Areas' own list, so a new corridor
+sensor needs no edit; delay_off 1 min, the clear timeout).
+
+| group | light | states | lit by |
+|---|---|---|---|
+| *task* | corridor light | `occupied`, `accented`, `sleep` | any corridor sensor, including the stairs one |
+| *overhead* | entrance light | `accented`, `sleep` | the corridor proper; by night anything (`sleep`) |
+
+Each light is in **one** group. The operator's first version put the corridor light in *task* and
+in an *accent* group; two groups switching one light give conflicting commands. At night `sleep`
+lights both, as before (2026-10-22).
+
+**The inverse accent was rejected before it shipped.** "Stairs only" (stairs sensor on, nobody in
+the corridor) as the accent, with the entrance light on `occupied`, fails two ways in Magic Areas'
+own logic (`light.py`, priority states). The stairs sensor makes the area occupied a moment before a
+derived accent arrives, so the entrance light blinks on and off. And when the stairs sensor clears
+inside the clear timeout, the accent falls away from an occupied area, which lights the entrance
+light for that minute. With the accent on the corridor proper, the stairs sensor never reaches the
+entrance light by day.
+
+`binary_sensor.lighting_corridor_presence` deliberately has **no device class**. If it were an
+occupancy sensor and someone put it in the Corridor area, Magic Areas would count it as presence
+and it would hold the corridor occupied on its own.
+
+Tests: *corridor presence:* cases in `tests/climate/cases.py` (the stairs sensor alone is not the
+corridor; someone in the corridor while the stairs sensor is on still is; Magic Areas not loaded),
+and two `mutate.py` rows (the stairs sensor counted; the logic inverted). The groups themselves are
+actuation and cannot be reached by a test.
+

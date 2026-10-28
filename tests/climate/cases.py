@@ -1394,6 +1394,42 @@ _hw("False", "0", "30", "on", finding="0 lx is a reading, not a dead sensor")
 _hw("False", "45", "30", "unknown", finding="a first evaluation inside the band starts dark")
 
 
+# ---------------------------------------------------------------- stairs: the corridor light, not the entrance
+# 2026-10-25, operator: a motion sensor at the foot of the stairs lights the stairs AND the corridor
+# light (the two light the staircase), but not the entrance light.  Magic Areas only drives a group
+# while its area is occupied, so the stairs sensor is a corridor presence sensor (include_entities),
+# and `accented` tells the two corridor groups apart.  `Lighting corridor presence` is that accent:
+# some corridor sensor OTHER than the stairs one sees someone.  Entrance light = accented (+ sleep);
+# corridor light = occupied + accented (+ sleep).  The inverse ("stairs only") was rejected before
+# it shipped: the stairs sensor makes the area occupied a moment before such an accent arrives, so
+# the entrance light blinked on, and when the stairs sensor cleared inside the clear timeout the
+# accent fell away from an occupied area and lit the entrance for a minute.  Here the stairs sensor
+# never reaches the entrance by day.  The sensors are read from Magic Areas' own list, so a new
+# corridor sensor needs no edit; the stairs sensor is on that list too and must not count.
+CP = "Lighting corridor presence"
+CP_LIST = "state_attr('binary_sensor.magic_areas_presence_tracking_corridor_area_state','presence_sensors')"
+CP_ON = "select('is_state','on')"
+CP_C = ["binary_sensor.corridor_presence_presence", "binary_sensor.evo192_zone_entrance_pir_open",
+        "binary_sensor.evo192_zone_entrance_door_open", "binary_sensor.stairs_motion_occupancy"]
+
+
+def _cp(expect, on, listed=CP_C, finding=""):
+    A(sensor_case("corridor presence: on %s, listed %s" % (on, "MA list" if listed == CP_C else listed),
+                  expect, {CP_LIST: repr(listed), CP_ON: "select('in', %r)" % list(on)},
+                  sensor=CP, finding=finding))
+
+
+_cp("False", ["binary_sensor.stairs_motion_occupancy"],
+    finding="2026-10-25: the stairs sensor alone is not the corridor - no entrance light for the stairs")
+_cp("True", ["binary_sensor.stairs_motion_occupancy", "binary_sensor.corridor_presence_presence"],
+    finding="someone in the corridor while the stairs sensor is on still gets the entrance light")
+_cp("True", ["binary_sensor.corridor_presence_presence"], finding="the corridor mmWave")
+_cp("True", ["binary_sensor.evo192_zone_entrance_pir_open"], finding="the alarm PIR counts as the corridor")
+_cp("False", [], finding="nobody anywhere")
+_cp("False", ["binary_sensor.corridor_presence_presence"], listed=None,
+    finding="Magic Areas not loaded: renders, does not error")
+
+
 # ---------------------------------------------------------------- batteries and lights left on
 # 2026-10-12.  Two roll-ups that feed notifications.  `Any low battery` lists the house's battery
 # sensors under 20 % so a leak sensor at 15 % is not found by it failing.  Phones, the car and the

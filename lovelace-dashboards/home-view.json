@@ -332,6 +332,11 @@
        "name": "Shower",
        "page": "shower",
        "special": "shower"
+      },
+      "stairs": {
+       "icon": "mdi:stairs-down",
+       "name": "Stairs",
+       "page": "stairs"
       }
      },
      "show_empty": false,
@@ -389,6 +394,11 @@
        "name": "Shower",
        "page": "shower",
        "special": "shower"
+      },
+      "stairs": {
+       "icon": "mdi:stairs-down",
+       "name": "Stairs",
+       "page": "stairs"
       }
      },
      "show_empty": false,
