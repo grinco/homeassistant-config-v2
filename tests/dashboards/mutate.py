@@ -508,6 +508,28 @@ def m_second_sensor_in_aggregated_room(d):
     return "C20"
 
 
+def m_diagnostic_sensor_counted(d):
+    """A chip thermometer lands in the shower, and the shower's Magic Area does NOT
+    ignore diagnostics: it is averaged in. C20 skips diagnostic sensors only where
+    Magic Areas does (2026-10-28, an Aqara leak sensor's device temperature)."""
+    path = os.path.join(d, "core.entity_registry")
+    with io.open(path, encoding="utf-8") as fh:
+        reg = json.load(fh)
+    reg["data"]["entities"].append({
+        "entity_id": "sensor.mutant_shower_leak_device_temperature", "platform": "mqtt",
+        "area_id": "shower", "device_id": None, "original_device_class": "temperature",
+        "device_class": None, "labels": [], "unique_id": "mutant-chip", "disabled_by": None,
+        "hidden_by": None, "entity_category": "diagnostic"})
+    with io.open(path, "w", encoding="utf-8") as fh:
+        json.dump(reg, fh)
+    ce = _cfg(d, "core.config_entries")
+    for e in ce["data"]["entries"]:
+        if e.get("domain") == "magic_areas" and e["data"].get("id") == "shower":
+            e["options"]["ignore_diagnostic_entities"] = False
+    _save(d, "core.config_entries", ce)
+    return "C20"
+
+
 def _relabel(d, pick, change):
     """Apply `change` to every registry entity `pick` accepts; there must be one."""
     path = os.path.join(d, "core.entity_registry")
@@ -841,6 +863,7 @@ MUTATIONS = [
     ("Needs attention ignores the safety roll-up", m_safety_gate_dropped),
     ("a heating zone gets a hand-made card", m_heating_hand_listed),
     ("a second sensor joins an aggregated room", m_second_sensor_in_aggregated_room),
+    ("a chip thermometer joins a room that counts diagnostics", m_diagnostic_sensor_counted),
     ("a room meter shown beside the reading it feeds", m_primary_probe_shown),
     ("a probe measuring elsewhere in the room hidden", m_unique_probe_hidden),
     ("a chip temperature reaches a room page", m_chip_temperature_shown),

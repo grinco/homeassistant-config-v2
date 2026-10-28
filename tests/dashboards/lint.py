@@ -1231,8 +1231,13 @@ def main():
                      % (label, len(no_occ)), sorted(no_occ))
 
         # C20 - a labelled Magic Areas aggregate has exactly one member.
+        # Magic Areas leaves out diagnostic entities (a sensor's own chip temperature)
+        # only where its `ignore_diagnostic_entities` is on; unset counts them, to be safe.
         if label == "lovelace":
             ents = registry_entities()
+            skips_diag = {e["data"].get("id") for e in _store("core.config_entries", "entries")
+                          if e.get("domain") == "magic_areas"
+                          and (e.get("options") or {}).get("ignore_diagnostic_entities")}
             multi = []
             for a in ents:
                 if a["integration"] != "magic_areas" or ROOM_SHOW_LABEL not in a["labels"]:
@@ -1241,7 +1246,8 @@ def main():
                     continue
                 members = [e["entity_id"] for e in ents
                            if e["domain"] == "sensor" and e["integration"] != "magic_areas"
-                           and e["area"] == a["area"] and e["device_class"] == a["device_class"]]
+                           and e["area"] == a["area"] and e["device_class"] == a["device_class"]
+                           and not (e["entity_category"] == "diagnostic" and e["area"] in skips_diag)]
                 if len(members) != 1:
                     multi.append("%s averages %d: %s" % (a["entity_id"], len(members), ", ".join(sorted(members))))
             if multi:
