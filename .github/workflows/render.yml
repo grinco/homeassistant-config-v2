@@ -55,6 +55,8 @@ jobs:
         run: |
           pip install -r tests/render/requirements.txt
           python -m playwright install --with-deps chromium-headless-shell
+      - name: the renderer refuses the loading screen
+        run: python3 tests/render/test_not_rendered.py
       - name: build the synthetic house, and check it is complete
         run: |
           python3 tests/fixtures/synthetic.py "$RUNNER_TEMP/house"
