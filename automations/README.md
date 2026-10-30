@@ -51,6 +51,17 @@ Sends `sensor.any_low_battery` (in `resolved-sensors.json`) to one adult's phone
 again the moment the list stops being `none`. All the logic is in the sensor, which is also what
 Home's Needs attention shows, so the notification and the dashboard cannot disagree.
 
+## `bedroom-knob.json`
+
+The bedroom's Tuya ERS-10TZBVK-AA knob, through the EPMatt controller blueprint, driving the
+Torchère only: single and double press toggle it, a turn steps it 10% (25 of 254) per detent.
+The steps go to Zigbee2MQTT as `brightness_step`, not through `light.turn_on`: Z2M sends that
+as a plain ZCL `step`, which a lamp that is off ignores. `light.turn_on` with a step becomes
+`moveToLevelWithOnOff`, which turns the lamp on, so a step decided on a stale "on" state, or
+retried by Z2M after a timeout, lit lamps that had just been switched off (2026-10-30). The
+Aladdin lamp is out of the network for now; add it back here when it is re-paired. The topic
+uses the Z2M friendly name, so renaming the lamp in Z2M breaks the turn actions.
+
 ## `energy-digest.json`
 
 At 00:10, yesterday's consumption over the Energy dashboard's own meters, from the same
