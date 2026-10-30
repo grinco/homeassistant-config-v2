@@ -1,0 +1,48 @@
+{
+ "id": "1793376788217",
+ "alias": "Bedroom Lights Control",
+ "description": "",
+ "use_blueprint": {
+  "path": "EPMatt/tuya_ERS-10TZBVK-AA.yaml",
+  "input": {
+   "controller_device": "a90b14473d1fc26ce2fb17335369575d",
+   "action_click_short": [
+    {
+     "action": "light.toggle",
+     "target": {
+      "entity_id": "light.torchere"
+     }
+    }
+   ],
+   "action_click_double": [
+    {
+     "action": "light.toggle",
+     "metadata": {},
+     "target": {
+      "entity_id": "light.torchere"
+     },
+     "data": {}
+    }
+   ],
+   "click_long_loop": false,
+   "action_rotate_left": [
+    {
+     "action": "mqtt.publish",
+     "data": {
+      "topic": "zigbee2mqtt/Torchere/set",
+      "payload": "{\"brightness_step\": -25, \"transition\": 0.3}"
+     }
+    }
+   ],
+   "action_rotate_right": [
+    {
+     "action": "mqtt.publish",
+     "data": {
+      "topic": "zigbee2mqtt/Torchere/set",
+      "payload": "{\"brightness_step\": 25, \"transition\": 0.3}"
+     }
+    }
+   ]
+  }
+ }
+}
