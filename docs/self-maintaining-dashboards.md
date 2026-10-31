@@ -80,6 +80,13 @@ legend on (lint C37), or its header names only the first line.
   shared by the tiles and the 24 h graph (lint C13 now covers both sections). Use `floor_id(entity)`,
   not `floor_id(area_id)`: the area-id form resolved area `bedroom` to the *name* of another area,
   "Bedroom", and dropped or misfiled rooms.
+- **Security → Sensors (2026-10-31):** grouped by room, a subtitle per area and its sensors under it.
+  A sensor is named for what it is (Motion, Leak, Window, Smoke, CO); only when a room has two of
+  a kind does the device name decide (Entrance Door, Entrance PIR, Tamper), with the room's own
+  name and words like *zone*, *open*, *presence* stripped. A Paradox zone that is its room's only
+  alarm zone reads *Alarm zone*. `tests/dashboards/security_names.py` renders the live generator
+  and fails on a duplicate name within a room, a name repeating its room, or an ungrouped list:
+  the flat list had three tiles all called *Corridor zone open*.
 - **One night (lint C22):** dashboards compute night exactly as the climate loop does — the alarm in
   `armed_night`, the schedule only while the alarm itself is unavailable.
 - **Lights:** Magic Areas makes a group per light category as well as `_all_lights`; room pages and
