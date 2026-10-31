@@ -90,11 +90,6 @@
        "color": "#4caf50",
        "entity": "sensor.ac_power_total",
        "name": "All air conditioners"
-      },
-      {
-       "color": "#00bcd4",
-       "entity": "sensor.socket_power_total",
-       "name": "All sockets"
       }
      ],
      "grid_options": {
@@ -270,92 +265,33 @@
      "type": "heading"
     },
     {
-     "card": {
-      "height": 150,
-      "hours_to_show": 24,
-      "icon": "mdi:power-socket-de",
-      "line_width": 2,
-      "lower_bound": 0,
-      "points_per_hour": 2,
-      "show": {
-       "extrema": false,
-       "fill": false,
-       "icon": false,
-       "labels": true,
-       "legend": true,
-       "name": false,
-       "state": false
-      },
-      "type": "custom:mini-graph-card"
-     },
-     "card_param": "entities",
-     "filter": {
-      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set e = {'entity': s.power, 'name': o.get('name') or s.name} -%}\n{%- if o.get('color') %}{% set e = dict(e, color=o.get('color')) %}{% endif -%}\n{%- set out.l = out.l + [e] -%}\n{%- endfor -%}\n{{ out.l }}"
-     },
+     "entities": [
+      {
+       "color": "#00bcd4",
+       "entity": "sensor.socket_power_total",
+       "name": "All sockets"
+      }
+     ],
      "grid_options": {
       "columns": 12,
       "rows": "auto"
      },
-     "show_empty": false,
-     "sockets": {
-      "sensor.downstairs_toilet_power": {
-       "chart": "teal",
-       "color": "#03a9f4",
-       "icon": "mdi:toilet",
-       "max": 1600,
-       "name": "Toilet down"
-      },
-      "sensor.kitchen_kitchen_socket_power": {
-       "chart": "deep-purple",
-       "color": "#009688",
-       "icon": "mdi:robot-vacuum",
-       "max": 1600,
-       "name": "Vacuum dock"
-      },
-      "sensor.living_room_tv_socket_power": {
-       "chart": "amber",
-       "color": "#ffc107",
-       "icon": "mdi:television-classic",
-       "max": 300,
-       "name": "TV"
-      },
-      "sensor.lr_powerline_device_power": {
-       "chart": null,
-       "color": "#795548",
-       "icon": "mdi:transmission-tower",
-       "max": 50,
-       "name": "LR powerline"
-      },
-      "sensor.media_corner_power": {
-       "chart": "red",
-       "color": "#e91e63",
-       "icon": "mdi:audio-video",
-       "max": 150,
-       "name": "Media corner"
-      },
-      "sensor.mini_rack_power": {
-       "chart": "deep-orange",
-       "color": "#ff5722",
-       "icon": "mdi:server",
-       "max": 150,
-       "name": "Mini rack"
-      },
-      "sensor.unifi_poe_network_power": {
-       "chart": "blue-grey",
-       "color": "#607d8b",
-       "icon": "mdi:server-network",
-       "max": 60,
-       "name": "PoE network"
-      },
-      "sensor.upstairs_toilet_power": {
-       "chart": "brown",
-       "color": "#00bcd4",
-       "icon": "mdi:toilet",
-       "max": 1000,
-       "name": "Toilet up"
-      }
+     "height": 140,
+     "hours_to_show": 24,
+     "icon": "mdi:lightning-bolt",
+     "line_width": 2,
+     "lower_bound": 0,
+     "points_per_hour": 4,
+     "show": {
+      "extrema": true,
+      "fill": "fade",
+      "icon": true,
+      "labels": true,
+      "legend": false,
+      "name": true,
+      "state": true
      },
-     "type": "custom:auto-entities"
+     "type": "custom:mini-graph-card"
     },
     {
      "card": {
@@ -379,26 +315,12 @@
        "max": 1600,
        "name": "Toilet down"
       },
-      "sensor.kitchen_kitchen_socket_power": {
-       "chart": "deep-purple",
-       "color": "#009688",
-       "icon": "mdi:robot-vacuum",
-       "max": 1600,
-       "name": "Vacuum dock"
-      },
       "sensor.living_room_tv_socket_power": {
        "chart": "amber",
        "color": "#ffc107",
        "icon": "mdi:television-classic",
        "max": 300,
        "name": "TV"
-      },
-      "sensor.lr_powerline_device_power": {
-       "chart": null,
-       "color": "#795548",
-       "icon": "mdi:transmission-tower",
-       "max": 50,
-       "name": "LR powerline"
       },
       "sensor.media_corner_power": {
        "chart": "red",
@@ -451,10 +373,6 @@
       "columns": "full"
      },
      "outlets": {
-      "switch.kitchen_kitchen_socket_magsafe_charger": {
-       "icon": "mdi:cellphone-charging",
-       "name": "MagSafe charger"
-      },
       "switch.living_room_tv_socket_switchbot_bridge": {
        "icon": "mdi:bridge",
        "name": "Switchbot bridge"
@@ -481,7 +399,7 @@
       "rows": 1
      },
      "icon": "mdi:transmission-tower",
-     "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = h.state; var suf = n === '1' ? 'st' : n === '2' ? 'nd' : n === '3' ? 'rd' : 'th'; return n + suf + ' cheapest hour today'; ]]]",
+     "label": "[[[ var h = states['sensor.current_spot_electricity_hour_order']; if (!h) return ''; var n = parseInt(h.state, 10); if (isNaN(n)) return ''; if (n === 1) return 'Cheapest hour today'; if (n >= 24) return 'Dearest hour today'; var suf = n === 2 ? 'nd' : n === 3 ? 'rd' : (n === 21 ? 'st' : n === 22 ? 'nd' : n === 23 ? 'rd' : 'th'); return n + suf + ' cheapest of 24 hours'; ]]]",
      "name": "Electricity now",
      "show_label": true,
      "show_state": false,
@@ -515,7 +433,7 @@
      "hours_to_show": 24,
      "icon": "mdi:cash-clock",
      "line_width": 2,
-     "name": "Spot electricity",
+     "name": "Spot price, last 24 h",
      "points_per_hour": 1,
      "show": {
       "extrema": true,
