@@ -298,13 +298,13 @@ ROOM_SHOW_LABEL = "on_room_page"
 
 # Environmental readings a room page shows by default (C18). A sensor of one of
 # these classes, in a room's area, is generated as a tile unless it carries
-# ROOM_HIDDEN_LABEL. The Zigbee VOC index is unitless and has no device class,
-# so it is named by its entity-id suffix instead.
+# ROOM_HIDDEN_LABEL. The Zigbee VOC index and the Philips allergen index are unitless and have no device class,
+# so they are named by their entity-id suffix instead.
 ENV_CLASSES = ("temperature", "humidity", "illuminance", "carbon_dioxide", "carbon_monoxide",
                "pm1", "pm25", "pm10", "volatile_organic_compounds",
                "volatile_organic_compounds_parts", "aqi", "atmospheric_pressure", "pressure",
                "nitrogen_dioxide", "ozone", "sound_pressure")
-ENV_ID_RE = re.compile(r"_voc_index$")
+ENV_ID_RE = re.compile(r"_(voc|allergen)_index$")
 
 # C21: the classes that make the house unsafe, and the sensor that rolls them up.
 SAFETY_CLASSES = ("moisture", "smoke", "gas", "carbon_monoxide", "safety")

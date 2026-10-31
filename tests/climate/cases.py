@@ -989,6 +989,96 @@ A(guard("an idle purifier is ours to start", "already_running", "False",
         {FAN_ON: "false", OWNED: "false"}, finding="the normal path"))
 
 
+# ---------------------------------------------------------------- bedroom purifier (air quality)
+# 2026-10-31, operator: "start automatically during the day when either pm2.5 or the allergen
+# index is above 2.5 ... turn it off when pm drops to or below two or allergen to one (make sure
+# you cover the cases when allergen is one while pm2 is high)". Read as hysteresis: EITHER reading
+# high starts it, BOTH readings low stop it - one clean reading must never end a run the other
+# still needs. Night is the house's night (the alarm), shared with every other consumer below.
+BED_PURIFIER = "1792300000001"
+
+
+def bp(name, expr, expect, given=None, subs=None, finding=""):
+    return dict(name="bedroom purifier: " + name, automation=BED_PURIFIER, expr=expr,
+                expect=expect, given=given or {}, subs=subs or {}, finding=finding)
+
+
+def bp_air(name, expr, expect, pm, allergen, finding):
+    return bp(name, expr, expect, {"pm": pm, "allergen": allergen}, finding=finding)
+
+
+A(bp_air("PM2.5 above 2.5 is dirty", "dirty", "True", 3.0, 1.0,
+         "operator 2026-10-31: either reading above 2.5 starts it - allergen 1 must not veto"))
+A(bp_air("allergen above 2.5 is dirty", "dirty", "True", 1.0, 3.0,
+         "operator 2026-10-31: either reading starts it"))
+A(bp_air("2.5 itself is not dirty", "dirty", "False", 2.5, 2.5,
+         "'above 2.5' - the threshold is exclusive"))
+A(bp_air("an unknown reading never starts it", "dirty", "False", -1.0, -1.0,
+         "unavailable maps to -1; no reading is no evidence of dirty air"))
+A(bp_air("both low is clear", "clear", "True", 2.0, 1.0,
+         "operator 2026-10-31: 'to or below two' / 'to one' - inclusive"))
+A(bp_air("allergen 1 while PM2.5 is high is NOT clear", "clear", "False", 5.0, 1.0,
+         "operator 2026-10-31: the named case - allergen at 1 must not stop a PM run"))
+A(bp_air("PM2.5 low while allergen is high is NOT clear", "clear", "False", 1.0, 3.0,
+         "the mirror of the named case (guard both directions)"))
+A(bp_air("between the thresholds is neither", "clear", "False", 2.5, 1.0,
+         "hysteresis: PM 2.5 neither starts nor stops it"))
+A(bp_air("allergen 2 holds a run with clean PM", "clear", "False", 1.0, 2.0,
+         "hysteresis band on the allergen side: above 1 keeps it running"))
+A(bp_air("an unknown reading never stops it", "clear", "False", -1.0, 1.0,
+         "a sensor that dropped out is not evidence of clean air"))
+
+
+def bp_act(name, expect, finding, **kw):
+    g = dict(owned=False, fan="off", night=False, dirty=False, clear=False,
+             manual_cooldown=False)
+    g.update(kw)
+    return bp(name, "act", expect, g, finding=finding)
+
+
+A(bp_act("dirty air by day starts it", "start", "operator 2026-10-31", dirty=True))
+A(bp_act("dirty air at night does not start it", "none",
+         "operator 2026-10-31: during the day only", dirty=True, night=True))
+A(bp_act("a person's own run is never stopped", "none",
+         "never turn off what we did not turn on (purifier design 3.3)",
+         fan="on", clear=True))
+A(bp_act("a person's own run is not stopped at night either", "none",
+         "the same rule at the night edge", fan="on", night=True))
+A(bp_act("our run stops when the air is clear", "stop", "operator 2026-10-31",
+         owned=True, fan="on", clear=True))
+A(bp_act("our run keeps going while one reading is still high", "none",
+         "operator 2026-10-31: allergen 1 with PM high", owned=True, fan="on",
+         dirty=True))
+A(bp_act("our run stops at night", "stop",
+         "auto-runs are a daytime thing; the bedroom is slept in", owned=True, fan="on",
+         dirty=True, night=True))
+A(bp_act("an unreachable fan of ours is still stopped", "stop",
+         "corridor v6 lesson: unreachable is not off", owned=True, fan="unavailable",
+         clear=True))
+A(bp_act("our fan found off means a person stopped it", "released",
+         "release, and hold off a while, rather than fight them", owned=True, fan="off",
+         dirty=True))
+A(bp_act("a recent manual stop blocks a re-start", "none",
+         "the person wanted it off; dirty air must not overrule them at once",
+         dirty=True, manual_cooldown=True))
+A(bp_act("an unreachable idle fan is not started", "none",
+         "only start what is known to be off", fan="unavailable", dirty=True))
+A(bp_act("a running fan is not 'started' again", "none",
+         "fan on and not ours: a person's run", fan="on", dirty=True))
+
+# Cooldown: real epochs (see the corridor F4 note about toy timestamps and the 2000 sentinel).
+BP_STOP = 1792300000.0
+A(bp("a manual stop 10 min ago is cooling down", "manual_cooldown", "True",
+     {"stop_ts": BP_STOP}, {"now().timestamp()": repr(BP_STOP + 600)},
+     finding="hold off after a person switches it off"))
+A(bp("a manual stop 2 h ago is not", "manual_cooldown", "False",
+     {"stop_ts": BP_STOP}, {"now().timestamp()": repr(BP_STOP + 7200)},
+     finding="the cooldown expires"))
+A(bp("never stopped means no cooldown", "manual_cooldown", "False",
+     {"stop_ts": 946681200.0}, {"now().timestamp()": repr(BP_STOP)},
+     finding="the year-2000 sentinel means never"))
+
+
 # ---------------------------------------------------------------- CO2 (SwitchBot BLE)
 # The two Meter Pro CO2 devices report carbon dioxide over BLE. Room mapping was PROVEN by
 # cross-checking readings, not by the entity-id suffix: living room = b5be, office = 5fe9.

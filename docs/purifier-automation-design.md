@@ -424,3 +424,108 @@ boundary in §2 was asymmetric in a way the document did not admit. Both are now
 - **Did corridor temperature jump?** The `corridor X>Y` pair is the F5 measurement, and it
   decides whether the corridor may ever join the mould check.
 - **Did the fan and the flag move together?** Any cycle where they disagree is F2 returning.
+
+---
+
+## 9. Bedroom purifier: clean the air by day (2026-10-31)
+
+`automation.purifier_bedroom_air_quality_by_day` (id `1792300000001`), `mode: single`,
+`max_exceeded: silent`. The device is a Philips AC2889/10 (`fan.ac2889_10`, device renamed
+*Philips Air Purifier* to match the corridor's *Xiaomi Air Purifier*). It is a sibling of the
+corridor automation, not a copy of it. The corridor's runs are *event* driven (a cat visit, then
+a timed window). This one is *state* driven: the readings decide, every time they change.
+
+### 9.1 The request
+
+> "make sure it starts automatically during the day when either pm2.5 or the allergen index is
+> above 2.5 ... turn it off when pm drops to or below two or allergen to one (make sure you cover
+> the cases when allergen is one while pm2 is high)"
+
+The bracket decides the reading. Taken literally, "turn off when PM ≤ 2 **or** allergen ≤ 1"
+stops a run started by PM 6 the moment the allergen index reads 1, which it does most of the
+time. So the run is **hysteresis on both readings**:
+
+| | PM2.5 (5-min mean) | allergen index (5-min mean) |
+|---|---|---|
+| **dirty**: starts it | > 2.5 | **or** > 2.5 |
+| **clear**: stops it | ≤ 2 | **and** ≤ 1 |
+
+Between the two (PM 2.5, or allergen 1.5–2.5) nothing changes. The mirror of the named case,
+PM clean with allergen still high, is held the same way: climate v5.4/v5.5 each fixed one
+direction of a two-way hazard and shipped the other.
+
+### 9.2 Day is the house's day
+
+Night is the alarm in `armed_night`; `schedule.climate_night` stands in only while the alarm
+itself is `unavailable`/`unknown`. This is the same expression as the climate loop, the
+radiators, Adaptive Lighting and `binary_sensor.lighting_night`. The automation keeps its own
+copy because it triggers on the alarm changing (harness `NIGHT_CONSUMERS` says why), and the copy
+is registered there, so the shared night truth table runs against it and `wiring.py` fails if it
+drifts out of the list.
+
+- **By day:** dirty air starts the purifier in preset *Auto*.
+- **At night:** nothing starts. A run *the automation* started is stopped at the night edge, because
+  the bedroom is slept in. A run a person started is never touched, by day or by night.
+
+### 9.3 Ownership, and a person's choice
+
+Same rule as §3.3: never turn off what we did not turn on. `input_boolean.bedroom_purifier_auto_run`
+is claimed **before** commanding (the §7.4 lesson) and released only once the fan *reports* off.
+
+- Fan `off` while we own it means a person switched our run off (or the device lost power).
+  The automation releases it and stamps `input_datetime.bedroom_purifier_manual_stop`. For 60
+  minutes dirty air does not restart it, so a person who wanted quiet is not overruled
+  within seconds. The stamp is seeded to the year-2000 sentinel (never).
+- A start that ends with the fan known `off` releases **without** the stamp: a failed start is
+  not a person.
+- `unavailable` is not off: an owned fan that is unreachable is still stopped; an idle fan
+  that is unreachable is not started.
+
+### 9.4 Why means, not raw readings
+
+The raw readings move 1 → 5 → 1 within 30 s while the unit cleans (history, 2026-10-31 17:41-17:46).
+A threshold on them would start and stop the unit on noise. Two native **statistics** helpers,
+`sensor.bedroom_purifier_pm2_5_mean` and `sensor.bedroom_purifier_allergen_mean`, take the mean
+over 5 minutes with `keep_last_sample` (so a reading that stops changing keeps its value rather
+than going unknown). They are attached to the purifier's device and labelled `not_on_room_pages`, so they never
+appear as duplicate tiles. A missing reading maps to −1 and is neither dirty nor clear: no
+reading never starts a run and never ends one (night still does).
+
+### 9.5 Dashboards
+
+- **Bedroom page:** generated, as every room page is. The fan already appears under *Air*, and its PM2.5
+  under *Environment*, the same way as the corridor's purifier. The allergen index has no device class.
+  Like the Zigbee VOC index, it is matched by its id suffix: the rule is now
+  `/_(voc|allergen)_index$/` in every room (lint C14 one skeleton, C18 with the widened `ENV_ID_RE`).
+- **Climate → Air quality, indoors:** next to the corridor purifier: the unit, PM2.5 and allergen
+  meters, pre-filter cleaning due and HEPA hours left.
+
+### 9.6 What is tested, and what is not
+
+`tests/climate/cases.py`, *bedroom purifier*: `dirty` and `clear` straddle both thresholds,
+including the named case and its mirror; `act` covers start, night, person's run, our run,
+unreachable, released, and cooldown; plus the shared night truth table. `mutate.py` has seven
+mutations (OR at the stop, PM-only start, unknown counted as clear, starting at night, stopping
+a person's run, an unreachable run left on, no cooldown); all are caught.
+
+**Not tested:** the sequencing (claim → command → confirm → release), the waits, and the
+statistics helpers' windowing. As with §5, the harness has no step order.
+
+**Open: does the AC2889 sample while off?** The corridor's mb3 does not (§1). If this unit's
+sensor also stops while it is off, the readings freeze at their last value after a stop and
+dirty air in an idle bedroom is never seen, so no start ever fires. The unit had been on
+continuously since it was added, so this was not observable on day one. Check the PM2.5 history
+after the first automatic stop. If the readings are flat while the fan is off, the fix is a
+periodic sampling run, not a threshold change.
+
+### 9.7 Review (`review-20261031-50bf.md`)
+
+| # | Finding | Verdict | Status |
+|---|---|---|---|
+| 2.3 / 4 | `mode: single` drops a fan-state, alarm or reading trigger that lands during our own 2-min start/stop wait. A person's toggle or the night edge in that window is not acted on at once | Correct | **Accepted.** Every run re-reads the whole state, as in the climate loop (`automations/README.md`, run modes). The next mean change or the 10-min tick decides the same thing, so the delay is bounded at 10 minutes |
+| 2.1 | A person toggles our fan off and back on inside the wait: we keep the claim and stop it later when the air is clear | Correct, narrow | **Accepted.** From the outside that sequence is indistinguishable from "left it on". A person who wants it on regardless switches it off and on again after the run ends, and it is theirs |
+| 3 | `owned` + `off` that is not a person (power loss, `unavailable → off` on reconnect) stamps the 60-min cooldown | Correct | **Accepted** (same class as corridor F5). The cost is one hour without auto-start. If "it did not start this afternoon" is reported, check for a dropout first |
+| 3 | Philips *Auto* switching itself off would read as a person | **Disputed** | Auto varies fan speed; it does not switch the unit off |
+| 5 | Stale statistics means after the source goes unavailable could start or stop on old data | **Disputed** | The source and the fan are one device. While it is offline the fan reads `unavailable`, and a start needs it known `off`. An owned run being stopped then is the safe direction. After a restart the means read unknown → −1 → no action until a reading arrives |
+| 6 | Sampling while off is a ship blocker | **Partly agreed** | It is the main open question (§9.6). It is not a blocker because its failure mode is *never starts*, not a wrong actuation. It is verified on the first automatic stop |
+| matrix | Sequencing, wait concurrency, statistics windowing untested | Correct | The harness has no step order (§5); stated in §9.6 rather than implied |
