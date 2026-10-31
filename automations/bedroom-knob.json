@@ -1,48 +1,95 @@
 {
  "id": "1793376788217",
  "alias": "Bedroom Lights Control",
- "description": "",
- "use_blueprint": {
-  "path": "EPMatt/tuya_ERS-10TZBVK-AA.yaml",
-  "input": {
-   "controller_device": "a90b14473d1fc26ce2fb17335369575d",
-   "action_click_short": [
+ "description": "Bedroom knob drives the Torchère: press toggles, a turn steps brightness. In command mode the step is the knob's own step size (bigger for a longer turn); event-mode actions are kept as a fallback at 25 per event. Steps go to Z2M as brightness_step (plain ZCL step) so a lamp that is off stays off.",
+ "triggers": [
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "toggle",
+   "id": "toggle"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "single",
+   "id": "toggle"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "double",
+   "id": "toggle"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "brightness_step_up",
+   "id": "up"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "rotate_right",
+   "id": "up"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "brightness_step_down",
+   "id": "down"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "rotate_left",
+   "id": "down"
+  }
+ ],
+ "conditions": [],
+ "actions": [
+  {
+   "choose": [
     {
-     "action": "light.toggle",
-     "target": {
-      "entity_id": "light.torchere"
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "toggle"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "light.toggle",
+       "target": {
+        "entity_id": "light.torchere"
+       }
+      }
+     ]
+    }
+   ],
+   "default": [
+    {
+     "variables": {
+      "step": "{% set p = trigger.payload_json %}{{ [p.get('action_step_size') | int(25), 1] | max if p.action.startswith('brightness_step') else 25 }}"
      }
-    }
-   ],
-   "action_click_double": [
-    {
-     "action": "light.toggle",
-     "metadata": {},
-     "target": {
-      "entity_id": "light.torchere"
-     },
-     "data": {}
-    }
-   ],
-   "click_long_loop": false,
-   "action_rotate_left": [
+    },
     {
      "action": "mqtt.publish",
      "data": {
       "topic": "zigbee2mqtt/Torchere/set",
-      "payload": "{\"brightness_step\": -25, \"transition\": 0.3}"
-     }
-    }
-   ],
-   "action_rotate_right": [
-    {
-     "action": "mqtt.publish",
-     "data": {
-      "topic": "zigbee2mqtt/Torchere/set",
-      "payload": "{\"brightness_step\": 25, \"transition\": 0.3}"
+      "payload": "{{ {'brightness_step': step if trigger.id == 'up' else -step, 'transition': 0.3} | to_json }}"
      }
     }
    ]
   }
- }
+ ],
+ "mode": "queued",
+ "max": 10
 }
