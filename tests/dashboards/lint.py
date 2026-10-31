@@ -228,6 +228,12 @@ Checks, each one written because something it catches actually shipped:
                          name and every other line is unlabelled: on 2026-10-31 the
                          Energy graph read "All air conditioners" while also drawing
                          the socket total, so the sockets looked like AC load.
+  C38 env-tile-names     every Environment tile on a room page is named in at most
+                         TILE_NAME_MAX characters, unique within its room. On
+                         2026-10-31 a phone render cut most device readings to
+                         "PM2.5 Bedroo..." because the tile named itself reading +
+                         device. Tiles now show the reading's own name, and a reading
+                         that would clash carries a short registry name ("Desk temp.").
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -305,6 +311,9 @@ ENV_CLASSES = ("temperature", "humidity", "illuminance", "carbon_dioxide", "carb
                "volatile_organic_compounds_parts", "aqi", "atmospheric_pressure", "pressure",
                "nitrogen_dioxide", "ozone", "sound_pressure")
 ENV_ID_RE = re.compile(r"_(voc|allergen)_index$")
+# C38: a tile name longer than this is cut off in a two-column grid at 390 px
+# (render 2026-10-31: "PM2.5 Bedroo..." - 13 characters and the ellipsis).
+TILE_NAME_MAX = 14
 
 # C21: the classes that make the house unsafe, and the sensor that rolls them up.
 SAFETY_CLASSES = ("moisture", "smoke", "gas", "carbon_monoxide", "safety")
@@ -1256,6 +1265,56 @@ def main():
             if problems:
                 fail("C33", "%s: a room's Environment block shows a probe twice, or hides one"
                      % label, problems)
+
+        # C38 - every Environment tile name fits a phone and is unique in its room.
+        if label == "lovelace":
+            ents = registry_entities()
+            raw = {e["entity_id"]: e for e in _store("core.entity_registry", "entities")}
+            devs = {d["id"]: d for d in _store("core.device_registry", "devices")}
+            area_name_of = {a["id"]: a["name"] for a in _store("core.area_registry", "areas")}
+
+            def tile_name(cfg, eid):
+                if isinstance(cfg, str):
+                    return cfg
+                r = raw.get(eid) or {}
+                d = devs.get(r.get("device_id")) or {}
+                dn = d.get("name_by_user") or d.get("name") or ""
+                parts = []
+                for p in cfg if isinstance(cfg, list) else [cfg or {"type": "entity"}]:
+                    t = (p or {}).get("type")
+                    if t == "entity":
+                        parts.append(r.get("name") or r.get("original_name") or dn)
+                    elif t == "device":
+                        parts.append(dn)
+                    elif t == "text":
+                        parts.append(p.get("text") or "")
+                return " ".join(x for x in parts if x)
+
+            long_, same = [], []
+            for v in rooms:
+                for card, inc, exc in generators(v):
+                    if not any(env_rule(r) for r in inc):
+                        continue
+                    names = {}
+                    for e in ents:
+                        if e["domain"] != "sensor" or e["entity_category"] or e["hidden_by"]:
+                            continue
+                        if any(rule_matches(x, e, area_name_of) for x in exc):
+                            continue
+                        rule = next((r for r in inc if rule_matches(r, e, area_name_of)), None)
+                        if rule is None:
+                            continue
+                        n = tile_name((rule.get("options") or {}).get("name"), e["entity_id"])
+                        names.setdefault(n.lower(), []).append(e["entity_id"])
+                        if len(n) > TILE_NAME_MAX:
+                            long_.append("%-14s %-24r %s" % (v.get("path"), n, e["entity_id"]))
+                    for n, ids in names.items():
+                        if len(ids) > 1:
+                            same.append("%-14s %r <- %s" % (v.get("path"), n, ", ".join(sorted(ids))))
+            if long_ or same:
+                fail("C38", "%s: Environment tile names run off a phone tile or repeat in a room"
+                     % label, ["longer than %d characters: %s" % (TILE_NAME_MAX, x) for x in sorted(long_)]
+                     + ["the same name twice: " + x for x in sorted(same)])
 
         # C23 - the room's occupancy is a tile that opens its details.
         if label == "lovelace":

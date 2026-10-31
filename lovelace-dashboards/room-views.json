@@ -398,9 +398,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -422,9 +419,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -1247,9 +1241,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -1271,9 +1262,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -2096,9 +2084,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -2120,9 +2105,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -2945,9 +2927,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -2969,9 +2948,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -3794,9 +3770,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -3818,9 +3791,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -4643,9 +4613,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -4667,9 +4634,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -5492,9 +5456,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -5516,9 +5477,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -6341,9 +6299,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -6365,9 +6320,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -7190,9 +7142,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -7214,9 +7163,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -8039,9 +7985,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -8063,9 +8006,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -8888,9 +8828,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -8912,9 +8849,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -9737,9 +9671,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -9761,9 +9692,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -10586,9 +10514,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -10610,9 +10535,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -11435,9 +11357,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"
@@ -11459,9 +11378,6 @@
           "name": [
            {
             "type": "entity"
-           },
-           {
-            "type": "device"
            }
           ],
           "type": "tile"

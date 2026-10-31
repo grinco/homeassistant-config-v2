@@ -458,6 +458,29 @@ def m_env_block_dropped(d):
     return "C18"
 
 
+def m_env_names_with_device(d):
+    """Environment tiles name themselves reading + device again: cut off on a phone."""
+    doc = _cfg(d, LOV)
+    for v in _rooms(doc):
+        for c in _env(v):
+            for r in c["filter"]["include"]:
+                o = r.get("options") or {}
+                if isinstance(o.get("name"), list):
+                    o["name"] = [{"type": "entity"}, {"type": "device"}]
+    _save(d, LOV, doc)
+    return "C38"
+
+
+def m_env_names_collide(d):
+    """Two readings in one room share a name: the resolved Temperature and a probe's."""
+    ents = _cfg(d, "core.entity_registry")
+    for e in ents["data"]["entities"]:
+        if e["entity_id"] == "sensor.livingroom_thermostat_livingroom_thermostat_temperature":
+            e["name"] = None
+    _save(d, "core.entity_registry", ents)
+    return "C38"
+
+
 def m_env_needs_label(d):
     """Readings only with the opt-in label again: PM2.5 and light level vanish."""
     doc = _cfg(d, LOV)
@@ -921,6 +944,8 @@ def m_total_graph_hand_lists(d):
 
 
 MUTATIONS = [
+    ("Environment tiles named reading + device again", m_env_names_with_device),
+    ("two readings in a room share a tile name", m_env_names_collide),
     ("the AC graph also draws the sockets", m_graph_unlabelled),
     ("the socket total graph names a plug", m_total_graph_hand_lists),
     ("a generated graph charts an offline sensor", m_graph_charts_offline),

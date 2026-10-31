@@ -55,7 +55,11 @@ legend on (lint C37), or its header names only the first line.
 - **Environment (2026-10-07):** every room page generates a tile for each sensor in its area whose
   device class is environmental (temperature, humidity, illuminance, CO₂, CO, PM1/2.5/10, VOC, AQI,
   pressure, NO₂, ozone, sound pressure), plus the Zigbee VOC index and the Philips allergen index,
-  which have no class and are matched by their `_voc_index` / `_allergen_index` id suffix. Resolved room sensors (label `on_room_page`) show as plain
+  which have no class and are matched by their `_voc_index` / `_allergen_index` id suffix.
+  Tiles show the reading's own name only (lint C38: at most 14 characters, unique in the room);
+  a second reading of the same kind in a room gets a short registry name saying where it is
+  (*Desk temp.*, *Wall humidity*, *Purifier PM2.5*, *Dining lux*) - name a new one the same way.
+  Resolved room sensors (label `on_room_page`) show as plain
   *Temperature* / *Humidity* / *CO₂*; device sensors show their reading first, then the device.
   Before this a room page showed only the three resolved readings, as small heading badges, so a
   terrace light level, a purifier's PM2.5 and a bedroom's PM2.5/VOC were on no page (lint C18).
