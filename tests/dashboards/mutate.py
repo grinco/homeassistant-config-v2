@@ -887,7 +887,23 @@ def m_graph_charts_offline(d):
     raise SystemExit("no generated socket graph to mutate")
 
 
+def m_graph_unlabelled(d):
+    """The AC graph draws the socket total too, under the header "All air conditioners"."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            graphs = [c for c in sec.get("cards") or []
+                      if isinstance(c, dict) and c.get("type") == "custom:mini-graph-card"]
+            for ac, nxt in zip(graphs, graphs[1:]):
+                if (ac.get("entities") or [{}])[0].get("entity") == "sensor.ac_power_total":
+                    ac["entities"] += nxt["entities"]
+                    _save(d, LOV, doc)
+                    return "C37"
+    raise SystemExit("no AC graph to merge the socket total into")
+
+
 MUTATIONS = [
+    ("the AC graph also draws the sockets", m_graph_unlabelled),
     ("the socket graph charts an offline plug", m_graph_charts_offline),
     ("a socket's curation outlives the socket", m_socket_curation_stale),
     ("outlet curation names a metered socket's switch", m_outlet_curation_is_main),
