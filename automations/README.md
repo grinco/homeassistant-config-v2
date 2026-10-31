@@ -34,7 +34,7 @@ Three overload strategies are used, on purpose, and each follows from what a run
   2026-10-20), and the only waits are the per-room preset `wait_template`s, 10 s each with
   `continue_on_timeout`, so even the worst case is under a minute and cannot swallow a tick.
   `silent` keeps the log free of a warning for an event that is not a fault.
-- **`queued`: the alarm sync, Away, the night mode and the radiators.** Each run acts on a
+- **`queued`: the alarm sync, Away, the night mode, the radiators and the bedroom knob.** Each run acts on a
   *transition* (an arm, an edge of the schedule, a target change), and a dropped transition
   is a missed command. Queued runs re-read live state at the start, so a queued echo of the
   automation's own write does nothing. The alarm sync allows 25 and warns when that is
@@ -53,8 +53,16 @@ Home's Needs attention shows, so the notification and the dashboard cannot disag
 
 ## `bedroom-knob.json`
 
-The bedroom's Tuya ERS-10TZBVK-AA knob, through the EPMatt controller blueprint, driving the
-Torchère only: single and double press toggle it, a turn steps it 10% (25 of 254) per detent.
+The bedroom's Tuya ERS-10TZBVK-AA knob, driving the Torchère only. The knob is in **command**
+mode (triple-press on the knob switches it; a write from Z2M times out while it sleeps). In event
+mode it reports at most one rotate event every 1.5–2 s however many detents are turned, so a
+quick multi-click turn moved the lamp one step (Z2M log, 2026-10-31). In command mode each turn
+is one `brightness_step_up`/`_down` carrying `action_step_size`, about 13 per detent and growing
+with the turn (25–85 seen), and that size is passed through 1:1. A press is `toggle`. The
+event-mode actions (single/double press, `rotate_*` at 25) are still mapped, so the knob keeps
+working if it falls back to event mode. MQTT triggers on the knob's topic rather than the EPMatt
+blueprint, which reads only the action and drops the step size. `queued`, because each message
+is a step and dropping one loses it.
 The steps go to Zigbee2MQTT as `brightness_step`, not through `light.turn_on`: Z2M sends that
 as a plain ZCL `step`, which a lamp that is off ignores. `light.turn_on` with a step becomes
 `moveToLevelWithOnOff`, which turns the lamp on, so a step decided on a stale "on" state, or
