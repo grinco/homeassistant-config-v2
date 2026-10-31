@@ -220,6 +220,11 @@ Checks, each one written because something it catches actually shipped:
                          for a day keeps the whole graph on its spinner: on 2026-10-31
                          the Energy socket graph never loaded because two removed plugs
                          were still being charted.
+  C37 graph-labelled     a mini-graph-card with more than one line shows its legend.
+                         With `legend: false` the header carries the FIRST entity's
+                         name and every other line is unlabelled: on 2026-10-31 the
+                         Energy graph read "All air conditioners" while also drawing
+                         the socket total, so the sockets looked like AC load.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1410,6 +1415,15 @@ def main():
         if spin:
             fail("C36", "%s: a generated graph can chart an entity with no history, "
                         "which keeps the whole card loading" % label, spin)
+
+        # C37 - a graph with several lines says which line is which.
+        mute = [path for path, card in found
+                if card.get("type") == "custom:mini-graph-card"
+                and len(card.get("entities") or []) > 1
+                and (card.get("show") or {}).get("legend") is False]
+        if mute:
+            fail("C37", "%s: a graph draws several lines with the legend off, so the "
+                        "header names only the first" % label, mute)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
