@@ -841,7 +841,56 @@ def m_comfort_day_only(d):
     return "C34"
 
 
+def _curated(doc, key):
+    """The first Energy card carrying a `sockets` / `outlets` curation map."""
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            for c in sec.get("cards") or []:
+                if isinstance(c, dict) and c.get(key):
+                    return c
+    raise SystemExit("no card carries a %r map to mutate" % key)
+
+
+def m_socket_curation_stale(d):
+    """A socket's curation outlives it: the key names a sensor with no device of its own."""
+    doc = _cfg(d, LOV)
+    _curated(doc, "sockets")["sockets"]["sensor.ac_power_total"] = {"name": "Gone"}
+    _save(d, LOV, doc)
+    return "C35"
+
+
+def m_outlet_curation_is_main(d):
+    """The unmetered list's curation names a metered socket's own main switch."""
+    doc = _cfg(d, LOV)
+    regs = _cfg(d, "core.entity_registry")["data"]["entities"]
+    dev = {e["entity_id"]: e.get("device_id") for e in regs}
+    sock = sorted(_curated(doc, "sockets")["sockets"])[0]
+    main = min((e for e, did in dev.items() if did == dev[sock] and e.startswith("switch.")), key=len)
+    _curated(doc, "outlets")["outlets"][main] = {"name": "Main"}
+    _save(d, LOV, doc)
+    return "C35"
+
+
+def m_graph_charts_offline(d):
+    """The socket graph charts a plug that is offline again: the card never leaves its spinner."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            for c in sec.get("cards") or []:
+                if (isinstance(c, dict) and c.get("type") == "custom:auto-entities"
+                        and (c.get("card") or {}).get("type") == "custom:mini-graph-card"
+                        and c.get("sockets")):
+                    c["filter"]["template"] = c["filter"]["template"].replace(
+                        " if is_number(states(s.power))", "")
+                    _save(d, LOV, doc)
+                    return "C36"
+    raise SystemExit("no generated socket graph to mutate")
+
+
 MUTATIONS = [
+    ("the socket graph charts an offline plug", m_graph_charts_offline),
+    ("a socket's curation outlives the socket", m_socket_curation_stale),
+    ("outlet curation names a metered socket's switch", m_outlet_curation_is_main),
     ("Comfort hand-lists a room's target", m_comfort_hand_listed),
     ("Comfort walks its own room list", m_comfort_names_room),
     ("Comfort computes night itself", m_comfort_own_night),
