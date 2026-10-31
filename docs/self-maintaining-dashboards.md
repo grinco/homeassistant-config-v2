@@ -22,7 +22,14 @@ adding or removing cards. `tests/dashboards/lint.py` enforces it (C13–C15).
 | a person | Security → Presence, and admin → Phones |
 
 The one step Home Assistant does not allow to be generated: adding a new plug to the built-in
-**Energy dashboard** (Settings → Dashboards → Energy → Individual devices).
+**Energy dashboard** (Settings → Dashboards → Energy → Individual devices). `tests/climate/wiring.py` fails
+until it is done (and when a meter there no longer exists), and the energy digest's copy of the list
+must then be updated to match. A plug that is gone for good is deleted (or, for Tuya, disabled) so it
+leaves the generated lists too.
+
+The generated graphs chart only entities reading a number now (lint C36): mini-graph-card draws
+nothing until every entity it charts has a point in its window, so one plug offline for a day used
+to leave the whole Energy socket graph on its loading spinner.
 
 ## Labels
 

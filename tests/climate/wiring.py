@@ -110,6 +110,44 @@ def digest_meters(prefs_path=ENERGY):
     return sorted(set(want) - set(ids)), sorted(set(ids) - set(want))
 
 
+def sockets_on_energy(prefs_path=ENERGY):
+    """Every metered socket is on the Energy dashboard, and every meter there still exists.
+
+    Adding a plug to the Energy dashboard is the one step Home Assistant does not let a
+    dashboard generate (docs/self-maintaining-dashboards.md), so it is the step that gets
+    missed: on 2026-10-31 three new plugs were absent and a gone vacuum dock was still summed.
+    A metered socket is the Energy tab's own rule: a power sensor not made by Powercalc, on a
+    device with a switch and no climate entity. Its meter is that device's energy sensor.
+    """
+    import io
+    import json
+    reg = harness.ENTRIES.replace("core.config_entries", "core.entity_registry")
+    with io.open(reg, encoding="utf-8") as fh:
+        ents = [e for e in json.load(fh)["data"]["entities"] if not e.get("disabled_by")]
+    with io.open(prefs_path, encoding="utf-8") as fh:
+        prefs = json.load(fh)["data"]
+    on = {d["stat_consumption"] for d in prefs.get("device_consumption") or []}
+    cls = lambda e: e.get("device_class") or e.get("original_device_class")
+    by_dev = {}
+    for e in ents:
+        if e.get("device_id"):
+            by_dev.setdefault(e["device_id"], []).append(e)
+    missing = []
+    for did, dev in by_dev.items():
+        ids = [e["entity_id"] for e in dev]
+        mine = [e for e in dev if e.get("platform") != "powercalc"]
+        if not (any(cls(e) == "power" and e["entity_id"].startswith("sensor.") for e in mine)
+                and any(i.startswith("switch.") for i in ids)
+                and not any(i.startswith("climate.") for i in ids)):
+            continue
+        meters = sorted(e["entity_id"] for e in mine
+                        if cls(e) == "energy" and e["entity_id"].startswith("sensor."))
+        if meters and not on & set(meters):
+            missing.append(meters[0])
+    known = {e["entity_id"] for e in ents}
+    return sorted(missing), sorted(on - known)
+
+
 DIGEST_ID = "1792100000001"
 
 
@@ -123,6 +161,16 @@ def main():
         print("\nThe energy digest must sum exactly the Energy dashboard's meters.")
         return 1
     print("  the energy digest sums exactly the Energy dashboard's meters")
+
+    unlisted, gone = sockets_on_energy()
+    for m in unlisted:
+        print("  NOT ON ENERGY   %s meters a socket but is not on the Energy dashboard" % m)
+    for m in gone:
+        print("  GONE METER      %s is on the Energy dashboard but no longer exists" % m)
+    if unlisted or gone:
+        print("\nEvery metered socket belongs on the Energy dashboard (Settings > Dashboards > Energy).")
+        return 1
+    print("  every metered socket is on the Energy dashboard")
 
     stray, gone = night_copies()
     for where, key in stray:
