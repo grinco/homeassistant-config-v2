@@ -206,6 +206,20 @@ Checks, each one written because something it catches actually shipped:
                          were the most-used controls after lights, by all three
                          household accounts, and lived only on room pages and the
                          adults-only Climate tab.
+  C35 curation-matches   every key in an Energy `sockets` map is a power sensor the
+                         socket generator lists (not Powercalc, on a device with a
+                         switch and no climate), and every `outlets` key an outlet
+                         switch it lists as unmetered. A key that matches nothing
+                         curates nothing and only looks like it does: on 2026-10-31
+                         the map still named a vacuum dock that had left the house
+                         and a Powercalc sensor the generator never shows.
+  C36 graph-numeric      a mini-graph-card that auto-entities generates charts only
+                         entities reading a number now. mini-graph-card 0.13 draws
+                         nothing until EVERY entity has a numeric point in the window
+                         (`renderGraph` waits on each `_history`), so one plug offline
+                         for a day keeps the whole graph on its spinner: on 2026-10-31
+                         the Energy socket graph never loaded because two removed plugs
+                         were still being charted.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -402,6 +416,35 @@ def registry_entities():
             device_class=e.get("device_class") or e.get("original_device_class"),
             entity_category=e.get("entity_category"), hidden_by=e.get("hidden_by")))
     return out
+
+
+def socket_universe():
+    """(power sensors the Energy socket generator lists, outlets it lists as unmetered).
+
+    The generator's own rule, read from the registry: a power sensor not made by
+    Powercalc, on a device with a switch and no climate entity; that device's main
+    switch is its shortest switch id. Unmetered outlets are outlet-class switches that
+    are no device's main switch.
+    """
+    ents = [e for e in _store("core.entity_registry", "entities") if not e.get("disabled_by")]
+    by_dev = {}
+    for e in ents:
+        if e.get("device_id"):
+            by_dev.setdefault(e["device_id"], []).append(e["entity_id"])
+    cls = lambda e: e.get("device_class") or e.get("original_device_class")
+    power, mains = set(), set()
+    for e in ents:
+        if not (e["entity_id"].startswith("sensor.") and cls(e) == "power"
+                and e.get("platform") != "powercalc" and e.get("device_id")):
+            continue
+        sib = by_dev[e["device_id"]]
+        sw = [x for x in sib if x.startswith("switch.")]
+        if sw and not any(x.startswith("climate.") for x in sib):
+            power.add(e["entity_id"])
+            mains.add(min(sw, key=len))
+    outlets = {e["entity_id"] for e in ents if e["entity_id"].startswith("switch.")
+               and cls(e) == "outlet" and e["entity_id"] not in mains}
+    return power, outlets
 
 
 # C33: a device with one of these is an appliance; its own temperature probe
@@ -1343,6 +1386,30 @@ def main():
                     bat.append("%s computes its own battery list" % path)
             if bat:
                 fail("C29", "%s: the low-battery note and the roll-up can disagree" % label, bat)
+
+        # C35 - socket and outlet curation names something the generator lists.
+        s_power, s_outlets = socket_universe()
+        dead = []
+        for path, card in found:
+            for key, universe in (("sockets", s_power), ("outlets", s_outlets)):
+                for k in sorted(card.get(key) or {}):
+                    if k not in universe:
+                        dead.append("%s %s[%s] is not a %s the generator lists"
+                                    % (path, key, k, "metered socket" if key == "sockets"
+                                       else "unmetered outlet"))
+        if dead:
+            fail("C35", "%s: socket curation names a device the Energy tab does not show"
+                 % label, dead)
+
+        # C36 - a generated graph charts only entities that read a number.
+        spin = [path for path, card in found
+                if card.get("type") == "custom:auto-entities"
+                and (card.get("card") or {}).get("type") == "custom:mini-graph-card"
+                and "template" in (card.get("filter") or {})
+                and not re.search(r"is_number\(states\(", card["filter"]["template"])]
+        if spin:
+            fail("C36", "%s: a generated graph can chart an entity with no history, "
+                        "which keeps the whole card loading" % label, spin)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
