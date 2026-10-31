@@ -29,7 +29,10 @@ leaves the generated lists too.
 
 The generated graphs chart only entities reading a number now (lint C36): mini-graph-card draws
 nothing until every entity it charts has a point in its window, so one plug offline for a day used
-to leave the whole Energy socket graph on its loading spinner.
+to leave the whole Energy socket graph on its loading spinner. That per-plug graph has since been
+retired in favour of the socket total (a registry-walking helper, which C13 allows in the generated
+Sockets section); the Climate graphs keep the guard. A graph with more than one line keeps its
+legend on (lint C37), or its header names only the first line.
 
 ## Labels
 
