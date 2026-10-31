@@ -511,7 +511,11 @@ a person's run, an unreachable run left on, no cooldown); all are caught.
 **Not tested:** the sequencing (claim → command → confirm → release), the waits, and the
 statistics helpers' windowing. As with §5, the harness has no step order.
 
-**Open: does the AC2889 sample while off?** The corridor's mb3 does not (§1). If this unit's
+**Resolved 2026-10-31: the AC2889 samples while off.** The operator confirmed it reports in
+standby, and history agrees: PM2.5 kept changing after a manual off at 19:10. Kept below for the
+record, since the corridor's mb3 behaves the other way.
+
+~~Open: does the AC2889 sample while off?~~ The corridor's mb3 does not (§1). If this unit's
 sensor also stops while it is off, the readings freeze at their last value after a stop and
 dirty air in an idle bedroom is never seen, so no start ever fires. The unit had been on
 continuously since it was added, so this was not observable on day one. Check the PM2.5 history
@@ -527,5 +531,5 @@ periodic sampling run, not a threshold change.
 | 3 | `owned` + `off` that is not a person (power loss, `unavailable → off` on reconnect) stamps the 60-min cooldown | Correct | **Accepted** (same class as corridor F5). The cost is one hour without auto-start. If "it did not start this afternoon" is reported, check for a dropout first |
 | 3 | Philips *Auto* switching itself off would read as a person | **Disputed** | Auto varies fan speed; it does not switch the unit off |
 | 5 | Stale statistics means after the source goes unavailable could start or stop on old data | **Disputed** | The source and the fan are one device. While it is offline the fan reads `unavailable`, and a start needs it known `off`. An owned run being stopped then is the safe direction. After a restart the means read unknown → −1 → no action until a reading arrives |
-| 6 | Sampling while off is a ship blocker | **Partly agreed** | It is the main open question (§9.6). It is not a blocker because its failure mode is *never starts*, not a wrong actuation. It is verified on the first automatic stop |
+| 6 | Sampling while off is a ship blocker | **Resolved** | The AC2889 reports in standby (operator, 2026-10-31; PM2.5 history after a manual off agrees), so dirty air in an idle bedroom is seen |
 | matrix | Sequencing, wait concurrency, statistics windowing untested | Correct | The harness has no step order (§5); stated in §9.6 rather than implied |
