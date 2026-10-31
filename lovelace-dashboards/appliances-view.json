@@ -114,7 +114,19 @@
      },
      "name": "Progress",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "sensor.house_oven_program_progress",
+       "state_not": "unavailable"
+      },
+      {
+       "condition": "state",
+       "entity": "sensor.house_oven_program_progress",
+       "state_not": "unknown"
+      }
+     ]
     },
     {
      "entity": "sensor.house_oven_program_finish_time",
@@ -124,7 +136,19 @@
      },
      "name": "Finishes",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "sensor.house_oven_program_finish_time",
+       "state_not": "unavailable"
+      },
+      {
+       "condition": "state",
+       "entity": "sensor.house_oven_program_finish_time",
+       "state_not": "unknown"
+      }
+     ]
     },
     {
      "heading": "Oven controls",
@@ -270,7 +294,19 @@
      },
      "name": "Progress",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "sensor.house_dishwasher_program_progress",
+       "state_not": "unavailable"
+      },
+      {
+       "condition": "state",
+       "entity": "sensor.house_dishwasher_program_progress",
+       "state_not": "unknown"
+      }
+     ]
     },
     {
      "entity": "sensor.house_dishwasher_program_finish_time",
@@ -280,7 +316,19 @@
      },
      "name": "Finishes",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "sensor.house_dishwasher_program_finish_time",
+       "state_not": "unavailable"
+      },
+      {
+       "condition": "state",
+       "entity": "sensor.house_dishwasher_program_finish_time",
+       "state_not": "unknown"
+      }
+     ]
     },
     {
      "color": "blue-grey",
@@ -351,7 +399,19 @@
      },
      "name": "Silence on demand",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "switch.house_dishwasher_silence_on_demand",
+       "state_not": "unavailable"
+      },
+      {
+       "condition": "state",
+       "entity": "switch.house_dishwasher_silence_on_demand",
+       "state_not": "unknown"
+      }
+     ]
     },
     {
      "entity": "button.house_dishwasher_stop_program",
@@ -433,7 +493,29 @@
      "heading": "Connectivity",
      "heading_style": "subtitle",
      "icon": "mdi:wifi",
-     "type": "heading"
+     "type": "heading",
+     "visibility": [
+      {
+       "condition": "or",
+       "conditions": [
+        {
+         "condition": "state",
+         "entity": "binary_sensor.house_oven_connectivity",
+         "state": "off"
+        },
+        {
+         "condition": "state",
+         "entity": "binary_sensor.house_cooktop_connectivity",
+         "state": "off"
+        },
+        {
+         "condition": "state",
+         "entity": "binary_sensor.house_dishwasher_connectivity",
+         "state": "off"
+        }
+       ]
+      }
+     ]
     },
     {
      "entity": "binary_sensor.house_oven_connectivity",
@@ -443,7 +525,14 @@
      },
      "name": "Oven",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.house_oven_connectivity",
+       "state": "off"
+      }
+     ]
     },
     {
      "entity": "binary_sensor.house_cooktop_connectivity",
@@ -453,7 +542,14 @@
      },
      "name": "Cooktop",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.house_cooktop_connectivity",
+       "state": "off"
+      }
+     ]
     },
     {
      "entity": "binary_sensor.house_dishwasher_connectivity",
@@ -463,7 +559,14 @@
      },
      "name": "Dishwasher",
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.house_dishwasher_connectivity",
+       "state": "off"
+      }
+     ]
     }
    ],
    "type": "grid"
@@ -670,6 +773,7 @@
       "rows": 1
      },
      "name": "Odometer",
+     "state_display": "[[[ const v = Number(entity.state); return isNaN(v) ? entity.state : Math.round(v).toLocaleString('en-US') + ' ' + (entity.attributes.unit_of_measurement || ''); ]]]",
      "template": "vg_stat",
      "type": "custom:button-card"
     },
@@ -680,6 +784,7 @@
       "rows": 1
      },
      "name": "Service in",
+     "state_display": "[[[ const v = Number(entity.state); if (isNaN(v)) return entity.state; const u = entity.attributes.unit_of_measurement; const h = u === 'd' ? v * 24 : u === 'min' ? v / 60 : v; return h >= 48 ? Math.round(h / 24) + ' days' : Math.round(h) + ' h'; ]]]",
      "template": "vg_stat",
      "type": "custom:button-card"
     },

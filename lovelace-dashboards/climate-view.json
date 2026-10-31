@@ -364,33 +364,6 @@
      "entities": [
       {
        "color": "#4caf50",
-       "entity": "sensor.house_humidity",
-       "name": "Outside humidity"
-      }
-     ],
-     "font_size": 75,
-     "grid_options": {
-      "columns": 12,
-      "rows": 3
-     },
-     "hours_to_show": 24,
-     "icon": "mdi:water-percent",
-     "line_width": 2,
-     "points_per_hour": 2,
-     "show": {
-      "fill": "fade",
-      "icon": true,
-      "labels": false,
-      "legend": false,
-      "name": true,
-      "state": true
-     },
-     "type": "custom:mini-graph-card"
-    },
-    {
-     "entities": [
-      {
-       "color": "#4caf50",
        "entity": "sensor.climate_temp_outdoor",
        "name": "In use"
       },
@@ -445,7 +418,7 @@
      "grid_options": {
       "columns": 12
      },
-     "name": "Home",
+     "name": "Next 24 h",
      "type": "tile"
     },
     {
@@ -507,7 +480,7 @@
       "columns": 6,
       "rows": 1
      },
-     "name": "UV index",
+     "name": "UV",
      "template": "vg_stat",
      "type": "custom:button-card"
     },
@@ -719,7 +692,7 @@
     {
      "entity": "sensor.corridor_xiaomi_air_purifier_pm2_5",
      "grid_options": {
-      "columns": 12,
+      "columns": 6,
       "rows": 1
      },
      "icon": "mdi:blur",
@@ -807,7 +780,7 @@
     {
      "entity": "sensor.bedroom_ac2889_10_pm2_5",
      "grid_options": {
-      "columns": 12,
+      "columns": 6,
       "rows": 1
      },
      "icon": "mdi:blur",
@@ -832,7 +805,7 @@
     {
      "entity": "sensor.bedroom_ac2889_10_allergen_index",
      "grid_options": {
-      "columns": 12,
+      "columns": 6,
       "rows": 1
      },
      "icon": "mdi:flower-pollen",
@@ -862,6 +835,7 @@
      },
      "icon": "mdi:air-filter",
      "name": "Pre-filter clean in",
+     "state_display": "[[[ const v = Number(entity.state); if (isNaN(v)) return entity.state; const u = entity.attributes.unit_of_measurement; const h = u === 'd' ? v * 24 : u === 'min' ? v / 60 : v; return h >= 48 ? Math.round(h / 24) + ' days' : Math.round(h) + ' h'; ]]]",
      "tap_action": {
       "action": "more-info"
      },
@@ -876,6 +850,7 @@
      },
      "icon": "mdi:air-filter",
      "name": "HEPA filter left",
+     "state_display": "[[[ const v = Number(entity.state); if (isNaN(v)) return entity.state; const u = entity.attributes.unit_of_measurement; const h = u === 'd' ? v * 24 : u === 'min' ? v / 60 : v; return h >= 48 ? Math.round(h / 24) + ' days' : Math.round(h) + ' h'; ]]]",
      "tap_action": {
       "action": "more-info"
      },
