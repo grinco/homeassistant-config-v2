@@ -872,39 +872,58 @@ def m_outlet_curation_is_main(d):
 
 
 def m_graph_charts_offline(d):
-    """The socket graph charts a plug that is offline again: the card never leaves its spinner."""
+    """A generated Climate graph charts an offline sensor: the card never leaves its spinner."""
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
         for sec in v.get("sections") or []:
             for c in sec.get("cards") or []:
                 if (isinstance(c, dict) and c.get("type") == "custom:auto-entities"
                         and (c.get("card") or {}).get("type") == "custom:mini-graph-card"
-                        and c.get("sockets")):
+                        and "is_number(states(e))" in c["filter"].get("template", "")):
                     c["filter"]["template"] = c["filter"]["template"].replace(
-                        " if is_number(states(s.power))", "")
+                        "is_number(states(e))", "true")
                     _save(d, LOV, doc)
                     return "C36"
-    raise SystemExit("no generated socket graph to mutate")
+    raise SystemExit("no generated graph to mutate")
+
+
+def _first(card):
+    e = (card.get("entities") or [None])[0]
+    return e.get("entity") if isinstance(e, dict) else e
+
+
+def _graph_of(doc, entity):
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            for c in sec.get("cards") or []:
+                if (isinstance(c, dict) and c.get("type") == "custom:mini-graph-card"
+                        and _first(c) == entity):
+                    return c
+    raise SystemExit("no graph of %s to mutate" % entity)
 
 
 def m_graph_unlabelled(d):
     """The AC graph draws the socket total too, under the header "All air conditioners"."""
     doc = _cfg(d, LOV)
-    for v in doc["data"]["config"]["views"]:
-        for sec in v.get("sections") or []:
-            graphs = [c for c in sec.get("cards") or []
-                      if isinstance(c, dict) and c.get("type") == "custom:mini-graph-card"]
-            for ac, nxt in zip(graphs, graphs[1:]):
-                if (ac.get("entities") or [{}])[0].get("entity") == "sensor.ac_power_total":
-                    ac["entities"] += nxt["entities"]
-                    _save(d, LOV, doc)
-                    return "C37"
-    raise SystemExit("no AC graph to merge the socket total into")
+    ac = _graph_of(doc, "sensor.ac_power_total")
+    ac["entities"] += _graph_of(doc, "sensor.socket_power_total")["entities"]
+    _save(d, LOV, doc)
+    return "C37"
+
+
+def m_total_graph_hand_lists(d):
+    """The socket total graph also charts one plug by name: a hand-listed device."""
+    doc = _cfg(d, LOV)
+    g = _graph_of(doc, "sensor.socket_power_total")
+    g["entities"].append({"entity": "sensor.living_room_tv_socket_power"})
+    _save(d, LOV, doc)
+    return "C13"
 
 
 MUTATIONS = [
     ("the AC graph also draws the sockets", m_graph_unlabelled),
-    ("the socket graph charts an offline plug", m_graph_charts_offline),
+    ("the socket total graph names a plug", m_total_graph_hand_lists),
+    ("a generated graph charts an offline sensor", m_graph_charts_offline),
     ("a socket's curation outlives the socket", m_socket_curation_stale),
     ("outlet curation names a metered socket's switch", m_outlet_curation_is_main),
     ("Comfort hand-lists a room's target", m_comfort_hand_listed),

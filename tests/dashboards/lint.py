@@ -73,6 +73,8 @@ Checks, each one written because something it catches actually shipped:
                          still missed the socket total, and renaming the terrace
                          sensor broke ten more. A missing section fails too, so
                          the check cannot pass by the section being deleted.
+                         A card charting only a registry-walking total
+                         (GENERATED_TOTALS) is allowed: it needs no edit per device.
   C14 one-room-skeleton  every room page is the same page with its area swapped in.
                          A page edited by hand stops receiving fixes made to the
                          others, and a new area can only be added cheaply if its
@@ -219,7 +221,8 @@ Checks, each one written because something it catches actually shipped:
                          (`renderGraph` waits on each `_history`), so one plug offline
                          for a day keeps the whole graph on its spinner: on 2026-10-31
                          the Energy socket graph never loaded because two removed plugs
-                         were still being charted.
+                         were still being charted. (That graph was retired on
+                         2026-10-31; the Climate graphs carry the same guard.)
   C37 graph-labelled     a mini-graph-card with more than one line shows its legend.
                          With `legend: false` the header carries the FIRST entity's
                          name and every other line is unlabelled: on 2026-10-31 the
@@ -327,6 +330,10 @@ GENERATED = [
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
+
+# C13: totals a generated section may chart - each is a helper that walks the registry
+# itself, so a new device joins it with no edit. A card naming anything else is hand-listed.
+GENERATED_TOTALS = {"sensor.socket_power_total"}
 
 # C26: the tabs whose sections are laid out to fill the width, and how many columns that is.
 MAIN_TABS = ("home", "climate", "energy", "security", "appliances")
@@ -1039,6 +1046,11 @@ def main():
                     if t_ in ("heading", "markdown"):
                         continue
                     if t_ == "custom:auto-entities" and not c.get("entities"):
+                        continue
+                    named = [e.get("entity") if isinstance(e, dict) else e
+                             for e in c.get("entities") or []] + [c.get("entity")]
+                    named = [e for e in named if e]
+                    if named and set(named) <= GENERATED_TOTALS:
                         continue
                     listed.append("%s/%s/%s#%d  %s  (%s)" % (label, vpath, heading or "*", i, t_,
                                                             c.get("entity") or c.get("name")))
