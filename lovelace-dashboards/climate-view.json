@@ -789,6 +789,100 @@
      "type": "custom:button-card"
     },
     {
+     "entity": "fan.ac2889_10",
+     "features": [
+      {
+       "style": "dropdown",
+       "type": "fan-preset-modes"
+      }
+     ],
+     "features_position": "bottom",
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:air-purifier",
+     "name": "Air purifier · bedroom",
+     "type": "tile"
+    },
+    {
+     "entity": "sensor.bedroom_ac2889_10_pm2_5",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:blur",
+     "name": "PM2.5 · bedroom",
+     "styles": {
+      "icon": [
+       {
+        "color": "purple"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 75,
+      "tint": "purple"
+     }
+    },
+    {
+     "entity": "sensor.bedroom_ac2889_10_allergen_index",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:flower-pollen",
+     "name": "Allergen index · bedroom",
+     "styles": {
+      "icon": [
+       {
+        "color": "orange"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 12,
+      "tint": "orange"
+     }
+    },
+    {
+     "entity": "sensor.bedroom_ac2889_10_pre_filter_cleaning",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-filter",
+     "name": "Pre-filter clean in",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.bedroom_ac2889_10_hepa_filter",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:air-filter",
+     "name": "HEPA filter left",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
      "badges": [
       {
        "color": "green",
@@ -892,7 +986,7 @@
      },
      "card_param": "entities",
      "filter": {
-      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','temperature') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endfor -%}{{ out.l }}"
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','temperature') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- if is_number(states(e)) -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endif -%}{%- endfor -%}{{ out.l }}"
      },
      "grid_options": {
       "columns": "full"
@@ -948,7 +1042,7 @@
      },
      "card_param": "entities",
      "filter": {
-      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','humidity') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endfor -%}{{ out.l }}"
+      "template": "{%- set pal = ['#ff9800','#3f51b5','#9c27b0','#e91e63','#00bcd4','#8bc34a','#795548','#009688','#ffc107','#607d8b','#f44336','#673ab7'] -%}{%- set ns = namespace(l=[]) -%}{%- for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','humidity') -%}{%- set a = area_id(s.entity_id) -%}{%- if a and floor_id(s.entity_id) and 'on_room_page' in labels(s.entity_id) -%}{%- set ns.l = ns.l + [(area_name(a), s.entity_id)] -%}{%- endif -%}{%- endfor -%}{%- set rooms = ns.l | sort(attribute='0') -%}{%- set out = namespace(l=[]) -%}{%- for n, e in rooms -%}{%- if is_number(states(e)) -%}{%- set out.l = out.l + [{'entity': e, 'name': n, 'color': pal[loop.index0 % (pal | count)]}] -%}{%- endif -%}{%- endfor -%}{{ out.l }}"
      },
      "grid_options": {
       "columns": "full"
