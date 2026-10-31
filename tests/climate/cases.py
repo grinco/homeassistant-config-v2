@@ -1902,6 +1902,16 @@ A(ph("warm-up: a passed edge is not a window", "False", {}, {NEXT: "'2026-09-21T
      "a stale next_event must not warm all night"))
 A(ph("warm-up: an unknown next event does nothing", "False", {}, {NEXT: "none"},
      "a schedule without a next event is no window"))
+# 2026-10-31, observed: the schedule stores a night as one block per weekday (21:00-24:00, then
+# 00:00-06:00), so before midnight next_event is 00:00 local. The state stays 'on' across it - it
+# is no edge - but the warm-up read it as the morning one and heated the living room to its DAY
+# target from 23:15. Times are Europe/Prague (UTC+1 in winter); the window is 30 min in both.
+A(ph("warm-up: midnight inside the night is not the morning edge", "False", {},
+     {NEXT: "'2026-11-01T00:00:00+01:00'", NOWTS: "1793485800.0"},
+     "2026-10-31 observed: living room heated to the day target from 23:15"))
+A(ph("warm-up: the real morning edge after midnight still warms", "True", {},
+     {NEXT: "'2026-11-01T06:00:00+01:00'", NOWTS: "1793507400.0"},
+     "the midnight rule must not cost the 05:15 warm-up"))
 
 # Review 2026-10-11 (v6): Tado's OWN open-window detection switches a zone off by itself.  Without
 # this, HA called that "changed by hand", held the zone 2 h and pushed a false notification - and

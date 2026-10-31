@@ -367,6 +367,9 @@ BUGS = [
   lambda t: t.replace(" <= (preheat_min | float(45)) * 60", "")),
  ("warm-up: a passed edge still counts", "expr", "preheat",
   lambda t: t.replace("0 < ((as_timestamp", "-99999999 < ((as_timestamp")),
+ ("warm-up: midnight read as the morning edge (2026-10-31)", "expr", "preheat",
+  lambda t: t.replace(" and (as_timestamp(state_attr('schedule.climate_night','next_event'), 0)"
+                      " | timestamp_custom('%H:%M')) != '00:00'", "")),
  ("warm-up: aims at the night target", "expr", "target",
   lambda t: t.replace("(night and not preheat)", "night")),
  ("warm-up: the radiator rule still blocks the AC", "expr", "mode",
