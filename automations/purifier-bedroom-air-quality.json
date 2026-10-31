@@ -1,0 +1,185 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "allergen": "{{ states('sensor.bedroom_purifier_allergen_mean') | float(-1) }}",
+    "fan": "{{ states('fan.ac2889_10') }}",
+    "night": "{% set a = states('alarm_control_panel.home') %}{{ a == 'armed_night' or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on')) }}",
+    "owned": "{{ is_state('input_boolean.bedroom_purifier_auto_run','on') }}",
+    "pm": "{{ states('sensor.bedroom_purifier_pm2_5_mean') | float(-1) }}",
+    "stop_ts": "{{ as_timestamp(states('input_datetime.bedroom_purifier_manual_stop'), 0) }}"
+   }
+  },
+  {
+   "variables": {
+    "clear": "{{ 0 <= pm <= 2 and 0 <= allergen <= 1 }}",
+    "dirty": "{{ pm > 2.5 or allergen > 2.5 }}",
+    "manual_cooldown": "{{ (now().timestamp() - stop_ts) < 3600 }}"
+   }
+  },
+  {
+   "variables": {
+    "act": "{% if owned and fan == 'off' %}released{% elif owned and (night or clear) %}stop{% elif not owned and fan == 'off' and not night and dirty and not manual_cooldown %}start{% else %}none{% endif %}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "alias": "Start: dirty air by day",
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ act == 'start' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_boolean.turn_on",
+       "alias": "Claim before commanding (corridor v6 lesson)",
+       "target": {
+        "entity_id": "input_boolean.bedroom_purifier_auto_run"
+       }
+      },
+      {
+       "action": "fan.turn_on",
+       "continue_on_error": true,
+       "data": {
+        "preset_mode": "Auto"
+       },
+       "target": {
+        "entity_id": "fan.ac2889_10"
+       }
+      },
+      {
+       "continue_on_timeout": true,
+       "timeout": "00:02:00",
+       "wait_template": "{{ is_state('fan.ac2889_10', 'on') }}"
+      },
+      {
+       "if": [
+        {
+         "condition": "state",
+         "entity_id": "fan.ac2889_10",
+         "state": "off"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_boolean.turn_off",
+         "alias": "Known off: the start failed, release without a cooldown",
+         "target": {
+          "entity_id": "input_boolean.bedroom_purifier_auto_run"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "alias": "Stop: our run, air clear or night",
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ act == 'stop' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "fan.turn_off",
+       "continue_on_error": true,
+       "target": {
+        "entity_id": "fan.ac2889_10"
+       }
+      },
+      {
+       "continue_on_timeout": true,
+       "timeout": "00:02:00",
+       "wait_template": "{{ is_state('fan.ac2889_10', 'off') }}"
+      },
+      {
+       "if": [
+        {
+         "condition": "state",
+         "entity_id": "fan.ac2889_10",
+         "state": "off"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_boolean.turn_off",
+         "alias": "Confirmed off: release (otherwise keep it, the next run retries)",
+         "target": {
+          "entity_id": "input_boolean.bedroom_purifier_auto_run"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "alias": "Released: a person switched our run off",
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ act == 'released' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_boolean.turn_off",
+       "target": {
+        "entity_id": "input_boolean.bedroom_purifier_auto_run"
+       }
+      },
+      {
+       "action": "input_datetime.set_datetime",
+       "data": {
+        "timestamp": "{{ now().timestamp() }}"
+       },
+       "target": {
+        "entity_id": "input_datetime.bedroom_purifier_manual_stop"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Purifier — bedroom air quality by day",
+ "conditions": [],
+ "description": "v1 (2026-10-31). By DAY (night = alarm armed_night; schedule.climate_night only while the alarm itself is unavailable/unknown) starts fan.ac2889_10 when the 5-min mean PM2.5 OR allergen index is above 2.5. Stops a run IT started only when BOTH are clear: PM2.5 <= 2 AND allergen <= 1 - one clean reading never ends a run the other still needs. Stops its own run at night. Never stops a run a person started. A person switching our run off releases it and blocks auto-starts for 60 min. Unreachable is not off. Means are statistics helpers sensor.bedroom_purifier_*_mean (the raw readings jump 1->5 every 30 s). Design: docs/purifier-automation-design.md §9.",
+ "id": "1792300000001",
+ "max_exceeded": "silent",
+ "mode": "single",
+ "triggers": [
+  {
+   "entity_id": [
+    "sensor.bedroom_purifier_pm2_5_mean",
+    "sensor.bedroom_purifier_allergen_mean"
+   ],
+   "to": null,
+   "trigger": "state"
+  },
+  {
+   "entity_id": "fan.ac2889_10",
+   "to": null,
+   "trigger": "state"
+  },
+  {
+   "entity_id": [
+    "alarm_control_panel.home",
+    "schedule.climate_night"
+   ],
+   "to": null,
+   "trigger": "state"
+  },
+  {
+   "minutes": "/10",
+   "trigger": "time_pattern"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

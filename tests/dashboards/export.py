@@ -71,6 +71,7 @@ AUTOS = {
     "1789725511503": "climate-maintain-per-room-targets.json",
     "1789802676002": "climate-stamp-ha-start.json",
     "1789947000001": "purifier-after-cat-toilet.json",
+    "1792300000001": "purifier-bedroom-air-quality.json",
     "1790200000001": "house-night-mode.json",
     "1790300000001": "climate-radiators.json",
     "1790400000001": "house-alarm-sync.json",

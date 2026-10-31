@@ -83,6 +83,7 @@ NIGHT_CONSUMERS = (
     ("radiators", "1790300000001", "night"),
     ("adaptive lighting", "1790200000001", "sleep_on"),
     ("lights", "sensor", "Lighting night"),
+    ("bedroom purifier", "1792300000001", "night"),
 )
 NIGHT_HELPER = "binary_sensor.lighting_night"
 

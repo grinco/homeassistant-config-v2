@@ -409,7 +409,7 @@
         {
          "area": "living_room",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -738,7 +738,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -1258,7 +1258,7 @@
         {
          "area": "kitchen",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -1587,7 +1587,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -2107,7 +2107,7 @@
         {
          "area": "bedroom",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -2436,7 +2436,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -2956,7 +2956,7 @@
         {
          "area": "corridor",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -3285,7 +3285,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -3805,7 +3805,7 @@
         {
          "area": "stairs",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -4134,7 +4134,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -4654,7 +4654,7 @@
         {
          "area": "bedroom_2",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -4983,7 +4983,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -5503,7 +5503,7 @@
         {
          "area": "kid1_room",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -5832,7 +5832,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -6352,7 +6352,7 @@
         {
          "area": "kid2_room",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -6681,7 +6681,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -7201,7 +7201,7 @@
         {
          "area": "hallway",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -7530,7 +7530,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -8050,7 +8050,7 @@
         {
          "area": "bathroom",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -8379,7 +8379,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -8899,7 +8899,7 @@
         {
          "area": "shower",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -9228,7 +9228,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -9748,7 +9748,7 @@
         {
          "area": "laundry_room",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -10077,7 +10077,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -10597,7 +10597,7 @@
         {
          "area": "closet",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -10926,7 +10926,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
@@ -11446,7 +11446,7 @@
         {
          "area": "tea_room",
          "domain": "sensor",
-         "entity_id": "/_voc_index$/",
+         "entity_id": "/_(voc|allergen)_index$/",
          "options": {
           "entity": "this.entity_id",
           "features": [
@@ -11775,7 +11775,7 @@
          }
         },
         {
-         "entity_id": "/_voc_index$/"
+         "entity_id": "/_(voc|allergen)_index$/"
         }
        ],
        "include": [
