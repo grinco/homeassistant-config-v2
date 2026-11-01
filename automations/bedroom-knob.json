@@ -1,7 +1,7 @@
 {
  "id": "1793376788217",
  "alias": "Bedroom Lights Control",
- "description": "Bedroom knob drives the Torchère: press toggles, a turn steps brightness. In command mode the step is the knob's own step size (bigger for a longer turn); event-mode actions are kept as a fallback at 25 per event. Steps go to Z2M as brightness_step (plain ZCL step) so a lamp that is off stays off.",
+ "description": "Bedroom knob drives the Torchère: press toggles, a turn steps brightness. In command mode the step is the knob's own step size (bigger for a longer turn); event-mode actions are kept as a fallback at 25 per event. Steps go to Z2M as brightness_step (plain ZCL step) so a lamp that is off stays off. Press and turn steps the hue around the colour wheel (Z2M hue_step, degrees, 2x the knob step size).",
  "triggers": [
   {
    "trigger": "mqtt",
@@ -51,6 +51,20 @@
    "value_template": "{{ value_json.action | default('') }}",
    "payload": "rotate_left",
    "id": "down"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "color_temperature_step_up",
+   "id": "hue_up"
+  },
+  {
+   "trigger": "mqtt",
+   "topic": "zigbee2mqtt/Bedroom Knob",
+   "value_template": "{{ value_json.action | default('') }}",
+   "payload": "color_temperature_step_down",
+   "id": "hue_down"
   }
  ],
  "conditions": [],
@@ -69,6 +83,31 @@
        "action": "light.toggle",
        "target": {
         "entity_id": "light.torchere"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": [
+        "hue_up",
+        "hue_down"
+       ]
+      }
+     ],
+     "sequence": [
+      {
+       "variables": {
+        "hue": "{{ [trigger.payload_json.get('action_step_size') | int(13), 1] | max * 2 }}"
+       }
+      },
+      {
+       "action": "mqtt.publish",
+       "data": {
+        "topic": "zigbee2mqtt/Torchere/set",
+        "payload": "{{ {'hue_step': hue if trigger.id == 'hue_up' else -hue, 'transition': 0.3} | to_json }}"
        }
       }
      ]
