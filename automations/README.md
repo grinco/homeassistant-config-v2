@@ -63,6 +63,13 @@ event-mode actions (single/double press, `rotate_*` at 25) are still mapped, so 
 working if it falls back to event mode. MQTT triggers on the knob's topic rather than the EPMatt
 blueprint, which reads only the action and drops the step size. `queued`, because each message
 is a step and dropping one loses it.
+Holding the centre while turning sends `color_temperature_step_up`/`_down` instead; those step
+the hue round the colour wheel (Z2M `hue_step`, in degrees, twice the knob's step size, so about
+26° a click). Like the brightness step, it does not switch the lamp on. The Torchère reports xy
+and colour temperature, not hue, and on 2026-11-01 a few hue steps (and Z2M's read-back of the
+hue after one) timed out at 10 s each, stalling every later command; the timeouts stopped within
+two minutes and later hue steps landed cleanly. If they come back, send absolute xy colours
+computed in HA instead, which need no read-back.
 The steps go to Zigbee2MQTT as `brightness_step`, not through `light.turn_on`: Z2M sends that
 as a plain ZCL `step`, which a lamp that is off ignores. `light.turn_on` with a step becomes
 `moveToLevelWithOnOff`, which turns the lamp on, so a step decided on a stale "on" state, or
