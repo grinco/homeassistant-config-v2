@@ -408,7 +408,7 @@ A(case("safety still respects its own throttle", "may_act", "False",
 
 # ---------------------------------------------------------------- resolved sensors
 BED = "Climate temp bedroom"
-PROBE = "states('sensor.master_bedroom_bedroom_ac_temperature')"
+PROBE = "states('sensor.bedroom_ac_temperature')"
 TRV_OK = "is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on')"
 TRV_HEAT = "states('sensor.bedroom_trv_bedroom_trv_heating')"
 TRV_TEMP = "states('sensor.bedroom_trv_bedroom_trv_temperature')"
@@ -477,7 +477,7 @@ A(sensor_case(
 BED_H = "Climate humidity bedroom"
 BED_H_VS = "states('sensor.bedroom_air_quality_sensor_humidity')"
 BED_H_TRV = "states('sensor.bedroom_trv_bedroom_trv_humidity')"
-BED_H_AC = "states('sensor.master_bedroom_bedroom_ac_humidity')"
+BED_H_AC = "states('sensor.bedroom_ac_humidity')"
 
 A(sensor_case(
     "bedroom humidity prefers the air quality sensor", "52.0",
@@ -551,15 +551,15 @@ OF_H = "Climate humidity office"
 
 LR_T_BLE = "states('sensor.meter_pro_co2_b5be_temperature')"
 LR_T_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_temperature')"
-LR_T_AC = "states('sensor.living_room_livingroom_ac_temperature')"
+LR_T_AC = "states('sensor.living_room_ac_temperature')"
 LR_H_BLE = "states('sensor.meter_pro_co2_b5be_humidity')"
 LR_H_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_humidity')"
-LR_H_AC = "states('sensor.living_room_livingroom_ac_humidity')"
+LR_H_AC = "states('sensor.living_room_ac_humidity')"
 
 OF_T_BLE = "states('sensor.meter_pro_co2_5fe9_temperature')"
-OF_T_AC = "states('sensor.office_guest_room_office_ac_temperature')"
+OF_T_AC = "states('sensor.office_ac_temperature')"
 OF_H_BLE = "states('sensor.meter_pro_co2_5fe9_humidity')"
-OF_H_AC = "states('sensor.office_guest_room_office_ac_humidity')"
+OF_H_AC = "states('sensor.office_ac_humidity')"
 
 # Every tier carries a DIFFERENT value in these cases, so the expected output
 # names exactly one tier.  Giving two tiers the same reading would let a wrong
@@ -1198,18 +1198,19 @@ OUT_T = "states('sensor.outdoor_motion_temperature')"
 # `sensor.house_temperature` and resolved from the gitignored local map here.
 OUT_W = "states('%s')" % harness.load_rooms()["house"]["forecast_temp"]
 OUT_R = "states('sensor.climate_temp_outdoor')"
+OUT_A = "states('sensor.ac_outdoor_temperature')"  # the AC probes' min_max helper
 
 A(sensor_case(
     "the terrace sensor outranks the forecast", "13.1",
     {OUT_T: "'13.1'", OUT_W: "'10.6'"},
     sensor=OUT, finding="2026-09-25: measured at the house beats modelled for the area"))
 A(sensor_case(
-    "an unavailable terrace sensor falls to the forecast", "10.6",
-    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
+    "an unavailable terrace sensor falls to the forecast when the AC helper is down too", "10.6",
+    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
     sensor=OUT, finding="Z2M's 3 h availability timeout lands here, not on a stale number"))
 A(sensor_case(
     "a terrace sensor that has not reported yet falls to the forecast", "10.6",
-    {OUT_T: "'unknown'", OUT_W: "'10.6'"},
+    {OUT_T: "'unknown'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
     sensor=OUT, finding="after a restart or re-pair the sensor is 'unknown' first"))
 A(sensor_case(
     "a terrace reading of exactly zero is a reading", "0.0",
@@ -1220,25 +1221,59 @@ A(sensor_case(
     {OUT_T: "'-5.3'", OUT_W: "'-2.0'"},
     sensor=OUT, finding="the -900 cutoff must not swallow real frost"))
 A(sensor_case(
-    "both outdoor sources down yield nothing", "",
-    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
+    "every outdoor source down yields nothing", "",
+    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
     sensor=OUT, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 # The empty state alone does not clear the entity -- HA kept the old number when that was
 # tried on the radiation sensor -- so availability gates it, exactly as there.
 A(sensor_case(
     "the outdoor sensor is available on the terrace alone", "True",
-    {OUT_T: "'13.1'", OUT_W: "'unavailable'"},
+    {OUT_T: "'13.1'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
     sensor=OUT + "::availability", finding="either source is enough"))
 A(sensor_case(
     "the outdoor sensor is available on the forecast alone", "True",
-    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
+    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
     sensor=OUT + "::availability", finding="either source is enough"))
 A(sensor_case(
-    "the outdoor sensor is unavailable when both sources are", "False",
-    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
+    "the outdoor sensor is unavailable when every source is", "False",
+    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
     sensor=OUT + "::availability",
     finding="an empty state kept the previous number on the radiation sensor"))
+
+# 2026-11-06 (operator): the AC outdoor probes are the second tier, ahead of the forecast, which
+# is now the LAST resort.  The probes sit on the five units and drop out when a unit disconnects
+# or reboots, so they are read through one min_max helper (it skips unavailable members), and
+# the helper is what this tier reads.
+#
+#   1. the terrace sensor   -- measured, at the house
+#   2. the AC outdoor helper -- measured on the units, mean of whichever are reporting
+#   3. the forecast         -- only when both measured sources are down
+
+A(sensor_case(
+    "the AC outdoor helper answers when the terrace sensor is down", "9.4",
+    {OUT_T: "'unavailable'", OUT_A: "'9.4'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="2026-11-06: a measured AC probe beats the modelled forecast"))
+A(sensor_case(
+    "the terrace sensor still outranks the AC outdoor helper", "13.1",
+    {OUT_T: "'13.1'", OUT_A: "'9.4'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="2026-11-06: the terrace is the house's own sensor, not a probe on a unit"))
+A(sensor_case(
+    "the forecast is the last resort when terrace and AC are both down", "10.6",
+    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="2026-11-06: forecast only when both measured sources are gone"))
+A(sensor_case(
+    "an unknown AC helper falls through to the forecast", "10.6",
+    {OUT_T: "'unknown'", OUT_A: "'unknown'", OUT_W: "'10.6'"},
+    sensor=OUT, finding="2026-11-06: after a restart the helper reads unknown until a unit reports"))
+A(sensor_case(
+    "a reading of exactly zero from the AC helper is a reading", "0.0",
+    {OUT_T: "'unavailable'", OUT_A: "'0.0'", OUT_W: "'3.0'"},
+    sensor=OUT, finding="2026-11-06: 0 C is falsy-proof, as on the terrace"))
+A(sensor_case(
+    "the outdoor sensor is available on the AC helper alone", "True",
+    {OUT_T: "'unavailable'", OUT_A: "'9.4'", OUT_W: "'unavailable'"},
+    sensor=OUT + "::availability", finding="2026-11-06: any measured source keeps it available"))
 
 A(case("the house reads the resolved outdoor sensor", "outdoor", "13.1",
        {}, {OUT_R: "'13.1'"},

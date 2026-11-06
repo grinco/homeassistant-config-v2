@@ -22,8 +22,8 @@ BUGS = [
  ("the 2026-09-20 unit_moved bug (drop '- settle')", "expr", "unit_moved",
   lambda t: t.replace("lc < since_cmd - settle", "lc < since_cmd")),
  ("v5.5 offset substitution (reject a correct -4)", "sensor", "Climate temp bedroom",
-  lambda t: t.replace("{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}",
-                      "{% set ac = ac if ac >= -3.5 else -2 %}{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}")),
+  lambda t: t.replace("{% set f = states('sensor.bedroom_ac_temperature') | float(-999) %}",
+                      "{% set ac = ac if ac >= -3.5 else -2 %}{% set f = states('sensor.bedroom_ac_temperature') | float(-999) %}")),
  ("bedroom: the air quality sensor no longer primary", "sensor", "Climate temp bedroom",
   lambda t: t.replace("{% if v > -900 %}{{ v | round(2) }}{% elif p > -900 %}",
                       "{% if p > -900 %}")),
@@ -468,10 +468,17 @@ BUGS = [
  # Kids room 2 gained its meter on 2026-09-25; the chain must not quietly revert.
  ("kid 2: the room meter dropped from the chain", "sensor", KID2_T,
   lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif p > -900 %}", "{% if p > -900 %}")),
- # Outdoor temperature, 2026-09-25: terrace sensor first, forecast second.
+ # Outdoor temperature, 2026-09-25: terrace sensor first, forecast last.
+ # 2026-11-06: the AC outdoor helper sits second; the forecast is the last resort.
  ("outdoor: the forecast outranks the terrace again", "sensor", "Climate temp outdoor",
-  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",
-                      "{% if w > -900 %}{{ w | round(2) }}{% elif t > -900 %}{{ t | round(2) }}")),
+  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif a > -900 %}",
+                      "{% if w > -900 %}{{ w | round(2) }}{% elif t > -900 %}{{ t | round(2) }}{% elif a > -900 %}")),
+ ("outdoor: the AC helper outranks the terrace", "sensor", "Climate temp outdoor",
+  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif a > -900 %}{{ a | round(2) }}",
+                      "{% if a > -900 %}{{ a | round(2) }}{% elif t > -900 %}{{ t | round(2) }}")),
+ ("outdoor: the forecast outranks the AC helper", "sensor", "Climate temp outdoor",
+  lambda t: t.replace("{% elif a > -900 %}{{ a | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",
+                      "{% elif w > -900 %}{{ w | round(2) }}{% elif a > -900 %}{{ a | round(2) }}")),
  ("outdoor: a reading of exactly zero taken for no reading", "sensor", "Climate temp outdoor",
   lambda t: t.replace("{% if t > -900 %}", "{% if t and t > -900 %}")),
  ("outdoor: availability gated on the terrace alone", "sensor", "Climate temp outdoor::availability",
