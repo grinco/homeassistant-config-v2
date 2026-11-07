@@ -111,6 +111,9 @@ BUGS = [
   "1792300000001"),
  ("bedroom purifier: starts at night", "expr2", "act",
   lambda t: t.replace("and not night and dirty", "and dirty"), "1792300000001"),
+ # 2026-11-07: off at night whoever started it. Dropping that branch brings back the old rule.
+ ("bedroom purifier: a person's run left alone at night again", "expr2", "act",
+  lambda t: t.replace("{% elif night and fan == 'on' %}stop", "{% elif false %}stop"), "1792300000001"),
  ("bedroom purifier: stops a person's run", "expr2", "act",
   lambda t: t.replace("{% elif owned and (night or clear) %}", "{% elif fan != 'off' and (night or clear) %}"),
   "1792300000001"),

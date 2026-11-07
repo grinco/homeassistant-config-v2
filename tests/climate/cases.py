@@ -1042,8 +1042,11 @@ A(bp_act("dirty air at night does not start it", "none",
 A(bp_act("a person's own run is never stopped", "none",
          "never turn off what we did not turn on (purifier design 3.3)",
          fan="on", clear=True))
-A(bp_act("a person's own run is not stopped at night either", "none",
-         "the same rule at the night edge", fan="on", night=True))
+# 2026-11-07 (operator): at night the purifier is OFF, whoever started it. This replaces the
+# earlier rule that left a person's run alone at night (purifier design 3.3 covers day only now).
+A(bp_act("a person's run is stopped at night too", "stop",
+         "operator 2026-11-07: the bedroom purifier is off in night mode, whoever started it",
+         fan="on", night=True))
 A(bp_act("our run stops when the air is clear", "stop", "operator 2026-10-31",
          owned=True, fan="on", clear=True))
 A(bp_act("our run keeps going while one reading is still high", "none",
