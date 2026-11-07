@@ -3,9 +3,9 @@
   {
    "variables": {
     "ids": [
-     "sensor.living_room_livingroom_ac_energy",
-     "sensor.office_guest_room_office_ac_energy",
-     "sensor.master_bedroom_bedroom_ac_energy",
+     "sensor.living_room_ac_energy",
+     "sensor.office_ac_energy",
+     "sensor.bedroom_ac_energy",
      "sensor.kid1_room_ac_energy",
      "sensor.kid2_room_ac_energy",
      "sensor.downstairs_toilet_energy",

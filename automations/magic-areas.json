@@ -360,8 +360,8 @@
     "features": {
      "light_groups": {
       "accent_lights": [
-       "light.aladdin_lamp",
-       "light.torchere"
+       "light.torchere",
+       "light.aladdin"
       ],
       "accent_lights_act_on": [
        "occupancy",
