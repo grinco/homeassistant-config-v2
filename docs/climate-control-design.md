@@ -2713,6 +2713,15 @@ aims at its DAY target and the AC may heat it even with a radiator, without the 
 night `quiet` preset still applies). Only while the schedule itself is on — a manual "night" has no
 morning edge, a manual day has already ended the night.
 
+**Midnight is not the morning edge (2026-10-31, observed).** The schedule holds a night as one block
+per weekday — 21:00–24:00, then 00:00–06:00 — so before midnight its `next_event` is 00:00 local,
+although the state stays `on` straight through it. The warm-up took that for the morning edge and from
+23:15 heated the living room towards its day target (23 °C against a 19 °C night). A `next_event` at
+local 00:00 is now never a warm-up edge; at midnight `next_event` moves to 06:00 and the real window
+opens at 05:15. Cost, accepted: a night that genuinely ends at midnight gets no warm-up. The alarm is
+unaffected — it moves on state changes, and there is none at midnight. Tests: *warm-up: midnight
+inside the night …* (and its 05:15 counterpart); mutation *midnight read as the morning edge*.
+
 **Known, recorded:**
 - ~~The bedroom has no room meter~~ — **resolved 2026-10-20**: an IKEA VINDSTYRKA (Zigbee, free air,
   away from the AC discharge and the radiator) is now the bedroom's primary temperature and humidity

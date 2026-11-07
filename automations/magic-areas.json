@@ -429,7 +429,9 @@
        "state"
       ],
       "accent_lights_states": [],
-      "overhead_lights": [],
+      "overhead_lights": [
+       "light.closet_light"
+      ],
       "overhead_lights_act_on": [
        "occupancy",
        "state"
