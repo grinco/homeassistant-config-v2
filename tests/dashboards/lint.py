@@ -861,8 +861,9 @@ def main():
         # the moment a bulb was placed there, and the tile went on rendering a
         # dash - a value frozen at authoring time, in a card whose whole job is
         # to report the present. Naming the AREA instead of the entities is the
-        # structural version of the promise room-tile-navigation.md already
-        # made: "it starts working by itself the moment a light is added".
+        # structural version of the promise docs/self-maintaining-dashboards.md
+        # (room tiles) already made: "it starts working by itself the moment a
+        # light is added".
         #
         # The room tiles are located by the section they live in, NOT by their
         # template name: `vg_room` is also worn by the six quick-strip tiles and

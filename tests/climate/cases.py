@@ -1133,7 +1133,7 @@ A(hr("CO2 does not mask a cold-room risk", "True", "14", "45", "500",
 
 
 # ================================================================ Change A (round-15 approved)
-# docs/proposal-decide-act-split.md. Written FIRST per the repo's TDD rule; reviewed BEFORE
+# the decide/act split record (retired; see docs/climate-control-design.md §12). Written FIRST per the repo's TDD rule; reviewed BEFORE
 # deployment (review-20260921-a472), which approved A and STOPPED B.
 #
 # Change B's cases are deliberately NOT here. The review found four unlisted hazards in it
