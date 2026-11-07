@@ -2541,3 +2541,75 @@ A(brief("the message leads with what needs doing", "message",
 A(brief("a quiet house says so", "message",
         "Nothing needs attention.\nYesterday the metered devices used 6.85 kWh.",
         given=dict(attention=[], energy="Yesterday the metered devices used 6.85 kWh.")))
+
+# 2026-11-07 (operator): an idle AC reports its power as `unknown`, so the AC power total reads
+# `unknown` whenever every unit is idle.  Proposed: a unit whose climate entity is exactly `off`
+# and whose power is `unknown`/`unavailable` publishes 0 W.  Anything else passes the reading
+# through, and an unreachable unit (climate `unavailable`) stays unknown, never 0 W.
+# These cases name the sensor the proposal would create, and the two reads it would make
+# (CLIMATE_AC / POWER_AC).  The sensor does not exist yet: until it does, run.py reports
+# "not found in the live config" (a suite error, not a verdict), which is the expected state
+# before the change.  The subs must match the implemented expression text exactly.
+AC_CLIMATE = "states('climate.living_room_ac')"
+AC_POWER = "states('sensor.living_room_ac_power')"
+AC_TITLE = "Climate AC power living room"
+
+A(sensor_case(
+    "an idle AC with no power reading publishes 0 W", "0",
+    {AC_CLIMATE: "'off'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
+    finding="2026-11-07: the AC power total reads unknown when every unit is idle"))
+A(sensor_case(
+    "an idle AC with an unavailable power reading also publishes 0 W", "0",
+    {AC_CLIMATE: "'off'", AC_POWER: "'unavailable'"}, sensor=AC_TITLE,
+    finding="2026-11-07: off is the commanded state; the unit is not running"))
+A(sensor_case(
+    "an unreachable AC is not idle: no reading stays unknown", "unknown",
+    {AC_CLIMATE: "'unavailable'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
+    finding="unreachable is not off: an unavailable unit must never be published as 0 W"))
+A(sensor_case(
+    "a running AC with no power reading stays unknown, not zero", "unknown",
+    {AC_CLIMATE: "'cool'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
+    finding="a running unit that reports nothing is a gap, not an idle unit"))
+A(sensor_case(
+    "an idle AC's real standby draw is passed through, not zeroed", "12.0",
+    {AC_CLIMATE: "'off'", AC_POWER: "'12.0'"}, sensor=AC_TITLE,
+    finding="standby draw is a measurement; only a missing reading becomes 0"))
+A(sensor_case(
+    "a running AC's power is passed through", "850.0",
+    {AC_CLIMATE: "'cool'", AC_POWER: "'850.0'"}, sensor=AC_TITLE,
+    finding="the running reading is never replaced"))
+
+# 2026-11-07 (operator): the same idle rule for the other four units, each with its own climate
+# entity and power sensor.  Same six cases per unit, so a unit cannot drift from the rule.
+#
+# The two children's units take their ids from the gitignored room map (the names are scrubbed
+# from the repo; see harness.load_rooms), like every other child-room reference in this suite.
+_RM = harness.load_rooms()
+_AC_UNITS = (
+    ("Climate AC power office", "climate.office_ac", "sensor.office_ac_power"),
+    ("Climate AC power bedroom", "climate.bedroom_ac", "sensor.bedroom_ac_power"),
+    ("Climate AC power " + _RM["kid1"]["title"], _RM["kid1"]["ac_climate"], _RM["kid1"]["ac_power"]),
+    ("Climate AC power " + _RM["kid2"]["title"], _RM["kid2"]["ac_climate"], _RM["kid2"]["ac_power"]),
+)
+for _title, _climate, _power in _AC_UNITS:
+    _c = "states('%s')" % _climate
+    _p = "states('%s')" % _power
+    _unit = _title.replace("Climate AC power ", "")
+    A(sensor_case("%s: an idle AC with no power reading publishes 0 W" % _unit, "0",
+                  {_c: "'off'", _p: "'unknown'"}, sensor=_title,
+                  finding="2026-11-07: idle units read unknown, so the total read unknown"))
+    A(sensor_case("%s: an idle AC with an unavailable reading also publishes 0 W" % _unit, "0",
+                  {_c: "'off'", _p: "'unavailable'"}, sensor=_title,
+                  finding="2026-11-07: off is the commanded state; the unit is not running"))
+    A(sensor_case("%s: an unreachable AC is not idle: no reading stays unknown" % _unit, "unknown",
+                  {_c: "'unavailable'", _p: "'unknown'"}, sensor=_title,
+                  finding="unreachable is not off: never published as 0 W"))
+    A(sensor_case("%s: a running AC with no power reading stays unknown" % _unit, "unknown",
+                  {_c: "'cool'", _p: "'unknown'"}, sensor=_title,
+                  finding="a running unit that reports nothing is a gap, not an idle unit"))
+    A(sensor_case("%s: an idle AC's real standby draw is passed through" % _unit, "12.0",
+                  {_c: "'off'", _p: "'12.0'"}, sensor=_title,
+                  finding="standby draw is a measurement; only a missing reading becomes 0"))
+    A(sensor_case("%s: a running AC's power is passed through" % _unit, "850.0",
+                  {_c: "'cool'", _p: "'850.0'"}, sensor=_title,
+                  finding="the running reading is never replaced"))

@@ -485,6 +485,26 @@ BUGS = [
   lambda t: "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 }}"),
  ("outdoor: the house reads the forecast directly again", "expr", "outdoor",
   lambda t: "{{ states('%s') | float(-999) }}" % harness.load_rooms()["house"]["forecast_temp"]),
+ # 2026-11-07: an idle AC publishes 0 W, and nothing else does. Each row breaks one half of the rule.
+ ("idle AC: the off check dropped (zero whenever power is unknown)", "sensor", "Climate AC power living room",
+  lambda t: t.replace("c == 'off' and ", "")),
+ ("idle AC: an unreachable unit counted as idle", "sensor", "Climate AC power living room",
+  lambda t: t.replace("c == 'off' and ", "c in ['off', 'unavailable'] and ")),
+ ("idle AC: the rule removed (no idle unit ever reads 0)", "sensor", "Climate AC power living room",
+  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if false %}0")),
+ ("idle AC: an unavailable reading not zeroed", "sensor", "Climate AC power living room",
+  lambda t: t.replace("p in ['unknown', 'unavailable']", "p == 'unknown'")),
+ ("idle AC: a real standby draw zeroed", "sensor", "Climate AC power living room",
+  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if c == 'off' %}0")),
+ # The same rule on the other units: one mutation per unit, so a unit cannot drift unnoticed.
+ ("idle AC: office rule removed", "sensor", "Climate AC power office",
+  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if false %}0")),
+ ("idle AC: bedroom unreachable counted as idle", "sensor", "Climate AC power bedroom",
+  lambda t: t.replace("c == 'off' and ", "c in ['off', 'unavailable'] and ")),
+ ("idle AC: kid 1 unavailable reading not zeroed", "sensor", "Climate AC power " + harness.load_rooms()["kid1"]["title"],
+  lambda t: t.replace("p in ['unknown', 'unavailable']", "p == 'unknown'")),
+ ("idle AC: kid 2 standby draw zeroed", "sensor", "Climate AC power " + harness.load_rooms()["kid2"]["title"],
+  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if c == 'off' %}0")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
