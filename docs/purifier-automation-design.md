@@ -464,8 +464,9 @@ is registered there, so the shared night truth table runs against it and `wiring
 drifts out of the list.
 
 - **By day:** dirty air starts the purifier in preset *Auto*.
-- **At night:** nothing starts. A run *the automation* started is stopped at the night edge, because
-  the bedroom is slept in. A run a person started is never touched, by day or by night.
+- **At night:** nothing starts, and the purifier is off whoever started it (operator, 2026-11-07:
+  the bedroom is slept in). This replaces the earlier rule that left a person's run alone at night.
+  By day a run a person started is never touched.
 
 ### 9.3 Ownership, and a person's choice
 

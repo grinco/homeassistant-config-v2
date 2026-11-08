@@ -42,7 +42,10 @@ DEVICE_KEEP = ("id", "area_id", "labels", "name", "name_by_user", "manufacturer"
                "via_device_id", "entry_type", "disabled_by")
 ENTRY_DOMAINS = ("template", "magic_areas", "min_max", "group")
 ENTRY_DATA_KEEP = {"magic_areas": ("id", "name")}
-ENTRY_OPTIONS_KEEP = {"template": ("state", "name", "template_type", "device_class",
+# lint C20 reads a Magic Areas entry's `ignore_diagnostic_entities`: without it the fixture counts a
+# sink's chip temperature as a member of the bathroom mean, and the export refuses on a false failure.
+ENTRY_OPTIONS_KEEP = {"magic_areas": ("ignore_diagnostic_entities",),
+                      "template": ("state", "name", "template_type", "device_class",
                                    "unit_of_measurement", "state_class"),
                       "min_max": ("entity_ids", "name", "type", "round_digits"),
                       "group": ("entities", "name", "group_type", "hide_members", "all")}
