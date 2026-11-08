@@ -360,8 +360,8 @@
     "features": {
      "light_groups": {
       "accent_lights": [
-       "light.torchere",
-       "light.aladdin"
+       "light.aladdin_lamp",
+       "light.torchere"
       ],
       "accent_lights_act_on": [
        "occupancy",
@@ -429,9 +429,7 @@
        "state"
       ],
       "accent_lights_states": [],
-      "overhead_lights": [
-       "light.closet_light"
-      ],
+      "overhead_lights": [],
       "overhead_lights_act_on": [
        "occupancy",
        "state"

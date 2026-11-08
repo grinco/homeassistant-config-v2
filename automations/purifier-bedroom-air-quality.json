@@ -19,7 +19,7 @@
   },
   {
    "variables": {
-    "act": "{% if owned and fan == 'off' %}released{% elif night and fan == 'on' %}stop{% elif owned and (night or clear) %}stop{% elif not owned and fan == 'off' and not night and dirty and not manual_cooldown %}start{% else %}none{% endif %}"
+    "act": "{% if owned and fan == 'off' %}released{% elif owned and (night or clear) %}stop{% elif not owned and fan == 'off' and not night and dirty and not manual_cooldown %}start{% else %}none{% endif %}"
    }
   },
   {
@@ -147,7 +147,7 @@
  ],
  "alias": "Purifier — bedroom air quality by day",
  "conditions": [],
- "description": "v1 (2026-10-31). By DAY (night = alarm armed_night; schedule.climate_night only while the alarm itself is unavailable/unknown) starts fan.ac2889_10 when the 5-min mean PM2.5 OR allergen index is above 2.5. Stops a run IT started only when BOTH are clear: PM2.5 <= 2 AND allergen <= 1 - one clean reading never ends a run the other still needs. At night it is OFF whoever started the run (operator 2026-11-07); by day it never stops a run a person started. A person switching our run off releases it and blocks auto-starts for 60 min. Unreachable is not off. Means are statistics helpers sensor.bedroom_purifier_*_mean (the raw readings jump 1->5 every 30 s). Design: docs/purifier-automation-design.md §9.",
+ "description": "v1 (2026-10-31). By DAY (night = alarm armed_night; schedule.climate_night only while the alarm itself is unavailable/unknown) starts fan.ac2889_10 when the 5-min mean PM2.5 OR allergen index is above 2.5. Stops a run IT started only when BOTH are clear: PM2.5 <= 2 AND allergen <= 1 - one clean reading never ends a run the other still needs. Stops its own run at night. Never stops a run a person started. A person switching our run off releases it and blocks auto-starts for 60 min. Unreachable is not off. Means are statistics helpers sensor.bedroom_purifier_*_mean (the raw readings jump 1->5 every 30 s). Design: docs/purifier-automation-design.md §9.",
  "id": "1792300000001",
  "max_exceeded": "silent",
  "mode": "single",

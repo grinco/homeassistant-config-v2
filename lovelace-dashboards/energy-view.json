@@ -120,7 +120,7 @@
      "type": "heading"
     },
     {
-     "entity": "sensor.climate_ac_power_living_room",
+     "entity": "sensor.living_room_livingroom_ac_power",
      "grid_options": {
       "columns": 6,
       "rows": 1
@@ -145,7 +145,7 @@
      }
     },
     {
-     "entity": "sensor.climate_ac_power_office",
+     "entity": "sensor.office_guest_room_office_ac_power",
      "grid_options": {
       "columns": 6,
       "rows": 1
@@ -170,7 +170,7 @@
      }
     },
     {
-     "entity": "sensor.climate_ac_power_bedroom",
+     "entity": "sensor.master_bedroom_bedroom_ac_power",
      "grid_options": {
       "columns": 6,
       "rows": 1
@@ -195,7 +195,7 @@
      }
     },
     {
-     "entity": "sensor.climate_ac_power_kid1",
+     "entity": "sensor.kid1_room_ac_power",
      "grid_options": {
       "columns": 6,
       "rows": 1
@@ -220,7 +220,7 @@
      }
     },
     {
-     "entity": "sensor.climate_ac_power_kid2",
+     "entity": "sensor.kid2_room_ac_power",
      "grid_options": {
       "columns": 6,
       "rows": 1

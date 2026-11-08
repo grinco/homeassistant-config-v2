@@ -408,7 +408,7 @@ A(case("safety still respects its own throttle", "may_act", "False",
 
 # ---------------------------------------------------------------- resolved sensors
 BED = "Climate temp bedroom"
-PROBE = "states('sensor.bedroom_ac_temperature')"
+PROBE = "states('sensor.master_bedroom_bedroom_ac_temperature')"
 TRV_OK = "is_state('binary_sensor.bedroom_trv_bedroom_trv_connectivity','on')"
 TRV_HEAT = "states('sensor.bedroom_trv_bedroom_trv_heating')"
 TRV_TEMP = "states('sensor.bedroom_trv_bedroom_trv_temperature')"
@@ -477,7 +477,7 @@ A(sensor_case(
 BED_H = "Climate humidity bedroom"
 BED_H_VS = "states('sensor.bedroom_air_quality_sensor_humidity')"
 BED_H_TRV = "states('sensor.bedroom_trv_bedroom_trv_humidity')"
-BED_H_AC = "states('sensor.bedroom_ac_humidity')"
+BED_H_AC = "states('sensor.master_bedroom_bedroom_ac_humidity')"
 
 A(sensor_case(
     "bedroom humidity prefers the air quality sensor", "52.0",
@@ -551,15 +551,15 @@ OF_H = "Climate humidity office"
 
 LR_T_BLE = "states('sensor.meter_pro_co2_b5be_temperature')"
 LR_T_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_temperature')"
-LR_T_AC = "states('sensor.living_room_ac_temperature')"
+LR_T_AC = "states('sensor.living_room_livingroom_ac_temperature')"
 LR_H_BLE = "states('sensor.meter_pro_co2_b5be_humidity')"
 LR_H_WALL = "states('sensor.livingroom_thermostat_livingroom_thermostat_humidity')"
-LR_H_AC = "states('sensor.living_room_ac_humidity')"
+LR_H_AC = "states('sensor.living_room_livingroom_ac_humidity')"
 
 OF_T_BLE = "states('sensor.meter_pro_co2_5fe9_temperature')"
-OF_T_AC = "states('sensor.office_ac_temperature')"
+OF_T_AC = "states('sensor.office_guest_room_office_ac_temperature')"
 OF_H_BLE = "states('sensor.meter_pro_co2_5fe9_humidity')"
-OF_H_AC = "states('sensor.office_ac_humidity')"
+OF_H_AC = "states('sensor.office_guest_room_office_ac_humidity')"
 
 # Every tier carries a DIFFERENT value in these cases, so the expected output
 # names exactly one tier.  Giving two tiers the same reading would let a wrong
@@ -1042,11 +1042,8 @@ A(bp_act("dirty air at night does not start it", "none",
 A(bp_act("a person's own run is never stopped", "none",
          "never turn off what we did not turn on (purifier design 3.3)",
          fan="on", clear=True))
-# 2026-11-07 (operator): at night the purifier is OFF, whoever started it. This replaces the
-# earlier rule that left a person's run alone at night (purifier design 3.3 covers day only now).
-A(bp_act("a person's run is stopped at night too", "stop",
-         "operator 2026-11-07: the bedroom purifier is off in night mode, whoever started it",
-         fan="on", night=True))
+A(bp_act("a person's own run is not stopped at night either", "none",
+         "the same rule at the night edge", fan="on", night=True))
 A(bp_act("our run stops when the air is clear", "stop", "operator 2026-10-31",
          owned=True, fan="on", clear=True))
 A(bp_act("our run keeps going while one reading is still high", "none",
@@ -1133,7 +1130,7 @@ A(hr("CO2 does not mask a cold-room risk", "True", "14", "45", "500",
 
 
 # ================================================================ Change A (round-15 approved)
-# the decide/act split record (retired; see docs/climate-control-design.md §12). Written FIRST per the repo's TDD rule; reviewed BEFORE
+# docs/proposal-decide-act-split.md. Written FIRST per the repo's TDD rule; reviewed BEFORE
 # deployment (review-20260921-a472), which approved A and STOPPED B.
 #
 # Change B's cases are deliberately NOT here. The review found four unlisted hazards in it
@@ -1201,19 +1198,18 @@ OUT_T = "states('sensor.outdoor_motion_temperature')"
 # `sensor.house_temperature` and resolved from the gitignored local map here.
 OUT_W = "states('%s')" % harness.load_rooms()["house"]["forecast_temp"]
 OUT_R = "states('sensor.climate_temp_outdoor')"
-OUT_A = "states('sensor.ac_outdoor_temperature')"  # the AC probes' min_max helper
 
 A(sensor_case(
     "the terrace sensor outranks the forecast", "13.1",
     {OUT_T: "'13.1'", OUT_W: "'10.6'"},
     sensor=OUT, finding="2026-09-25: measured at the house beats modelled for the area"))
 A(sensor_case(
-    "an unavailable terrace sensor falls to the forecast when the AC helper is down too", "10.6",
-    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
+    "an unavailable terrace sensor falls to the forecast", "10.6",
+    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
     sensor=OUT, finding="Z2M's 3 h availability timeout lands here, not on a stale number"))
 A(sensor_case(
     "a terrace sensor that has not reported yet falls to the forecast", "10.6",
-    {OUT_T: "'unknown'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
+    {OUT_T: "'unknown'", OUT_W: "'10.6'"},
     sensor=OUT, finding="after a restart or re-pair the sensor is 'unknown' first"))
 A(sensor_case(
     "a terrace reading of exactly zero is a reading", "0.0",
@@ -1224,59 +1220,25 @@ A(sensor_case(
     {OUT_T: "'-5.3'", OUT_W: "'-2.0'"},
     sensor=OUT, finding="the -900 cutoff must not swallow real frost"))
 A(sensor_case(
-    "every outdoor source down yields nothing", "",
-    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
+    "both outdoor sources down yield nothing", "",
+    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
     sensor=OUT, finding="R7-9: the skip sentinel, never a fabricated number"))
 
 # The empty state alone does not clear the entity -- HA kept the old number when that was
 # tried on the radiation sensor -- so availability gates it, exactly as there.
 A(sensor_case(
     "the outdoor sensor is available on the terrace alone", "True",
-    {OUT_T: "'13.1'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
+    {OUT_T: "'13.1'", OUT_W: "'unavailable'"},
     sensor=OUT + "::availability", finding="either source is enough"))
 A(sensor_case(
     "the outdoor sensor is available on the forecast alone", "True",
-    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
+    {OUT_T: "'unavailable'", OUT_W: "'10.6'"},
     sensor=OUT + "::availability", finding="either source is enough"))
 A(sensor_case(
-    "the outdoor sensor is unavailable when every source is", "False",
-    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'unavailable'"},
+    "the outdoor sensor is unavailable when both sources are", "False",
+    {OUT_T: "'unavailable'", OUT_W: "'unavailable'"},
     sensor=OUT + "::availability",
     finding="an empty state kept the previous number on the radiation sensor"))
-
-# 2026-11-06 (operator): the AC outdoor probes are the second tier, ahead of the forecast, which
-# is now the LAST resort.  The probes sit on the five units and drop out when a unit disconnects
-# or reboots, so they are read through one min_max helper (it skips unavailable members), and
-# the helper is what this tier reads.
-#
-#   1. the terrace sensor   -- measured, at the house
-#   2. the AC outdoor helper -- measured on the units, mean of whichever are reporting
-#   3. the forecast         -- only when both measured sources are down
-
-A(sensor_case(
-    "the AC outdoor helper answers when the terrace sensor is down", "9.4",
-    {OUT_T: "'unavailable'", OUT_A: "'9.4'", OUT_W: "'10.6'"},
-    sensor=OUT, finding="2026-11-06: a measured AC probe beats the modelled forecast"))
-A(sensor_case(
-    "the terrace sensor still outranks the AC outdoor helper", "13.1",
-    {OUT_T: "'13.1'", OUT_A: "'9.4'", OUT_W: "'10.6'"},
-    sensor=OUT, finding="2026-11-06: the terrace is the house's own sensor, not a probe on a unit"))
-A(sensor_case(
-    "the forecast is the last resort when terrace and AC are both down", "10.6",
-    {OUT_T: "'unavailable'", OUT_A: "'unavailable'", OUT_W: "'10.6'"},
-    sensor=OUT, finding="2026-11-06: forecast only when both measured sources are gone"))
-A(sensor_case(
-    "an unknown AC helper falls through to the forecast", "10.6",
-    {OUT_T: "'unknown'", OUT_A: "'unknown'", OUT_W: "'10.6'"},
-    sensor=OUT, finding="2026-11-06: after a restart the helper reads unknown until a unit reports"))
-A(sensor_case(
-    "a reading of exactly zero from the AC helper is a reading", "0.0",
-    {OUT_T: "'unavailable'", OUT_A: "'0.0'", OUT_W: "'3.0'"},
-    sensor=OUT, finding="2026-11-06: 0 C is falsy-proof, as on the terrace"))
-A(sensor_case(
-    "the outdoor sensor is available on the AC helper alone", "True",
-    {OUT_T: "'unavailable'", OUT_A: "'9.4'", OUT_W: "'unavailable'"},
-    sensor=OUT + "::availability", finding="2026-11-06: any measured source keeps it available"))
 
 A(case("the house reads the resolved outdoor sensor", "outdoor", "13.1",
        {}, {OUT_R: "'13.1'"},
@@ -1940,16 +1902,6 @@ A(ph("warm-up: a passed edge is not a window", "False", {}, {NEXT: "'2026-09-21T
      "a stale next_event must not warm all night"))
 A(ph("warm-up: an unknown next event does nothing", "False", {}, {NEXT: "none"},
      "a schedule without a next event is no window"))
-# 2026-10-31, observed: the schedule stores a night as one block per weekday (21:00-24:00, then
-# 00:00-06:00), so before midnight next_event is 00:00 local. The state stays 'on' across it - it
-# is no edge - but the warm-up read it as the morning one and heated the living room to its DAY
-# target from 23:15. Times are Europe/Prague (UTC+1 in winter); the window is 30 min in both.
-A(ph("warm-up: midnight inside the night is not the morning edge", "False", {},
-     {NEXT: "'2026-11-01T00:00:00+01:00'", NOWTS: "1793485800.0"},
-     "2026-10-31 observed: living room heated to the day target from 23:15"))
-A(ph("warm-up: the real morning edge after midnight still warms", "True", {},
-     {NEXT: "'2026-11-01T06:00:00+01:00'", NOWTS: "1793507400.0"},
-     "the midnight rule must not cost the 05:15 warm-up"))
 
 # Review 2026-10-11 (v6): Tado's OWN open-window detection switches a zone off by itself.  Without
 # this, HA called that "changed by hand", held the zone 2 h and pushed a false notification - and
@@ -2544,75 +2496,3 @@ A(brief("the message leads with what needs doing", "message",
 A(brief("a quiet house says so", "message",
         "Nothing needs attention.\nYesterday the metered devices used 6.85 kWh.",
         given=dict(attention=[], energy="Yesterday the metered devices used 6.85 kWh.")))
-
-# 2026-11-07 (operator): an idle AC reports its power as `unknown`, so the AC power total reads
-# `unknown` whenever every unit is idle.  Proposed: a unit whose climate entity is exactly `off`
-# and whose power is `unknown`/`unavailable` publishes 0 W.  Anything else passes the reading
-# through, and an unreachable unit (climate `unavailable`) stays unknown, never 0 W.
-# These cases name the sensor the proposal would create, and the two reads it would make
-# (CLIMATE_AC / POWER_AC).  The sensor does not exist yet: until it does, run.py reports
-# "not found in the live config" (a suite error, not a verdict), which is the expected state
-# before the change.  The subs must match the implemented expression text exactly.
-AC_CLIMATE = "states('climate.living_room_ac')"
-AC_POWER = "states('sensor.living_room_ac_power')"
-AC_TITLE = "Climate AC power living room"
-
-A(sensor_case(
-    "an idle AC with no power reading publishes 0 W", "0",
-    {AC_CLIMATE: "'off'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
-    finding="2026-11-07: the AC power total reads unknown when every unit is idle"))
-A(sensor_case(
-    "an idle AC with an unavailable power reading also publishes 0 W", "0",
-    {AC_CLIMATE: "'off'", AC_POWER: "'unavailable'"}, sensor=AC_TITLE,
-    finding="2026-11-07: off is the commanded state; the unit is not running"))
-A(sensor_case(
-    "an unreachable AC is not idle: no reading stays unknown", "unknown",
-    {AC_CLIMATE: "'unavailable'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
-    finding="unreachable is not off: an unavailable unit must never be published as 0 W"))
-A(sensor_case(
-    "a running AC with no power reading stays unknown, not zero", "unknown",
-    {AC_CLIMATE: "'cool'", AC_POWER: "'unknown'"}, sensor=AC_TITLE,
-    finding="a running unit that reports nothing is a gap, not an idle unit"))
-A(sensor_case(
-    "an idle AC's real standby draw is passed through, not zeroed", "12.0",
-    {AC_CLIMATE: "'off'", AC_POWER: "'12.0'"}, sensor=AC_TITLE,
-    finding="standby draw is a measurement; only a missing reading becomes 0"))
-A(sensor_case(
-    "a running AC's power is passed through", "850.0",
-    {AC_CLIMATE: "'cool'", AC_POWER: "'850.0'"}, sensor=AC_TITLE,
-    finding="the running reading is never replaced"))
-
-# 2026-11-07 (operator): the same idle rule for the other four units, each with its own climate
-# entity and power sensor.  Same six cases per unit, so a unit cannot drift from the rule.
-#
-# The two children's units take their ids from the gitignored room map (the names are scrubbed
-# from the repo; see harness.load_rooms), like every other child-room reference in this suite.
-_RM = harness.load_rooms()
-_AC_UNITS = (
-    ("Climate AC power office", "climate.office_ac", "sensor.office_ac_power"),
-    ("Climate AC power bedroom", "climate.bedroom_ac", "sensor.bedroom_ac_power"),
-    ("Climate AC power " + _RM["kid1"]["title"], _RM["kid1"]["ac_climate"], _RM["kid1"]["ac_power"]),
-    ("Climate AC power " + _RM["kid2"]["title"], _RM["kid2"]["ac_climate"], _RM["kid2"]["ac_power"]),
-)
-for _title, _climate, _power in _AC_UNITS:
-    _c = "states('%s')" % _climate
-    _p = "states('%s')" % _power
-    _unit = _title.replace("Climate AC power ", "")
-    A(sensor_case("%s: an idle AC with no power reading publishes 0 W" % _unit, "0",
-                  {_c: "'off'", _p: "'unknown'"}, sensor=_title,
-                  finding="2026-11-07: idle units read unknown, so the total read unknown"))
-    A(sensor_case("%s: an idle AC with an unavailable reading also publishes 0 W" % _unit, "0",
-                  {_c: "'off'", _p: "'unavailable'"}, sensor=_title,
-                  finding="2026-11-07: off is the commanded state; the unit is not running"))
-    A(sensor_case("%s: an unreachable AC is not idle: no reading stays unknown" % _unit, "unknown",
-                  {_c: "'unavailable'", _p: "'unknown'"}, sensor=_title,
-                  finding="unreachable is not off: never published as 0 W"))
-    A(sensor_case("%s: a running AC with no power reading stays unknown" % _unit, "unknown",
-                  {_c: "'cool'", _p: "'unknown'"}, sensor=_title,
-                  finding="a running unit that reports nothing is a gap, not an idle unit"))
-    A(sensor_case("%s: an idle AC's real standby draw is passed through" % _unit, "12.0",
-                  {_c: "'off'", _p: "'12.0'"}, sensor=_title,
-                  finding="standby draw is a measurement; only a missing reading becomes 0"))
-    A(sensor_case("%s: a running AC's power is passed through" % _unit, "850.0",
-                  {_c: "'cool'", _p: "'850.0'"}, sensor=_title,
-                  finding="the running reading is never replaced"))

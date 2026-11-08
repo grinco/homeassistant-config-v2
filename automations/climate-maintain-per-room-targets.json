@@ -30,7 +30,7 @@
      {
       "alert": "input_datetime.climate_safety_alert_living_room",
       "bad": "input_datetime.climate_sensor_bad_since_living_room",
-      "climate": "climate.living_room_ac",
+      "climate": "climate.living_room_livingroom_ac",
       "cmd": "input_datetime.climate_cmd_living_room",
       "day_t": "input_number.climate_target_day_living_room",
       "enable": "input_boolean.climate_room_living_room",
@@ -50,7 +50,7 @@
      {
       "alert": "input_datetime.climate_safety_alert_office",
       "bad": "input_datetime.climate_sensor_bad_since_office",
-      "climate": "climate.office_ac",
+      "climate": "climate.office_guest_room_office_ac",
       "cmd": "input_datetime.climate_cmd_office",
       "day_t": "input_number.climate_target_day_office",
       "enable": "input_boolean.climate_room_office",
@@ -70,7 +70,7 @@
      {
       "alert": "input_datetime.climate_safety_alert_bedroom",
       "bad": "input_datetime.climate_sensor_bad_since_bedroom",
-      "climate": "climate.bedroom_ac",
+      "climate": "climate.master_bedroom_bedroom_ac",
       "cmd": "input_datetime.climate_cmd_bedroom",
       "day_t": "input_number.climate_target_day_bedroom",
       "enable": "input_boolean.climate_room_bedroom",
@@ -238,9 +238,9 @@
       }
      },
      {
-      "note": "v6 MORNING WARM-UP (2026-10-11, operator: 'pleasant to enter in the morning a room that has been also warmed by the AC'). In the last preheat_min minutes before the night schedule's MORNING edge, a room with its warm-up toggle on aims at its DAY target and the AC may heat it even with a radiator. Only while the schedule itself is on: a manual night has no morning edge, and a manual day already ended the night. MIDNIGHT IS NOT AN EDGE (2026-10-31, observed): the schedule stores a night as one block per weekday (21:00-24:00, then 00:00-06:00), so before midnight next_event is 00:00 local while the state stays on across it. Read as the morning edge, it heated the living room to its DAY target from 23:15. A next_event at local 00:00 is therefore never the warm-up edge; the real one (06:00) becomes next_event at midnight. Cost: a night that genuinely ends at midnight gets no warm-up.",
+      "note": "v6 MORNING WARM-UP (2026-10-11, operator: 'pleasant to enter in the morning a room that has been also warmed by the AC'). In the last preheat_min minutes before the night schedule's MORNING edge, a room with its warm-up toggle on aims at its DAY target and the AC may heat it even with a radiator. Only while the schedule itself is on: a manual night has no morning edge, and a manual day already ended the night.",
       "variables": {
-       "preheat": "{{ is_state(r.preheat, 'on') and house == 'heat' and night and is_state('schedule.climate_night','on') and 0 < ((as_timestamp(state_attr('schedule.climate_night','next_event'), 0) | float(0)) - now().timestamp()) <= (preheat_min | float(45)) * 60 and (as_timestamp(state_attr('schedule.climate_night','next_event'), 0) | timestamp_custom('%H:%M')) != '00:00' }}",
+       "preheat": "{{ is_state(r.preheat, 'on') and house == 'heat' and night and is_state('schedule.climate_night','on') and 0 < ((as_timestamp(state_attr('schedule.climate_night','next_event'), 0) | float(0)) - now().timestamp()) <= (preheat_min | float(45)) * 60 }}",
        "rad_entity": "{{ r.rad }}",
        "rad_window": "{{ r.rad_window }}"
       }

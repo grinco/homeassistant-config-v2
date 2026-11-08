@@ -46,8 +46,7 @@ ENTRY_KEEP = {"entry_id", "domain", "title", "data", "options", "version", "mino
               "source", "created_at", "modified_at"}
 ENTRY_DOMAINS = {"template", "magic_areas", "min_max", "group", "ci_fixture"}
 ENTRY_DATA_KEEP = {"magic_areas": {"id", "name"}}
-ENTRY_OPTIONS_KEEP = {"magic_areas": {"ignore_diagnostic_entities"},
-                      "template": {"state", "name", "template_type", "device_class",
+ENTRY_OPTIONS_KEEP = {"template": {"state", "name", "template_type", "device_class",
                                    "unit_of_measurement", "state_class"},
                       "min_max": {"entity_ids", "name", "type", "round_digits"},
                       "group": {"entities", "name", "group_type", "hide_members", "all"}}

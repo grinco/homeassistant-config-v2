@@ -3,23 +3,20 @@
   {
    "variables": {
     "ids": [
-     "sensor.living_room_ac_energy",
-     "sensor.office_ac_energy",
-     "sensor.bedroom_ac_energy",
+     "sensor.living_room_livingroom_ac_energy",
+     "sensor.office_guest_room_office_ac_energy",
+     "sensor.master_bedroom_bedroom_ac_energy",
      "sensor.kid1_room_ac_energy",
      "sensor.kid2_room_ac_energy",
      "sensor.downstairs_toilet_energy",
      "sensor.upstairs_toilet_energy",
+     "sensor.living_room_vacuum_socket_total_energy",
      "sensor.living_room_tv_socket_total_energy",
+     "sensor.media_corner_energy",
      "sensor.all_lights_energy",
      "sensor.mini_rack_energy",
      "sensor.unifi_poe_network_energy",
-     "sensor.jankas_desk_energy",
-     "sensor.rtx3090_pc_energy",
-     "sensor.drier_socket_energy",
-     "sensor.kid1_desk_socket_energy",
-     "sensor.bedroom_dual_switch_energy",
-     "sensor.media_corner_energy"
+     "sensor.jankas_desk_energy"
     ]
    }
   },
