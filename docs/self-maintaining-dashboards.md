@@ -186,3 +186,38 @@ Rendered at 390 / 820 / 1280 px (`tests/dashboards/render.py`), three things dif
   three singles. Climate's Outside section was split at *Air quality — indoors* for this.
 - Left alone: the *Environment* heading on a room page is a grid title, larger than the heading
   cards above it.
+
+## Room tiles and their gestures (2026-09-25)
+
+The Home room tiles are one button-card template, `vg_room_card`
+(`lovelace-dashboards/button-card-templates.yaml`). Gestures:
+
+- **Tap the card**: open the room's page.
+- **Tap the 46 px lamp button**: if anything in the room is lit, turn the room's lights off;
+  otherwise on. It uses `light.turn_off` / `light.turn_on` with `target: area_id`, so it needs no
+  group and works from the first light. It is lit amber while the room's lights are on.
+- **No hold, no double tap.** A long press is invisible, and the family Home must be usable by
+  elderly parents, guests and children. The card opens the room, as a tile does everywhere; the
+  lamp is a separate button that shows what it does.
+- **Trade-off, deliberate:** the lamp turns the whole room off or on, never one light. In a room
+  with one lamp on and one off, a tap means "all off", as the old script did.
+- The status line does not count lights (2026-10-20, issue #5): on a phone "3 lights on" pushed
+  "Someone here" off the card, and the lamp button already shows the lights. Locked by
+  `tests/dashboards/roomcard.py`.
+
+The 2026-09 report that a Kids room tile opened the AC more-info dialog was never proven. The
+likely cause was a `perform-action` that did not dispatch, so the card fell back to `more-info` on
+the AC entity. The rewrite removes the question: every tap is now `toggle` or `none`. Nothing here
+is covered by `tests/climate/`, which is an oracle for the climate loop only. It was verified by
+rendering each tile's templates against live state (all twelve) and one real actuation.
+
+## Open items carried from the retired surfacing record (2026-09-23)
+
+- **Both SwitchBot meters were exposed twice**, over BLE and over Matter. The resolved climate
+  template read BLE first and fell back to Matter, so the duplicate was load-bearing. The Matter
+  bridge was decommissioned on 2026-10-22, so the Matter half is gone; check the BLE-only fallback
+  before tidying anything about it.
+- **`golemio` and `transit_departures` had produced no entities**, pending a restart. Not
+  re-checked in the 2026-11-07 merge.
+- **Corridor template sensors emit `''`** when the purifier is unreachable. Open; see
+  `docs/climate-control-design.md` §12.
