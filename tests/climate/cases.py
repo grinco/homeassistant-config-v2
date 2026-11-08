@@ -2546,13 +2546,13 @@ A(brief("a quiet house says so", "message",
         given=dict(attention=[], energy="Yesterday the metered devices used 6.85 kWh.")))
 
 # 2026-11-07 (operator): an idle AC reports its power as `unknown`, so the AC power total reads
-# `unknown` whenever every unit is idle.  Proposed: a unit whose climate entity is exactly `off`
+# `unknown` whenever every unit is idle.  Rule: a unit whose climate entity is exactly `off`
 # and whose power is `unknown`/`unavailable` publishes 0 W.  Anything else passes the reading
 # through, and an unreachable unit (climate `unavailable`) stays unknown, never 0 W.
-# These cases name the sensor the proposal would create, and the two reads it would make
-# (CLIMATE_AC / POWER_AC).  The sensor does not exist yet: until it does, run.py reports
-# "not found in the live config" (a suite error, not a verdict), which is the expected state
-# before the change.  The subs must match the implemented expression text exactly.
+# The rule is live: the `Climate AC power <room>` template sensors implement it, and these
+# cases read those expressions from the live config.  The subs must match the implemented
+# expression text exactly; if the expression changes shape, run.py refuses the case rather
+# than passing it.
 AC_CLIMATE = "states('climate.living_room_ac')"
 AC_POWER = "states('sensor.living_room_ac_power')"
 AC_TITLE = "Climate AC power living room"
