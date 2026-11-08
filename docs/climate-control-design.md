@@ -55,12 +55,15 @@ and a hard constraint:
 > if any of the ACs are running or must start — they must be in silent + windfree mode
 
 They had explicitly **rejected** manually-triggered routines ("I don't like routines that need
-to be triggered manually"), and the house has **no presence or motion sensors**. So the system
-must decide entirely from temperature, time, and alarm state.
+to be triggered manually"). Some rooms **do** have occupancy sensors, and they were left out of
+the control loop deliberately, not for want of hardware. The original reasoning for that
+decision is not recorded here yet — **operator to supply it**. Until it is, the control loop
+decides from temperature, time, and alarm state.
 
 ### Non-goals
 
-- Presence-based control. No sensors exist; adding them is a separate project.
+- Presence-based control from the room occupancy sensors. Deliberately excluded (see the
+  correction at §30); the reason is to be recorded.
 - Replacing the units' own PID loop. We choose a setpoint and a mode; the unit does the rest.
 - Humidity, air quality or ventilation control.
 - Scheduling around electricity price. The spot-price integration is installed but exposes no
@@ -2295,19 +2298,24 @@ a slow loop.
 There is no `hvac_action`, and the `drlc_*` attributes are utility demand-response, not this.
 
 Area presence exists, and would be the *honest* discriminator — a unit that switches off while
-its room is empty is power saving, full stop. But the `magic_areas` sensors have **no physical
-detectors behind them yet**; they are set by hand, which is why the bedroom reads empty for 28
-hours. The operator intends to fit real detectors in the coming weeks.
+its room is empty is power saving, full stop.
 
-**So presence was deliberately not wired into the control loop** — not because the setup is
-wrong, but because it is not finished. Building a safety-adjacent classifier on an input that
-is currently a manual placeholder would have been a worse bug than the one being fixed, and the
-shape-based rule below needs nothing that does not already exist.
+> **Correction, 2026-11-08.** The earlier text here said the house had no occupancy detectors
+> and that the `magic_areas` sensors were hand-set placeholders awaiting hardware. Both are
+> wrong for some rooms: the Bedroom has a real motion occupancy sensor, and the Corridor and
+> Hallway have presence sensors. Those were **deliberately not used** by the control loop; the
+> operator's reason is to be recorded here. The `magic_areas` aggregates are still not a
+> substitute for them.
+>
+> The units' own presence power saving is trusted. It is slower to switch off than an empty
+> room warrants, and the away safety band is **allowed to conflict with it** on purpose: the
+> band re-commands a unit that the unit has powered down, and the operator accepts that. The
+> conflict is recorded here so a reviewer does not reopen it as an oversight.
 
-**Revisit this when the detectors land.** Presence would let the automation distinguish a
-power-save from a person directly rather than inferring it from the shape of the change, and
-would also make "resume when the room is occupied again" possible — which the current design
-cannot do, and which is its main limitation (see below).
+The shape-based rule below needs nothing beyond what exists, and it is the current design. The
+open limitation remains: the design cannot resume a room when it is occupied again. Using the
+existing occupancy sensors for that is a question for the operator, not something the rule
+below decides.
 
 ### The discriminator is the shape of the change, not its cause
 
