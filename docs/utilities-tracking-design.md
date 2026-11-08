@@ -62,6 +62,8 @@ depends on the meter's protocol, unknown until we see a packet). Plan:
 ### Checks
 
 - Reading must be >= the previous reading. A decrease is logged and rejected, not recorded.
+  The check runs in the decoder before the MQTT publish, so a rejected packet never reaches the
+  sensor. The decoder keeps the last accepted value and drops anything below it.
 - A flow rate sanity limit: a reading jump above the largest plausible burst in one interval
   (set after the capture, from the real numbers) is flagged rather than recorded.
 
@@ -74,6 +76,12 @@ A helper for the reading, entered from the phone:
 - `input_number` for the reading in m³ (the counter's own unit; check whether the meter shows
   m³ or a corrected volume). Min 0, max set above the meter's rollover value. A new helper
   starts at its min, so the first entry must be seeded deliberately, not read as zero.
+- **Rollover.** When the counter wraps (for example 99999 to 00000), the operator enters the
+  wrapped value as read. A second helper, `input_number.gas_rollover_offset` (m³), holds the
+  total volume the counter has wrapped so far. The total sensor is the entered reading plus that
+  offset. When the entered reading is lower than the last accepted one by more than a set
+  fraction of the counter's range, validation treats it as a wrap: it adds the counter's range
+  to the offset and records the entry. The operator confirms a wrap before the offset moves.
 - `input_datetime` for when the reading was taken, defaulting to now. The operator enters the
   reading and the time it was read, not the time it was typed.
 
@@ -85,22 +93,24 @@ reading, on a day the operator picks.
 - A sensor that takes the entered reading as its total: `device_class: gas`,
   `state_class: total_increasing`, unit `m³`.
 - `utility_meter` for monthly consumption from it.
-- The gas volume to energy conversion (kWh) needs the calorific value from the gas supplier's
-  bill. It is a single factor and it belongs in the configuration of the Energy dashboard, not
-  in a template.
+- The gas volume to energy conversion requires the calorific value (kWh per m³) from the gas
+  supplier's bill. That value is configured in the Energy dashboard, not hardcoded in a template.
 
 ### Checks
 
-- Reading must be >= the previous reading, and no more than a plausible amount above it for
-  the days since the last entry. Otherwise the entry is rejected with a notification, and the
-  operator is asked to check the digits.
+- Reading must be >= the previous accepted reading (after the rollover offset is applied), and
+  no more than a configured maximum daily increase multiplied by the days since the last entry.
+- Validation is an automation on the `input_number` change. If the entry fails, the automation
+  sets the helper back to the last accepted value, so the helper never keeps a rejected reading,
+  and sends a notification asking the operator to check the digits. The sensor is updated only
+  on the accepted path.
 - A missing reading is not an error. The derived consumption simply spans the gap, and the
   dashboard shows it as one period.
 
 ## The hot-water link
 
 The boiler feeds both gas and the hot-water tank, so gas use in winter will include the hot
-water. The Tado hot cycle (`docs/hot-water.md`) is one fixed weekly load of gas. Once gas is
+water. The Tado hot cycle (`docs/hot-water.md`) runs a fixed weekly heating schedule. Once gas is
 tracked, it becomes possible to measure what the weekly cycle costs. Not in scope for the first
 pass.
 
