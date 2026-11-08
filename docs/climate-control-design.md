@@ -2304,7 +2304,7 @@ its room is empty is power saving, full stop.
 > and that the `magic_areas` sensors were hand-set placeholders awaiting hardware. Both are
 > wrong for some rooms: the Bedroom has a real motion occupancy sensor, and the Corridor and
 > Hallway have presence sensors. Those were **deliberately not used** by the control loop; the
-> operator's reason is to be recorded here. The `magic_areas` aggregates are still not a
+> operator is to supply the rationale. The `magic_areas` aggregates are still not a
 > substitute for them.
 >
 > The units' own presence power saving is trusted. It is slower to switch off than an empty
