@@ -31,7 +31,7 @@ Instance: HA 2026.9.3 Supervised, Home.
 | **v5.6** | **The AC offset is no longer plausibility-checked at all — its helper range IS the envelope, and the extra check could only reject a *correct* large offset and fail cold; a calibration override now reaches the phone; the recurrence notice stopped naming a cause it cannot know and got its own notification id** | Round-12 findings F-1.1, F-1.5, F-4.2/3/4 — see §28 |
 | **v5.7** | **A unit that goes to `off` for a reason we cannot identify is a stand-down, not a wall override** — quiet hold, no push, no breaker, and we do not re-command against the unit's own timer. A change to any other mode is still treated as a genuine outside override | The operator enabled the ACs' presence-based power saving — see §30 |
 | **v5.8** | **Safety dispatch hoisted above the back-offs.** A freezing room that was stood down or overridden resolved to `heat` and then never sent the command, for up to 20 minutes | Round-14 F14-5 — see §31 |
-| **v5.9** | **A hold now records WHY it exists** — `external` or `standdown` — and the label is cleared when the hold ends. The hold mechanism is untouched | Round-14 F14-2, round-15 A3; the decide/act split record was retired, its outcome is in §12 |
+| **v5.9** | **A hold now records WHY it exists** — `external` or `standdown` — and the label is cleared when the hold ends. The hold mechanism is untouched | Round-14 F14-2, round-15 A3; `docs/proposal-decide-act-split.md` |
 | **v5.10** | **Room hysteresis moved from an overshoot band ABOVE the target to a re-entry deadband BELOW it**, in both directions, and split onto its own helper | The exit could not be reached by the unit's own action, so a room sat in `heat` all day — see §32 |
 | **v5.11** | **The house reads a resolved outdoor sensor** — a terrace thermometer first, the forecast integration's temperature second — instead of naming the forecast directly | A sensor went up on the terrace — see §33 |
 
@@ -1006,30 +1006,6 @@ automation, and none may be added to that list.
 - Thermostatic valve entities are coming. If they are read-only they become the best control
   sensor for the three rooms still on AC return-air probes, closing the single-offset assumption
   and the tick-bound latency for those rooms at once.
-- **Open findings, carried from the retired finding index** (`climate-finding-status.md`, written
-  against design v4.3; not re-verified in the 2026-11-07 merge):
-  - A1: hysteresis assumes the unit reports within one tick. Bounded by `settle` (240 s), not eliminated.
-  - A7: a prolonged safety failure alerts on a repeating throttle, not an escalation.
-  - A11: largely resolved by the Tado valves (v5). The AC-probe offset still applies to the AC
-    fallbacks; `climate_trv_sensor_offset` is 0.0 and unmeasured, so it asserts nothing yet.
-  - P2: a setpoint-only change at the wall is classed as a fault, not a person, because
-    `last_changed` does not move for attribute-only changes. Bounded: `will_set_temp` is gated on
-    `not tripped`, so the breaker halts the fight after about three ticks and alerts.
-  - R5: a SmartThings re-emit of an unchanged `hvac_mode` within `human_window` can still read as a
-    human. Narrowed by the 1200 s cap, not closed.
-  - Observation: whether `heat` above setpoint moves air, which decides whether the in-season
-    air-filter case should use `fan_only`. Needs watching, not a redesign.
-- **Corridor template sensors still emit an empty string.** `Climate temp corridor` and
-  `Climate humidity corridor` end in a bare `{% endif %}`, so when the purifier is unreachable they
-  render `''` and Home Assistant logs "Received invalid sensor state". The consumers read them with
-  `| float(-99)`, so nothing misbehaves. The fix (`unknown` for no value) starts with a failing case
-  in `tests/climate/cases.py`. Found 2026-09-23; still present in `automations/resolved-sensors.json`.
-- **When to revisit the custom component** (from the retired decide/act split record, 2026-09-21).
-  The trigger was presence work, because presence touches both the decision and the dispatch, the
-  timing-sensitive names where the worst bugs lived. Check whether that has landed before deciding.
-  The question then is whether a component is the right vehicle for presence. The old record's
-  counts were found stale across fourteen review rounds, so treat any design record written that
-  way as a hint, not a transfer medium.
 
 ---
 
@@ -2586,7 +2562,7 @@ that has gone wrong twice.
 **The AC power sensors under-report badly.** `sensor.living_room_livingroom_ac_power` averaged
 65 W across the hour in which the energy counter gained 743 Wh. The energy counters are the
 trustworthy ones; the live power tiles and the Energy tab's AC meters understate reality. Noted
-here because the meter ceilings in the retired room-views record (in git history) were set from this data.
+here because the meter ceilings in `docs/room-views-button-card.md` were set from this data.
 
 ## 33. v5.11 — an outdoor thermometer at the house
 
@@ -2736,15 +2712,6 @@ last `input_number.climate_preheat_minutes` (45) before the night schedule's mor
 aims at its DAY target and the AC may heat it even with a radiator, without the boost threshold (the
 night `quiet` preset still applies). Only while the schedule itself is on — a manual "night" has no
 morning edge, a manual day has already ended the night.
-
-**Midnight is not the morning edge (2026-10-31, observed).** The schedule holds a night as one block
-per weekday — 21:00–24:00, then 00:00–06:00 — so before midnight its `next_event` is 00:00 local,
-although the state stays `on` straight through it. The warm-up took that for the morning edge and from
-23:15 heated the living room towards its day target (23 °C against a 19 °C night). A `next_event` at
-local 00:00 is now never a warm-up edge; at midnight `next_event` moves to 06:00 and the real window
-opens at 05:15. Cost, accepted: a night that genuinely ends at midnight gets no warm-up. The alarm is
-unaffected — it moves on state changes, and there is none at midnight. Tests: *warm-up: midnight
-inside the night …* (and its 05:15 counterpart); mutation *midnight read as the morning edge*.
 
 **Known, recorded:**
 - ~~The bedroom has no room meter~~ — **resolved 2026-10-20**: an IKEA VINDSTYRKA (Zigbee, free air,

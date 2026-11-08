@@ -22,8 +22,8 @@ BUGS = [
  ("the 2026-09-20 unit_moved bug (drop '- settle')", "expr", "unit_moved",
   lambda t: t.replace("lc < since_cmd - settle", "lc < since_cmd")),
  ("v5.5 offset substitution (reject a correct -4)", "sensor", "Climate temp bedroom",
-  lambda t: t.replace("{% set f = states('sensor.bedroom_ac_temperature') | float(-999) %}",
-                      "{% set ac = ac if ac >= -3.5 else -2 %}{% set f = states('sensor.bedroom_ac_temperature') | float(-999) %}")),
+  lambda t: t.replace("{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}",
+                      "{% set ac = ac if ac >= -3.5 else -2 %}{% set f = states('sensor.master_bedroom_bedroom_ac_temperature') | float(-999) %}")),
  ("bedroom: the air quality sensor no longer primary", "sensor", "Climate temp bedroom",
   lambda t: t.replace("{% if v > -900 %}{{ v | round(2) }}{% elif p > -900 %}",
                       "{% if p > -900 %}")),
@@ -111,9 +111,6 @@ BUGS = [
   "1792300000001"),
  ("bedroom purifier: starts at night", "expr2", "act",
   lambda t: t.replace("and not night and dirty", "and dirty"), "1792300000001"),
- # 2026-11-07: off at night whoever started it. Dropping that branch brings back the old rule.
- ("bedroom purifier: a person's run left alone at night again", "expr2", "act",
-  lambda t: t.replace("{% elif night and fan == 'on' %}stop", "{% elif false %}stop"), "1792300000001"),
  ("bedroom purifier: stops a person's run", "expr2", "act",
   lambda t: t.replace("{% elif owned and (night or clear) %}", "{% elif fan != 'off' and (night or clear) %}"),
   "1792300000001"),
@@ -370,9 +367,6 @@ BUGS = [
   lambda t: t.replace(" <= (preheat_min | float(45)) * 60", "")),
  ("warm-up: a passed edge still counts", "expr", "preheat",
   lambda t: t.replace("0 < ((as_timestamp", "-99999999 < ((as_timestamp")),
- ("warm-up: midnight read as the morning edge (2026-10-31)", "expr", "preheat",
-  lambda t: t.replace(" and (as_timestamp(state_attr('schedule.climate_night','next_event'), 0)"
-                      " | timestamp_custom('%H:%M')) != '00:00'", "")),
  ("warm-up: aims at the night target", "expr", "target",
   lambda t: t.replace("(night and not preheat)", "night")),
  ("warm-up: the radiator rule still blocks the AC", "expr", "mode",
@@ -471,43 +465,16 @@ BUGS = [
  # Kids room 2 gained its meter on 2026-09-25; the chain must not quietly revert.
  ("kid 2: the room meter dropped from the chain", "sensor", KID2_T,
   lambda t: t.replace("{% if b > -900 %}{{ b | round(2) }}{% elif p > -900 %}", "{% if p > -900 %}")),
- # Outdoor temperature, 2026-09-25: terrace sensor first, forecast last.
- # 2026-11-06: the AC outdoor helper sits second; the forecast is the last resort.
+ # Outdoor temperature, 2026-09-25: terrace sensor first, forecast second.
  ("outdoor: the forecast outranks the terrace again", "sensor", "Climate temp outdoor",
-  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif a > -900 %}",
-                      "{% if w > -900 %}{{ w | round(2) }}{% elif t > -900 %}{{ t | round(2) }}{% elif a > -900 %}")),
- ("outdoor: the AC helper outranks the terrace", "sensor", "Climate temp outdoor",
-  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif a > -900 %}{{ a | round(2) }}",
-                      "{% if a > -900 %}{{ a | round(2) }}{% elif t > -900 %}{{ t | round(2) }}")),
- ("outdoor: the forecast outranks the AC helper", "sensor", "Climate temp outdoor",
-  lambda t: t.replace("{% elif a > -900 %}{{ a | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",
-                      "{% elif w > -900 %}{{ w | round(2) }}{% elif a > -900 %}{{ a | round(2) }}")),
+  lambda t: t.replace("{% if t > -900 %}{{ t | round(2) }}{% elif w > -900 %}{{ w | round(2) }}",
+                      "{% if w > -900 %}{{ w | round(2) }}{% elif t > -900 %}{{ t | round(2) }}")),
  ("outdoor: a reading of exactly zero taken for no reading", "sensor", "Climate temp outdoor",
   lambda t: t.replace("{% if t > -900 %}", "{% if t and t > -900 %}")),
  ("outdoor: availability gated on the terrace alone", "sensor", "Climate temp outdoor::availability",
   lambda t: "{{ states('sensor.outdoor_motion_temperature') | float(-999) > -900 }}"),
  ("outdoor: the house reads the forecast directly again", "expr", "outdoor",
   lambda t: "{{ states('%s') | float(-999) }}" % harness.load_rooms()["house"]["forecast_temp"]),
- # 2026-11-07: an idle AC publishes 0 W, and nothing else does. Each row breaks one half of the rule.
- ("idle AC: the off check dropped (zero whenever power is unknown)", "sensor", "Climate AC power living room",
-  lambda t: t.replace("c == 'off' and ", "")),
- ("idle AC: an unreachable unit counted as idle", "sensor", "Climate AC power living room",
-  lambda t: t.replace("c == 'off' and ", "c in ['off', 'unavailable'] and ")),
- ("idle AC: the rule removed (no idle unit ever reads 0)", "sensor", "Climate AC power living room",
-  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if false %}0")),
- ("idle AC: an unavailable reading not zeroed", "sensor", "Climate AC power living room",
-  lambda t: t.replace("p in ['unknown', 'unavailable']", "p == 'unknown'")),
- ("idle AC: a real standby draw zeroed", "sensor", "Climate AC power living room",
-  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if c == 'off' %}0")),
- # The same rule on the other units: one mutation per unit, so a unit cannot drift unnoticed.
- ("idle AC: office rule removed", "sensor", "Climate AC power office",
-  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if false %}0")),
- ("idle AC: bedroom unreachable counted as idle", "sensor", "Climate AC power bedroom",
-  lambda t: t.replace("c == 'off' and ", "c in ['off', 'unavailable'] and ")),
- ("idle AC: kid 1 unavailable reading not zeroed", "sensor", "Climate AC power " + harness.load_rooms()["kid1"]["title"],
-  lambda t: t.replace("p in ['unknown', 'unavailable']", "p == 'unknown'")),
- ("idle AC: kid 2 standby draw zeroed", "sensor", "Climate AC power " + harness.load_rooms()["kid2"]["title"],
-  lambda t: t.replace("{% if c == 'off' and p in ['unknown', 'unavailable'] %}0", "{% if c == 'off' %}0")),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")

@@ -376,10 +376,6 @@
        "color": "#607d8b",
        "entity": "sensor.house_temperature",
        "name": "Forecast"
-      },
-      {
-       "entity": "sensor.ac_outdoor_temperature",
-       "name": "AC probes"
       }
      ],
      "grid_options": {
@@ -1042,7 +1038,7 @@
     },
     {
      "collapsible_controls": false,
-     "entity": "climate.living_room_ac",
+     "entity": "climate.living_room_livingroom_ac",
      "fill_container": true,
      "grid_options": {
       "columns": 12
@@ -1065,7 +1061,7 @@
     },
     {
      "collapsible_controls": false,
-     "entity": "climate.office_ac",
+     "entity": "climate.office_guest_room_office_ac",
      "fill_container": true,
      "grid_options": {
       "columns": 12
@@ -1088,7 +1084,7 @@
     },
     {
      "collapsible_controls": false,
-     "entity": "climate.bedroom_ac",
+     "entity": "climate.master_bedroom_bedroom_ac",
      "fill_container": true,
      "grid_options": {
       "columns": 12

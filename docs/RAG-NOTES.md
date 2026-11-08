@@ -51,8 +51,8 @@ With many review rounds, the index fills with *findings* — most of them long s
 query phrased as a problem surfaces critique rather than current design, so a future session can
 "discover" a bug that was closed weeks ago, or reason from deleted code.
 
-Keep a short list of open findings in the design record, ingest it, and keep it current. For
-the climate loop that list is `docs/climate-control-design.md` §12.
+Maintain a short, high-signal index of which findings are open and which are closed, ingest it,
+and keep it current. See `docs/climate-finding-status.md`.
 
 ## 6. Verify before trusting a recalled fact
 
