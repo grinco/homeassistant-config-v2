@@ -5,7 +5,8 @@ tower_png, outdir = sys.argv[1], sys.argv[2]
 os.makedirs(outdir, exist_ok=True)
 # size WxH and the tower's horizontal centre as a fraction of the width
 W, H = (int(v) for v in (sys.argv[3] if len(sys.argv) > 3 else '900x620').split('x'))
-TOWER_X = float(sys.argv[4]) if len(sys.argv) > 4 else 0.5
+TOWER_X = float(sys.argv[4]) if len(sys.argv) > 4 else 0.68
+TOWER_H = float(sys.argv[5]) if len(sys.argv) > 5 else 0.98   # tower height / frame height
 
 # keep only the largest connected opaque component (drops floating sculptures cut off from the tower)
 t = Image.open(tower_png).convert('RGBA')
@@ -25,9 +26,9 @@ for y0, x0 in zip(*np.nonzero(a)):
 keep = max(sizes, key=sizes.get)
 arr = np.asarray(t).copy(); arr[..., 3] = np.where(lab == keep, arr[..., 3], 0)
 tower = Image.fromarray(arr)
-th = int(H * 1.12); tw = int(tower.width * th / tower.height)
+th = int(H * TOWER_H); tw = int(tower.width * th / tower.height)
 tower = tower.resize((tw, th), Image.LANCZOS)
-TX, TY = int(W * TOWER_X - tw / 2), int(H * 0.04)
+TX, TY = int(W * TOWER_X - tw / 2), H - th + int(H * 0.04)
 _al = np.asarray(tower)[..., 3]; _ty = int(np.nonzero(_al.max(1) > 128)[0][0]); TIP = (TX + int(np.nonzero(_al[_ty + 2] > 128)[0].mean()), TY + _ty)
 
 def grad(top, bot):
