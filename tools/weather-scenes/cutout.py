@@ -12,8 +12,6 @@ seen = np.zeros((h,w),bool); q=deque()
 for x in range(w):
   for y0 in (0,h-1):
     if sky[y0,x] and not seen[y0,x]: q.append((y0,x)); seen[y0,x]=True
-for x in []:
-    if sky[0,x]: q.append((0,x)); seen[0,x]=True
 for y in range(h):
     for x in (0,w-1):
         if sky[y,x] and not seen[y,x]: q.append((y,x)); seen[y,x]=True

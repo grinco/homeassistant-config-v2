@@ -3,6 +3,8 @@
     weather_ahead(forecast, now, hours=3) -> JSON
       forecast  the `forecast` list from weather.get_forecasts (type: hourly)
       now       datetime or ISO string
+    Rows must carry timezone-aware datetimes, as Home Assistant returns them; a naive one
+    would fail the comparison with `now` and break the render.
     Window: the hour in progress through the last hour that starts before now + hours.
     condition  the worst condition in the window (precipitation > wind > fog > cloud)
     scene      the tower picture for it: sunny, partlycloudy, cloudy, rainy, pouring,

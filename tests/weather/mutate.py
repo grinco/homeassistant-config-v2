@@ -24,6 +24,7 @@ MUTATIONS = [
     ("sleet shown as rain", "'snowy-rainy': 'sleet'", "'snowy-rainy': 'rainy'"),
     ("day/night from the last hour", "set first = ns.rows[0]", "set first = ns.rows[-1]"),
     ("feels-like takes max", "'feels_min': feels | min", "'feels_min': feels | max"),
+    ("wind takes min", "'wind_max': wind | max", "'wind_max': wind | min"),
     ("precip over whole forecast", "'precip': mm | sum", "'precip': (forecast | map(attribute='precipitation') | list) | sum"),
 ]
 

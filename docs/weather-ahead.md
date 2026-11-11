@@ -92,6 +92,11 @@ for 31 days.
   suits the forecast card's shape. The text sits over the darker top and bottom of the
   picture.
 
+`tests/weather/` runs only against the live instance: it reads the deployed macro, not the
+repo copy, so the two can drift without the repo noticing. Copy the macro to
+`/config/custom_templates/` and run `homeassistant.reload_custom_templates` before running
+the tests. CI only compiles these files (`compileall`); it never runs them.
+
 ## Configuration as deployed
 
 `configuration.yaml`:
@@ -119,7 +124,7 @@ template:
       - variables:
           ahead: >-
             {% from 'weather_ahead.jinja' import weather_ahead %}
-            {% set rows = fc['weather.home'].forecast if fc is defined and 'weather.home' in fc else [] %}
+            {% set rows = fc['weather.home'].forecast if fc is defined and fc is mapping and 'weather.home' in fc else [] %}
             {{ weather_ahead(rows, now()) | from_json }}
     sensor:
       - name: Weather ahead

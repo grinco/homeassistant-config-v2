@@ -98,6 +98,10 @@ CASES = [
     dict(name="highest rain probability over the window", field="precip_prob", expect="60",
          forecast=[row(10, "cloudy", pp=10), row(13, "rainy", pp=60), row(14, "rainy", pp=90)],
          finding="window bounds the maximum"),
+    dict(name="strongest wind over the window", field="wind_max", expect="30",
+         forecast=[row(10, "cloudy", wind=10), row(12, "windy", wind=30), row(13, "cloudy", wind=20),
+                   row(14, "windy", wind=60)],
+         finding="review 2026-11-11: wind_max had no case"),
     # No forecast at all (integration down): nothing to show.
     dict(name="empty forecast -> no condition", field="condition", expect="None",
          forecast=[], finding="availability"),
