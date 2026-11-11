@@ -32,6 +32,9 @@ the [`screenshots`](https://github.com/grinco/homeassistant-config-v2/tree/scree
 | `tests/fixtures/` | The invented house CI renders, and its completeness test |
 | `tests/render/` | End to end: Home Assistant in a container, seeded, rendered; fails on a broken card |
 | `docs/ci-dashboard-render-design.md` | How CI renders without the live instance or any real data |
+| `docs/weather-ahead.md` | The Home weather picture: the tower in the next three hours' weather, its macro, sensor and tests |
+| `tests/weather/` | Cases for the `weather_ahead` macro, run against the deployed copy, with mutation testing |
+| `tools/weather-scenes/` | Generates the tower scene images from one public-domain photo |
 | `tests/leakcheck.py` | Scans tracked files and unpushed commits for anything the anonymisation should have removed |
 | `esphome/` | Bluetooth proxy and Geiger counter configs |
 

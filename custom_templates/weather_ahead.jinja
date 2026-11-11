@@ -1,0 +1,58 @@
+{#- What the weather does over the next few hours, reduced to what decides what to wear.
+
+    weather_ahead(forecast, now, hours=3) -> JSON
+      forecast  the `forecast` list from weather.get_forecasts (type: hourly)
+      now       datetime or ISO string
+    Rows must carry timezone-aware datetimes, as Home Assistant returns them; a naive one
+    would fail the comparison with `now` and break the render.
+    Window: the hour in progress through the last hour that starts before now + hours.
+    condition  the worst condition in the window (precipitation > wind > fog > cloud)
+    scene      the tower picture for it: sunny, partlycloudy, cloudy, rainy, pouring,
+               storm, snowy, sleet, fog, windy
+    daytime    the hour in progress (is_daytime), falling back to sun.sun
+    {} when the window is empty (no forecast). -#}
+{% macro weather_ahead(forecast, now, hours=3) -%}
+{%- set now = as_datetime(now) if now is string else now -%}
+{%- set end = now + timedelta(hours=hours) -%}
+{%- set rank = {'lightning-rainy': 14, 'lightning': 13, 'hail': 12, 'pouring': 11,
+                'snowy': 10, 'snowy-rainy': 9, 'rainy': 8, 'windy-variant': 7, 'windy': 6,
+                'fog': 5, 'cloudy': 4, 'exceptional': 3, 'partlycloudy': 2,
+                'sunny': 1, 'clear-night': 1} -%}
+{%- set scene = {'lightning-rainy': 'storm', 'lightning': 'storm', 'hail': 'pouring',
+                 'pouring': 'pouring', 'snowy': 'snowy', 'snowy-rainy': 'sleet',
+                 'rainy': 'rainy', 'windy-variant': 'windy', 'windy': 'windy', 'fog': 'fog',
+                 'cloudy': 'cloudy', 'exceptional': 'cloudy', 'partlycloudy': 'partlycloudy',
+                 'sunny': 'sunny', 'clear-night': 'sunny'} -%}
+{%- set ns = namespace(rows=[], best=none, best_rank=-1) -%}
+{%- for f in forecast or [] -%}
+  {%- set t = as_datetime(f.datetime) -%}
+  {%- if t is not none and t + timedelta(hours=1) > now and t < end -%}
+    {%- set ns.rows = ns.rows + [f] -%}
+    {%- set r = rank.get(f.condition, 0) -%}
+    {%- if r > ns.best_rank -%}{%- set ns.best, ns.best_rank = f.condition, r -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if ns.rows | count == 0 -%}
+{{- {} | to_json -}}
+{%- else -%}
+{%- set first = ns.rows[0] -%}
+{%- set temps = ns.rows | selectattr('temperature', 'defined') | map(attribute='temperature') | list -%}
+{%- set feels = ns.rows | selectattr('apparent_temperature', 'defined') | map(attribute='apparent_temperature') | list -%}
+{%- set mm = ns.rows | selectattr('precipitation', 'defined') | map(attribute='precipitation') | list -%}
+{%- set pp = ns.rows | selectattr('precipitation_probability', 'defined') | map(attribute='precipitation_probability') | list -%}
+{%- set wind = ns.rows | selectattr('wind_speed', 'defined') | map(attribute='wind_speed') | list -%}
+{{- {
+  'condition': ns.best,
+  'scene': scene.get(ns.best, 'cloudy'),
+  'daytime': first.is_daytime if first.is_daytime is defined else is_state('sun.sun', 'above_horizon'),
+  'temp_min': temps | min if temps else none,
+  'temp_max': temps | max if temps else none,
+  'temp_range': (temps | min | round(0) | int) ~ '..' ~ (temps | max | round(0) | int) if temps else none,
+  'feels_min': feels | min if feels else none,
+  'precip': mm | sum | round(1) if mm else none,
+  'precip_prob': pp | max if pp else none,
+  'wind_max': wind | max if wind else none,
+  'hours': ns.rows | count,
+} | to_json -}}
+{%- endif -%}
+{%- endmacro %}
