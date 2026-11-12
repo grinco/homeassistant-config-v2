@@ -2,6 +2,8 @@
 
     python3 card_style.py [version] > style.jinja
 
+Paste the output as the card's card_mod style on every regeneration (see docs/weather-ahead.md).
+
 The style picks the scene from sensor.weather_ahead (scene, daytime) and stacks:
   ha-card background   <scene>-<dn>-back.jpg            still sky
   ha-card::before      <scene>-<dn>-clouds.webp         strip drifting left (transform)
@@ -13,7 +15,7 @@ Everything stops under prefers-reduced-motion: the glass swaps to a still frame.
 """
 import sys
 
-V = sys.argv[1] if len(sys.argv) > 1 else '4'
+V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '6'
 URL = "/local/zizkov/anim/%s.%s?v=" + V
 TILE = 200            # CSS px a 400 px tile is shown at
 STOPS = (0, 25, 50, 75, 100)
@@ -89,8 +91,9 @@ def css(scene):
 
 
 COMMON = """{% set a = states.sensor.weather_ahead.attributes if states.sensor.weather_ahead is not none else {} %}
-{% set sc = a.get('scene') if a.get('scene') in FX else 'cloudy' %}
-{% set dn = 'day' if (a.get('daytime') if a.get('daytime') in [true, false] else is_state('sun.sun', 'above_horizon')) else 'night' %}
+{% set sc = a.get('scene') if a.get('scene') in fx else 'cloudy' %}
+{% set dt = a.get('daytime') if a.get('daytime') in [true, false] else is_state('sun.sun', 'above_horizon') %}
+{% set dn = 'day' if dt else 'night' %}
 {% set words = {'clear-night': 'clear', 'sunny': 'sunny', 'partlycloudy': 'partly cloudy', 'cloudy': 'cloudy', 'fog': 'fog', 'rainy': 'rain', 'pouring': 'heavy rain', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'hail': 'hail', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'windy': 'windy', 'windy-variant': 'windy', 'exceptional': 'unusual weather'} %}
 {% set ahead = words.get(states('sensor.weather_ahead')) %}
 ha-card {
@@ -101,12 +104,17 @@ ha-card {
   text-shadow: 0 1px 4px rgba(0,0,0,.75);
 }
 ha-card > * { position: relative; z-index: 2; }
-{{ FX[sc] | replace('DN', dn) }}
+{{ fx[sc] | replace('DN', dn) }}
 @keyframes wx-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes wx-flash { 0%, 86%, 89%, 92%, 100% { filter: brightness(1); } 87% { filter: brightness(2.4); } 90.5% { filter: brightness(1.9); } }
 @media (prefers-reduced-motion: reduce) { ha-card::before, ha-card::after { animation: none !important; } }
 {% if ahead %}.name { font-size: 0 !important; }
 .name::after { content: 'Next 3 h: {{ ahead }}'; font-size: var(--ha-font-size-m, 14px); }{% endif %}"""
 
-fx = '{' + ', '.join("'%s': \"%s\"" % (k, css(k)) for k in SCENES) + '}'
-print(('{% set FX = ' + fx + ' %}\n' + COMMON).replace('FX', 'fx'))
+def style():
+    fx = '{' + ', '.join("'%s': \"%s\"" % (k, css(k)) for k in SCENES) + '}'
+    return '{% set fx = ' + fx + ' %}\n' + COMMON
+
+
+if __name__ == '__main__':
+    print(style())
