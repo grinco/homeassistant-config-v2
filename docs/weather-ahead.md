@@ -65,7 +65,7 @@ Both left the sensor `unavailable` with nothing in the log:
   returns JSON, and JSON's `true`, `false` and `null` are not Python, so the variable stayed a
   string and `ahead.condition` was undefined. `| from_json` in the variable fixes it.
 
-## The pictures
+## The pictures, and how they move
 
 They are drawn, not photographed. One public-domain photo of the tower against a clear
 blue sky ([Wikimedia Commons, "Zizkov tv tower.jpg"](https://commons.wikimedia.org/wiki/File:Zizkov_tv_tower.jpg),
@@ -73,19 +73,41 @@ by Orange.man) is cut out of its sky, and `scenes.py` paints each scene around i
 sun or moon and stars, clouds, rain, snow, a lightning bolt, wind streaks and fog. The tower
 is relit for each scene, and at night the red obstruction light on the antenna is on.
 
+Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
+layers rather than one picture:
+
+| layer | element | motion |
+|---|---|---|
+| `<scene>-<dn>-back.jpg`: sky, sun/moon, stars, bolt | `ha-card` background | none |
+| `<scene>-<dn>-clouds.webp`: a strip that wraps left to right | `ha-card::before`, 200 % wide | `transform` drift: 90 s per loop (partly cloudy), 30 s (windy), 160 s (overcast); storms also flash every 7 s |
+| precipitation tiles `rain-light`, `rain-heavy`, `snow-near`, `snow-far`, `wind-day/night` | `ha-card::after` | `background-position`; rain falls on a 1:4 slant and snow sways, each loop an exact number of tiles, so there is no seam |
+| scrim and `<scene>-<dn>-front.webp`: the tower, fog, obstruction light | `ha-card::after`, under the tiles | none |
+| `glass-<kind>.webp`: drops and flakes landing on the screen | `ha-card::after`, topmost | a looping animated WebP (8 s); drops splat in, some slide, then evaporate; flakes melt into a drop and vanish |
+
+The card's own content sits above all of it (`ha-card > * { z-index: 2 }`). Under
+`prefers-reduced-motion` the CSS animations stop and the glass swaps to a still frame
+(`glass-<kind>-still.png`); the scene still shows its weather, it just does not move.
+
+`card_style.py` writes the whole `card_mod` style (one CSS block per scene, keyframes
+included), so the CSS is generated, not hand-edited:
+
 ```bash
 python3 tools/weather-scenes/cutout.py src.jpg tower.png 12   # 12 = how far the sky fill may grow
 python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size, tower centre, tower height
-sudo install -m 644 out/*.jpg /usr/share/hassio/homeassistant/www/zizkov/
+python3 tools/weather-scenes/glass.py out/                    # slow: about 10 min
+sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
+python3 tools/weather-scenes/card_style.py 5 > style.jinja    # 5 = the ?v= cache-buster
 ```
 
-The image URL carries `?v=3`. After regenerating the images, bump it: `/local/` is cached
-for 31 days.
+After regenerating anything, bump the version: `/local/` is cached for 31 days.
 
 ## Not covered by a test
 
 - That the sensor fires and the action returns a forecast: checked by reading
   `sensor.weather_ahead` back after deployment.
+- That it moves: `render.py` freezes animations (`animations="disabled"`), so motion was
+  checked by two shots 0.7 s apart in one browser session: about 6 % of the card's pixels
+  change, and 0 % with reduced motion emulated.
 - How the card looks: checked by rendering Home at 390 px and 1280 px with
   `tests/dashboards/render.py`. The scene images are 900×620 with the tower about two-thirds of
   the way across and slightly zoomed out (operator's choice, after a centred version), which
@@ -153,20 +175,9 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    {% set a = states.sensor.weather_ahead.attributes if states.sensor.weather_ahead is not none else {} %}
-    {% set sc = a.get('scene') if a.get('scene') in ['sunny','partlycloudy','cloudy','rainy','pouring','storm','snowy','sleet','fog','windy'] else 'cloudy' %}
-    {% set d = a.get('daytime') if a.get('daytime') in [true, false] else is_state('sun.sun', 'above_horizon') %}
-    {% set words = {'clear-night': 'clear', 'sunny': 'sunny', 'partlycloudy': 'partly cloudy', 'cloudy': 'cloudy', 'fog': 'fog', 'rainy': 'rain', 'pouring': 'heavy rain', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'hail': 'hail', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'windy': 'windy', 'windy-variant': 'windy', 'exceptional': 'unusual weather'} %}
-    {% set ahead = words.get(states('sensor.weather_ahead')) %}
-    ha-card {
-      background-image: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/{{ sc }}-{{ 'day' if d else 'night' }}.jpg?v=3') !important;
-      background-size: cover !important;
-      background-position: center !important;
-      --primary-text-color: #fff;
-      --secondary-text-color: rgba(255,255,255,.88);
-      color: #fff;
-      text-shadow: 0 1px 4px rgba(0,0,0,.75);
-    }
-    {% if ahead %}.name { font-size: 0 !important; }
-    .name::after { content: 'Next 3 h: {{ ahead }}'; font-size: var(--ha-font-size-m, 14px); }{% endif %}
+    # the output of: python3 tools/weather-scenes/card_style.py 5
 ```
+
+The style picks `scene` and `daytime` from `sensor.weather_ahead` (falling back to cloudy
+and `sun.sun`), stacks the layers above for that scene, and replaces the location line
+with "Next 3 h: <condition>".

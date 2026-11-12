@@ -1,4 +1,11 @@
-"""Render the Zizkov tower weather scenes: <scene>-<day|night>.jpg"""
+"""Render the Zizkov tower weather scenes as animation layers.
+
+Per scene and day/night: <name>-back.jpg (sky), <name>-clouds.webp (a seamless strip that
+drifts) and <name>-front.webp (the tower). Shared tiles: rain-light, rain-heavy, snow-near,
+snow-far, wind-day, wind-night (.webp), which tile seamlessly in both directions.
+
+    python3 scenes.py tower.png out/ [WxH] [tower centre x] [tower height]
+"""
 import sys, os, random, math, numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageChops
 tower_png, outdir = sys.argv[1], sys.argv[2]
@@ -47,17 +54,20 @@ def disc(img, cx, cy, r, color):
     d = ImageDraw.Draw(img); d.ellipse((cx-r, cy-r, cx+r, cy+r), fill=color)
 
 def clouds(img, n, color, ymax, alpha, seed, stretch=1.0, size=1.0):
+    """Clouds on their own layer, seamless left-to-right so the strip can drift."""
     rnd = random.Random(seed)
-    layer = Image.new('RGBA', (W, H), color + (0,)); d = ImageDraw.Draw(layer)
+    wide = Image.new('RGBA', (3 * W, H), color + (0,)); d = ImageDraw.Draw(wide)
     for _ in range(n):
-        cx, cy = rnd.uniform(-100, W + 100), rnd.uniform(-40, ymax)
+        cx, cy = rnd.uniform(0, W), rnd.uniform(-40, ymax)
         for _ in range(rnd.randint(5, 9)):
             rx = rnd.uniform(40, 110) * stretch * size; ry = rnd.uniform(25, 60) * size
             ox, oy = rnd.uniform(-120, 120) * stretch * size, rnd.uniform(-25, 20) * size
             shade = rnd.uniform(0.9, 1.05)
             c = tuple(int(min(255, v * shade)) for v in color)
-            d.ellipse((cx+ox-rx, cy+oy-ry, cx+ox+rx, cy+oy+ry), fill=c + (alpha,))
-    img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(14)))
+            for k in (0, 1, 2):   # draw every copy, so the strip wraps
+                x = cx + ox + k * W
+                d.ellipse((x-rx, cy+oy-ry, x+rx, cy+oy+ry), fill=c + (alpha,))
+    img.alpha_composite(wide.filter(ImageFilter.GaussianBlur(14)).crop((W, 0, 2 * W, H)))
 
 def overcast(img, color, alpha, seed, ymax=H):
     clouds(img, 26, color, ymax, alpha, seed, stretch=1.6, size=1.3)
@@ -79,19 +89,42 @@ def aviation(img):
     cx, cy = TIP[0], TIP[1] + 3
     glow(img, cx, cy, 26, (255, 40, 30), 0.9); disc(img, cx, cy, 3, (255, 90, 80, 255))
 
-def rain(img, n, length, alpha, seed, slant=0.22, width=2):
-    rnd = random.Random(seed); layer = Image.new('RGBA', (W, H), (210, 220, 235, 0)); d = ImageDraw.Draw(layer)
-    for _ in range(n):
-        x, y = rnd.uniform(-100, W), rnd.uniform(-length, H); L = length * rnd.uniform(0.6, 1.2)
-        d.line((x, y, x + L * slant, y + L), fill=(210, 220, 235, int(alpha * rnd.uniform(0.5, 1))), width=width)
-    img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(0.6)))
+T = 400   # precipitation tile, px (shown at half size in CSS, so sharp on 2x screens)
 
-def snow(img, n, seed, wet=False):
-    rnd = random.Random(seed); layer = Image.new('RGBA', (W, H), (255, 255, 255, 0)); d = ImageDraw.Draw(layer)
-    for _ in range(n):
-        x, y = rnd.uniform(0, W), rnd.uniform(0, H); r = rnd.choice((1.5, 2, 2.5, 3.5, 4.5))
-        d.ellipse((x-r, y-r, x+r, y+r), fill=(255, 255, 255, rnd.randint(170, 250)))
-    img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(0.9)))
+def _tile(draw_fn, blur, color, size=(T, T)):
+    tw_, th_ = size
+    big = Image.new('RGBA', (3 * tw_, 3 * th_), color + (0,)); d = ImageDraw.Draw(big)
+    for kx in (0, 1, 2):
+        for ky in (0, 1, 2):
+            draw_fn(d, kx * tw_, ky * th_)
+    return big.filter(ImageFilter.GaussianBlur(blur)).crop((tw_, th_, 2 * tw_, 2 * th_))
+
+def rain_tile(n, length, alpha, seed, width=2):
+    # slant 1/4: the CSS moves the tile (1, 4) tiles per loop, which is seamless
+    rnd = random.Random(seed)
+    drops = [(rnd.uniform(0, T), rnd.uniform(0, T), length * rnd.uniform(0.6, 1.2),
+              int(alpha * rnd.uniform(0.5, 1))) for _ in range(n)]
+    def draw(d, ox, oy):
+        for x, y, L, a in drops:
+            d.line((ox + x, oy + y, ox + x + L * 0.25, oy + y + L), fill=(210, 220, 235, a), width=width)
+    return _tile(draw, 0.6, (210, 220, 235))
+
+def snow_tile(n, radii, seed):
+    rnd = random.Random(seed)
+    flakes = [(rnd.uniform(0, T), rnd.uniform(0, T), rnd.choice(radii), rnd.randint(170, 250)) for _ in range(n)]
+    def draw(d, ox, oy):
+        for x, y, r, a in flakes:
+            d.ellipse((ox+x-r, oy+y-r, ox+x+r, oy+y+r), fill=(255, 255, 255, a))
+    return _tile(draw, 0.9, (255, 255, 255))
+
+def wind_tile(seed, color, n=9):
+    rnd = random.Random(seed); size = (2 * T, T)
+    gusts = [(rnd.uniform(0, 2 * T), rnd.uniform(20, T - 20), rnd.uniform(160, 380), rnd.randint(90, 160)) for _ in range(n)]
+    def draw(d, ox, oy):
+        for x, y, L, a in gusts:
+            pts = [(ox + x + i * L / 20, oy + y + 10 * math.sin(i / 3.2)) for i in range(21)]
+            d.line(pts, fill=color + (a,), width=3)
+    return _tile(draw, 1.2, color, size)
 
 def lightning(img, seed):
     rnd = random.Random(seed); x, y = int(W*.22), -10; pts = [(x, y)]
@@ -116,42 +149,56 @@ def fog(img, color, top_a, bot_a):
     img.alpha_composite(layer)
 
 def render(scene, night):
+    """Three layers: back (sky, sun/moon, stars, bolt), clouds (seamless strip), front
+    (tower, fog, obstruction light). Precipitation and wind come from the shared tiles."""
     R = 7  # seed
+    cl = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    front = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     if scene in ('sunny', 'partlycloudy', 'windy'):
         sky = grad((14, 22, 52), (40, 58, 102)) if night else grad((38, 110, 205), (150, 200, 240))
         if night: stars(sky, R); disc(sky, int(W*.18), int(H*.2), 34, (245, 240, 220, 255)); glow(sky, int(W*.18), int(H*.2), 140, (200, 210, 255), 0.35)
         else: glow(sky, int(W*.18), int(H*.2), 380, (255, 245, 200), 0.85); disc(sky, int(W*.18), int(H*.2), 48, (255, 252, 235, 255))
-        if scene == 'partlycloudy': clouds(sky, 6, (70, 80, 110) if night else (250, 250, 252), H * 0.6, 235, R)
-        if scene == 'windy': clouds(sky, 7, (70, 80, 110) if night else (245, 247, 250), H * 0.7, 200, R, stretch=2.6, size=0.7)
-        tow = lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0)
-        sky.alpha_composite(tow, (TX, TY))
-        if scene == 'windy': wind(sky, R, (230, 235, 245) if not night else (150, 160, 190))
+        if scene == 'partlycloudy': clouds(cl, 6, (70, 80, 110) if night else (250, 250, 252), H * 0.6, 235, R)
+        if scene == 'windy': clouds(cl, 7, (70, 80, 110) if night else (245, 247, 250), H * 0.7, 200, R, stretch=2.6, size=0.7)
+        front.alpha_composite(lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0), (TX, TY))
     elif scene == 'cloudy':
         sky = grad((28, 32, 44), (52, 56, 70)) if night else grad((138, 148, 162), (196, 202, 210))
-        overcast(sky, (60, 64, 78) if night else (222, 225, 230), 220, R)
-        sky.alpha_composite(lit_tower(0.33, 0.3, (30, 35, 60), 0.2) if night else lit_tower(0.86, 0.45), (TX, TY))
+        overcast(cl, (60, 64, 78) if night else (222, 225, 230), 220, R)
+        front.alpha_composite(lit_tower(0.33, 0.3, (30, 35, 60), 0.2) if night else lit_tower(0.86, 0.45), (TX, TY))
     elif scene in ('rainy', 'pouring', 'storm', 'sleet'):
         dark = scene in ('pouring', 'storm')
         if night: sky = grad((14, 16, 24), (34, 38, 50))
         else: sky = grad((70, 76, 88), (122, 128, 140)) if dark else grad((104, 112, 126), (160, 166, 176))
-        overcast(sky, (40, 44, 56) if night else ((96, 100, 112) if dark else (150, 156, 166)), 230, R)
+        overcast(cl, (40, 44, 56) if night else ((96, 100, 112) if dark else (150, 156, 166)), 230, R)
         if scene == 'storm': lightning(sky, R)
-        sky.alpha_composite(lit_tower(0.3, 0.25, (25, 30, 50), 0.2) if night else lit_tower(0.66 if dark else 0.76, 0.35), (TX, TY))
-        if scene == 'sleet': rain(sky, 220, 30, 150, R); snow(sky, 160, R + 1)
-        else: rain(sky, 900 if dark else 380, 55 if dark else 38, 200 if dark else 170, R, width=2)
-        if dark: fog(sky, (120, 128, 140) if not night else (40, 44, 56), 0.05, 0.3)
+        front.alpha_composite(lit_tower(0.3, 0.25, (25, 30, 50), 0.2) if night else lit_tower(0.66 if dark else 0.76, 0.35), (TX, TY))
+        if dark: fog(front, (120, 128, 140) if not night else (40, 44, 56), 0.05, 0.3)
     elif scene == 'snowy':
         sky = grad((40, 44, 58), (78, 82, 96)) if night else grad((128, 138, 154), (186, 192, 202))
-        overcast(sky, (80, 84, 100) if night else (176, 182, 192), 210, R)
-        sky.alpha_composite(lit_tower(0.42, 0.25, (40, 50, 90), 0.2) if night else lit_tower(0.95, 0.3), (TX, TY))
-        snow(sky, 520, R)
+        overcast(cl, (80, 84, 100) if night else (176, 182, 192), 210, R)
+        front.alpha_composite(lit_tower(0.42, 0.25, (40, 50, 90), 0.2) if night else lit_tower(0.95, 0.3), (TX, TY))
     elif scene == 'fog':
         sky = grad((40, 44, 52), (66, 70, 78)) if night else grad((190, 194, 198), (220, 222, 224))
-        sky.alpha_composite(lit_tower(0.38, 0.2) if night else lit_tower(0.9, 0.25), (TX, TY))
-        fog(sky, (70, 74, 82) if night else (226, 228, 230), 0.55, 0.3)
-    if night: aviation(sky)
-    sky.convert('RGB').save(os.path.join(outdir, f"{scene}-{'night' if night else 'day'}.jpg"), quality=82, optimize=True, progressive=True)
+        front.alpha_composite(lit_tower(0.38, 0.2) if night else lit_tower(0.9, 0.25), (TX, TY))
+        fog(front, (70, 74, 82) if night else (226, 228, 230), 0.55, 0.3)
+    if night: aviation(front)
+    name = f"{scene}-{'night' if night else 'day'}"
+    sky.convert('RGB').save(os.path.join(outdir, name + '-back.jpg'), quality=84, optimize=True, progressive=True)
+    if cl.getbbox(): cl.save(os.path.join(outdir, name + '-clouds.webp'), quality=82)
+    front.save(os.path.join(outdir, name + '-front.webp'), quality=88)
 
 SCENES = ['sunny', 'partlycloudy', 'cloudy', 'rainy', 'pouring', 'storm', 'snowy', 'sleet', 'fog', 'windy']
 for s in SCENES:
     for n in (False, True): render(s, n)
+
+R = 7
+tiles = {
+    'rain-light': rain_tile(26, 60, 170, R),
+    'rain-heavy': rain_tile(70, 85, 200, R + 1),
+    'snow-near': snow_tile(22, (4, 5, 6.5), R + 2),
+    'snow-far': snow_tile(60, (2, 2.5, 3), R + 3),
+    'wind-day': wind_tile(R, (230, 235, 245)),
+    'wind-night': wind_tile(R, (150, 160, 190)),
+}
+for k, im in tiles.items():
+    im.save(os.path.join(outdir, k + '.webp'), quality=85)
