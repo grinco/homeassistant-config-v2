@@ -82,7 +82,7 @@ layers rather than one picture:
 | `<scene>-<dn>-clouds.webp`: a strip that wraps left to right | `ha-card::before`, 200 % wide | `transform` drift: 90 s per loop (partly cloudy), 30 s (windy), 160 s (overcast); storms also flash every 7 s |
 | precipitation tiles `rain-light`, `rain-heavy`, `snow-near`, `snow-far`, `wind-day/night` | `ha-card::after` | `background-position`; rain falls on a 1:4 slant and snow sways, each loop an exact number of tiles, so there is no seam |
 | scrim and `<scene>-<dn>-front.webp`: the tower, fog, obstruction light | `ha-card::after`, under the tiles | none |
-| `glass-<kind>.webp`: drops and flakes landing on the screen | `ha-card::after`, topmost | a looping animated WebP (8 s); drops splat in, some slide, then evaporate; flakes melt into a drop and vanish |
+| `glass-<kind>.webp`: drops and flakes landing on the screen | `ha-card::after`, topmost | a looping animated WebP (8 s); drops splat in, stick, then run down under gravity with a sideways wind drift and a thinning wet trail, and evaporate; flakes slide with the wind, melt into a drop and vanish |
 
 The card's own content sits above all of it (`ha-card > * { z-index: 2 }`). Under
 `prefers-reduced-motion` the CSS animations stop and the glass swaps to a still frame
@@ -94,9 +94,9 @@ included), so the CSS is generated, not hand-edited:
 ```bash
 python3 tools/weather-scenes/cutout.py src.jpg tower.png 12   # 12 = how far the sky fill may grow
 python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size, tower centre, tower height
-python3 tools/weather-scenes/glass.py out/                    # slow: about 10 min
+python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 5 > style.jinja    # 5 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 6 > style.jinja    # 6 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days.
@@ -175,7 +175,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 5
+    # the output of: python3 tools/weather-scenes/card_style.py 6
 ```
 
 The style picks `scene` and `daytime` from `sensor.weather_ahead` (falling back to cloudy

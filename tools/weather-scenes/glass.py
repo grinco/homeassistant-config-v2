@@ -2,6 +2,9 @@
 
     python3 glass.py out/
 
+Drops stick for a moment, then run down under gravity to a top speed, pushed sideways by
+the wind and leaving a thinning wet trail; flakes slide with the wind as they melt.
+
 Writes glass-<kind>.webp (looping animated WebP with alpha) and glass-<kind>-still.png (one
 frame, for prefers-reduced-motion) for kind in rain, pour, snow, sleet. The loop is seamless:
 every drop's age is taken modulo the loop length.
@@ -79,8 +82,12 @@ def _scaled(sprite, k, alpha):
     return im
 
 
+WIND = {'rain': 0.22, 'pour': 0.45, 'snow': 0.0, 'sleet': 0.3}   # sideways px per px fallen
+FLAKE_DRIFT = {'snow': 18.0, 'sleet': 26.0}                         # px/s a flake slides sideways
+
+
 def events(kind, seed):
-    """(birth s, x, y, type, size, life s, slide px)"""
+    """(birth s, x, y, type, size, life s, stick s, top speed px/s)"""
     rnd = random.Random(seed)
     rate = {'rain': 0.9, 'pour': 2.0, 'snow': 1.0, 'sleet': 1.0}[kind]   # per second
     ev = []
@@ -88,29 +95,57 @@ def events(kind, seed):
         t = rnd.uniform(0, LOOP)
         typ = 'flake' if kind == 'snow' or (kind == 'sleet' and rnd.random() < 0.5) else 'drop'
         size = rnd.choice((10, 12, 14)) if typ == 'flake' else rnd.choice((6, 7, 8, 10, 12))
-        life = rnd.uniform(2.5, 4.5)
-        slide = rnd.uniform(30, 80) if typ == 'drop' and size >= 8 and rnd.random() < 0.35 else 0
-        ev.append((t, rnd.uniform(10, W - 10), rnd.uniform(10, H * 0.9), typ, size, life, slide))
+        runs = typ == 'drop' and rnd.random() < (0.85 if size >= 8 else 0.4)
+        life = rnd.uniform(3.0, 5.0) if runs else rnd.uniform(2.5, 4.0)
+        stick = rnd.uniform(0.25, 1.4)                       # sits before gravity wins
+        vt = (55 + 11 * size) * rnd.uniform(0.8, 1.25) if runs else 0
+        ev.append((t, rnd.uniform(10, W - 10), rnd.uniform(5, H * 0.75), typ, size, life, stick, vt))
     return ev
+
+
+G = 320.0   # px/s^2
+
+
+def fallen(age, stick, vt):
+    """Distance run down the glass: still until `stick`, then gravity up to a top speed."""
+    a = age - stick
+    if vt <= 0 or a <= 0:
+        return 0.0
+    ta = vt / G
+    return 0.5 * G * a * a if a < ta else 0.5 * G * ta * ta + vt * (a - ta)
 
 
 DROPS = {r: drop_sprite(r) for r in (5, 6, 7, 8, 10, 12)}
 FLAKES = {}
 
 
-def frame(ev, t):
+def frame(ev, t, kind):
     im = Image.new('RGBA', (W, H), (255, 255, 255, 0))
-    for (b, x, y, typ, size, life, slide) in ev:
+    wind = WIND[kind]
+    for (b, x, y, typ, size, life, stick, vt) in ev:
         age = (t - b) % LOOP
         if age >= life:
             continue
         u = age / life
         if typ == 'drop':
-            k = min(1.0, 0.35 + age / 0.12)                     # splat in
-            a = 1.0 if u < 0.7 else max(0.0, 1 - (u - 0.7) / 0.3)
-            k *= 1 - 0.3 * max(0.0, (u - 0.7) / 0.3)          # evaporate: shrink as it fades
-            yy = y + (slide * max(0.0, (age - 1.2)) ** 2 / max(0.01, (life - 1.2) ** 2) if slide and age > 1.2 else 0)
-            sp = scaled(DROPS[min(DROPS, key=lambda r: abs(r - size))], k, a)
+            def at(g):
+                d = fallen(g, stick, vt)
+                return x + wind * d + 3.5 * math.sin(d / 16.0), y + d
+            fade = 1.0 if u < 0.75 else max(0.0, 1 - (u - 0.75) / 0.25)
+            if vt:   # the wet trail it leaves, thinning behind it
+                for k in range(1, 36):
+                    g = age - 0.02 * k
+                    if g <= stick:
+                        break
+                    tx, ty = at(g)
+                    tr = scaled(DROPS[5], 0.36, 0.22 * (1 - k / 36) * fade)
+                    im.alpha_composite(tr, (int(tx - tr.width / 2), int(ty - tr.height / 2)))
+            k = min(1.0, 0.35 + age / 0.12)                   # splat in
+            k *= 1 - 0.3 * max(0.0, (u - 0.75) / 0.25)        # evaporate: shrink as it fades
+            if vt and age > stick:
+                k *= 0.92                                     # a running drop stretches thin
+            xx, yy = at(age)
+            sp = scaled(DROPS[min(DROPS, key=lambda r: abs(r - size))], k, fade)
         else:
             if size not in FLAKES:
                 FLAKES[size] = flake_sprite(size)
@@ -121,15 +156,17 @@ def frame(ev, t):
             sp = Image.new('RGBA', (max(fl.width, dr.width), max(fl.height, dr.height)), (255, 255, 255, 0))
             sp.alpha_composite(dr, ((sp.width - dr.width) // 2, (sp.height - dr.height) // 2))
             sp.alpha_composite(fl, ((sp.width - fl.width) // 2, (sp.height - fl.height) // 2))
-            yy = y
-        im.alpha_composite(sp, (int(x - sp.width / 2), int(yy - sp.height / 2)))
+            # pushed sideways by the wind, and once it is water, gravity takes it a little
+            xx = x + FLAKE_DRIFT.get(kind, 0) * age
+            yy = y + 7.0 * age + 0.5 * G * 0.4 * max(0.0, age - 0.75 * life) ** 2
+        im.alpha_composite(sp, (int(xx - sp.width / 2), int(yy - sp.height / 2)))
     return im
 
 
 for i, kind in enumerate(('rain', 'pour', 'snow', 'sleet')):
     ev = events(kind, 11 + i)
-    frames = [frame(ev, n / FPS) for n in range(N)]
+    frames = [frame(ev, n / FPS, kind) for n in range(N)]
     frames[0].save(os.path.join(out, 'glass-%s.webp' % kind), save_all=True, append_images=frames[1:],
-                   duration=int(1000 / FPS), loop=0, quality=70, method=6, minimize_size=True)
-    frame(ev, 2.0).save(os.path.join(out, 'glass-%s-still.png' % kind), optimize=True)
+                   duration=int(1000 / FPS), loop=0, quality=70, method=4)
+    frame(ev, 2.0, kind).save(os.path.join(out, 'glass-%s-still.png' % kind), optimize=True)
     print(kind, len(ev), 'events', os.path.getsize(os.path.join(out, 'glass-%s.webp' % kind)) // 1024, 'KB')
