@@ -106,6 +106,14 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **Security at a glance (lint C47, 2026-11-13).** The alarm panel's health is one line under the
+  Alarmo card ("Panel online · battery 13.9 V · wall panel **disarmed**"): readiness only while
+  disarmed, anything abnormal in bold (panel not online, not ready, battery under 12.2 V, the wall
+  panel disagreeing with Alarmo). Front door: the door and lock battery are heading badges and the
+  lock tile carries lock/unlock on its own row; the left-unlocked / left-open warnings stay. Front
+  door camera: the last-motion picture is 16:9 and covers its card; the PIR is only a heading badge.
+  Cameras: two per row at 16:9 (still images, tap for live). Presence stays. C47: Security names
+  each entity once, badges included, and a health reading shows as a card only when abnormal.
 - **Comfort: one row per room (lint C34, 2026-11-13).** Each automated room is one row: the target
   the automation uses now (night while `binary_sensor.lighting_night` is on, day otherwise) as a
   tile with − / + on two-thirds of the width, and that room's air-filter switch on the last third.

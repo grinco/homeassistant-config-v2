@@ -1000,6 +1000,26 @@ def m_comfort_rows_split(d):
     return "C34"
 
 
+def m_security_health_pill(d):
+    """2026-11-13: the panel link is a card again, green whether or not anything is wrong."""
+    doc = _cfg(d, LOV)
+    _section(doc, "security", "Alarm").append(
+        {"type": "custom:button-card", "template": "vg_stat", "entity": "sensor.evo192_pai_status",
+         "name": "Panel link", "grid_options": {"columns": 6, "rows": 1}})
+    _save(d, LOV, doc)
+    return "C47"
+
+
+def m_security_pir_twice(d):
+    """2026-11-13: the doorbell PIR is a heading badge and a pill again."""
+    doc = _cfg(d, LOV)
+    _section(doc, "security", "Front door camera").append(
+        {"type": "custom:button-card", "template": "vg_stat", "entity": "binary_sensor.home_door_motion",
+         "name": "Camera PIR", "grid_options": {"columns": 6, "rows": 1}})
+    _save(d, LOV, doc)
+    return "C47"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1258,6 +1278,8 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
+    ("an alarm health pill shows while normal", m_security_health_pill),
+    ("the doorbell PIR shows twice", m_security_pir_twice),
     ("Comfort's target and filter leave their shared row", m_comfort_rows_split),
     ("an AC card shows at 0 W again", m_ac_card_always_shown),
     ("an all-clear room lists every sensor again", m_security_lists_clear_rooms),

@@ -287,6 +287,12 @@ Checks, each one written because something it catches actually shipped:
                          numeric_state visibility and an "all off" line stands in for them;
                          the sockets generator lists idle sockets in one summary; Security's
                          sensor generator folds an all-clear room into one line.
+  C47 security-glance    the Security tab names each entity once (heading badges included),
+                         and the alarm panel's health readings (link, readiness, backup
+                         battery, the wall panel's own state) are one summary line; a pill
+                         for one shows only when it is abnormal (a visibility condition).
+                         2026-11-13: four always-green pills, and the doorbell PIR shown as a
+                         heading badge and again as a pill.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -770,6 +776,9 @@ def effective(card, lib):
             eff[k] = v
     return eff
 
+
+# C47: the alarm panel's health readings (Paradox EVO192 via PAI).
+SECURITY_HEALTH_RE = r"^(sensor\.evo192_pai_status|sensor\.evo192_system_power_battery|binary_sensor\.\w*_partition_paradox_alarm_ready|alarm_control_panel\.evo192_partition_\w+)$"
 
 # C44: rooms per row in a floor's grid.
 FLOOR_COLUMNS = 3
@@ -1777,6 +1786,24 @@ def main():
                 quiet.append("security: an all-clear room still lists every sensor")
         if quiet:
             fail("C46", "%s: an idle list spends a card per idle thing" % label, quiet)
+
+        # C47 - Security: each entity once; alarm health is a line, pills only when abnormal.
+        sv = next((v for v in views if v.get("path") == "security"), None)
+        if sv is not None:
+            loud, seen = [], {}
+            for path, card in cards(sv, "%s/security" % label):
+                if card.get("type") == "custom:auto-entities":
+                    continue
+                eid = card.get("entity")
+                if isinstance(eid, str) and "." in eid and eid != "this.entity_id":
+                    seen.setdefault(eid, []).append(path)
+                if (re.match(SECURITY_HEALTH_RE, str(eid)) and card.get("type") != "heading"
+                        and not card.get("visibility")):
+                    loud.append("%s shows %s whether or not it is abnormal" % (path, eid))
+            loud += ["%s appears %d times: %s" % (e, len(p_), ", ".join(p_))
+                     for e, p_ in sorted(seen.items()) if len(p_) > 1]
+            if loud:
+                fail("C47", "%s: Security repeats itself or shows normal health as a card" % label, loud)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

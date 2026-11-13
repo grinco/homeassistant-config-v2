@@ -31,46 +31,12 @@
      "use_code_dialog": false
     },
     {
-     "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
+     "content": "{% set pai = states('sensor.evo192_pai_status') %}{% set rd = states('binary_sensor.corridor_evo192_partition_paradox_alarm_ready') %}{% set b = states('sensor.evo192_system_power_battery') | float(0) %}{% set wall = states('alarm_control_panel.evo192_partition_paradox_alarm') %}{% set a = states('alarm_control_panel.home') %}{{ 'Panel online' if pai == 'online' else '**Panel ' ~ pai ~ '**' }}{% if a == 'disarmed' %} · {{ 'ready to arm' if rd == 'on' else '**not ready to arm**' }}{% endif %} · battery {{ ('**' ~ b ~ ' V**') if b < 12.2 else (b ~ ' V') }}{% if wall != a %} · wall panel **{{ wall | replace('_', ' ') }}**{% endif %}",
      "grid_options": {
-      "columns": 6,
-      "rows": 1
+      "columns": "full"
      },
-     "name": "Physical panel",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Ready to arm",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.evo192_pai_status",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:lan-connect",
-     "name": "Panel link",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.evo192_system_power_battery",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:car-battery",
-     "name": "Backup battery",
-     "template": "vg_stat",
-     "type": "custom:button-card"
+     "text_only": true,
+     "type": "markdown"
     },
     {
      "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
@@ -94,6 +60,22 @@
   {
    "cards": [
     {
+     "badges": [
+      {
+       "color": "amber",
+       "entity": "binary_sensor.lock_ultra_max_7b06",
+       "name": "Door",
+       "show_state": true,
+       "type": "entity"
+      },
+      {
+       "color": "green",
+       "entity": "sensor.lock_ultra_max_7b06_battery",
+       "name": "Battery",
+       "show_state": true,
+       "type": "entity"
+      }
+     ],
      "heading": "Front door",
      "icon": "mdi:door",
      "type": "heading"
@@ -105,31 +87,12 @@
        "type": "lock-commands"
       }
      ],
+     "features_position": "inline",
      "grid_options": {
       "columns": "full"
      },
      "name": "Lock",
      "type": "tile"
-    },
-    {
-     "entity": "binary_sensor.lock_ultra_max_7b06",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Door",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.lock_ultra_max_7b06_battery",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Lock battery",
-     "template": "vg_stat",
-     "type": "custom:button-card"
     },
     {
      "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
@@ -262,11 +225,11 @@
      "type": "heading"
     },
     {
+     "aspect_ratio": "16:9",
      "entity": "image.home_door_last_motion_image",
-     "fit_mode": "contain",
+     "fit_mode": "cover",
      "grid_options": {
-      "columns": "full",
-      "rows": 6
+      "columns": "full"
      },
      "name": "Last motion",
      "show_name": false,
@@ -284,7 +247,7 @@
     {
      "entity": "camera.home_door",
      "grid_options": {
-      "columns": 6,
+      "columns": 12,
       "rows": 1
      },
      "icon": "mdi:cctv",
@@ -292,17 +255,6 @@
      "tap_action": {
       "action": "more-info"
      },
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.home_door_motion",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:motion-sensor",
-     "name": "Camera PIR",
      "template": "vg_stat",
      "type": "custom:button-card"
     }
@@ -315,7 +267,7 @@
      "cards": [
       {
        "card": {
-        "columns": 1,
+        "columns": 2,
         "square": false,
         "type": "grid"
        },
@@ -324,7 +276,7 @@
         "camera.home_door"
        ],
        "filter": {
-        "template": "\n{%- set ex = config.get('exclude', []) -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.camera | sort(attribute='entity_id') -%}\n{%- if s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else none -%}\n{%- set ns.l = ns.l + [{'type': 'picture-entity', 'entity': s.entity_id, 'name': dn or area_name(s.entity_id), 'camera_view': 'auto', 'show_state': false, 'fit_mode': 'contain', 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 'full', 'rows': 5}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
+        "template": "\n{%- set ex = config.get('exclude', []) -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.camera | sort(attribute='entity_id') -%}\n{%- if s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else none -%}\n{%- set ns.l = ns.l + [{'type': 'picture-entity', 'entity': s.entity_id, 'name': dn or area_name(s.entity_id), 'camera_view': 'auto', 'show_state': false, 'fit_mode': 'contain', 'aspect_ratio': '16:9', 'tap_action': {'action': 'more-info'}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
        },
        "grid_options": {
         "columns": "full"
