@@ -11,9 +11,9 @@ What it locks down (review 2026-11-12):
 - in every scene and keyframe stop, background-position has exactly one entry per
   background-image layer, so no layer silently takes another's position;
 - the reduced-motion override keeps the same number of layers, swapping only the glass.
-- day or night follows sun.sun at render time, in both directions (2026-11-13: the forecast's
-  is_daytime for the hour in progress still said day after sunset, so the card showed the
-  day picture at dusk).
+- day or night follows sun.sun at render time, in both directions (why: docs/weather-ahead.md).
+  The render is plain Jinja with a fake `states`; it checks which picture and headline the
+  template picks, not card-mod's re-rendering, and it compares strings, not HA's native types.
 """
 import os, re, sys
 
@@ -67,6 +67,10 @@ def day_night(fails):
         out = render_style(sun, sensor_attrs={"daytime": stale})
         if want + "back" not in out or wrong + "back" in out:
             fails.append("sun %s, sensor daytime %s: card does not show %s" % (sun, stale, want.strip("-")))
+    # Sensor unavailable (no forecast): cloudy picture, no headline swap (review 2026-11-13).
+    out = render_style("above_horizon", sensor_state="unavailable", sensor_attrs={"scene": None})
+    if "cloudy-day-back" not in out or "Next 3 h" in out:
+        fails.append("sensor unavailable: not the cloudy picture without a headline")
     # The forecast keeps 'sunny' for an hour that started before sunset: after dark say clear.
     for sun, want in (("below_horizon", "Next 3 h: clear'"), ("above_horizon", "Next 3 h: sunny'")):
         if want not in render_style(sun, sensor_state="sunny"):

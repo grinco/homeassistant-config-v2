@@ -48,7 +48,7 @@ tests call the same code the sensor runs.
   pouring (also hail), storm (lightning, lightning-rainy), snowy, sleet (snowy-rainy), fog,
   windy (windy, windy-variant). clear-night is the sunny scene at night, and exceptional is
   cloudy.
-- **Day or night is not the macro's job.** The card reads `sun.sun` itself (see below).
+- **Day or night is not the macro's job.** The card reads `sun.sun` itself, in its card_mod style (under "Configuration as deployed").
 - **Numbers, over the window only:** temperature min/max, feels-like minimum, precipitation
   sum, highest precipitation probability and highest wind speed.
 - **No forecast** (integration down): the macro returns `{}` and the sensor goes
@@ -215,5 +215,8 @@ with "Next 3 h: <condition>" ("clear" rather than "sunny" after dark).
 Day or night used to come from the forecast's `is_daytime` for the hour in progress. That
 hour can start before sunset, so for up to an hour after dark the card showed the day
 picture (seen 2026-11-13 at 16:35, sun 3° below the horizon). `sun.sun` changes at sunset
-itself and the card re-renders on it. `test_card_style.py` renders the style with Jinja and
+itself, and card-mod re-renders a style when an entity it reads changes. That re-render at
+the moment of sunset or sunrise has not been watched yet; a fresh load after sunset shows
+night. While `sun.sun` itself is unavailable (the first seconds of a restart) the card shows
+night; accepted, it lasts one render. `test_card_style.py` renders the style with Jinja and
 checks both directions: a stale "day" after sunset and a stale "night" after sunrise.

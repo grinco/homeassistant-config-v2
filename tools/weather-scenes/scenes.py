@@ -92,6 +92,8 @@ def clouds(img, cover, top, under, ymax, seed, stretch=1.6, density=1.0, lo=4.0,
     img.alpha_composite(Image.fromarray(out, 'RGBA'))
 
 def overcast(img, color, alpha, seed, ymax=1.0):
+    """A closed deck: alpha never drops below 0.55, but the texture thins towards the bottom,
+    as a real deck looks thinner towards the horizon. Intended."""
     c = np.array(color, float)
     clouds(img, 1.0, tuple((c * 1.18).clip(0, 255)), tuple(c * 0.7), ymax, seed, stretch=2.4,
            density=alpha / 255, lo=2.0, deck=True)
