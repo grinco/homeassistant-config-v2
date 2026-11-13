@@ -263,6 +263,15 @@ Checks, each one written because something it catches actually shipped:
                          Energy panel). 2026-11-13: socket load was on screen three times
                          and spot price twice in the first screenful, and a 14-day bar
                          chart of the lights' modelled kWh filled half a desktop.
+  C43 appliances-glance  Appliances is a glance. The oven, cooktop and dishwasher are
+                         watched, never driven: no program picker, button or action
+                         names one (operator, 2026-11-13). The tab names
+                         each entity once (no badge row repeating a State card), shows
+                         no settings (switch, number, image or connectivity entities -
+                         those live on the device's page), and a program's progress or
+                         finish time shows only while a program runs (the card carries a
+                         visibility condition). 2026-11-13: the least-used tab was
+                         3,400 px on a phone, mostly toggles and idle readings.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -721,6 +730,9 @@ def effective(card, lib):
     return eff
 
 
+# C3/C7: a card nested in another card's `cards` list is laid out by that card, not the section.
+NESTED_IN_GRID = re.compile(r"/cards/\d+/cards/\d+$")
+
 # C39: the views whose guides live behind an (i), and how long a heading may be.
 GUIDE_VIEWS = ("climate", "climate-advanced")
 HEADING_MAX = 22
@@ -774,7 +786,9 @@ def main():
             # slot (button-card's power pill, a slider row) is laid out by its
             # parent's grid-template-areas, so grid_options would do nothing -
             # requiring it there would be a check that fails for a wrong reason.
-            if "/custom_fields/" in path:
+            # Likewise a card inside a grid card: the grid card sizes it (Appliances'
+            # kitchen row stays three across even on a phone that way).
+            if "/custom_fields/" in path or NESTED_IN_GRID.search(path):
                 continue
             if not (card.get("grid_options") or {}).get("rows"):
                 norows.append("%s  (%s)" % (path, card.get("entity")))
@@ -825,7 +839,8 @@ def main():
         # 3-column cap left the third column empty on every row.
         tall, odd = [], []
         for path, card in found:
-            if card.get("type") != "custom:button-card" or "/custom_fields/" in path:
+            if (card.get("type") != "custom:button-card" or "/custom_fields/" in path
+                    or NESTED_IN_GRID.search(path)):
                 continue
             chain = set()
             queue = list(template_names(card))
@@ -1634,6 +1649,32 @@ def main():
                       for e, p in sorted(seen.items()) if len(p) > 1]
             if twice:
                 fail("C42", "%s: the Energy tab repeats itself" % label, twice)
+
+        # C43 - Appliances is a glance, not a settings page.
+        ap = [v for v in views if v.get("path") == "appliances"]
+        if ap:
+            seen, busy = {}, []
+            for path, card in cards(ap[0], "%s/appliances" % label):
+                eid = card.get("entity")
+                if not isinstance(eid, str):
+                    continue
+                seen.setdefault(eid, []).append(path)
+                dom = eid.split(".")[0]
+                if dom in ("switch", "number", "image") or eid.endswith("_connectivity"):
+                    busy.append("%s shows setting %s" % (path, eid))
+                if re.search(r"_program_(progress|finish_time)$", eid) and not card.get("visibility"):
+                    busy.append("%s shows %s while nothing runs" % (path, eid))
+            # The kitchen appliances are watched, never driven from here (operator,
+            # 2026-11-13): no program picker, no button, no action naming one.
+            for path, card in cards(ap[0], "%s/appliances" % label):
+                blob = own_text(card)
+                # As a card's entity or an action's target; reading a program's name is fine.
+                if re.search(r'"(entity|entity_id)": "(select|button)\.[a-z0-9_]*_(oven|cooktop|dishwasher)_', blob):
+                    busy.append("%s controls a kitchen appliance" % path)
+            busy += ["%s appears %d times: %s" % (e, len(p), ", ".join(p))
+                     for e, p in sorted(seen.items()) if len(p) > 1]
+            if busy:
+                fail("C43", "%s: Appliances is busier than a glance" % label, busy)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

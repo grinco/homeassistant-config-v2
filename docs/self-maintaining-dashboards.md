@@ -106,6 +106,18 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **Appliances is a glance (lint C43, 2026-11-13).** Three sections, one card style (the one-row
+  stat pill). *Kitchen* is one row of three compact cards (a grid card, so it stays three across
+  on a phone; template `vg_kitchen`): a 64px sketch of the real model that glows or bubbles while it
+  runs, the state, and a detail line: while a program runs, the time left and progress (a
+  delayed start says when it will be done); otherwise cavity temperature, program and door; and a
+  set kitchen timer (the oven's and cooktop's alarm clock) at any time. Tested by executing the
+  card's own JavaScript: `tests/dashboards/kitchencard.py`. They are watched, never driven from Home
+  Assistant (operator). No program picker, no Pause/Resume/Stop.
+  *Vacuum*: its commands inline on one row, status, battery, room, suction. *Car*: the lock
+  inline, doors and windows, location, range, the remote. No settings (switches, numbers,
+  connectivity, the vacuum map: they live on each device's page) and no badge row (it repeated
+  each state). 3,400 → ~800 px on a phone.
 - **The Energy tab names each entity once (lint C42, 2026-11-13).** No view badges (AC load, socket
   load and spot price were each also a graph right below), no load badge on the Sockets heading, and
   no statistics-graph: the 14-day modelled-lights chart went, since Home Assistant's own Energy panel
