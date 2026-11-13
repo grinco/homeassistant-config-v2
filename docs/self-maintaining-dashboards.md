@@ -204,6 +204,12 @@ The Home room tiles are one button-card template, `vg_room_card`
 - The status line does not count lights (2026-10-20, issue #5): on a phone "3 lights on" pushed
   "Someone here" off the card, and the lamp button already shows the lights. Locked by
   `tests/dashboards/roomcard.py`.
+- Presence is said both ways (2026-11-13): "Someone here" or "No one here", but only in a room
+  whose Magic Areas occupancy entity lists at least one `binary_sensor` in `presence_sensors`.
+  Magic Areas makes that entity in every room, sensor or not, and counts speakers and TVs as
+  presence; without a real sensor behind it, "No one here" would be a guess, so the card says
+  nothing. An occupancy entity that is unavailable or unknown also says nothing. Before this, only occupied rooms said anything, and an empty room looked the same as
+  one that cannot tell. Locked by `tests/dashboards/roomcard.py`.
 
 The 2026-09 report that a Kids room tile opened the AC more-info dialog was never proven. The
 likely cause was a `perform-action` that did not dispatch, so the card fell back to `more-info` on
