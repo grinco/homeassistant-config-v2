@@ -235,6 +235,8 @@ Checks, each one written because something it catches actually shipped:
                          device. Tiles now show the reading's own name, and a reading
                          that would clash carries a short registry name ("Desk temp.").
   C39 guides-collapsed   on the Climate views a heading is a name, at most HEADING_MAX
+                         characters, and a bold status flag carries no rationale clause
+                         after it (four words or more after "** — ");
                          characters; the explanation behind it lives in an (i) that
                          expands: a markdown `<details>` whose `<summary>` is the
                          mdi:information-outline icon, at least one per view. On
@@ -1534,12 +1536,19 @@ def main():
                         loud.append("%s has a <details> whose summary is not the (i) icon" % path)
                     else:
                         infos += 1
+                # A status flag states the fault; its rationale is a clause after it,
+                # "**Not responding: X** - comfort throttled, safety still running".
+                shown = re.sub(r"<details>.*?</details>", "", text, flags=re.S)
+                # Quotes and brackets end a run: "**Away** - safety band only' if away"
+                # is a Jinja string literal stating a state, not prose.
+                for m in re.finditer(r"\*\* [\u2014-] ((?:[^\s{<*'\"()]+ ){3,}[^\s{<*'\"()]+)", shown):
+                    loud.append("%s explains a flag on screen: %r" % (path, m.group(1)[:50]))
                 if text.count("<details>") != text.count("</details>"):
                     loud.append("%s has an unclosed <details>" % path)
             if not infos:
                 loud.append("%s/%s has no (i) guide at all" % (label, v.get("path")))
         if guide_views and loud:
-            fail("C39", "%s: a Climate guide is on show instead of behind its (i)" % label, loud)
+            fail("C39", "%s: a Climate heading or status flag explains itself, or a guide is not behind its (i)" % label, loud)
 
         # C40 - the Climate tab shows a reading once.
         clim = [v for v in views if v.get("path") == "climate"]

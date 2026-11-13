@@ -798,6 +798,29 @@ def m_climate_repeats_reading(d):
     return "C40"
 
 
+def m_guide_flag_explained(d):
+    """2026-11-13 review: a status flag carries its rationale on screen again."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    c = next(c for s in adv["sections"] for c in s["cards"]
+             if c.get("type") == "markdown" and "**Isolated:" in c.get("content", ""))
+    c["content"] = c["content"].replace("join(', ') }}**", "join(', ') }}** \u2014 comfort commands throttled to hourly retries", 1)
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_guide_view_without_info(d):
+    """2026-11-13 review: a Climate view loses every (i)."""
+    doc = _cfg(d, LOV)
+    v = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate"][0]
+    for s in v["sections"]:
+        for c in s["cards"]:
+            if c.get("type") == "markdown":
+                c["content"] = re.sub(r"<details>.*?</details>", "", c["content"], flags=re.S)
+    _save(d, LOV, doc)
+    return "C39"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1063,6 +1086,8 @@ MUTATIONS = [
     ("a transform leaves a scratch key", m_scratch_key),
     ("a Climate heading explains itself again", m_guide_on_show),
     ("a Climate guide expands from text, not the (i)", m_guide_summary_not_info),
+    ("a Climate status flag explains itself again", m_guide_flag_explained),
+    ("a Climate view loses every (i)", m_guide_view_without_info),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]
