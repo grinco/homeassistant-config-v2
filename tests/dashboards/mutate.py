@@ -946,6 +946,28 @@ def m_floor_forgets_fold(d):
     return "C44"
 
 
+def m_fold_hides_badge(d):
+    """2026-11-13: a section whose heading carries a toggle is folded again."""
+    doc = _cfg(d, LOV)
+    for v in doc["data"]["config"]["views"]:
+        for sec in v.get("sections") or []:
+            cs = sec.get("cards") or []
+            if cs and cs[0].get("type") == "heading" and cs[0].get("badges"):
+                sec["cards"] = [{"type": "custom:expander-card", "title-card": cs[0], "cards": cs[1:],
+                                 "storage-id": "x"}]
+                _save(d, LOV, doc)
+                return "C45"
+    raise SystemExit("no heading with badges to fold")
+
+
+def m_attention_remembers_fold(d):
+    """2026-11-13: Needs attention keeps a folded state across loads, hiding new alarms."""
+    doc = _cfg(d, LOV)
+    _needs_attention(doc)["cards"][0]["storage-id"] = "home-needs-attention"
+    _save(d, LOV, doc)
+    return "C45"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1204,6 +1226,8 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
+    ("a section with a heading toggle folds again", m_fold_hides_badge),
+    ("Needs attention remembers being folded", m_attention_remembers_fold),
     ("a floor back to two rooms per row", m_floor_two_across),
     ("a floor forgets being folded", m_floor_forgets_fold),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),

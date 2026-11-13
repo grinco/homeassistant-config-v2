@@ -276,6 +276,12 @@ Checks, each one written because something it catches actually shipped:
                          (an expander-card with a storage-id, so a phone remembers it) and
                          lays its rooms out FLOOR_COLUMNS across. 2026-11-13: on a phone the
                          upstairs rooms began two screens down.
+  C45 fold-rules         a section folds (expander-card) only if its heading carries
+                         nothing on the right - no badges, no tap action - because the
+                         fold chevron takes that place (operator, 2026-11-13: keep the
+                         toggle, info or action rather than the fold). Needs attention
+                         may fold but never remembers it (no storage-id): a phone that
+                         kept it folded would hide the next smoke or leak alarm.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1716,6 +1722,21 @@ def main():
                                            % (i, g.get("floor"), (g.get("card") or {}).get("columns"), FLOOR_COLUMNS))
             if far:
                 fail("C44", "%s: a floor's rooms are a long scroll away" % label, far)
+
+        # C45 - fold only what has nothing on the right; Needs attention never stays folded.
+        folds = []
+        for v in views:
+            for _, c in cards(v, "%s/%s" % (label, v.get("path"))):
+                if c.get("type") != "custom:expander-card":
+                    continue
+                t = c.get("title-card") or {}
+                if t.get("badges") or t.get("tap_action"):
+                    folds.append("%s/%s: %r folds, hiding what its heading carries on the right"
+                                 % (label, v.get("path"), t.get("heading")))
+                if t.get("heading") == "Needs attention" and c.get("storage-id"):
+                    folds.append("%s/%s: Needs attention remembers being folded" % (label, v.get("path")))
+        if folds:
+            fail("C45", "%s: a fold hides something it should not" % label, folds)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

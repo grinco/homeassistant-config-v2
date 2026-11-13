@@ -8,115 +8,84 @@
   {
    "cards": [
     {
-     "cards": [
-      {
-       "button_scale_actions": 1,
-       "button_scale_keypad": 1,
-       "entity": "alarm_control_panel.home",
-       "grid_options": {
-        "columns": "full",
-        "rows": "auto"
-       },
-       "hide_keypad": false,
-       "keep_keypad_visible": false,
-       "name": "",
-       "show_bypassed_sensors": true,
-       "show_messages": true,
-       "show_ready_indicator": true,
-       "states": {},
-       "type": "custom:alarmo-card",
-       "use_code_dialog": false
-      },
-      {
-       "cards": [
-        {
-         "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Physical panel",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        },
-        {
-         "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Ready to arm",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        }
-       ],
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      {
-       "cards": [
-        {
-         "entity": "sensor.evo192_pai_status",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "icon": "mdi:lan-connect",
-         "name": "Panel link",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        },
-        {
-         "entity": "sensor.evo192_system_power_battery",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "icon": "mdi:car-battery",
-         "name": "Backup battery",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        }
-       ],
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      {
-       "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
-       "grid_options": {
-        "columns": "full"
-       },
-       "text_only": true,
-       "type": "markdown",
-       "visibility": [
-        {
-         "condition": "state",
-         "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_trouble",
-         "state": "on"
-        }
-       ]
-      }
-     ],
-     "child-padding": "0",
-     "clear": true,
-     "expanded": true,
-     "expanded-gap": "8px",
-     "expander-card-display": "grid",
-     "gap": "8px",
+     "heading": "Alarm",
+     "icon": "mdi:shield-home",
+     "type": "heading"
+    },
+    {
+     "button_scale_actions": 1,
+     "button_scale_keypad": 1,
+     "entity": "alarm_control_panel.home",
+     "grid_options": {
+      "columns": "full",
+      "rows": "auto"
+     },
+     "hide_keypad": false,
+     "keep_keypad_visible": false,
+     "name": "",
+     "show_bypassed_sensors": true,
+     "show_messages": true,
+     "show_ready_indicator": true,
+     "states": {},
+     "type": "custom:alarmo-card",
+     "use_code_dialog": false
+    },
+    {
+     "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Physical panel",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Ready to arm",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.evo192_pai_status",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:lan-connect",
+     "name": "Panel link",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.evo192_system_power_battery",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:car-battery",
+     "name": "Backup battery",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
      "grid_options": {
       "columns": "full"
      },
-     "padding": "0",
-     "storage-id": "security-alarm",
-     "title-card": {
-      "heading": "Alarm",
-      "icon": "mdi:shield-home",
-      "type": "heading"
-     },
-     "title-card-clickable": true,
-     "type": "custom:expander-card"
+     "text_only": true,
+     "type": "markdown",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_trouble",
+       "state": "on"
+      }
+     ]
     }
    ],
    "column_span": 1,
@@ -125,107 +94,76 @@
   {
    "cards": [
     {
-     "cards": [
+     "heading": "Front door",
+     "icon": "mdi:door",
+     "type": "heading"
+    },
+    {
+     "entity": "lock.lock_ultra_max_7b06",
+     "features": [
       {
-       "entity": "lock.lock_ultra_max_7b06",
-       "features": [
-        {
-         "type": "lock-commands"
-        }
-       ],
-       "grid_options": {
-        "columns": "full"
-       },
-       "name": "Lock",
-       "type": "tile"
-      },
-      {
-       "cards": [
-        {
-         "entity": "binary_sensor.lock_ultra_max_7b06",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Door",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        },
-        {
-         "entity": "sensor.lock_ultra_max_7b06_battery",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Lock battery",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        }
-       ],
-       "columns": 2,
-       "square": false,
-       "type": "grid"
-      },
-      {
-       "cards": [
-        {
-         "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Left unlocked",
-         "template": "vg_stat",
-         "type": "custom:button-card",
-         "visibility": [
-          {
-           "condition": "state",
-           "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
-           "state": "on"
-          }
-         ]
-        },
-        {
-         "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "name": "Left open",
-         "template": "vg_stat",
-         "type": "custom:button-card",
-         "visibility": [
-          {
-           "condition": "state",
-           "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
-           "state": "on"
-          }
-         ]
-        }
-       ],
-       "columns": 2,
-       "square": false,
-       "type": "grid"
+       "type": "lock-commands"
       }
      ],
-     "child-padding": "0",
-     "clear": true,
-     "expanded": true,
-     "expanded-gap": "8px",
-     "expander-card-display": "grid",
-     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
-     "padding": "0",
-     "storage-id": "security-front-door",
-     "title-card": {
-      "heading": "Front door",
-      "icon": "mdi:door",
-      "type": "heading"
+     "name": "Lock",
+     "type": "tile"
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
      },
-     "title-card-clickable": true,
-     "type": "custom:expander-card"
+     "name": "Door",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.lock_ultra_max_7b06_battery",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Lock battery",
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Left unlocked",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+       "state": "on"
+      }
+     ]
+    },
+    {
+     "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "name": "Left open",
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+       "state": "on"
+      }
+     ]
     }
    ],
    "type": "grid"
@@ -303,94 +241,70 @@
    },
    "cards": [
     {
-     "cards": [
+     "badges": [
       {
-       "entity": "image.home_door_last_motion_image",
-       "fit_mode": "contain",
-       "grid_options": {
-        "columns": "full",
-        "rows": 6
-       },
-       "name": "Last motion",
-       "show_name": false,
-       "show_state": false,
-       "tap_action": {
-        "action": "more-info"
-       },
-       "type": "picture-entity"
+       "color": "green",
+       "entity": "sensor.home_door_battery",
+       "name": "Battery",
+       "show_state": true,
+       "type": "entity"
       },
       {
-       "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}",
-       "text_only": true,
-       "type": "markdown"
-      },
-      {
-       "cards": [
-        {
-         "entity": "camera.home_door",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "icon": "mdi:cctv",
-         "name": "Live view",
-         "tap_action": {
-          "action": "more-info"
-         },
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        },
-        {
-         "entity": "binary_sensor.home_door_motion",
-         "grid_options": {
-          "columns": 6,
-          "rows": 1
-         },
-         "icon": "mdi:motion-sensor",
-         "name": "Camera PIR",
-         "template": "vg_stat",
-         "type": "custom:button-card"
-        }
-       ],
-       "columns": 2,
-       "square": false,
-       "type": "grid"
+       "color": "amber",
+       "entity": "binary_sensor.home_door_motion",
+       "name": "PIR",
+       "show_state": true,
+       "type": "entity"
       }
      ],
-     "child-padding": "0",
-     "clear": true,
-     "expanded": true,
-     "expanded-gap": "8px",
-     "expander-card-display": "grid",
-     "gap": "8px",
+     "heading": "Front door camera",
+     "icon": "mdi:cctv",
+     "type": "heading"
+    },
+    {
+     "entity": "image.home_door_last_motion_image",
+     "fit_mode": "contain",
      "grid_options": {
-      "columns": "full"
+      "columns": "full",
+      "rows": 6
      },
-     "padding": "0",
-     "storage-id": "security-front-door-camera",
-     "title-card": {
-      "badges": [
-       {
-        "color": "green",
-        "entity": "sensor.home_door_battery",
-        "name": "Battery",
-        "show_state": true,
-        "type": "entity"
-       },
-       {
-        "color": "amber",
-        "entity": "binary_sensor.home_door_motion",
-        "name": "PIR",
-        "show_state": true,
-        "type": "entity"
-       }
-      ],
-      "heading": "Front door camera",
-      "icon": "mdi:cctv",
-      "type": "heading"
+     "name": "Last motion",
+     "show_name": false,
+     "show_state": false,
+     "tap_action": {
+      "action": "more-info"
      },
-     "title-card-clickable": true,
-     "type": "custom:expander-card"
+     "type": "picture-entity"
+    },
+    {
+     "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}",
+     "text_only": true,
+     "type": "markdown"
+    },
+    {
+     "entity": "camera.home_door",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:cctv",
+     "name": "Live view",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "binary_sensor.home_door_motion",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:motion-sensor",
+     "name": "Camera PIR",
+     "template": "vg_stat",
+     "type": "custom:button-card"
     }
    ],
    "type": "grid"

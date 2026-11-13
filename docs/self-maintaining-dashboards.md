@@ -106,17 +106,18 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
-- **Every headed section folds (2026-11-13).** On Home and the main tabs (Climate, Climate —
-  advanced, Energy, Appliances, Security) each section that opens with a heading is an
-  `expander-card`: the heading is its title card, tap to fold, open by default, `storage-id`
-  `<view>-<heading-slug>` so each browser remembers its own choice (per device, not per user). The
-  expander stacks its children in one column, so cards that shared a line in the section become a
-  `horizontal-stack` row; widths follow the 6/12/full ladder, so the layout is unchanged. Section
-  sizing checks (C3, C7) apply to cards the section grid places, so on these tabs they no longer have
-  subjects; their mutants aim at the admin dashboard. Lookups by heading go through `sec_heading` /
-  `sec_cards`, which see inside the expander; that closed two holes (C34 passed silently with no
-  Comfort section; C30 could not see a folded Needs attention). Home puts Quick actions in the
-  Weather section, so it follows Weather on a phone while the floors keep their shared row.
+- **Folding is for long lists with nothing on the right (lint C45, 2026-11-13).** Foldable
+  (`expander-card`, heading as title card, open by default): Home's Downstairs, Upstairs, Needs
+  attention and Comfort; Security's Sensors and Cameras. Every other section stays a plain heading,
+  because its heading carries something on the right (a toggle, a reading, the settings gear) that
+  the fold chevron would take (operator: keep the action rather than the fold). `storage-id`
+  `<view>-<heading-slug>` makes a browser remember a fold (per device, not per user), except Needs
+  attention, which reopens on every load so a remembered fold cannot hide the next alarm. Inside an
+  expander, cards that share a line are a `grid` row and the expander lays out as a grid with an 8 px
+  gap, so spacing matches the section. Lookups by heading go through `sec_heading` / `sec_cards`;
+  that closed two silent holes (C34 with no Comfort section, C30 inside a folded Needs attention).
+  Quick actions shares the Weather section, so it follows Weather on a phone while the floors keep
+  their shared row on wide screens. A fold-everything pass was tried and reverted the same day.
 - **Floors side by side, collapsible, three across (lint C44, 2026-11-13).** Home shows each floor's
   room cards in a section of its own (Downstairs, Upstairs), placed together after Weather and Needs
   attention, so from two columns up they sit side by side. Each floor is an `expander-card`
