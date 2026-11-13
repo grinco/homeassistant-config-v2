@@ -422,10 +422,12 @@ def sec_heading(sec):
 
 
 def sec_cards(sec):
-    """A section's cards, with an expander-card replaced by the cards it folds (C44)."""
+    """A section's cards, with an expander-card (and the rows inside it) replaced by the cards it folds."""
     out = []
     for c in sec.get("cards") or []:
-        out.extend(c.get("cards") or [] if c.get("type") == "custom:expander-card" else [c])
+        for k in (c.get("cards") or [] if c.get("type") == "custom:expander-card" else [c]):
+            # a row of cards that shared a line in the section (collapse_all, 2026-11-13)
+            out.extend(k.get("cards") or [] if k.get("type") == "horizontal-stack" else [k])
     return out
 
 
@@ -1152,8 +1154,7 @@ def main():
         # C34 - Home's Comfort: every automated room's live target, generated.
         if label == "lovelace":
             home = next((v for v in views if v.get("path") == "home"), {})
-            comfort = [s for s in (home.get("sections") or [])
-                       if ((s.get("cards") or [{}])[0].get("heading") == "Comfort")]
+            comfort = [s for s in (home.get("sections") or []) if sec_heading(s) == "Comfort"]
             text = json.dumps(comfort)
             named = sorted(i for i in set(ENTITY_RE.findall(text))
                            if re.match(r"input_(number|boolean)\.climate_(target|air_filter|room)_", i)
@@ -1166,7 +1167,9 @@ def main():
                               ("climate_air_filter_", "offers no air-filter toggle")):
                 if need not in text:
                     problems.append(why)
-            if comfort and problems:
+            if not comfort:
+                problems = ["home has no Comfort section"]
+            if problems:
                 fail("C34", "%s: Home's Comfort section is not the generated live targets" % label,
                      problems)
 
@@ -1439,8 +1442,7 @@ def main():
         # C21 - Needs attention covers every safety alarm, by class, not by name.
         if label == "lovelace":
             home = next((v for v in views if v.get("path") == "home"), {})
-            na = [sec for sec in (home.get("sections") or [])
-                  if (sec.get("cards") or [{}])[0].get("heading") == "Needs attention"]
+            na = [sec for sec in (home.get("sections") or []) if sec_heading(sec) == "Needs attention"]
             safety_ids = {e["entity_id"] for e in registry_entities()
                           if e["domain"] == "binary_sensor" and e["device_class"] in SAFETY_CLASSES}
             problems = []
@@ -1491,7 +1493,7 @@ def main():
                 if not branches:
                     ungated.append("the section has no lone-OR gate to check against")
                     continue
-                for i, c in enumerate(sec.get("cards") or []):
+                for i, c in enumerate(sec_cards(sec)):
                     cv = c.get("visibility")
                     if not cv:
                         continue

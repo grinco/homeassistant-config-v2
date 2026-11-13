@@ -8,84 +8,109 @@
   {
    "cards": [
     {
-     "heading": "Alarm",
-     "icon": "mdi:shield-home",
-     "type": "heading"
-    },
-    {
-     "button_scale_actions": 1,
-     "button_scale_keypad": 1,
-     "entity": "alarm_control_panel.home",
-     "grid_options": {
-      "columns": "full",
-      "rows": "auto"
-     },
-     "hide_keypad": false,
-     "keep_keypad_visible": false,
-     "name": "",
-     "show_bypassed_sensors": true,
-     "show_messages": true,
-     "show_ready_indicator": true,
-     "states": {},
-     "type": "custom:alarmo-card",
-     "use_code_dialog": false
-    },
-    {
-     "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Physical panel",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Ready to arm",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.evo192_pai_status",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:lan-connect",
-     "name": "Panel link",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.evo192_system_power_battery",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:car-battery",
-     "name": "Backup battery",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
+     "cards": [
+      {
+       "button_scale_actions": 1,
+       "button_scale_keypad": 1,
+       "entity": "alarm_control_panel.home",
+       "grid_options": {
+        "columns": "full",
+        "rows": "auto"
+       },
+       "hide_keypad": false,
+       "keep_keypad_visible": false,
+       "name": "",
+       "show_bypassed_sensors": true,
+       "show_messages": true,
+       "show_ready_indicator": true,
+       "states": {},
+       "type": "custom:alarmo-card",
+       "use_code_dialog": false
+      },
+      {
+       "cards": [
+        {
+         "entity": "alarm_control_panel.evo192_partition_paradox_alarm",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Physical panel",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        },
+        {
+         "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_ready",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Ready to arm",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        }
+       ],
+       "type": "horizontal-stack"
+      },
+      {
+       "cards": [
+        {
+         "entity": "sensor.evo192_pai_status",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "icon": "mdi:lan-connect",
+         "name": "Panel link",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        },
+        {
+         "entity": "sensor.evo192_system_power_battery",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "icon": "mdi:car-battery",
+         "name": "Backup battery",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        }
+       ],
+       "type": "horizontal-stack"
+      },
+      {
+       "content": "{% set t = states.binary_sensor | selectattr('entity_id', 'match', 'binary_sensor\\\\.evo192_system_troubles_') | rejectattr('entity_id', 'eq', 'binary_sensor.evo192_system_troubles_system_trouble') | selectattr('state', 'eq', 'on') | map(attribute='name') | map('replace', 'EVO192 System troubles ', '') | map('replace', ' Trouble', '') | list %}**Panel trouble** — {{ t | join(', ') if t else 'unspecified' }}",
+       "grid_options": {
+        "columns": "full"
+       },
+       "text_only": true,
+       "type": "markdown",
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_trouble",
+         "state": "on"
+        }
+       ]
+      }
+     ],
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
      "grid_options": {
       "columns": "full"
      },
-     "text_only": true,
-     "type": "markdown",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.corridor_evo192_partition_paradox_alarm_trouble",
-       "state": "on"
-      }
-     ]
+     "padding": "0",
+     "storage-id": "security-alarm",
+     "title-card": {
+      "heading": "Alarm",
+      "icon": "mdi:shield-home",
+      "type": "heading"
+     },
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "column_span": 1,
@@ -94,76 +119,101 @@
   {
    "cards": [
     {
-     "heading": "Front door",
-     "icon": "mdi:door",
-     "type": "heading"
-    },
-    {
-     "entity": "lock.lock_ultra_max_7b06",
-     "features": [
+     "cards": [
       {
-       "type": "lock-commands"
+       "entity": "lock.lock_ultra_max_7b06",
+       "features": [
+        {
+         "type": "lock-commands"
+        }
+       ],
+       "grid_options": {
+        "columns": "full"
+       },
+       "name": "Lock",
+       "type": "tile"
+      },
+      {
+       "cards": [
+        {
+         "entity": "binary_sensor.lock_ultra_max_7b06",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Door",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        },
+        {
+         "entity": "sensor.lock_ultra_max_7b06_battery",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Lock battery",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        }
+       ],
+       "type": "horizontal-stack"
+      },
+      {
+       "cards": [
+        {
+         "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Left unlocked",
+         "template": "vg_stat",
+         "type": "custom:button-card",
+         "visibility": [
+          {
+           "condition": "state",
+           "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
+           "state": "on"
+          }
+         ]
+        },
+        {
+         "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "name": "Left open",
+         "template": "vg_stat",
+         "type": "custom:button-card",
+         "visibility": [
+          {
+           "condition": "state",
+           "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
+           "state": "on"
+          }
+         ]
+        }
+       ],
+       "type": "horizontal-stack"
       }
      ],
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
      "grid_options": {
       "columns": "full"
      },
-     "name": "Lock",
-     "type": "tile"
-    },
-    {
-     "entity": "binary_sensor.lock_ultra_max_7b06",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
+     "padding": "0",
+     "storage-id": "security-front-door",
+     "title-card": {
+      "heading": "Front door",
+      "icon": "mdi:door",
+      "type": "heading"
      },
-     "name": "Door",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "sensor.lock_ultra_max_7b06_battery",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Lock battery",
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Left unlocked",
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.lock_ultra_max_7b06_unlocked_alarm",
-       "state": "on"
-      }
-     ]
-    },
-    {
-     "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "name": "Left open",
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.lock_ultra_max_7b06_unclosed_alarm",
-       "state": "on"
-      }
-     ]
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "type": "grid"
@@ -171,48 +221,63 @@
   {
    "cards": [
     {
-     "heading": "Sensors",
-     "icon": "mdi:motion-sensor",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "type": "vertical-stack"
-     },
-     "card_param": "cards",
-     "exclude": [
-      "binary_sensor.home_door_motion"
+     "cards": [
+      {
+       "card": {
+        "type": "vertical-stack"
+       },
+       "card_param": "cards",
+       "exclude": [
+        "binary_sensor.home_door_motion"
+       ],
+       "filter": {
+        "template": "\n{%- set ma = integration_entities('magic_areas') -%}\n{%- set ex = config.get('exclude', []) -%}\n{%- set word = {'motion': 'Motion', 'occupancy': 'Motion', 'moisture': 'Leak', 'door': 'Door', 'window': 'Window', 'opening': 'Opening', 'garage_door': 'Garage door', 'smoke': 'Smoke', 'gas': 'Gas', 'carbon_monoxide': 'CO', 'safety': 'Safety', 'tamper': 'Tamper', 'vibration': 'Vibration'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) -%}\n{%- if s.entity_id not in ex and s.entity_id not in ma and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name') or '') if dev else '' -%}\n{%- set ns.l = ns.l + [{'entity': s.entity_id, 'area': area_name(s.entity_id), 'dev': dn, 'name': s.name, 'w': word[s.attributes.device_class], 'evo': s.entity_id.startswith('binary_sensor.evo192_zone_')}] -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set out = namespace(l=[]) -%}\n{%- for area in ns.l | map(attribute='area') | unique | sort -%}\n{%- set items = ns.l | selectattr('area', 'eq', area) | list -%}\n{%- set strip = '(?i)(' ~ area ~ '|' ~ area | replace(' ', '') ~ '|zone|open|presence|occupancy|moisture|water|motion)' -%}\n{%- set evos = items | selectattr('evo') | list | count -%}\n{%- set tiles = namespace(l=[]) -%}\n{%- for c in items -%}\n{%- if c.evo -%}\n{%- set raw = c.dev | regex_replace(strip, '') if evos > 1 else '' -%}\n{%- set fallback = 'Alarm zone' -%}\n{%- elif items | selectattr('w', 'eq', c.w) | list | count > 1 -%}\n{%- set raw = (c.name | replace(c.dev, '')) if (items | selectattr('dev', 'eq', c.dev) | list | count) > 1 else c.dev -%}\n{%- set raw = raw | regex_replace(strip, '') -%}\n{%- set fallback = c.w -%}\n{%- else -%}\n{%- set raw = '' -%}\n{%- set fallback = c.w -%}\n{%- endif -%}\n{%- set n = raw | regex_replace('\\\\s+', ' ') | trim -%}\n{%- set n = 'Whole room' if n | lower == 'area' else n -%}\n{%- set n = (n[:1] | upper ~ n[1:]) if n else fallback -%}\n{%- set tiles.l = tiles.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': c.entity, 'name': n}] -%}\n{%- endfor -%}\n{%- set out.l = out.l + [{'type': 'heading', 'heading': area, 'heading_style': 'subtitle'}, {'type': 'grid', 'columns': 2, 'square': false, 'cards': tiles.l | sort(attribute='name')}] -%}\n{%- endfor -%}\n{{ out.l }}\n"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      },
+      {
+       "heading": "Presence",
+       "heading_style": "subtitle",
+       "icon": "mdi:account-group",
+       "type": "heading"
+      },
+      {
+       "card": {
+        "columns": 2,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for p in states.person | sort(attribute='name') -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': p.entity_id, 'name': p.name.split(' ') | first}] -%}\n{%- endfor -%}\n{{ ns.l }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      }
      ],
-     "filter": {
-      "template": "\n{%- set ma = integration_entities('magic_areas') -%}\n{%- set ex = config.get('exclude', []) -%}\n{%- set word = {'motion': 'Motion', 'occupancy': 'Motion', 'moisture': 'Leak', 'door': 'Door', 'window': 'Window', 'opening': 'Opening', 'garage_door': 'Garage door', 'smoke': 'Smoke', 'gas': 'Gas', 'carbon_monoxide': 'CO', 'safety': 'Safety', 'tamper': 'Tamper', 'vibration': 'Vibration'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) -%}\n{%- if s.entity_id not in ex and s.entity_id not in ma and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name') or '') if dev else '' -%}\n{%- set ns.l = ns.l + [{'entity': s.entity_id, 'area': area_name(s.entity_id), 'dev': dn, 'name': s.name, 'w': word[s.attributes.device_class], 'evo': s.entity_id.startswith('binary_sensor.evo192_zone_')}] -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set out = namespace(l=[]) -%}\n{%- for area in ns.l | map(attribute='area') | unique | sort -%}\n{%- set items = ns.l | selectattr('area', 'eq', area) | list -%}\n{%- set strip = '(?i)(' ~ area ~ '|' ~ area | replace(' ', '') ~ '|zone|open|presence|occupancy|moisture|water|motion)' -%}\n{%- set evos = items | selectattr('evo') | list | count -%}\n{%- set tiles = namespace(l=[]) -%}\n{%- for c in items -%}\n{%- if c.evo -%}\n{%- set raw = c.dev | regex_replace(strip, '') if evos > 1 else '' -%}\n{%- set fallback = 'Alarm zone' -%}\n{%- elif items | selectattr('w', 'eq', c.w) | list | count > 1 -%}\n{%- set raw = (c.name | replace(c.dev, '')) if (items | selectattr('dev', 'eq', c.dev) | list | count) > 1 else c.dev -%}\n{%- set raw = raw | regex_replace(strip, '') -%}\n{%- set fallback = c.w -%}\n{%- else -%}\n{%- set raw = '' -%}\n{%- set fallback = c.w -%}\n{%- endif -%}\n{%- set n = raw | regex_replace('\\\\s+', ' ') | trim -%}\n{%- set n = 'Whole room' if n | lower == 'area' else n -%}\n{%- set n = (n[:1] | upper ~ n[1:]) if n else fallback -%}\n{%- set tiles.l = tiles.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': c.entity, 'name': n}] -%}\n{%- endfor -%}\n{%- set out.l = out.l + [{'type': 'heading', 'heading': area, 'heading_style': 'subtitle'}, {'type': 'grid', 'columns': 2, 'square': false, 'cards': tiles.l | sort(attribute='name')}] -%}\n{%- endfor -%}\n{{ out.l }}\n"
-     },
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
      "grid_options": {
       "columns": "full"
      },
-     "show_empty": false,
-     "type": "custom:auto-entities"
-    },
-    {
-     "heading": "Presence",
-     "heading_style": "subtitle",
-     "icon": "mdi:account-group",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
+     "padding": "0",
+     "storage-id": "security-sensors",
+     "title-card": {
+      "heading": "Sensors",
+      "icon": "mdi:motion-sensor",
+      "type": "heading"
      },
-     "card_param": "cards",
-     "filter": {
-      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for p in states.person | sort(attribute='name') -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': p.entity_id, 'name': p.name.split(' ') | first}] -%}\n{%- endfor -%}\n{{ ns.l }}"
-     },
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities"
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "type": "grid"
@@ -224,70 +289,90 @@
    },
    "cards": [
     {
-     "badges": [
+     "cards": [
       {
-       "color": "green",
-       "entity": "sensor.home_door_battery",
-       "name": "Battery",
-       "show_state": true,
-       "type": "entity"
+       "entity": "image.home_door_last_motion_image",
+       "fit_mode": "contain",
+       "grid_options": {
+        "columns": "full",
+        "rows": 6
+       },
+       "name": "Last motion",
+       "show_name": false,
+       "show_state": false,
+       "tap_action": {
+        "action": "more-info"
+       },
+       "type": "picture-entity"
       },
       {
-       "color": "amber",
-       "entity": "binary_sensor.home_door_motion",
-       "name": "PIR",
-       "show_state": true,
-       "type": "entity"
+       "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}",
+       "text_only": true,
+       "type": "markdown"
+      },
+      {
+       "cards": [
+        {
+         "entity": "camera.home_door",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "icon": "mdi:cctv",
+         "name": "Live view",
+         "tap_action": {
+          "action": "more-info"
+         },
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        },
+        {
+         "entity": "binary_sensor.home_door_motion",
+         "grid_options": {
+          "columns": 6,
+          "rows": 1
+         },
+         "icon": "mdi:motion-sensor",
+         "name": "Camera PIR",
+         "template": "vg_stat",
+         "type": "custom:button-card"
+        }
+       ],
+       "type": "horizontal-stack"
       }
      ],
-     "heading": "Front door camera",
-     "icon": "mdi:cctv",
-     "type": "heading"
-    },
-    {
-     "entity": "image.home_door_last_motion_image",
-     "fit_mode": "contain",
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
      "grid_options": {
-      "columns": "full",
-      "rows": 6
+      "columns": "full"
      },
-     "name": "Last motion",
-     "show_name": false,
-     "show_state": false,
-     "tap_action": {
-      "action": "more-info"
+     "padding": "0",
+     "storage-id": "security-front-door-camera",
+     "title-card": {
+      "badges": [
+       {
+        "color": "green",
+        "entity": "sensor.home_door_battery",
+        "name": "Battery",
+        "show_state": true,
+        "type": "entity"
+       },
+       {
+        "color": "amber",
+        "entity": "binary_sensor.home_door_motion",
+        "name": "PIR",
+        "show_state": true,
+        "type": "entity"
+       }
+      ],
+      "heading": "Front door camera",
+      "icon": "mdi:cctv",
+      "type": "heading"
      },
-     "type": "picture-entity"
-    },
-    {
-     "content": "{% set i = states.image.home_door_last_motion_image %}{% if i %}**Last motion** — {{ as_timestamp(i.last_changed) | timestamp_custom('%-d %b, %H:%M') }} · {{ relative_time(i.last_changed) }} ago · {{ states('sensor.home_door_last_alarm_type_name') }}{% else %}No motion image yet.{% endif %}",
-     "text_only": true,
-     "type": "markdown"
-    },
-    {
-     "entity": "camera.home_door",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:cctv",
-     "name": "Live view",
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_stat",
-     "type": "custom:button-card"
-    },
-    {
-     "entity": "binary_sensor.home_door_motion",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
-     },
-     "icon": "mdi:motion-sensor",
-     "name": "Camera PIR",
-     "template": "vg_stat",
-     "type": "custom:button-card"
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "type": "grid"
@@ -295,28 +380,43 @@
   {
    "cards": [
     {
-     "heading": "Cameras",
-     "icon": "mdi:cctv",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 1,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "exclude": [
-      "camera.home_door"
+     "cards": [
+      {
+       "card": {
+        "columns": 1,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "exclude": [
+        "camera.home_door"
+       ],
+       "filter": {
+        "template": "\n{%- set ex = config.get('exclude', []) -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.camera | sort(attribute='entity_id') -%}\n{%- if s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else none -%}\n{%- set ns.l = ns.l + [{'type': 'picture-entity', 'entity': s.entity_id, 'name': dn or area_name(s.entity_id), 'camera_view': 'auto', 'show_state': false, 'fit_mode': 'contain', 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 'full', 'rows': 5}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      }
      ],
-     "filter": {
-      "template": "\n{%- set ex = config.get('exclude', []) -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.camera | sort(attribute='entity_id') -%}\n{%- if s.entity_id not in ex and area_id(s.entity_id) and not is_hidden_entity(s.entity_id) -%}\n{%- set dev = device_id(s.entity_id) -%}\n{%- set dn = (device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else none -%}\n{%- set ns.l = ns.l + [{'type': 'picture-entity', 'entity': s.entity_id, 'name': dn or area_name(s.entity_id), 'camera_view': 'auto', 'show_state': false, 'fit_mode': 'contain', 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 'full', 'rows': 5}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l | sort(attribute='name') }}"
-     },
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
      "grid_options": {
       "columns": "full"
      },
-     "show_empty": false,
-     "type": "custom:auto-entities"
+     "padding": "0",
+     "storage-id": "security-cameras",
+     "title-card": {
+      "heading": "Cameras",
+      "icon": "mdi:cctv",
+      "type": "heading"
+     },
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "type": "grid"

@@ -44,14 +44,18 @@ def _save(d, f, doc):
         json.dump(doc, fh, ensure_ascii=False)
 
 
-def _first_button(cfg, template=None):
-    """Path to the first grid-positioned button-card, as (view, section, index)."""
-    for vi, v in enumerate(cfg["data"]["config"].get("views", [])):
-        for si, sec in enumerate(v.get("sections", []) or []):
-            for ci, c in enumerate(sec.get("cards", []) or []):
+def _first_button(cfg, template=None, positioned=False):
+    """The first button-card. `positioned`: one the section grid places (a direct child of
+    a section), which is what C3/C7 size. Since 2026-11-13 every main-tab section folds into
+    an expander, so on the main dashboard only nested button-cards are left - the sizing
+    mutants therefore aim at the admin dashboard."""
+    for v in cfg["data"]["config"].get("views", []):
+        for sec in v.get("sections", []) or []:
+            pool = (sec.get("cards", []) or []) if positioned else list(_walk(sec.get("cards", []) or []))
+            for c in pool:
                 if (isinstance(c, dict) and c.get("type") == "custom:button-card"
                         and template in (None, c.get("template"))):
-                    return vi, si, ci
+                    return c
     raise SystemExit("no button-card found to mutate")
 
 
@@ -68,8 +72,7 @@ def m_templates_elsewhere(d):
 
 def m_foreign_option(d):
     doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["state_content"] = ["state"]
+    _first_button(doc)["state_content"] = ["state"]
     _save(d, LOV, doc)
     return "C2"
 
@@ -83,17 +86,15 @@ def m_aspect_ratio(d):
 
 
 def m_drop_rows(d):
-    doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci].pop("grid_options", None)
-    _save(d, LOV, doc)
+    doc = _cfg(d, ADM)
+    _first_button(doc, positioned=True).pop("grid_options", None)
+    _save(d, ADM, doc)
     return "C3"
 
 
 def m_dead_entity(d):
     doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["entity"] = "sensor.does_not_exist_at_all"
+    _first_button(doc)["entity"] = "sensor.does_not_exist_at_all"
     _save(d, LOV, doc)
     return "C4"
 
@@ -101,9 +102,7 @@ def m_dead_entity(d):
 def m_dead_entity_in_js(d):
     """The one a structural walk would miss: an id only inside a JS template."""
     doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["label"] = \
-        "[[[ return states['sensor.ghost_entity_xyz'].state; ]]]"
+    _first_button(doc)["label"] = "[[[ return states['sensor.ghost_entity_xyz'].state; ]]]"
     _save(d, LOV, doc)
     return "C4"
 
@@ -127,19 +126,17 @@ def m_tall_cards(d):
 
     Picks a vg_stat by name: since 2026-10-25 Home opens with Quick actions,
     whose vg_action buttons are not two-line cards, and rows:2 on one is fine."""
-    doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc, "vg_stat")
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["grid_options"]["rows"] = 2
-    _save(d, LOV, doc)
+    doc = _cfg(d, ADM)
+    _first_button(doc, "vg_stat", positioned=True).setdefault("grid_options", {})["rows"] = 2
+    _save(d, ADM, doc)
     return "C7"
 
 
 def m_off_ladder_columns(d):
     """columns:4 gives 6-up on a laptop and ragged rows beside columns:6."""
-    doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]["grid_options"]["columns"] = 4
-    _save(d, LOV, doc)
+    doc = _cfg(d, ADM)
+    _first_button(doc, positioned=True).setdefault("grid_options", {})["columns"] = 5
+    _save(d, ADM, doc)
     return "C7"
 
 
@@ -160,12 +157,44 @@ def m_clobbered_label(d):
     card renders its fallback instead of a value. Six Home tiles and one Energy
     tile shipped like this."""
     doc = _cfg(d, LOV)
-    vi, si, ci = _first_button(doc)
-    card = doc["data"]["config"]["views"][vi]["sections"][si]["cards"][ci]
+    card = _first_button(doc)
     card.pop("variables", None)
     card["label"] = "[[[ return variables.grp ? states[variables.grp].state : '-'; ]]]"
     _save(d, LOV, doc)
     return "C8"
+
+
+def _head(sec):
+    """A section's heading, also when the section opens with an expander-card (2026-11-13)."""
+    first = (sec.get("cards") or [{}])[0]
+    if first.get("type") == "custom:expander-card":
+        return (first.get("title-card") or {}).get("heading")
+    return first.get("heading")
+
+
+def _body(sec):
+    """The list a section's content lives in: the expander's cards when it folds."""
+    first = (sec.get("cards") or [{}])[0]
+    return first["cards"] if first.get("type") == "custom:expander-card" else sec["cards"]
+
+
+def _flat_body(sec):
+    out = []
+    for c in _body(sec):
+        out.extend(c.get("cards") or [] if c.get("type") == "horizontal-stack" else [c])
+    return out
+
+
+def _walk(node):
+    """Every card dict under a view or section, nested ones too (expanders, rows)."""
+    if isinstance(node, dict):
+        if isinstance(node.get("type"), str):
+            yield node
+        for v in node.values():
+            yield from _walk(v)
+    elif isinstance(node, list):
+        for v in node:
+            yield from _walk(v)
 
 
 def _room_gen(cfg, floor="upper_floor"):
@@ -231,9 +260,8 @@ def _section(cfg, vpath, heading):
     for v in cfg["data"]["config"]["views"]:
         if v.get("path") == vpath:
             for sec in (v.get("sections") or []):
-                cs = sec.get("cards") or []
-                if cs and cs[0].get("heading") == heading:
-                    return cs
+                if (sec.get("cards") or []) and _head(sec) == heading:
+                    return _body(sec)
     raise SystemExit("no %s/%s section found to mutate" % (vpath, heading))
 
 
@@ -342,7 +370,7 @@ def m_silent_unsaid(d):
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
         for sec in v.get("sections") or []:
-            if (sec.get("cards") or [{}])[0].get("heading") != "Needs attention":
+            if _head(sec) != "Needs attention":
                 continue
             for c in sec.get("visibility") or []:
                 if c.get("condition") == "or":
@@ -618,7 +646,7 @@ def m_chip_temperature_shown(d):
 
 def _needs_attention(cfg):
     home = [v for v in cfg["data"]["config"]["views"] if v.get("path") == "home"][0]
-    return [x for x in home["sections"] if (x.get("cards") or [{}])[0].get("heading") == "Needs attention"][0]
+    return [x for x in home["sections"] if _head(x) == "Needs attention"][0]
 
 
 def m_safety_hand_listed(d):
@@ -762,7 +790,7 @@ def m_battery_gate_dropped(d):
 def m_battery_note_ungated(d):
     """The note renders whenever the section is open, saying 'none' under a smoke alarm."""
     doc = _cfg(d, LOV)
-    for c in _needs_attention(doc)["cards"]:
+    for c in _flat_body(_needs_attention(doc)):
         if "sensor.any_low_battery" in json.dumps(c):
             c.pop("visibility", None)
     _save(d, LOV, doc)
@@ -780,7 +808,7 @@ def m_guide_on_show(d):
     """2026-11-13: a Climate heading carries its explanation again."""
     doc = _cfg(d, LOV)
     adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
-    h = next(c for s in adv["sections"] for c in s["cards"] if c.get("type") == "heading"
+    h = next(c for c in _walk(adv["sections"]) if c.get("type") == "heading"
              and c.get("heading", "").startswith("Circuit breaker"))
     h["heading"] = "Circuit breaker \u2014 isolates a unit that stops responding"
     _save(d, LOV, doc)
@@ -791,8 +819,8 @@ def m_guide_summary_not_info(d):
     """2026-11-13: a guide expands from its own text instead of the (i)."""
     doc = _cfg(d, LOV)
     adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
-    for s in adv["sections"]:
-        for c in s["cards"]:
+    for c in _walk(adv["sections"]):
+        if True:
             if c.get("type") == "markdown" and "<summary>" in c.get("content", ""):
                 c["content"] = re.sub(r"<summary>.*?</summary>", "<summary>Read more</summary>", c["content"], flags=re.S)
     _save(d, LOV, doc)
@@ -821,7 +849,7 @@ def m_guide_flag_explained(d):
     """2026-11-13 review: a status flag carries its rationale on screen again."""
     doc = _cfg(d, LOV)
     adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
-    c = next(c for s in adv["sections"] for c in s["cards"]
+    c = next(c for c in _walk(adv["sections"])
              if c.get("type") == "markdown" and "**Isolated:" in c.get("content", ""))
     c["content"] = c["content"].replace("join(', ') }}**", "join(', ') }}** \u2014 comfort commands throttled to hourly retries", 1)
     _save(d, LOV, doc)
@@ -832,8 +860,8 @@ def m_guide_view_without_info(d):
     """2026-11-13 review: a Climate view loses every (i)."""
     doc = _cfg(d, LOV)
     v = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate"][0]
-    for s in v["sections"]:
-        for c in s["cards"]:
+    for c in _walk(v["sections"]):
+        if True:
             if c.get("type") == "markdown":
                 c["content"] = re.sub(r"<details>.*?</details>", "", c["content"], flags=re.S)
     _save(d, LOV, doc)
@@ -844,7 +872,7 @@ def m_advanced_toggle_feature(d):
     """2026-11-13: a room switch on Climate - advanced grows its toggle bar back."""
     doc = _cfg(d, LOV)
     adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
-    c = next(c for s in adv["sections"] for c in s["cards"]
+    c = next(c for c in _walk(adv["sections"])
              if str(c.get("entity", "")).startswith("input_boolean."))
     c["features"] = [{"type": "toggle"}]
     _save(d, LOV, doc)
@@ -1015,10 +1043,9 @@ def m_comfort_day_only(d):
 def _curated(doc, key):
     """The first Energy card carrying a `sockets` / `outlets` curation map."""
     for v in doc["data"]["config"]["views"]:
-        for sec in v.get("sections") or []:
-            for c in sec.get("cards") or []:
-                if isinstance(c, dict) and c.get(key):
-                    return c
+        for c in _walk(v.get("sections") or []):
+            if c.get(key):
+                return c
     raise SystemExit("no card carries a %r map to mutate" % key)
 
 
@@ -1046,8 +1073,8 @@ def m_graph_charts_offline(d):
     """A generated Climate graph charts an offline sensor: the card never leaves its spinner."""
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
-        for sec in v.get("sections") or []:
-            for c in sec.get("cards") or []:
+        for c in _walk(v.get("sections") or []):
+            if True:
                 if (isinstance(c, dict) and c.get("type") == "custom:auto-entities"
                         and (c.get("card") or {}).get("type") == "custom:mini-graph-card"
                         and "is_number(states(e))" in c["filter"].get("template", "")):
@@ -1065,8 +1092,8 @@ def _first(card):
 
 def _graph_of(doc, entity):
     for v in doc["data"]["config"]["views"]:
-        for sec in v.get("sections") or []:
-            for c in sec.get("cards") or []:
+        for c in _walk(v.get("sections") or []):
+            if True:
                 if (isinstance(c, dict) and c.get("type") == "custom:mini-graph-card"
                         and _first(c) == entity):
                     return c
