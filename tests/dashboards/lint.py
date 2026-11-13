@@ -1174,7 +1174,9 @@ def main():
                               (NIGHT_HELPER, "does not read night from %s" % NIGHT_HELPER),
                               ("climate_target_night_", "never offers a night target"),
                               ("climate_target_day_", "never offers a day target"),
-                              ("climate_air_filter_", "offers no air-filter toggle")):
+                              ("climate_air_filter_", "offers no air-filter toggle"),
+                              # 2026-11-13: one row per room, its target 2/3 and its filter 1/3.
+                              ("2fr 1fr", "does not put each room's target and filter side by side, 2/3 and 1/3")):
                 if need not in text:
                     problems.append(why)
             if not comfort:

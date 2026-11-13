@@ -106,6 +106,11 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **Comfort: one row per room (lint C34, 2026-11-13).** Each automated room is one row: the target
+  the automation uses now (night while `binary_sensor.lighting_night` is on, day otherwise) as a
+  tile with − / + on two-thirds of the width, and that room's air-filter switch on the last third.
+  The row is a bare button-card holding the two tiles in custom fields (`2fr 1fr`); a room with no
+  air filter gets the target tile alone.
 - **Show what is active, say the rest in one line (lint C46, C40e, 2026-11-13).** Energy: each AC
   card shows only above 10 W, and "All air conditioners are off." stands in when the total is below
   10 W; the socket generator lists sockets drawing 2 W or more and ends with one line naming the idle

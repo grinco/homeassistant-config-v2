@@ -989,6 +989,17 @@ def m_security_lists_clear_rooms(d):
     return "C46"
 
 
+def m_comfort_rows_split(d):
+    """2026-11-13: Comfort's targets and filters drift back into two separate grids."""
+    doc = _cfg(d, LOV)
+    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
+    g = next(c for c in _walk(home["sections"]) if c.get("type") == "custom:auto-entities"
+             and "climate_air_filter_" in (c.get("filter") or {}).get("template", ""))
+    g["filter"]["template"] = g["filter"]["template"].replace("2fr 1fr", "1fr 1fr")
+    _save(d, LOV, doc)
+    return "C34"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1247,6 +1258,7 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
+    ("Comfort's target and filter leave their shared row", m_comfort_rows_split),
     ("an AC card shows at 0 W again", m_ac_card_always_shown),
     ("an all-clear room lists every sensor again", m_security_lists_clear_rooms),
     ("a section with a heading toggle folds again", m_fold_hides_badge),
