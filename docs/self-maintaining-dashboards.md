@@ -16,7 +16,7 @@ adding or removing cards. `tests/dashboards/lint.py` enforces it (C13–C15).
 | a new area on a floor | a Home tile; it opens Home Assistant's own area page until a styled page is added |
 | a temperature, humidity, light-level, CO₂, particulate, VOC or pressure sensor in a room | its room page → *Environment*, as a tile with a 24 h trend. Label it `not_on_room_pages` if it is the probe a resolved room sensor reads first, or an appliance's own probe (AC, TRV, purifier, oven). A probe somewhere else in the room stays shown even when it feeds the resolved sensor as a fallback (lint C33) |
 | a leak, smoke, gas or CO sensor anywhere | Home → *Needs attention* the moment it trips (via `binary_sensor.any_safety_alarm`, lint C21), named "Smoke — Corridor"; the room card turns red. A leak sensor also gets a block in admin **Water & Outdoors → Water alarm**: state, battery, battery-low and any device setting (alert behaviour) |
-| a heating zone (Tado *Zone*) or a water heater | Climate → *Heating & hot water*: zones with target and modes, hot water with its modes, the zone's heating %. Radiator valves (`_trv_`) are listed status-only — the climate automation reads their setpoints and never commands them. Hot water also gets a tile in Home → *Quick actions* |
+| a heating zone (Tado *Zone*) or a water heater | Climate → *Heating & hot water*: zones with target and modes, hot water with its modes (the zone's heating % graph was dropped 2026-11-13: the tile already says Heating or Idle). Radiator valves (`_trv_`) are listed status-only — the climate automation reads their setpoints and never commands them. Hot water also gets a tile in Home → *Quick actions* |
 | a camera in a room | Security → Cameras (live snapshot, tap for the stream). A **battery** camera goes in the section's `exclude` list, as the front door does: the snapshot refreshes every few seconds while the tab is open |
 | a motion / door / window / leak / smoke / CO sensor in a room | Security → Sensors (two columns). A device with several (a camera's motion / person / animal) is told apart by its own entity name |
 | a person | Security → Presence, and admin → Phones |
@@ -93,6 +93,24 @@ legend on (lint C37), or its header names only the first line.
   the flat list had three tiles all called *Corridor zone open*.
 - **One night (lint C22):** dashboards compute night exactly as the climate loop does — the alarm in
   `armed_night`, the schedule only while the alarm itself is unavailable.
+- **Climate guides sit behind an (i) (lint C39, 2026-11-13).** On Climate and Climate — advanced a
+  heading is a name of at most 22 characters, and status lines state facts only ("Isolated: Office",
+  "Manual: Bedroom (until 14:00)"). Each section's explanation is a markdown `<details>` whose
+  `<summary>` is the `mdi:information-outline` icon: closed by default, per viewer, no helper, no
+  popup integration. The settings gear is a button badge on *Automatic climate*. The five
+  manual-until stamps, the away-since stamp and the breaker counters' − / reset / + buttons are gone:
+  the status lines already name an active hold or a tripped unit, and the breaker clears itself.
+- **Climate — advanced is compact (lint C41, 2026-11-13).** Two sections, house-wide and per room, so
+  a wide screen fills one row. Each room is its heading plus Day | Night: the Auto, Filter and
+  Warm-up switches are tap-to-toggle heading badges, coloured when on (names only, so all three fit
+  beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
+  unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
+  turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **The Climate tab shows a reading once (lint C40, 2026-11-13).** No forecast (Home's weather card
+  has it), no day/night alarm control (Home and Climate — advanced), no hand-placed copy of a reading
+  the Temperature/Humidity generators already list, no Tado heating % graphs. The Floors section keeps
+  its four numbers, not its graphs: the all-rooms and Outside graphs chart the same data. C40 does not
+  see that last cut; a phone render does (7,339 → 5,501 px).
 - **Lights:** Magic Areas makes a group per light category as well as `_all_lights`; room pages and
   the Home room card use only `_all_lights` (lint C17, C19).
 - **Home tiles:** one `auto-entities` per floor; a `rooms` map in the card config carries only the

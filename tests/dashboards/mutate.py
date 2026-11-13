@@ -16,6 +16,7 @@ proven is the real script, not a re-implementation of its logic.
 """
 
 import io
+import re
 import json
 import os
 import shutil
@@ -756,6 +757,90 @@ def _occ_cards(v):
                     for r in c["filter"]["include"])]
 
 
+def m_guide_on_show(d):
+    """2026-11-13: a Climate heading carries its explanation again."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    h = next(c for s in adv["sections"] for c in s["cards"] if c.get("type") == "heading"
+             and c.get("heading", "").startswith("Circuit breaker"))
+    h["heading"] = "Circuit breaker \u2014 isolates a unit that stops responding"
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_guide_summary_not_info(d):
+    """2026-11-13: a guide expands from its own text instead of the (i)."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    for s in adv["sections"]:
+        for c in s["cards"]:
+            if c.get("type") == "markdown" and "<summary>" in c.get("content", ""):
+                c["content"] = re.sub(r"<summary>.*?</summary>", "<summary>Read more</summary>", c["content"], flags=re.S)
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_climate_repeats_forecast(d):
+    """2026-11-13: the Climate tab grows its own forecast tile again."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Outside").append(
+        {"type": "tile", "entity": "weather.home", "features": [{"type": "temperature-forecast"}]})
+    _save(d, LOV, doc)
+    return "C40"
+
+
+def m_climate_repeats_reading(d):
+    """2026-11-13: a room reading the Temperature generator shows is placed by hand as well."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Outside").append(
+        {"type": "custom:button-card", "entity": "sensor.climate_temp_corridor", "template": "vg_stat"})
+    _save(d, LOV, doc)
+    return "C40"
+
+
+def m_guide_flag_explained(d):
+    """2026-11-13 review: a status flag carries its rationale on screen again."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    c = next(c for s in adv["sections"] for c in s["cards"]
+             if c.get("type") == "markdown" and "**Isolated:" in c.get("content", ""))
+    c["content"] = c["content"].replace("join(', ') }}**", "join(', ') }}** \u2014 comfort commands throttled to hourly retries", 1)
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_guide_view_without_info(d):
+    """2026-11-13 review: a Climate view loses every (i)."""
+    doc = _cfg(d, LOV)
+    v = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate"][0]
+    for s in v["sections"]:
+        for c in s["cards"]:
+            if c.get("type") == "markdown":
+                c["content"] = re.sub(r"<details>.*?</details>", "", c["content"], flags=re.S)
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_advanced_toggle_feature(d):
+    """2026-11-13: a room switch on Climate - advanced grows its toggle bar back."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    c = next(c for s in adv["sections"] for c in s["cards"]
+             if str(c.get("entity", "")).startswith("input_boolean.climate_room_"))
+    c["features"] = [{"type": "toggle"}]
+    _save(d, LOV, doc)
+    return "C41"
+
+
+def m_advanced_third_section(d):
+    """2026-11-13: Climate - advanced splits into a third section, leaving a column empty."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    adv["sections"].append({"type": "grid", "cards": [{"type": "heading", "heading": "Extra"}]})
+    _save(d, LOV, doc)
+    return "C41"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1019,6 +1104,14 @@ MUTATIONS = [
     ("a dead entity only inside a JS template", m_dead_entity_in_js),
     ("button-card's resource unregistered", m_unregistered_card),
     ("a transform leaves a scratch key", m_scratch_key),
+    ("a Climate heading explains itself again", m_guide_on_show),
+    ("a Climate guide expands from text, not the (i)", m_guide_summary_not_info),
+    ("a Climate status flag explains itself again", m_guide_flag_explained),
+    ("a Climate view loses every (i)", m_guide_view_without_info),
+    ("a room switch on Advanced grows its toggle bar", m_advanced_toggle_feature),
+    ("Climate - advanced splits into a third section", m_advanced_third_section),
+    ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
+    ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]
 
 

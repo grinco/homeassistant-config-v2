@@ -234,6 +234,29 @@ Checks, each one written because something it catches actually shipped:
                          "PM2.5 Bedroo..." because the tile named itself reading +
                          device. Tiles now show the reading's own name, and a reading
                          that would clash carries a short registry name ("Desk temp.").
+  C39 guides-collapsed   on the Climate views a heading is a name, at most HEADING_MAX
+                         characters, and a bold status flag carries no rationale clause
+                         after it (four words or more after "** — ");
+                         and the explanation behind it lives in an (i) that
+                         expands: a markdown `<details>` whose `<summary>` is the
+                         mdi:information-outline icon, at least one per view. On
+                         2026-11-13 the operator asked for the guides out of sight:
+                         headings read "Safety — runs even with the master switch
+                         off" and status lines carried a sentence of rationale each.
+  C40 climate-once       the Climate tab shows a reading once. Fails on (a) a hand-placed
+                         card naming an entity a generator on the same tab already
+                         renders; (b) a weather forecast (Home's weather card owns it);
+                         (c) the alarm's day/night control (Home and Climate - advanced
+                         own it); (d) the per-zone Tado heating % graphs (the zone tile
+                         already says Heating or Idle). 2026-11-13: the phone render was
+                         7,300 px, most of it repeats.
+  C41 advanced-compact   Climate - advanced: a switch tile carries no toggle feature
+                         (the feature doubles its height; room switches are heading
+                         badges); no breaker counter is shown (the Circuit breaker line
+                         names a tripped unit); and the page is two sections, house-wide
+                         and per-room, so a wide screen fills one row instead of leaving
+                         a column empty under the shorter one. 2026-11-13: five rooms of
+                         five tiles made the page 3,900 px at 1280.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -690,6 +713,11 @@ def effective(card, lib):
         if k != "template":
             eff[k] = v
     return eff
+
+
+# C39: the views whose guides live behind an (i), and how long a heading may be.
+GUIDE_VIEWS = ("climate", "climate-advanced")
+HEADING_MAX = 22
 
 
 def main():
@@ -1496,6 +1524,92 @@ def main():
         if mute:
             fail("C37", "%s: a graph draws several lines with the legend off, so the "
                         "header names only the first" % label, mute)
+
+        # C39 - Climate guides sit behind an (i), headings are names.
+        guide_views = [v for v in views if v.get("path") in GUIDE_VIEWS]
+        loud = []
+        for v in guide_views:
+            vc = cards(v, "%s/%s" % (label, v.get("path")))
+            infos = 0
+            for path, card in vc:
+                if card.get("type") == "heading" and len(card.get("heading", "")) > HEADING_MAX:
+                    loud.append("%s heading %r is longer than %d" % (path, card["heading"], HEADING_MAX))
+                text = card.get("content") if card.get("type") == "markdown" else None
+                if not isinstance(text, str):
+                    continue
+                for blk in re.findall(r"<details>(.*?)</details>", text, re.S):
+                    m = re.match(r"\s*<summary>(.*?)</summary>", blk, re.S)
+                    if not m or "mdi:information-outline" not in m.group(1):
+                        loud.append("%s has a <details> whose summary is not the (i) icon" % path)
+                    else:
+                        infos += 1
+                # A status flag states the fault; its rationale is a clause after it,
+                # "**Not responding: X** - comfort throttled, safety still running".
+                shown = re.sub(r"<details>.*?</details>", "", text, flags=re.S)
+                # Quotes and brackets end a run: "**Away** - safety band only' if away"
+                # is a Jinja string literal stating a state, not prose.
+                for m in re.finditer(r"\*\* [\u2014-] ((?:[^\s{<*'\"()]+ ){3,}[^\s{<*'\"()]+)", shown):
+                    loud.append("%s explains a flag on screen: %r" % (path, m.group(1)[:50]))
+                if text.count("<details>") != text.count("</details>"):
+                    loud.append("%s has an unclosed <details>" % path)
+            if not infos:
+                loud.append("%s/%s has no (i) guide at all" % (label, v.get("path")))
+        if guide_views and loud:
+            fail("C39", "%s: a Climate heading or status flag explains itself, or a guide is not behind its (i)" % label, loud)
+
+        # C40 - the Climate tab shows a reading once.
+        clim = [v for v in views if v.get("path") == "climate"]
+        if clim:
+            v = clim[0]
+            ents = registry_entities()
+            area_name_of = {a["id"]: a["name"] for a in _store("core.area_registry", "areas")}
+            by_id = {e["entity_id"]: e for e in ents}
+            gens = generators(v)
+            floored = area_names()
+            again = []
+            for path, card in cards(v, "%s/climate" % label):
+                eid = card.get("entity")
+                if card.get("type") == "custom:auto-entities" or not isinstance(eid, str):
+                    pass
+                elif eid in by_id and any(
+                        any(rule_matches(r, by_id[eid], area_name_of) for r in inc)
+                        and not any(rule_matches(x, by_id[eid], area_name_of) for x in exc)
+                        for _, inc, exc in gens):
+                    again.append("%s %s is also generated on this tab" % (path, eid))
+                elif (eid in by_id and "on_room_page" in by_id[eid]["labels"]
+                        and by_id[eid]["area"] in floored
+                        and by_id[eid]["device_class"] in ("temperature", "humidity")):
+                    # The Temperature and Humidity sections are Jinja generators whose
+                    # contract is exactly this: every on_room_page reading of the class.
+                    again.append("%s %s is also in the %s section" % (path, eid, by_id[eid]["device_class"]))
+                feats = [f.get("type") for f in card.get("features") or [] if isinstance(f, dict)]
+                if any(f in ("temperature-forecast", "precipitation-forecast") for f in feats):
+                    again.append("%s carries a weather forecast" % path)
+                if str(eid).startswith("alarm_control_panel."):
+                    again.append("%s is the alarm's day/night control" % path)
+                if card.get("type") == "custom:auto-entities":
+                    for r in ((card.get("filter") or {}).get("include") or []):
+                        if r.get("integration") == "tado" and "_heating" in str(r.get("entity_id", "")):
+                            again.append("%s generates the Tado zone heating %% graphs" % path)
+            if again:
+                fail("C40", "%s: the Climate tab repeats a reading shown elsewhere" % label, again)
+
+        # C41 - Climate - advanced stays compact.
+        adv = [v for v in views if v.get("path") == "climate-advanced"]
+        if adv:
+            bulky = []
+            for path, card in cards(adv[0], "%s/climate-advanced" % label):
+                eid = str(card.get("entity", ""))
+                feats = [f.get("type") for f in card.get("features") or [] if isinstance(f, dict)]
+                if eid.startswith("input_boolean.") and "toggle" in feats:
+                    bulky.append("%s %s doubles its height with a toggle feature" % (path, eid))
+                if eid.startswith("counter."):
+                    bulky.append("%s shows breaker counter %s" % (path, eid))
+            n = len(adv[0].get("sections") or [])
+            if n != 2:
+                bulky.append("climate-advanced has %d sections, not 2" % n)
+            if bulky:
+                fail("C41", "%s: Climate - advanced is longer than it needs to be" % label, bulky)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
