@@ -237,7 +237,7 @@ Checks, each one written because something it catches actually shipped:
   C39 guides-collapsed   on the Climate views a heading is a name, at most HEADING_MAX
                          characters, and a bold status flag carries no rationale clause
                          after it (four words or more after "** — ");
-                         characters; the explanation behind it lives in an (i) that
+                         and the explanation behind it lives in an (i) that
                          expands: a markdown `<details>` whose `<summary>` is the
                          mdi:information-outline icon, at least one per view. On
                          2026-11-13 the operator asked for the guides out of sight:
