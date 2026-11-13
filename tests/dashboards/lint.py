@@ -250,6 +250,13 @@ Checks, each one written because something it catches actually shipped:
                          own it); (d) the per-zone Tado heating % graphs (the zone tile
                          already says Heating or Idle). 2026-11-13: the phone render was
                          7,300 px, most of it repeats.
+  C41 advanced-compact   Climate - advanced: a switch tile carries no toggle feature
+                         (the feature doubles its height; room switches are heading
+                         badges); no breaker counter is shown (the Circuit breaker line
+                         names a tripped unit); and the page is two sections, house-wide
+                         and per-room, so a wide screen fills one row instead of leaving
+                         a column empty under the shorter one. 2026-11-13: five rooms of
+                         five tiles made the page 3,900 px at 1280.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1586,6 +1593,23 @@ def main():
                             again.append("%s generates the Tado zone heating %% graphs" % path)
             if again:
                 fail("C40", "%s: the Climate tab repeats a reading shown elsewhere" % label, again)
+
+        # C41 - Climate - advanced stays compact.
+        adv = [v for v in views if v.get("path") == "climate-advanced"]
+        if adv:
+            bulky = []
+            for path, card in cards(adv[0], "%s/climate-advanced" % label):
+                eid = str(card.get("entity", ""))
+                feats = [f.get("type") for f in card.get("features") or [] if isinstance(f, dict)]
+                if eid.startswith("input_boolean.") and "toggle" in feats:
+                    bulky.append("%s %s doubles its height with a toggle feature" % (path, eid))
+                if eid.startswith("counter."):
+                    bulky.append("%s shows breaker counter %s" % (path, eid))
+            n = len(adv[0].get("sections") or [])
+            if n != 2:
+                bulky.append("climate-advanced has %d sections, not 2" % n)
+            if bulky:
+                fail("C41", "%s: Climate - advanced is longer than it needs to be" % label, bulky)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

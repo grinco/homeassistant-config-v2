@@ -821,6 +821,26 @@ def m_guide_view_without_info(d):
     return "C39"
 
 
+def m_advanced_toggle_feature(d):
+    """2026-11-13: a room switch on Climate - advanced grows its toggle bar back."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    c = next(c for s in adv["sections"] for c in s["cards"]
+             if str(c.get("entity", "")).startswith("input_boolean.climate_room_"))
+    c["features"] = [{"type": "toggle"}]
+    _save(d, LOV, doc)
+    return "C41"
+
+
+def m_advanced_third_section(d):
+    """2026-11-13: Climate - advanced splits into a third section, leaving a column empty."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    adv["sections"].append({"type": "grid", "cards": [{"type": "heading", "heading": "Extra"}]})
+    _save(d, LOV, doc)
+    return "C41"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1088,6 +1108,8 @@ MUTATIONS = [
     ("a Climate guide expands from text, not the (i)", m_guide_summary_not_info),
     ("a Climate status flag explains itself again", m_guide_flag_explained),
     ("a Climate view loses every (i)", m_guide_view_without_info),
+    ("a room switch on Advanced grows its toggle bar", m_advanced_toggle_feature),
+    ("Climate - advanced splits into a third section", m_advanced_third_section),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

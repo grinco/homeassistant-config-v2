@@ -100,6 +100,12 @@ legend on (lint C37), or its header names only the first line.
   popup integration. The settings gear is a button badge on *Automatic climate*. The five
   manual-until stamps, the away-since stamp and the breaker counters' − / reset / + buttons are gone:
   the status lines already name an active hold or a tripped unit, and the breaker clears itself.
+- **Climate — advanced is compact (lint C41, 2026-11-13).** Two sections, house-wide and per room, so
+  a wide screen fills one row. Each room is its heading plus Day | Night: the Auto, Filter and
+  Warm-up switches are tap-to-toggle heading badges, coloured when on (names only, so all three fit
+  beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
+  unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
+  turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
 - **The Climate tab shows a reading once (lint C40, 2026-11-13).** No forecast (Home's weather card
   has it), no day/night alarm control (Home and Climate — advanced), no hand-placed copy of a reading
   the Temperature/Humidity generators already list, no Tado heating % graphs. The Floors section keeps
