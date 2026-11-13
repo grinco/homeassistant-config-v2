@@ -107,7 +107,9 @@ legend on (lint C37), or its header names only the first line.
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
 - **Appliances is a glance (lint C43, 2026-11-13).** Three sections, one card style (the one-row
-  stat pill). *Kitchen* spans the width, the three appliances side by side: they are watched, never driven from Home
+  stat pill). *Kitchen* is one row of three compact cards (a grid card, so it stays three across
+  on a phone; template `vg_kitchen`): a 64px sketch of the real model that glows or bubbles while it
+  runs, the state, and a detail line (cavity temperature, program, door). They are watched, never driven from Home
   Assistant (operator): their state, and while a program runs (`run`, `pause`, `delayedstart`,
   `actionrequired`) its finish time and progress. No program picker, no Pause/Resume/Stop.
   *Vacuum*: its commands inline on one row, status, battery, room, suction. *Car*: the lock

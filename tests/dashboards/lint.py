@@ -730,6 +730,9 @@ def effective(card, lib):
     return eff
 
 
+# C3/C7: a card nested in another card's `cards` list is laid out by that card, not the section.
+NESTED_IN_GRID = re.compile(r"/cards/\d+/cards/\d+$")
+
 # C39: the views whose guides live behind an (i), and how long a heading may be.
 GUIDE_VIEWS = ("climate", "climate-advanced")
 HEADING_MAX = 22
@@ -783,7 +786,9 @@ def main():
             # slot (button-card's power pill, a slider row) is laid out by its
             # parent's grid-template-areas, so grid_options would do nothing -
             # requiring it there would be a check that fails for a wrong reason.
-            if "/custom_fields/" in path:
+            # Likewise a card inside a grid card: the grid card sizes it (Appliances'
+            # kitchen row stays three across even on a phone that way).
+            if "/custom_fields/" in path or NESTED_IN_GRID.search(path):
                 continue
             if not (card.get("grid_options") or {}).get("rows"):
                 norows.append("%s  (%s)" % (path, card.get("entity")))
@@ -834,7 +839,8 @@ def main():
         # 3-column cap left the third column empty on every row.
         tall, odd = [], []
         for path, card in found:
-            if card.get("type") != "custom:button-card" or "/custom_fields/" in path:
+            if (card.get("type") != "custom:button-card" or "/custom_fields/" in path
+                    or NESTED_IN_GRID.search(path)):
                 continue
             chain = set()
             queue = list(template_names(card))
