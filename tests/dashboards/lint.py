@@ -234,6 +234,13 @@ Checks, each one written because something it catches actually shipped:
                          "PM2.5 Bedroo..." because the tile named itself reading +
                          device. Tiles now show the reading's own name, and a reading
                          that would clash carries a short registry name ("Desk temp.").
+  C39 guides-collapsed   on the Climate views a heading is a name, at most HEADING_MAX
+                         characters; the explanation behind it lives in an (i) that
+                         expands: a markdown `<details>` whose `<summary>` is the
+                         mdi:information-outline icon, at least one per view. On
+                         2026-11-13 the operator asked for the guides out of sight:
+                         headings read "Safety — runs even with the master switch
+                         off" and status lines carried a sentence of rationale each.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -690,6 +697,11 @@ def effective(card, lib):
         if k != "template":
             eff[k] = v
     return eff
+
+
+# C39: the views whose guides live behind an (i), and how long a heading may be.
+GUIDE_VIEWS = ("climate", "climate-advanced")
+HEADING_MAX = 22
 
 
 def main():
@@ -1496,6 +1508,31 @@ def main():
         if mute:
             fail("C37", "%s: a graph draws several lines with the legend off, so the "
                         "header names only the first" % label, mute)
+
+        # C39 - Climate guides sit behind an (i), headings are names.
+        guide_views = [v for v in views if v.get("path") in GUIDE_VIEWS]
+        loud = []
+        for v in guide_views:
+            vc = cards(v, "%s/%s" % (label, v.get("path")))
+            infos = 0
+            for path, card in vc:
+                if card.get("type") == "heading" and len(card.get("heading", "")) > HEADING_MAX:
+                    loud.append("%s heading %r is longer than %d" % (path, card["heading"], HEADING_MAX))
+                text = card.get("content") if card.get("type") == "markdown" else None
+                if not isinstance(text, str):
+                    continue
+                for blk in re.findall(r"<details>(.*?)</details>", text, re.S):
+                    m = re.match(r"\s*<summary>(.*?)</summary>", blk, re.S)
+                    if not m or "mdi:information-outline" not in m.group(1):
+                        loud.append("%s has a <details> whose summary is not the (i) icon" % path)
+                    else:
+                        infos += 1
+                if text.count("<details>") != text.count("</details>"):
+                    loud.append("%s has an unclosed <details>" % path)
+            if not infos:
+                loud.append("%s/%s has no (i) guide at all" % (label, v.get("path")))
+        if guide_views and loud:
+            fail("C39", "%s: a Climate guide is on show instead of behind its (i)" % label, loud)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

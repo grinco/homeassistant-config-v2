@@ -93,6 +93,13 @@ legend on (lint C37), or its header names only the first line.
   the flat list had three tiles all called *Corridor zone open*.
 - **One night (lint C22):** dashboards compute night exactly as the climate loop does — the alarm in
   `armed_night`, the schedule only while the alarm itself is unavailable.
+- **Climate guides sit behind an (i) (lint C39, 2026-11-13).** On Climate and Climate — advanced a
+  heading is a name of at most 22 characters, and status lines state facts only ("Isolated: Office",
+  "Manual: Bedroom (until 14:00)"). Each section's explanation is a markdown `<details>` whose
+  `<summary>` is the `mdi:information-outline` icon: closed by default, per viewer, no helper, no
+  popup integration. The settings gear is a button badge on *Automatic climate*. The five
+  manual-until stamps, the away-since stamp and the breaker counters' − / reset / + buttons are gone:
+  the status lines already name an active hold or a tripped unit, and the breaker clears itself.
 - **Lights:** Magic Areas makes a group per light category as well as `_all_lights`; room pages and
   the Home room card use only `_all_lights` (lint C17, C19).
 - **Home tiles:** one `auto-entities` per floor; a `rooms` map in the card config carries only the

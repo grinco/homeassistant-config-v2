@@ -16,6 +16,7 @@ proven is the real script, not a re-implementation of its logic.
 """
 
 import io
+import re
 import json
 import os
 import shutil
@@ -756,6 +757,29 @@ def _occ_cards(v):
                     for r in c["filter"]["include"])]
 
 
+def m_guide_on_show(d):
+    """2026-11-13: a Climate heading carries its explanation again."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    h = next(c for s in adv["sections"] for c in s["cards"] if c.get("type") == "heading"
+             and c.get("heading", "").startswith("Circuit breaker"))
+    h["heading"] = "Circuit breaker \u2014 isolates a unit that stops responding"
+    _save(d, LOV, doc)
+    return "C39"
+
+
+def m_guide_summary_not_info(d):
+    """2026-11-13: a guide expands from its own text instead of the (i)."""
+    doc = _cfg(d, LOV)
+    adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
+    for s in adv["sections"]:
+        for c in s["cards"]:
+            if c.get("type") == "markdown" and "<summary>" in c.get("content", ""):
+                c["content"] = re.sub(r"<summary>.*?</summary>", "<summary>Read more</summary>", c["content"], flags=re.S)
+    _save(d, LOV, doc)
+    return "C39"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1019,6 +1043,8 @@ MUTATIONS = [
     ("a dead entity only inside a JS template", m_dead_entity_in_js),
     ("button-card's resource unregistered", m_unregistered_card),
     ("a transform leaves a scratch key", m_scratch_key),
+    ("a Climate heading explains itself again", m_guide_on_show),
+    ("a Climate guide expands from text, not the (i)", m_guide_summary_not_info),
 ]
 
 
