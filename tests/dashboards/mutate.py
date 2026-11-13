@@ -859,6 +859,35 @@ def m_energy_history_chart(d):
     return "C42"
 
 
+def m_appliances_setting(d):
+    """2026-11-13: a settings toggle comes back to Appliances."""
+    doc = _cfg(d, LOV)
+    _section(doc, "appliances", "Kitchen").append(
+        {"type": "tile", "entity": "switch.oven_child_lock"})
+    _save(d, LOV, doc)
+    return "C43"
+
+
+def m_appliances_progress_always(d):
+    """2026-11-13: the dishwasher's progress shows when nothing runs."""
+    doc = _cfg(d, LOV)
+    for c in _section(doc, "appliances", "Kitchen"):
+        if str(c.get("entity", "")).endswith("_program_progress"):
+            c.pop("visibility", None)
+    _save(d, LOV, doc)
+    return "C43"
+
+
+def m_appliances_kitchen_control(d):
+    """2026-11-13: a stop button for the dishwasher comes back."""
+    doc = _cfg(d, LOV)
+    _section(doc, "appliances", "Kitchen").append(
+        {"type": "button", "tap_action": {"action": "perform-action", "perform_action": "button.press",
+         "target": {"entity_id": "button.home_dishwasher_stop_program"}}})
+    _save(d, LOV, doc)
+    return "C43"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1130,6 +1159,9 @@ MUTATIONS = [
     ("Climate - advanced splits into a third section", m_advanced_third_section),
     ("the Energy badge row repeats a graph", m_energy_badge_repeat),
     ("a statistics chart comes back to Energy", m_energy_history_chart),
+    ("a settings toggle comes back to Appliances", m_appliances_setting),
+    ("Appliances shows progress while idle", m_appliances_progress_always),
+    ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

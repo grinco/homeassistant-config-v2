@@ -263,6 +263,15 @@ Checks, each one written because something it catches actually shipped:
                          Energy panel). 2026-11-13: socket load was on screen three times
                          and spot price twice in the first screenful, and a 14-day bar
                          chart of the lights' modelled kWh filled half a desktop.
+  C43 appliances-glance  Appliances is a glance. The oven, cooktop and dishwasher are
+                         watched, never driven: no program picker, button or action
+                         names one (operator, 2026-11-13). The tab names
+                         each entity once (no badge row repeating a State card), shows
+                         no settings (switch, number, image or connectivity entities -
+                         those live on the device's page), and a program's progress or
+                         finish time shows only while a program runs (the card carries a
+                         visibility condition). 2026-11-13: the least-used tab was
+                         3,400 px on a phone, mostly toggles and idle readings.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1634,6 +1643,31 @@ def main():
                       for e, p in sorted(seen.items()) if len(p) > 1]
             if twice:
                 fail("C42", "%s: the Energy tab repeats itself" % label, twice)
+
+        # C43 - Appliances is a glance, not a settings page.
+        ap = [v for v in views if v.get("path") == "appliances"]
+        if ap:
+            seen, busy = {}, []
+            for path, card in cards(ap[0], "%s/appliances" % label):
+                eid = card.get("entity")
+                if not isinstance(eid, str):
+                    continue
+                seen.setdefault(eid, []).append(path)
+                dom = eid.split(".")[0]
+                if dom in ("switch", "number", "image") or eid.endswith("_connectivity"):
+                    busy.append("%s shows setting %s" % (path, eid))
+                if re.search(r"_program_(progress|finish_time)$", eid) and not card.get("visibility"):
+                    busy.append("%s shows %s while nothing runs" % (path, eid))
+            # The kitchen appliances are watched, never driven from here (operator,
+            # 2026-11-13): no program picker, no button, no action naming one.
+            for path, card in cards(ap[0], "%s/appliances" % label):
+                blob = own_text(card)
+                if re.search(r'"(select|button)\.[a-z0-9_]*_(oven|cooktop|dishwasher)_', blob):
+                    busy.append("%s controls a kitchen appliance" % path)
+            busy += ["%s appears %d times: %s" % (e, len(p), ", ".join(p))
+                     for e, p in sorted(seen.items()) if len(p) > 1]
+            if busy:
+                fail("C43", "%s: Appliances is busier than a glance" % label, busy)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
