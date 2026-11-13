@@ -44,7 +44,9 @@ jobs:
       - name: every test script compiles
         run: python3 -m compileall -q tests
       - name: the animated weather card's CSS has no seams and no misaligned layers
-        run: python3 tests/weather/test_card_style.py
+        run: |
+          pip install -q jinja2==3.1.6
+          python3 tests/weather/test_card_style.py
       - name: the synthetic house can render the dashboard (CI renders it, never the real one)
         run: |
           pip install -q pyyaml==6.0.2

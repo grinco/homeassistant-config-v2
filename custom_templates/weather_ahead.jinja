@@ -9,7 +9,6 @@
     condition  the worst condition in the window (precipitation > wind > fog > cloud)
     scene      the tower picture for it: sunny, partlycloudy, cloudy, rainy, pouring,
                storm, snowy, sleet, fog, windy
-    daytime    the hour in progress (is_daytime), falling back to sun.sun
     {} when the window is empty (no forecast). -#}
 {% macro weather_ahead(forecast, now, hours=3) -%}
 {%- set now = as_datetime(now) if now is string else now -%}
@@ -35,7 +34,6 @@
 {%- if ns.rows | count == 0 -%}
 {{- {} | to_json -}}
 {%- else -%}
-{%- set first = ns.rows[0] -%}
 {%- set temps = ns.rows | selectattr('temperature', 'defined') | map(attribute='temperature') | list -%}
 {%- set feels = ns.rows | selectattr('apparent_temperature', 'defined') | map(attribute='apparent_temperature') | list -%}
 {%- set mm = ns.rows | selectattr('precipitation', 'defined') | map(attribute='precipitation') | list -%}
@@ -44,7 +42,6 @@
 {{- {
   'condition': ns.best,
   'scene': scene.get(ns.best, 'cloudy'),
-  'daytime': first.is_daytime if first.is_daytime is defined else is_state('sun.sun', 'above_horizon'),
   'temp_min': temps | min if temps else none,
   'temp_max': temps | max if temps else none,
   'temp_range': (temps | min | round(0) | int) ~ '..' ~ (temps | max | round(0) | int) if temps else none,

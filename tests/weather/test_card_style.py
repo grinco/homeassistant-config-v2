@@ -11,6 +11,9 @@ What it locks down (review 2026-11-12):
 - in every scene and keyframe stop, background-position has exactly one entry per
   background-image layer, so no layer silently takes another's position;
 - the reduced-motion override keeps the same number of layers, swapping only the glass.
+- day or night follows sun.sun at render time, in both directions (why: docs/weather-ahead.md).
+  The render is plain Jinja with a fake `states`; it checks which picture and headline the
+  template picks, not card-mod's re-rendering, and it compares strings, not HA's native types.
 """
 import os, re, sys
 
@@ -33,8 +36,50 @@ def split_layers(value):
     return out + [cur.strip()] if cur.strip() else out
 
 
+class _States:
+    """Just enough of Home Assistant's `states` for the style's Jinja: callable and dotted."""
+    def __init__(self, st):
+        self._st = st
+    def __call__(self, eid):
+        return self._st.get(eid, {}).get("state", "unknown")
+    def __getattr__(self, domain):
+        class _D:
+            def __getattr__(_, obj):
+                e = self._st.get(domain + "." + obj)
+                return type("S", (), e) if e else None
+        return _D()
+
+
+def render_style(sun, sensor_state="sunny", sensor_attrs=None):
+    import jinja2
+    st = {"sun.sun": {"state": sun, "attributes": {}},
+          "sensor.weather_ahead": {"state": sensor_state,
+                                   "attributes": dict({"scene": sensor_state}, **(sensor_attrs or {}))}}
+    env = jinja2.Environment()
+    env.globals.update(states=_States(st), is_state=lambda e, v: st.get(e, {}).get("state") == v)
+    return env.from_string(card_style.style()).render()
+
+
+def day_night(fails):
+    # Straddle sunset both ways: the sensor's attributes say one thing, the sun the other.
+    for sun, stale, want, wrong in (("below_horizon", True, "-night-", "-day-"),
+                                    ("above_horizon", False, "-day-", "-night-")):
+        out = render_style(sun, sensor_attrs={"daytime": stale})
+        if want + "back" not in out or wrong + "back" in out:
+            fails.append("sun %s, sensor daytime %s: card does not show %s" % (sun, stale, want.strip("-")))
+    # Sensor unavailable (no forecast): cloudy picture, no headline swap (review 2026-11-13).
+    out = render_style("above_horizon", sensor_state="unavailable", sensor_attrs={"scene": None})
+    if "cloudy-day-back" not in out or "Next 3 h" in out:
+        fails.append("sensor unavailable: not the cloudy picture without a headline")
+    # The forecast keeps 'sunny' for an hour that started before sunset: after dark say clear.
+    for sun, want in (("below_horizon", "Next 3 h: clear'"), ("above_horizon", "Next 3 h: sunny'")):
+        if want not in render_style(sun, sensor_state="sunny"):
+            fails.append("sun %s, forecast sunny: headline is not %s" % (sun, want.rstrip("'")))
+
+
 def main():
     fails = []
+    day_night(fails)
     for scene, (drift, loop, layers) in card_style.SCENES.items():
         for name, (dx, dy, sway) in layers:
             if not (float(dx).is_integer() and float(dy).is_integer()):

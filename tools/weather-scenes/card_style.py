@@ -4,7 +4,7 @@
 
 Paste the output as the card's card_mod style on every regeneration (see docs/weather-ahead.md).
 
-The style picks the scene from sensor.weather_ahead (scene, daytime) and stacks:
+The style picks the scene from sensor.weather_ahead and day or night from sun.sun, and stacks:
   ha-card background   <scene>-<dn>-back.jpg            still sky
   ha-card::before      <scene>-<dn>-clouds.webp         strip drifting left (transform)
   ha-card::after       precipitation tiles, scrim,      tiles move (background-position),
@@ -15,7 +15,7 @@ Everything stops under prefers-reduced-motion: the glass swaps to a still frame.
 """
 import sys
 
-V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '6'
+V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '7'
 URL = "/local/zizkov/anim/%s.%s?v=" + V
 TILE = 200            # CSS px a 400 px tile is shown at
 STOPS = (0, 25, 50, 75, 100)
@@ -92,10 +92,10 @@ def css(scene):
 
 COMMON = """{% set a = states.sensor.weather_ahead.attributes if states.sensor.weather_ahead is not none else {} %}
 {% set sc = a.get('scene') if a.get('scene') in fx else 'cloudy' %}
-{% set dt = a.get('daytime') if a.get('daytime') in [true, false] else is_state('sun.sun', 'above_horizon') %}
-{% set dn = 'day' if dt else 'night' %}
+{% set dn = 'day' if is_state('sun.sun', 'above_horizon') else 'night' %}
 {% set words = {'clear-night': 'clear', 'sunny': 'sunny', 'partlycloudy': 'partly cloudy', 'cloudy': 'cloudy', 'fog': 'fog', 'rainy': 'rain', 'pouring': 'heavy rain', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'hail': 'hail', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'windy': 'windy', 'windy-variant': 'windy', 'exceptional': 'unusual weather'} %}
 {% set ahead = words.get(states('sensor.weather_ahead')) %}
+{% set ahead = 'clear' if ahead == 'sunny' and dn == 'night' else ahead %}
 ha-card {
   position: relative; overflow: hidden; isolation: isolate;
   --primary-text-color: #fff;
