@@ -1668,7 +1668,8 @@ def main():
             # 2026-11-13): no program picker, no button, no action naming one.
             for path, card in cards(ap[0], "%s/appliances" % label):
                 blob = own_text(card)
-                if re.search(r'"(select|button)\.[a-z0-9_]*_(oven|cooktop|dishwasher)_', blob):
+                # As a card's entity or an action's target; reading a program's name is fine.
+                if re.search(r'"(entity|entity_id)": "(select|button)\.[a-z0-9_]*_(oven|cooktop|dishwasher)_', blob):
                     busy.append("%s controls a kitchen appliance" % path)
             busy += ["%s appears %d times: %s" % (e, len(p), ", ".join(p))
                      for e, p in sorted(seen.items()) if len(p) > 1]

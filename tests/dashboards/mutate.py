@@ -868,16 +868,6 @@ def m_appliances_setting(d):
     return "C43"
 
 
-def m_appliances_progress_always(d):
-    """2026-11-13: the dishwasher's progress shows when nothing runs."""
-    doc = _cfg(d, LOV)
-    for c in _section(doc, "appliances", "Kitchen"):
-        if str(c.get("entity", "")).endswith("_program_progress"):
-            c.pop("visibility", None)
-    _save(d, LOV, doc)
-    return "C43"
-
-
 def m_appliances_kitchen_control(d):
     """2026-11-13: a stop button for the dishwasher comes back."""
     doc = _cfg(d, LOV)
@@ -1160,7 +1150,6 @@ MUTATIONS = [
     ("the Energy badge row repeats a graph", m_energy_badge_repeat),
     ("a statistics chart comes back to Energy", m_energy_history_chart),
     ("a settings toggle comes back to Appliances", m_appliances_setting),
-    ("Appliances shows progress while idle", m_appliances_progress_always),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),

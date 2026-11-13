@@ -109,9 +109,11 @@ legend on (lint C37), or its header names only the first line.
 - **Appliances is a glance (lint C43, 2026-11-13).** Three sections, one card style (the one-row
   stat pill). *Kitchen* is one row of three compact cards (a grid card, so it stays three across
   on a phone; template `vg_kitchen`): a 64px sketch of the real model that glows or bubbles while it
-  runs, the state, and a detail line (cavity temperature, program, door). They are watched, never driven from Home
-  Assistant (operator): their state, and while a program runs (`run`, `pause`, `delayedstart`,
-  `actionrequired`) its finish time and progress. No program picker, no Pause/Resume/Stop.
+  runs, the state, and a detail line: while a program runs, the time left and progress (a
+  delayed start says when it will be done); otherwise cavity temperature, program and door; and a
+  set kitchen timer (the oven's and cooktop's alarm clock) at any time. Tested by executing the
+  card's own JavaScript: `tests/dashboards/kitchencard.py`. They are watched, never driven from Home
+  Assistant (operator). No program picker, no Pause/Resume/Stop.
   *Vacuum*: its commands inline on one row, status, battery, room, suction. *Car*: the lock
   inline, doors and windows, location, range, the remote. No settings (switches, numbers,
   connectivity, the vacuum map: they live on each device's page) and no badge row (it repeated
