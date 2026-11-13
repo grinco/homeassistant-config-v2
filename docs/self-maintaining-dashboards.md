@@ -208,7 +208,7 @@ The Home room tiles are one button-card template, `vg_room_card`
   whose Magic Areas occupancy entity lists at least one `binary_sensor` in `presence_sensors`.
   Magic Areas makes that entity in every room, sensor or not, and counts speakers and TVs as
   presence; without a real sensor behind it, "No one here" would be a guess, so the card says
-  nothing. Before this, only occupied rooms said anything, and an empty room looked the same as
+  nothing. An occupancy entity that is unavailable or unknown also says nothing. Before this, only occupied rooms said anything, and an empty room looked the same as
   one that cannot tell. Locked by `tests/dashboards/roomcard.py`.
 
 The 2026-09 report that a Kids room tile opened the AC more-info dialog was never proven. The

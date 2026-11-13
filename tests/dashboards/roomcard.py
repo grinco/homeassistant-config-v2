@@ -141,6 +141,24 @@ CASES = [
          room=room([ent(PRES, "magic_areas")],
                    [st(PRES, "on", device_class="occupancy", presence_sensors=["media_player.room_echo"])]),
          never=["No one here", "Someone here"]),
+    dict(name="an unavailable occupancy entity says nothing about presence",
+         finding="review 2026-11-13 F1: Magic Areas reloads and HA restarts leave it unavailable;"
+                 " a `!== 'off'` test would then claim the room is empty",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "unavailable", device_class="occupancy", presence_sensors=[MOTION])]),
+         never=["No one here", "Someone here"]),
+    dict(name="an unknown occupancy entity says nothing about presence",
+         finding="review 2026-11-13 F1: the same for unknown",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "unknown", device_class="occupancy", presence_sensors=[MOTION])]),
+         never=["No one here", "Someone here"]),
+    dict(name="a speaker next to a real sensor does not hide the sensor",
+         finding="review 2026-11-13: every other case had a one-entry list; any/all confusion in the"
+                 " filter would hide a room that has both",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "off", device_class="occupancy",
+                       presence_sensors=["media_player.room_echo", MOTION])]),
+         say=["No one here"]),
 ]
 
 RUNNER = """
