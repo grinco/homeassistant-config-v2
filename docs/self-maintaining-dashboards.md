@@ -106,6 +106,44 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **Comfort: one row per room (lint C34, 2026-11-13).** Each automated room is one row: the target
+  the automation uses now (night while `binary_sensor.lighting_night` is on, day otherwise) as a
+  tile with − / + on two-thirds of the width, and that room's air-filter switch on the last third.
+  The row is a bare button-card holding the two tiles in custom fields (`2fr 1fr`); a room with no
+  air filter gets the target tile alone.
+- **Show what is active, say the rest in one line (lint C46, C40e, 2026-11-13).** Energy: each AC
+  card shows only above 10 W, and "All air conditioners are off." stands in when the total is below
+  10 W; the socket generator lists sockets drawing 2 W or more and ends with one line naming the idle
+  ones ("6 idle · Toilet down · ..."). Security: rooms whose sensors all read off collapse into one
+  "All clear · Bathroom · ..." line; a room with anything on, unavailable or unknown keeps all its
+  cards (`show_all` in the generator's config lists every room, which `security_names.py` uses so
+  every name is still checked). Climate: one generated card per room in *Rooms*, temperature as the
+  line and humidity as a second state (no second line, so no legend), with the two all-rooms graphs
+  kept for both trends; the Auto badge on *Automatic climate* is the toggle (the separate toggle tile
+  repeated it) and the status is two short lines. C40(e): an entity appears once on the Climate tab,
+  badges included, so the Outside heading no longer repeats the outdoor temperature from the badge
+  row.
+- **Folding is for long lists with nothing on the right (lint C45, 2026-11-13).** Foldable
+  (`expander-card`, heading as title card, open by default): Home's Downstairs, Upstairs, Needs
+  attention and Comfort; Security's Sensors and Cameras. Every other section stays a plain heading,
+  because its heading carries something on the right (a toggle, a reading, the settings gear) that
+  the fold chevron would take (operator: keep the action rather than the fold). `storage-id`
+  `<view>-<heading-slug>` makes a browser remember a fold (per device, not per user), except Needs
+  attention, which reopens on every load so a remembered fold cannot hide the next alarm. Inside an
+  expander, cards that share a line are a `grid` row and the expander lays out as a grid with an 8 px
+  gap, so spacing matches the section. Lookups by heading go through `sec_heading` / `sec_cards`;
+  that closed two silent holes (C34 with no Comfort section, C30 inside a folded Needs attention).
+  Quick actions shares the Weather section, so it follows Weather on a phone while the floors keep
+  their shared row on wide screens. A fold-everything pass was tried and reverted the same day.
+- **Floors side by side, collapsible, three across (lint C44, 2026-11-13).** Home shows each floor's
+  room cards in a section of its own (Downstairs, Upstairs), placed together after Weather and Needs
+  attention, so from two columns up they sit side by side. Each floor is an `expander-card`
+  (MelleD/lovelace-expander-card, Marketplace) whose title card is the floor heading: tap it to fold
+  the floor; `storage-id` makes each phone remember its own choice. Rooms are three across; the room
+  card adapts to its own width with a CSS container query (`extra_styles`), so below 170 px the icon
+  and lamp shrink, humidity hides and the status line clips to one line. The upstairs rooms had begun
+  two screens down on a phone. Floor jump buttons were tried and dropped (operator). C10 and C13 find
+  the floor generators inside the expander (`sec_heading`, `sec_cards`).
 - **Appliances is a glance (lint C43, 2026-11-13).** Three sections, one card style (the one-row
   stat pill). *Kitchen* is one row of three compact cards (a grid card, so it stays three across
   on a phone; template `vg_kitchen`): a 64px sketch of the real model that glows or bubbles while it

@@ -1,41 +1,4 @@
 {
- "badges": [
-  {
-   "color": "green",
-   "entity": "sensor.ac_power_total",
-   "name": "AC load now",
-   "show_state": true,
-   "type": "entity"
-  },
-  {
-   "color": "teal",
-   "entity": "sensor.socket_power_total",
-   "name": "Socket load",
-   "show_state": true,
-   "type": "entity"
-  },
-  {
-   "color": "amber",
-   "entity": "sensor.current_spot_electricity_price",
-   "name": "Spot now",
-   "show_state": true,
-   "type": "entity"
-  },
-  {
-   "color": "blue",
-   "entity": "sensor.volvo_xc40_charging_power",
-   "name": "Car charging",
-   "show_state": true,
-   "type": "entity",
-   "visibility": [
-    {
-     "above": 0,
-     "condition": "numeric_state",
-     "entity": "sensor.volvo_xc40_charging_power"
-    }
-   ]
-  }
- ],
  "dense_section_placement": true,
  "icon": "mdi:lightning-bolt",
  "max_columns": 3,
@@ -114,10 +77,38 @@
      "type": "custom:mini-graph-card"
     },
     {
+     "color": "amber",
+     "entity": "sensor.all_lights_power",
+     "features": [
+      {
+       "hours_to_show": 24,
+       "type": "trend-graph"
+      }
+     ],
+     "grid_options": {
+      "columns": 12
+     },
+     "icon": "mdi:lightbulb-group",
+     "name": "Lights (modelled)",
+     "type": "tile"
+    },
+    {
      "heading": "Per air conditioner",
      "heading_style": "subtitle",
      "icon": "mdi:air-conditioner",
      "type": "heading"
+    },
+    {
+     "content": "All air conditioners are off.",
+     "text_only": true,
+     "type": "markdown",
+     "visibility": [
+      {
+       "below": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.ac_power_total"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_living_room",
@@ -142,7 +133,14 @@
      "variables": {
       "max": 1500,
       "tint": "orange"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_living_room"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_office",
@@ -167,7 +165,14 @@
      "variables": {
       "max": 1500,
       "tint": "indigo"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_office"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_bedroom",
@@ -192,7 +197,14 @@
      "variables": {
       "max": 1500,
       "tint": "purple"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_bedroom"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_kid1",
@@ -217,7 +229,14 @@
      "variables": {
       "max": 1500,
       "tint": "pink"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_kid1"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_kid2",
@@ -242,7 +261,14 @@
      "variables": {
       "max": 1500,
       "tint": "cyan"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_kid2"
+      }
+     ]
     }
    ],
    "column_span": 1,
@@ -251,15 +277,6 @@
   {
    "cards": [
     {
-     "badges": [
-      {
-       "color": "green",
-       "entity": "sensor.socket_power_total",
-       "name": "Load",
-       "show_state": true,
-       "type": "entity"
-      }
-     ],
      "heading": "Sockets",
      "icon": "mdi:power-socket-de",
      "type": "heading"
@@ -295,13 +312,11 @@
     },
     {
      "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
+      "type": "vertical-stack"
      },
      "card_param": "cards",
      "filter": {
-      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- endfor -%}\n{{ out.l }}"
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[], idle=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- if not is_number(states(s.power)) or states(s.power) | float(0) >= 2 -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- else -%}{%- set out.idle = out.idle + [o.get('name') or s.name] -%}{%- endif -%}\n{%- endfor -%}\n{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': out.l}] if out.l else []) + ([{'type': 'markdown', 'text_only': true, 'content': '**' ~ (out.idle | count) ~ ' idle** · ' ~ (out.idle | join(' · '))}] if out.idle else []) }}"
      },
      "grid_options": {
       "columns": "full"
@@ -354,7 +369,7 @@
      "type": "custom:auto-entities"
     },
     {
-     "heading": "Outlets without metering",
+     "heading": "Unmetered outlets",
      "heading_style": "subtitle",
      "icon": "mdi:power-plug-outline",
      "type": "heading"
@@ -393,7 +408,7 @@
      "type": "heading"
     },
     {
-     "entity": "sensor.current_spot_electricity_price",
+     "entity": "sensor.current_spot_electricity_hour_order",
      "grid_options": {
       "columns": 12,
       "rows": 1
@@ -406,12 +421,13 @@
      "styles": {
       "icon": [
        {
-        "color": "[[[ var p = parseFloat(entity.state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
+        "color": "[[[ var p = parseFloat((states['sensor.current_spot_electricity_price'] || {}).state); var lo = parseFloat(states['sensor.spot_cheapest_electricity_today'].state); var hi = parseFloat(states['sensor.spot_most_expensive_electricity_today'].state); if (isNaN(p) || isNaN(lo) || isNaN(hi) || hi <= lo) return '#9e9e9e'; var f = (p - lo) / (hi - lo); if (f < 0.25) return '#4caf50'; if (f < 0.5) return '#8bc34a'; if (f < 0.75) return '#ffc107'; return '#ff5722'; ]]]"
        }
       ]
      },
      "tap_action": {
-      "action": "more-info"
+      "action": "more-info",
+      "entity": "sensor.current_spot_electricity_price"
      },
      "template": "vg_stat",
      "type": "custom:button-card"
@@ -576,54 +592,6 @@
     }
    ],
    "column_span": 1,
-   "type": "grid"
-  },
-  {
-   "cards": [
-    {
-     "heading": "Modelled load — lights",
-     "icon": "mdi:calculator-variant-outline",
-     "type": "heading"
-    },
-    {
-     "color": "amber",
-     "entity": "sensor.all_lights_power",
-     "features": [
-      {
-       "hours_to_show": 24,
-       "type": "trend-graph"
-      }
-     ],
-     "grid_options": {
-      "columns": 12
-     },
-     "icon": "mdi:lightbulb-group",
-     "name": "Lights now",
-     "type": "tile"
-    },
-    {
-     "chart_type": "bar",
-     "days_to_show": 14,
-     "entities": [
-      {
-       "color": "amber",
-       "entity": "sensor.all_lights_energy",
-       "name": "Lights"
-      }
-     ],
-     "grid_options": {
-      "columns": "full",
-      "rows": 6
-     },
-     "period": "day",
-     "stat_types": [
-      "change"
-     ],
-     "title": "Modelled kWh, last 14 days",
-     "type": "statistics-graph"
-    }
-   ],
-   "column_span": 2,
    "type": "grid"
   },
   {

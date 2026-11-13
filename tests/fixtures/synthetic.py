@@ -159,6 +159,7 @@ def build_house():
              {"temperature": 14, "temperature_unit": "°C", "humidity": 62, "pressure": 1017,
               "pressure_unit": "hPa", "wind_speed": 9, "wind_speed_unit": "km/h", "supported_features": 0},
              platform="weather_ci")
+    h.entity("sensor.weather_ahead", "Weather ahead", "partlycloudy", {"scene": "cloudy"}, platform="template")
     h.entity("alarm_control_panel.home", "Alarm", "disarmed",
              {"code_arm_required": False, "supported_features": 63}, platform="alarm_ci")
     h.entity("binary_sensor.lighting_night", "Lighting night", "off", platform="template")
@@ -199,9 +200,18 @@ def dashboard():
 
     badge = dict(home["badges"][0]) if home.get("badges") else {"type": "entity", "show_name": True}
     home["badges"] = [dict(badge, entity=eid, name=name) for eid, name, _ in PEOPLE]
+    def walk(node):
+        if isinstance(node, dict):
+            yield node
+            for v in node.values():
+                yield from walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                yield from walk(v)
+
     for sec in home.get("sections") or []:
-        for c in sec.get("cards") or []:
-            if "rooms" in c:
+        for c in walk(sec.get("cards") or []):  # the floor generators sit inside an expander-card
+            if "rooms" in c and "floor" in c:
                 c["rooms"] = {a: dict({"icon": icon, "name": name, "page": page},
                                       **({"special": "kitchen"} if a == "kitchen" else {}))
                               for a, (name, floor, icon, page) in ROOMS.items() if floor == c.get("floor")}

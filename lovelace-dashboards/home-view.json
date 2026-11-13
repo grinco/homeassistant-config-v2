@@ -43,6 +43,24 @@
   {
    "cards": [
     {
+     "heading": "Weather",
+     "icon": "mdi:weather-partly-cloudy",
+     "type": "heading"
+    },
+    {
+     "card_mod": {
+      "style": "{% set fx = {'sunny': \"ha-card { background: url('/local/zizkov/anim/sunny-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/sunny-DN-front.webp?v=7'); background-size: 100% 100%, cover; background-repeat: no-repeat, no-repeat; background-position: 0 0, center; }\", 'partlycloudy': \"ha-card { background: url('/local/zizkov/anim/partlycloudy-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/partlycloudy-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 90s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/partlycloudy-DN-front.webp?v=7'); background-size: 100% 100%, cover; background-repeat: no-repeat, no-repeat; background-position: 0 0, center; }\", 'cloudy': \"ha-card { background: url('/local/zizkov/anim/cloudy-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/cloudy-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/cloudy-DN-front.webp?v=7'); background-size: 100% 100%, cover; background-repeat: no-repeat, no-repeat; background-position: 0 0, center; }\", 'fog': \"ha-card { background: url('/local/zizkov/anim/fog-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/fog-DN-front.webp?v=7'); background-size: 100% 100%, cover; background-repeat: no-repeat, no-repeat; background-position: 0 0, center; }\", 'windy': \"ha-card { background: url('/local/zizkov/anim/windy-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/windy-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 30s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/wind-DN.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/windy-DN-front.webp?v=7'); background-size: 400px 200px, 100% 100%, cover; background-repeat: repeat, no-repeat, no-repeat; background-position: 0 0, 0 0, center; animation: wx-fall-windy 3s linear infinite; } @keyframes wx-fall-windy { 0% { background-position: 0px 0px, 0 0, center; } 25% { background-position: 200px 0px, 0 0, center; } 50% { background-position: 400px 0px, 0 0, center; } 75% { background-position: 600px 0px, 0 0, center; } 100% { background-position: 800px 0px, 0 0, center; } }\", 'rainy': \"ha-card { background: url('/local/zizkov/anim/rainy-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/rainy-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/glass-rain.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/rainy-DN-front.webp?v=7'); background-size: cover, 200px 200px, 100% 100%, cover; background-repeat: no-repeat, repeat, no-repeat, no-repeat; background-position: center, 0 0, 0 0, center; animation: wx-fall-rainy 1.4s linear infinite; } @keyframes wx-fall-rainy { 0% { background-position: center, 0px 0px, 0 0, center; } 25% { background-position: center, 50px 200px, 0 0, center; } 50% { background-position: center, 100px 400px, 0 0, center; } 75% { background-position: center, 150px 600px, 0 0, center; } 100% { background-position: center, 200px 800px, 0 0, center; } } @media (prefers-reduced-motion: reduce) { ha-card::after { background-image: url('/local/zizkov/anim/glass-rain-still.png?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/rainy-DN-front.webp?v=7'); } }\", 'pouring': \"ha-card { background: url('/local/zizkov/anim/pouring-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/pouring-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/glass-pour.webp?v=7'), url('/local/zizkov/anim/rain-heavy.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/pouring-DN-front.webp?v=7'); background-size: cover, 200px 200px, 200px 200px, 100% 100%, cover; background-repeat: no-repeat, repeat, repeat, no-repeat, no-repeat; background-position: center, 0 0, 0 0, 0 0, center; animation: wx-fall-pouring 2s linear infinite; } @keyframes wx-fall-pouring { 0% { background-position: center, 0px 0px, 0px 0px, 0 0, center; } 25% { background-position: center, 100px 400px, 50px 200px, 0 0, center; } 50% { background-position: center, 200px 800px, 100px 400px, 0 0, center; } 75% { background-position: center, 300px 1200px, 150px 600px, 0 0, center; } 100% { background-position: center, 400px 1600px, 200px 800px, 0 0, center; } } @media (prefers-reduced-motion: reduce) { ha-card::after { background-image: url('/local/zizkov/anim/glass-pour-still.png?v=7'), url('/local/zizkov/anim/rain-heavy.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/pouring-DN-front.webp?v=7'); } }\", 'storm': \"ha-card { background: url('/local/zizkov/anim/storm-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/storm-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite, wx-flash 7s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/glass-pour.webp?v=7'), url('/local/zizkov/anim/rain-heavy.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/storm-DN-front.webp?v=7'); background-size: cover, 200px 200px, 200px 200px, 100% 100%, cover; background-repeat: no-repeat, repeat, repeat, no-repeat, no-repeat; background-position: center, 0 0, 0 0, 0 0, center; animation: wx-fall-storm 2s linear infinite; } @keyframes wx-fall-storm { 0% { background-position: center, 0px 0px, 0px 0px, 0 0, center; } 25% { background-position: center, 100px 400px, 50px 200px, 0 0, center; } 50% { background-position: center, 200px 800px, 100px 400px, 0 0, center; } 75% { background-position: center, 300px 1200px, 150px 600px, 0 0, center; } 100% { background-position: center, 400px 1600px, 200px 800px, 0 0, center; } } @media (prefers-reduced-motion: reduce) { ha-card::after { background-image: url('/local/zizkov/anim/glass-pour-still.png?v=7'), url('/local/zizkov/anim/rain-heavy.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/storm-DN-front.webp?v=7'); } }\", 'sleet': \"ha-card { background: url('/local/zizkov/anim/sleet-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/sleet-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/glass-sleet.webp?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), url('/local/zizkov/anim/snow-near.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/sleet-DN-front.webp?v=7'); background-size: cover, 200px 200px, 200px 200px, 100% 100%, cover; background-repeat: no-repeat, repeat, repeat, no-repeat, no-repeat; background-position: center, 0 0, 0 0, 0 0, center; animation: wx-fall-sleet 4s linear infinite; } @keyframes wx-fall-sleet { 0% { background-position: center, 0px 0px, 0px 0px, 0 0, center; } 25% { background-position: center, 100px 400px, 10px 50px, 0 0, center; } 50% { background-position: center, 200px 800px, 0px 100px, 0 0, center; } 75% { background-position: center, 300px 1200px, -10px 150px, 0 0, center; } 100% { background-position: center, 400px 1600px, 0px 200px, 0 0, center; } } @media (prefers-reduced-motion: reduce) { ha-card::after { background-image: url('/local/zizkov/anim/glass-sleet-still.png?v=7'), url('/local/zizkov/anim/rain-light.webp?v=7'), url('/local/zizkov/anim/snow-near.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/sleet-DN-front.webp?v=7'); } }\", 'snowy': \"ha-card { background: url('/local/zizkov/anim/snowy-DN-back.jpg?v=7') center / cover no-repeat !important; } ha-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: 0; pointer-events: none; background: url('/local/zizkov/anim/snowy-DN-clouds.webp?v=7') 0 0 / 50% 100% repeat-x; animation: wx-drift 160s linear infinite; will-change: transform; } ha-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url('/local/zizkov/anim/glass-snow.webp?v=7'), url('/local/zizkov/anim/snow-near.webp?v=7'), url('/local/zizkov/anim/snow-far.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/snowy-DN-front.webp?v=7'); background-size: cover, 200px 200px, 200px 200px, 100% 100%, cover; background-repeat: no-repeat, repeat, repeat, no-repeat, no-repeat; background-position: center, 0 0, 0 0, 0 0, center; animation: wx-fall-snowy 10s linear infinite; } @keyframes wx-fall-snowy { 0% { background-position: center, 0px 0px, 0px 0px, 0 0, center; } 25% { background-position: center, 14px 100px, 6px 50px, 0 0, center; } 50% { background-position: center, 0px 200px, 0px 100px, 0 0, center; } 75% { background-position: center, -14px 300px, -6px 150px, 0 0, center; } 100% { background-position: center, 0px 400px, 0px 200px, 0 0, center; } } @media (prefers-reduced-motion: reduce) { ha-card::after { background-image: url('/local/zizkov/anim/glass-snow-still.png?v=7'), url('/local/zizkov/anim/snow-near.webp?v=7'), url('/local/zizkov/anim/snow-far.webp?v=7'), linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 38%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.62) 100%), url('/local/zizkov/anim/snowy-DN-front.webp?v=7'); } }\"} %}\n{% set a = states.sensor.weather_ahead.attributes if states.sensor.weather_ahead is not none else {} %}\n{% set sc = a.get('scene') if a.get('scene') in fx else 'cloudy' %}\n{% set dn = 'day' if is_state('sun.sun', 'above_horizon') else 'night' %}\n{% set words = {'clear-night': 'clear', 'sunny': 'sunny', 'partlycloudy': 'partly cloudy', 'cloudy': 'cloudy', 'fog': 'fog', 'rainy': 'rain', 'pouring': 'heavy rain', 'lightning': 'thunder', 'lightning-rainy': 'thunderstorms', 'hail': 'hail', 'snowy': 'snow', 'snowy-rainy': 'sleet', 'windy': 'windy', 'windy-variant': 'windy', 'exceptional': 'unusual weather'} %}\n{% set ahead = words.get(states('sensor.weather_ahead')) %}\n{% set ahead = 'clear' if ahead == 'sunny' and dn == 'night' else ahead %}\nha-card {\n  position: relative; overflow: hidden; isolation: isolate;\n  --primary-text-color: #fff;\n  --secondary-text-color: rgba(255,255,255,.88);\n  color: #fff;\n  text-shadow: 0 1px 4px rgba(0,0,0,.75);\n}\nha-card > * { position: relative; z-index: 2; }\n{{ fx[sc] | replace('DN', dn) }}\n@keyframes wx-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }\n@keyframes wx-flash { 0%, 86%, 89%, 92%, 100% { filter: brightness(1); } 87% { filter: brightness(2.4); } 90.5% { filter: brightness(1.9); } }\n@media (prefers-reduced-motion: reduce) { ha-card::before, ha-card::after { animation: none !important; } }\n{% if ahead %}.name { font-size: 0 !important; }\n.name::after { content: 'Next 3 h: {{ ahead }}'; font-size: var(--ha-font-size-m, 14px); }{% endif %}\n"
+     },
+     "entity": "weather.home",
+     "forecast_type": "daily",
+     "grid_options": {
+      "columns": "full"
+     },
+     "show_current": true,
+     "show_forecast": true,
+     "type": "weather-forecast"
+    },
+    {
      "heading": "Quick actions",
      "icon": "mdi:gesture-tap",
      "type": "heading"
@@ -96,134 +114,150 @@
    },
    "cards": [
     {
-     "heading": "Needs attention",
-     "icon": "mdi:alert-circle-outline",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 1,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "\n{%- set word = {'moisture': 'Water leak', 'smoke': 'Smoke', 'gas': 'Gas', 'carbon_monoxide': 'Carbon monoxide', 'safety': 'Safety alarm'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) | selectattr('state','eq','on') -%}\n{%- if s.entity_id != 'binary_sensor.any_safety_alarm' -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': s.entity_id, 'name': word[s.attributes.device_class] ~ ' — ' ~ (area_name(s.entity_id) if area_id(s.entity_id) else s.name), 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
-     },
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities"
-    },
-    {
-     "card": {
-      "columns": 1,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_safety_sensor_silent').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Not reporting — ' ~ (state_attr(e, 'friendly_name') or e) ~ (' (' ~ area_name(e) ~ ')' if area_name(e) else ''), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endfor -%}\n{{ ns.l }}"
-     },
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
+     "cards": [
       {
-       "condition": "state",
-       "entity": "sensor.any_safety_sensor_silent",
-       "state_not": [
-        "none",
-        "unavailable",
-        "unknown"
+       "card": {
+        "columns": 1,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "\n{%- set word = {'moisture': 'Water leak', 'smoke': 'Smoke', 'gas': 'Gas', 'carbon_monoxide': 'Carbon monoxide', 'safety': 'Safety alarm'} -%}\n{%- set ns = namespace(l=[]) -%}\n{%- for s in states.binary_sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','in', word.keys() | list) | selectattr('state','eq','on') -%}\n{%- if s.entity_id != 'binary_sensor.any_safety_alarm' -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': s.entity_id, 'name': word[s.attributes.device_class] ~ ' — ' ~ (area_name(s.entity_id) if area_id(s.entity_id) else s.name), 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      },
+      {
+       "card": {
+        "columns": 1,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_safety_sensor_silent').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Not reporting — ' ~ (state_attr(e, 'friendly_name') or e) ~ (' (' ~ area_name(e) ~ ')' if area_name(e) else ''), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endfor -%}\n{{ ns.l }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities",
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "sensor.any_safety_sensor_silent",
+         "state_not": [
+          "none",
+          "unavailable",
+          "unknown"
+         ]
+        }
        ]
-      }
-     ]
-    },
-    {
-     "color": "red",
-     "entity": "alarm_control_panel.home",
-     "features": [
+      },
       {
-       "modes": [
-        "armed_home",
-        "armed_away"
+       "color": "red",
+       "entity": "alarm_control_panel.home",
+       "features": [
+        {
+         "modes": [
+          "armed_home",
+          "armed_away"
+         ],
+         "type": "alarm-modes"
+        }
        ],
-       "type": "alarm-modes"
+       "grid_options": {
+        "columns": 12
+       },
+       "icon": "mdi:shield-alert",
+       "name": "Alarm triggered",
+       "type": "tile",
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "alarm_control_panel.home",
+         "state": "triggered"
+        }
+       ]
+      },
+      {
+       "card": {
+        "columns": 1,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_low_battery').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- if e.startswith('+') -%}\n{%- set ns.l = ns.l + [{'type': 'markdown', 'content': e}] -%}\n{%- else -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Battery low — ' ~ ((state_attr(e, 'friendly_name') or e) | replace(' Battery', '')), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities",
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "sensor.any_low_battery",
+         "state_not": [
+          "none",
+          "unavailable",
+          "unknown"
+         ]
+        }
+       ]
+      },
+      {
+       "content": "{% set ns = namespace(mould=[], health=[], air=[]) %}{% set rooms = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% set page = {'living_room': 'living-room', 'office': 'guest-room', 'bedroom': 'bedroom', 'kid1': 'kid1', 'kid2': 'kid2'} %}{% for name, r in rooms %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% set sp = t - dp %}{% if h >= 70 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — mould grows above 70%'] %}{% elif h >= 65 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — drifting toward mould territory'] %}{% endif %}{% if sp < 3 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') only ' ~ sp | round(1) ~ ' °C above its dew point — condensation on any cooler surface'] %}{% endif %}{% if h < 30 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — dry enough to irritate airways'] %}{% endif %}{% if t < 16 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ t | round(1) ~ ' °C — cold enough to be a health risk, not just uncomfortable'] %}{% endif %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','carbon_dioxide') | list %}{% if s.state | float(0) >= 1400 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — ventilate'] %}{% elif s.state | float(0) >= 1000 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — stuffy'] %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','pm25') | rejectattr('entity_id','search','openweathermap') | list %}{% if s.state | float(0) >= 25 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' µg/m³ PM2.5'] %}{% endif %}{% endfor %}{% set aqi = states('sensor.outside_openweathermap_air_quality_index') | int(0) %}{% if aqi >= 4 %}{% set ns.air = ns.air + ['Outdoor air quality **' ~ aqi ~ '/5** — keep windows shut; do not ventilate to cool'] %}{% endif %}{% if ns.mould %}🦠 **Damp / mould risk**\n{% for x in ns.mould %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.health %}🫁 **Health**\n{% for x in ns.health %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.air %}🌫️ **Air quality**\n{% for x in ns.air %}- {{ x }}\n{% endfor %}{% endif %}",
+       "type": "markdown",
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "binary_sensor.climate_health_risk",
+         "state": "on"
+        }
+       ]
+      },
+      {
+       "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
+       "grid_options": {
+        "columns": 6,
+        "rows": 1
+       },
+       "icon": "mdi:air-filter",
+       "name": "Air purifier filter",
+       "template": "vg_stat",
+       "type": "custom:button-card",
+       "visibility": [
+        {
+         "below": 15,
+         "condition": "numeric_state",
+         "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining"
+        }
+       ]
       }
      ],
-     "grid_options": {
-      "columns": 12
-     },
-     "icon": "mdi:shield-alert",
-     "name": "Alarm triggered",
-     "type": "tile",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "alarm_control_panel.home",
-       "state": "triggered"
-      }
-     ]
-    },
-    {
-     "card": {
-      "columns": 1,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "\n{%- set ns = namespace(l=[]) -%}\n{%- for e in states('sensor.any_low_battery').split(', ') if e not in ['none', 'unavailable', 'unknown', ''] -%}\n{%- if e.startswith('+') -%}\n{%- set ns.l = ns.l + [{'type': 'markdown', 'content': e}] -%}\n{%- else -%}\n{%- set ns.l = ns.l + [{'type': 'custom:button-card', 'template': 'vg_stat', 'entity': e, 'name': 'Battery low — ' ~ ((state_attr(e, 'friendly_name') or e) | replace(' Battery', '')), 'tap_action': {'action': 'more-info'}, 'grid_options': {'columns': 12, 'rows': 1}}] -%}\n{%- endif -%}\n{%- endfor -%}\n{{ ns.l }}"
-     },
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "sensor.any_low_battery",
-       "state_not": [
-        "none",
-        "unavailable",
-        "unknown"
-       ]
-      }
-     ]
-    },
-    {
-     "content": "{% set ns = namespace(mould=[], health=[], air=[]) %}{% set rooms = [('Living room','living_room'),('Office','office'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% set page = {'living_room': 'living-room', 'office': 'guest-room', 'bedroom': 'bedroom', 'kid1': 'kid1', 'kid2': 'kid2'} %}{% for name, r in rooms %}{% set t = states('sensor.climate_temp_' ~ r) | float(-99) %}{% set h = states('sensor.climate_humidity_' ~ r) | float(-1) %}{% if t > -90 and h >= 0 %}{% set g = (17.27 * t / (237.7 + t)) + log(h / 100) %}{% set dp = 237.7 * g / (17.27 - g) %}{% set sp = t - dp %}{% if h >= 70 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — mould grows above 70%'] %}{% elif h >= 65 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — drifting toward mould territory'] %}{% endif %}{% if sp < 3 %}{% set ns.mould = ns.mould + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') only ' ~ sp | round(1) ~ ' °C above its dew point — condensation on any cooler surface'] %}{% endif %}{% if h < 30 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ h ~ '% RH — dry enough to irritate airways'] %}{% endif %}{% if t < 16 %}{% set ns.health = ns.health + ['[**' ~ name ~ '**](/lovelace/' ~ page.get(r, 'home') ~ ') ' ~ t | round(1) ~ ' °C — cold enough to be a health risk, not just uncomfortable'] %}{% endif %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','carbon_dioxide') | list %}{% if s.state | float(0) >= 1400 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — ventilate'] %}{% elif s.state | float(0) >= 1000 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' ppm CO₂ — stuffy'] %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','pm25') | rejectattr('entity_id','search','openweathermap') | list %}{% if s.state | float(0) >= 25 %}{% set ns.air = ns.air + ['**' ~ s.name ~ '** ' ~ s.state ~ ' µg/m³ PM2.5'] %}{% endif %}{% endfor %}{% set aqi = states('sensor.outside_openweathermap_air_quality_index') | int(0) %}{% if aqi >= 4 %}{% set ns.air = ns.air + ['Outdoor air quality **' ~ aqi ~ '/5** — keep windows shut; do not ventilate to cool'] %}{% endif %}{% if ns.mould %}🦠 **Damp / mould risk**\n{% for x in ns.mould %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.health %}🫁 **Health**\n{% for x in ns.health %}- {{ x }}\n{% endfor %}\n{% endif %}{% if ns.air %}🌫️ **Air quality**\n{% for x in ns.air %}- {{ x }}\n{% endfor %}{% endif %}",
-     "type": "markdown",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.climate_health_risk",
-       "state": "on"
-      }
-     ]
-    },
-    {
-     "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining",
-     "grid_options": {
-      "columns": 6,
-      "rows": 1
+     "padding": "0",
+     "title-card": {
+      "heading": "Needs attention",
+      "icon": "mdi:alert-circle-outline",
+      "type": "heading"
      },
-     "icon": "mdi:air-filter",
-     "name": "Air purifier filter",
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "visibility": [
-      {
-       "below": 15,
-       "condition": "numeric_state",
-       "entity": "sensor.corridor_xiaomi_air_purifier_filter_life_remaining"
-      }
-     ]
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "column_span": 3,
@@ -277,288 +311,82 @@
   {
    "cards": [
     {
-     "heading": "Rooms",
-     "icon": "mdi:home-outline",
-     "type": "heading"
-    },
-    {
-     "heading": "Downstairs",
-     "heading_style": "subtitle",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
-     },
-     "floor": "lower_floor",
-     "grid_options": {
-      "columns": "full"
-     },
-     "rooms": {
-      "bedroom": {
-       "icon": "mdi:desk",
-       "name": "Office",
-       "page": "guest-room"
-      },
-      "corridor": {
-       "icon": "mdi:stairs",
-       "name": "Corridor",
-       "page": "corridor"
-      },
-      "kitchen": {
-       "icon": "mdi:countertop-outline",
-       "name": "Kitchen",
-       "page": "kitchen",
-       "special": "kitchen"
-      },
-      "laundry_room": {
-       "icon": "mdi:washing-machine",
-       "name": "Laundry",
-       "page": "laundry-room"
-      },
-      "living_room": {
-       "icon": "mdi:sofa-outline",
-       "name": "Living room",
-       "page": "living-room"
-      },
-      "shower": {
-       "icon": "mdi:shower-head",
-       "name": "Shower",
-       "page": "shower",
-       "special": "shower"
-      },
-      "stairs": {
-       "icon": "mdi:stairs-down",
-       "name": "Stairs",
-       "page": "stairs"
-      }
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
+     "cards": [
       {
-       "condition": "screen",
-       "media_query": "(max-width: 599px)"
+       "card": {
+        "columns": 3,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
+       },
+       "floor": "lower_floor",
+       "grid_options": {
+        "columns": "full"
+       },
+       "rooms": {
+        "bedroom": {
+         "icon": "mdi:desk",
+         "name": "Office",
+         "page": "guest-room"
+        },
+        "corridor": {
+         "icon": "mdi:stairs",
+         "name": "Corridor",
+         "page": "corridor"
+        },
+        "kitchen": {
+         "icon": "mdi:countertop-outline",
+         "name": "Kitchen",
+         "page": "kitchen",
+         "special": "kitchen"
+        },
+        "laundry_room": {
+         "icon": "mdi:washing-machine",
+         "name": "Laundry",
+         "page": "laundry-room"
+        },
+        "living_room": {
+         "icon": "mdi:sofa-outline",
+         "name": "Living room",
+         "page": "living-room"
+        },
+        "shower": {
+         "icon": "mdi:shower-head",
+         "name": "Shower",
+         "page": "shower",
+         "special": "shower"
+        },
+        "stairs": {
+         "icon": "mdi:stairs-down",
+         "name": "Stairs",
+         "page": "stairs"
+        }
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
       }
-     ]
-    },
-    {
-     "card": {
-      "columns": 4,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
-     },
-     "floor": "lower_floor",
+     ],
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
-     "rooms": {
-      "bedroom": {
-       "icon": "mdi:desk",
-       "name": "Office",
-       "page": "guest-room"
-      },
-      "corridor": {
-       "icon": "mdi:stairs",
-       "name": "Corridor",
-       "page": "corridor"
-      },
-      "kitchen": {
-       "icon": "mdi:countertop-outline",
-       "name": "Kitchen",
-       "page": "kitchen",
-       "special": "kitchen"
-      },
-      "laundry_room": {
-       "icon": "mdi:washing-machine",
-       "name": "Laundry",
-       "page": "laundry-room"
-      },
-      "living_room": {
-       "icon": "mdi:sofa-outline",
-       "name": "Living room",
-       "page": "living-room"
-      },
-      "shower": {
-       "icon": "mdi:shower-head",
-       "name": "Shower",
-       "page": "shower",
-       "special": "shower"
-      },
-      "stairs": {
-       "icon": "mdi:stairs-down",
-       "name": "Stairs",
-       "page": "stairs"
-      }
+     "padding": "0",
+     "storage-id": "home-floor-downstairs",
+     "title-card": {
+      "heading": "Downstairs",
+      "icon": "mdi:home-floor-1",
+      "type": "heading"
      },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
-      {
-       "condition": "screen",
-       "media_query": "(min-width: 600px)"
-      }
-     ]
-    },
-    {
-     "heading": "Upstairs",
-     "heading_style": "subtitle",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
-     },
-     "floor": "upper_floor",
-     "grid_options": {
-      "columns": "full"
-     },
-     "rooms": {
-      "bathroom": {
-       "icon": "mdi:bathtub-outline",
-       "name": "Bathroom",
-       "page": "bathroom"
-      },
-      "bedroom_2": {
-       "icon": "mdi:bed-king-outline",
-       "name": "Bedroom",
-       "page": "bedroom"
-      },
-      "closet": {
-       "icon": "mdi:hanger",
-       "name": "Closet",
-       "page": "closet"
-      },
-      "kid2_room": {
-       "icon": "mdi:teddy-bear",
-       "name": "Kids room 2",
-       "page": "kid2"
-      },
-      "hallway": {
-       "icon": "mdi:stairs-up",
-       "name": "Hallway",
-       "page": "hallway"
-      },
-      "kid1_room": {
-       "icon": "mdi:bed-single-outline",
-       "name": "Kids room 1",
-       "page": "kid1"
-      },
-      "tea_room": {
-       "icon": "mdi:tea-outline",
-       "name": "Tea room",
-       "page": "tea-room"
-      }
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
-      {
-       "condition": "screen",
-       "media_query": "(max-width: 599px)"
-      }
-     ]
-    },
-    {
-     "card": {
-      "columns": 4,
-      "square": false,
-      "type": "grid"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
-     },
-     "floor": "upper_floor",
-     "grid_options": {
-      "columns": "full"
-     },
-     "rooms": {
-      "bathroom": {
-       "icon": "mdi:bathtub-outline",
-       "name": "Bathroom",
-       "page": "bathroom"
-      },
-      "bedroom_2": {
-       "icon": "mdi:bed-king-outline",
-       "name": "Bedroom",
-       "page": "bedroom"
-      },
-      "closet": {
-       "icon": "mdi:hanger",
-       "name": "Closet",
-       "page": "closet"
-      },
-      "kid2_room": {
-       "icon": "mdi:teddy-bear",
-       "name": "Kids room 2",
-       "page": "kid2"
-      },
-      "hallway": {
-       "icon": "mdi:stairs-up",
-       "name": "Hallway",
-       "page": "hallway"
-      },
-      "kid1_room": {
-       "icon": "mdi:bed-single-outline",
-       "name": "Kids room 1",
-       "page": "kid1"
-      },
-      "tea_room": {
-       "icon": "mdi:tea-outline",
-       "name": "Tea room",
-       "page": "tea-room"
-      }
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities",
-     "visibility": [
-      {
-       "condition": "screen",
-       "media_query": "(min-width: 600px)"
-      }
-     ]
-    }
-   ],
-   "column_span": 2,
-   "type": "grid"
-  },
-  {
-   "cards": [
-    {
-     "heading": "Comfort",
-     "icon": "mdi:home-thermometer-outline",
-     "type": "heading"
-    },
-    {
-     "card": {
-      "type": "vertical-stack"
-     },
-     "card_param": "cards",
-     "filter": {
-      "template": "{%- set night = is_state('binary_sensor.lighting_night', 'on') -%}{%- set ns = namespace(r=[]) -%}{%- for s in states.input_boolean | selectattr('object_id', 'match', 'climate_room_') | selectattr('state', 'eq', 'on') -%}{%- set room = s.object_id[13:] -%}{%- set t = ('input_number.climate_target_night_' if night else 'input_number.climate_target_day_') ~ room -%}{%- if has_value(t) and not is_hidden_entity(t) -%}{%- set ns.r = ns.r + [{'a': area_name(t) or room | replace('_', ' ') | title, 't': t, 'f': 'input_boolean.climate_air_filter_' ~ room}] -%}{%- endif -%}{%- endfor -%}{%- set ns2 = namespace(t=[], f=[]) -%}{%- for r in ns.r | sort(attribute='a') -%}{%- set ns2.t = ns2.t + [{'type': 'tile', 'entity': r.t, 'name': r.a, 'icon': 'mdi:weather-night' if night else 'mdi:thermometer', 'features': [{'type': 'numeric-input', 'style': 'buttons'}], 'features_position': 'bottom'}] -%}{%- if has_value(r.f) -%}{%- set ns2.f = ns2.f + [{'type': 'tile', 'entity': r.f, 'name': r.a, 'icon': 'mdi:air-filter', 'vertical': true, 'tap_action': {'action': 'toggle'}, 'icon_tap_action': {'action': 'toggle'}}] -%}{%- endif -%}{%- endfor -%}{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': ns2.t}] if ns2.t else []) + ([{'type': 'grid', 'columns': 4, 'square': false, 'cards': ns2.f}] if ns2.f else []) }}"
-     },
-     "grid_options": {
-      "columns": "full"
-     },
-     "show_empty": false,
-     "type": "custom:auto-entities"
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "column_span": 1,
@@ -567,19 +395,122 @@
   {
    "cards": [
     {
-     "heading": "Weather",
-     "icon": "mdi:weather-partly-cloudy",
-     "type": "heading"
-    },
-    {
-     "entity": "weather.home",
-     "forecast_type": "daily",
+     "cards": [
+      {
+       "card": {
+        "columns": 3,
+        "square": false,
+        "type": "grid"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
+       },
+       "floor": "upper_floor",
+       "grid_options": {
+        "columns": "full"
+       },
+       "rooms": {
+        "bathroom": {
+         "icon": "mdi:bathtub-outline",
+         "name": "Bathroom",
+         "page": "bathroom"
+        },
+        "bedroom_2": {
+         "icon": "mdi:bed-king-outline",
+         "name": "Bedroom",
+         "page": "bedroom"
+        },
+        "closet": {
+         "icon": "mdi:hanger",
+         "name": "Closet",
+         "page": "closet"
+        },
+        "kid2_room": {
+         "icon": "mdi:teddy-bear",
+         "name": "Kids room 2",
+         "page": "kid2"
+        },
+        "hallway": {
+         "icon": "mdi:stairs-up",
+         "name": "Hallway",
+         "page": "hallway"
+        },
+        "kid1_room": {
+         "icon": "mdi:bed-single-outline",
+         "name": "Kids room 1",
+         "page": "kid1"
+        },
+        "tea_room": {
+         "icon": "mdi:tea-outline",
+         "name": "Tea room",
+         "page": "tea-room"
+        }
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      }
+     ],
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
-     "show_current": true,
-     "show_forecast": true,
-     "type": "weather-forecast"
+     "padding": "0",
+     "storage-id": "home-floor-upstairs",
+     "title-card": {
+      "heading": "Upstairs",
+      "icon": "mdi:home-floor-2",
+      "type": "heading"
+     },
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "cards": [
+      {
+       "card": {
+        "type": "vertical-stack"
+       },
+       "card_param": "cards",
+       "filter": {
+        "template": "{%- set night = is_state('binary_sensor.lighting_night', 'on') -%}{%- set ns = namespace(r=[]) -%}{%- for s in states.input_boolean | selectattr('object_id', 'match', 'climate_room_') | selectattr('state', 'eq', 'on') -%}{%- set room = s.object_id[13:] -%}{%- set t = ('input_number.climate_target_night_' if night else 'input_number.climate_target_day_') ~ room -%}{%- if has_value(t) and not is_hidden_entity(t) -%}{%- set ns.r = ns.r + [{'a': area_name(t) or room | replace('_', ' ') | title, 't': t, 'f': 'input_boolean.climate_air_filter_' ~ room}] -%}{%- endif -%}{%- endfor -%}{%- set out = namespace(l=[]) -%}{%- for r in ns.r | sort(attribute='a') -%}{%- set temp = {'type': 'tile', 'entity': r.t, 'name': r.a, 'icon': 'mdi:weather-night' if night else 'mdi:thermometer', 'features': [{'type': 'numeric-input', 'style': 'buttons'}], 'features_position': 'bottom'} -%}{%- if has_value(r.f) -%}{%- set out.l = out.l + [{'type': 'custom:button-card', 'show_icon': false, 'show_name': false, 'show_state': false, 'tap_action': {'action': 'none'}, 'styles': {'card': [{'padding': '0'}, {'background': 'none'}, {'box-shadow': 'none'}, {'border': 'none'}, {'overflow': 'visible'}], 'grid': [{'grid-template-areas': '\"t f\"'}, {'grid-template-columns': '2fr 1fr'}, {'gap': '8px'}, {'align-items': 'stretch'}], 'custom_fields': {'t': [{'height': '100%'}, {'text-align': 'left'}], 'f': [{'height': '100%'}]}}, 'custom_fields': {'t': {'card': temp}, 'f': {'card': {'type': 'tile', 'entity': r.f, 'name': 'Filter', 'icon': 'mdi:air-filter', 'vertical': true, 'tap_action': {'action': 'toggle'}, 'icon_tap_action': {'action': 'toggle'}}}}}] -%}{%- else -%}{%- set out.l = out.l + [temp] -%}{%- endif -%}{%- endfor -%}{{ out.l }}"
+       },
+       "grid_options": {
+        "columns": "full"
+       },
+       "show_empty": false,
+       "type": "custom:auto-entities"
+      }
+     ],
+     "child-padding": "0",
+     "clear": true,
+     "expanded": true,
+     "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "0px",
+     "grid_options": {
+      "columns": "full"
+     },
+     "padding": "0",
+     "storage-id": "home-comfort",
+     "title-card": {
+      "heading": "Comfort",
+      "icon": "mdi:home-thermometer-outline",
+      "type": "heading"
+     },
+     "title-card-clickable": true,
+     "type": "custom:expander-card"
     }
    ],
    "column_span": 1,

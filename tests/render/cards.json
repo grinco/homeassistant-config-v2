@@ -20,6 +20,12 @@
    "sha256": "b7327b2fcd39f1fb859b60b53c869760d1d762ab4d4e4617b748971f528bd407"
   },
   {
+   "dir": "lovelace-expander-card",
+   "file": "expander-card.js",
+   "url": "https://github.com/MelleD/lovelace-expander-card/releases/download/7.3.7/expander-card.js",
+   "sha256": "98fedaa26fe0c2c099b1428532eb7e0a290614f51ca9a312636807289dd0d3cd"
+  },
+  {
    "dir": "lovelace-multiple-entity-row",
    "file": "multiple-entity-row.js",
    "url": "https://github.com/benct/lovelace-multiple-entity-row/releases/download/v4.13.0/multiple-entity-row.js",

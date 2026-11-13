@@ -19,7 +19,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 BUILD = os.path.join(HERE, "synthetic.py")
 ENTITY_RE = re.compile(
-    r"\b(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
+    r"(?<![\w./-])(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
     r"alarm_control_panel|person|weather|input_boolean|input_number|input_select|"
     r"input_datetime|input_text|counter|schedule|automation|button|number|select|"
     r"update|remote|lock|image|event|zone|sun|water_heater)\.[a-z0-9_]+")

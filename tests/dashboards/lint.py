@@ -141,11 +141,10 @@ Checks, each one written because something it catches actually shipped:
                          laptop it fills two columns instead of one 400 px strip
                          with blank margins either side (seen at 820 and 1280 px,
                          2026-10-12).
-  C25 breakpoints-tile   a Home floor is generated for phones (max-width 599px)
-                         and for wider screens (min-width 600px), and the two
-                         meet with no gap and no overlap. Until 2026-10-12 the
-                         split was 1023/1024, so a tablet got the phone layout
-                         stretched: two enormous room tiles per row.
+  C25 (retired 2026-11-13) Home floors were generated twice, for phones and wide
+                         screens, and C25 checked the breakpoints met. Each floor is now
+                         one three-across grid whose room cards adapt to their own width
+                         (C44), so there is no breakpoint left to check.
   C26 dense-columns      the main tabs (Home, Climate, Energy, Security, Appliances) pack
                          their sections densely (`dense_section_placement`) at
                          `max_columns: 3`, which is what 1024 to 1500 px holds. Without
@@ -272,6 +271,22 @@ Checks, each one written because something it catches actually shipped:
                          finish time shows only while a program runs (the card carries a
                          visibility condition). 2026-11-13: the least-used tab was
                          3,400 px on a phone, mostly toggles and idle readings.
+  C44 floor-reach        Home shows each floor's rooms in a section of its own, so floors sit
+                         side by side once the screen has two columns; each floor folds away
+                         (an expander-card with a storage-id, so a phone remembers it) and
+                         lays its rooms out FLOOR_COLUMNS across. 2026-11-13: on a phone the
+                         upstairs rooms began two screens down.
+  C45 fold-rules         a section folds (expander-card) only if its heading carries
+                         nothing on the right - no badges, no tap action - because the
+                         fold chevron takes that place (operator, 2026-11-13: keep the
+                         toggle, info or action rather than the fold). Needs attention
+                         may fold but never remembers it (no storage-id): a phone that
+                         kept it folded would hide the next smoke or leak alarm.
+  C46 quiet-when-idle    lists of mostly-idle things show what is active and say the rest in
+                         one line (operator, 2026-11-13): Energy's per-AC cards each carry a
+                         numeric_state visibility and an "all off" line stands in for them;
+                         the sockets generator lists idle sockets in one summary; Security's
+                         sensor generator folds an all-clear room into one line.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -308,10 +323,11 @@ MUSHROOM_ONLY = ("primary", "secondary", "icon_color", "fill_container",
                  "icon_tap_action", "badge_icon", "badge_color", "multiline_secondary")
 FOREIGN = {"custom:button-card": TILE_ONLY + MUSHROOM_ONLY}
 
-# Entity ids appear inside button-card JS templates as plain strings, so a text
+# The lookbehind, not \b: "rain-light.webp" in a background URL is a file, not light.webp
+# (2026-11-13). Entity ids appear inside button-card JS templates as plain strings, so a text
 # scan reaches them; a structural walk over `entity:` keys would not.
 ENTITY_RE = re.compile(
-    r"\b(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
+    r"(?<![\w./-])(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
     r"alarm_control_panel|person|weather|input_boolean|input_number|input_select|"
     r"input_datetime|input_text|counter|schedule|automation|button|number|select|"
     r"update|remote|lock|image|event|zone|sun)\.[a-z0-9_]+")
@@ -366,14 +382,14 @@ NIGHT_HELPER = "binary_sensor.lighting_night"
 # Sections that list devices and must therefore be generated (C13):
 # (dashboard, view path, first heading of the section, or None for every section).
 GENERATED = [
-    ("lovelace", "home", "Rooms"),
+    ("lovelace", "home", "Downstairs"),
+    ("lovelace", "home", "Upstairs"),
     ("lovelace", "home", "Comfort"),
     ("lovelace", "energy", "Sockets"),
     ("lovelace", "security", "Sensors"),
     ("lovelace", "security", "Cameras"),
     ("lovelace", "climate", "Heating & hot water"),
-    ("lovelace", "climate", "Temperature"),
-    ("lovelace", "climate", "Humidity"),
+    ("lovelace", "climate", "Rooms"),
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
@@ -391,6 +407,7 @@ RESOURCE_SLUG = {
     "slider-entity-row": "lovelace-slider-entity-row",
     "mini-media-player": "mini-media-player",
     "mini-graph-card": "mini-graph-card",
+    "expander-card": "lovelace-expander-card",
     "simple-thermostat": "simple-thermostat",
     "simple-weather-card": "simple-weather-card",
     "stack-in-card": "stack-in-card",
@@ -404,6 +421,30 @@ RESOURCE_SLUG = {
 def load(name):
     with io.open(os.path.join(STORAGE, name), encoding="utf-8") as fh:
         return json.load(fh)["data"]["config"]
+
+
+def sec_heading(sec):
+    """A section's heading: its first card's, or the title card of an expander it opens with."""
+    first = (sec.get("cards") or [{}])[0]
+    if first.get("type") == "custom:expander-card":
+        return (first.get("title-card") or {}).get("heading")
+    return first.get("heading")
+
+
+def sec_cards(sec):
+    """A section's cards, with an expander-card (and the rows inside it) replaced by the cards it folds."""
+    out = []
+    for c in sec.get("cards") or []:
+        for k in (c.get("cards") or [] if c.get("type") == "custom:expander-card" else [c]):
+            # a row of cards that shared a line in the section (collapse_all, 2026-11-13)
+            out.extend(k.get("cards") or [] if k.get("type") in ("horizontal-stack", "grid") else [k])
+    return out
+
+
+def is_floor_page(view):
+    """A floor page (2026-11-13, C44) lists one floor's room tiles; it is not a room page."""
+    found = [c for _, c in cards(view) if c.get("type") == "custom:auto-entities" and "floor" in c and "rooms" in c]
+    return bool(found) and view.get("path") != "home"
 
 
 def registry():
@@ -730,6 +771,9 @@ def effective(card, lib):
     return eff
 
 
+# C44: rooms per row in a floor's grid.
+FLOOR_COLUMNS = 3
+
 # C3/C7: a card nested in another card's `cards` list is laid out by that card, not the section.
 NESTED_IN_GRID = re.compile(r"/cards/\d+/cards/\d+$")
 
@@ -929,15 +973,14 @@ def main():
             gens = []
             for view in views:
                 for sec in (view.get("sections") or []):
-                    cs = sec.get("cards") or []
-                    if not cs or cs[0].get("heading") != "Rooms":
-                        continue
-                    for i, c in enumerate(cs):
-                        if c.get("type") == "custom:auto-entities" and "floor" in c:
-                            gens.append(("%s/rooms/%d" % (label, i), c))
+                    # Found by what it is (an auto-entities carrying `floor` and `rooms`), not by
+                    # a heading: since 2026-11-13 each floor is its own section (C44).
+                    for i, (_, c) in enumerate(cards(sec)):
+                        if c.get("type") == "custom:auto-entities" and "floor" in c and "rooms" in c:
+                            gens.append(("%s/%s/rooms/%d" % (label, view.get("path"), i), c))
             if not gens:
-                fail("C10", "%s: found no room-tile generator at all - the Rooms section "
-                            "is gone or renamed, and C9/C10 would pass by default" % label)
+                fail("C10", "%s: found no room-tile generator at all - the floor sections "
+                            "are gone, and C9/C10 would pass by default" % label)
 
             tile_area, stale, unknown = {}, [], []
             tpls = {json.dumps((c.get("filter") or {}).get("template")) for _, c in gens}
@@ -1055,7 +1098,7 @@ def main():
             for view in views:
                 if not view.get("subview") or view.get("back_path") != "/lovelace/home":
                     continue
-                if view.get("path") == "home-classic":
+                if view.get("path") == "home-classic" or is_floor_page(view):
                     continue
                 for path, card in cards(view, "%s/%s" % (label, view.get("path"))):
                     if card.get("type") != "custom:auto-entities":
@@ -1092,7 +1135,7 @@ def main():
             view = next((v for v in views if v.get("path") == vpath), None)
             secs = [] if view is None else [
                 s for s in (view.get("sections") or [])
-                if heading is None or ((s.get("cards") or [{}])[0].get("heading") == heading)]
+                if heading is None or sec_heading(s) == heading]
             if not secs:
                 fail("C13", "%s: %s has no %s section - a generated list that is "
                             "missing passes every other check"
@@ -1100,7 +1143,7 @@ def main():
                 continue
             listed = []
             for s in secs:
-                for i, c in enumerate(s.get("cards") or []):
+                for i, c in enumerate(sec_cards(s)):
                     t_ = c.get("type")
                     if t_ in ("heading", "markdown"):
                         continue
@@ -1121,8 +1164,7 @@ def main():
         # C34 - Home's Comfort: every automated room's live target, generated.
         if label == "lovelace":
             home = next((v for v in views if v.get("path") == "home"), {})
-            comfort = [s for s in (home.get("sections") or [])
-                       if ((s.get("cards") or [{}])[0].get("heading") == "Comfort")]
+            comfort = [s for s in (home.get("sections") or []) if sec_heading(s) == "Comfort"]
             text = json.dumps(comfort)
             named = sorted(i for i in set(ENTITY_RE.findall(text))
                            if re.match(r"input_(number|boolean)\.climate_(target|air_filter|room)_", i)
@@ -1132,17 +1174,21 @@ def main():
                               (NIGHT_HELPER, "does not read night from %s" % NIGHT_HELPER),
                               ("climate_target_night_", "never offers a night target"),
                               ("climate_target_day_", "never offers a day target"),
-                              ("climate_air_filter_", "offers no air-filter toggle")):
+                              ("climate_air_filter_", "offers no air-filter toggle"),
+                              # 2026-11-13: one row per room, its target 2/3 and its filter 1/3.
+                              ("2fr 1fr", "does not put each room's target and filter side by side, 2/3 and 1/3")):
                 if need not in text:
                     problems.append(why)
-            if comfort and problems:
+            if not comfort:
+                problems = ["home has no Comfort section"]
+            if problems:
                 fail("C34", "%s: Home's Comfort section is not the generated live targets" % label,
                      problems)
 
         # C14 / C15 - room pages: one skeleton, and focused.
         if label == "lovelace":
             rooms = [v for v in views if v.get("subview") and v.get("back_path") == "/lovelace/home"
-                     and v.get("path") != "home-classic"]
+                     and v.get("path") != "home-classic" and not is_floor_page(v)]
             shapes = {}
             unfocused = []
             for v in rooms:
@@ -1198,24 +1244,6 @@ def main():
             if narrow:
                 fail("C24", "%s: %d room page(s) are a single section - one narrow column on "
                             "a tablet or laptop" % (label, len(narrow)), sorted(narrow))
-            home_v = next((v for v in views if v.get("path") == "home"), None)
-            seen = {}
-            for _, card in cards(home_v or {}):
-                if card.get("type") == "custom:auto-entities" and card.get("floor"):
-                    for cond in card.get("visibility") or []:
-                        m = re.search(r"\((max|min)-width:\s*(\d+)px\)", cond.get("media_query") or "")
-                        if cond.get("condition") == "screen" and m:
-                            seen.setdefault(card["floor"], {})[m.group(1)] = int(m.group(2))
-            bad = []
-            for fl, b in sorted(seen.items()):
-                if b.get("max") is None or b.get("min") is None:
-                    bad.append("%s has only one of the two screen variants: %r" % (fl, b))
-                elif b["min"] != b["max"] + 1 or b["max"] != 599:
-                    bad.append("%s: phone up to %spx, wide from %spx (want 599 / 600, no gap)"
-                               % (fl, b["max"], b["min"]))
-            if bad:
-                fail("C25", "%s: Home room tiles do not switch layout at the tablet breakpoint"
-                     % label, bad)
 
         # C18 / C19 - environmental readings reach their room, and a fixed tile
         # name belongs to one entity.
@@ -1426,8 +1454,7 @@ def main():
         # C21 - Needs attention covers every safety alarm, by class, not by name.
         if label == "lovelace":
             home = next((v for v in views if v.get("path") == "home"), {})
-            na = [sec for sec in (home.get("sections") or [])
-                  if (sec.get("cards") or [{}])[0].get("heading") == "Needs attention"]
+            na = [sec for sec in (home.get("sections") or []) if sec_heading(sec) == "Needs attention"]
             safety_ids = {e["entity_id"] for e in registry_entities()
                           if e["domain"] == "binary_sensor" and e["device_class"] in SAFETY_CLASSES}
             problems = []
@@ -1478,7 +1505,7 @@ def main():
                 if not branches:
                     ungated.append("the section has no lone-OR gate to check against")
                     continue
-                for i, c in enumerate(sec.get("cards") or []):
+                for i, c in enumerate(sec_cards(sec)):
                     cv = c.get("visibility")
                     if not cv:
                         continue
@@ -1612,6 +1639,17 @@ def main():
                     for r in ((card.get("filter") or {}).get("include") or []):
                         if r.get("integration") == "tado" and "_heating" in str(r.get("entity_id", "")):
                             again.append("%s generates the Tado zone heating %% graphs" % path)
+            # (e) one entity, one place: a heading badge and a card for the same entity repeat
+            # each other (2026-11-13: the Auto badge and the big Automatic climate toggle).
+            seen = {}
+            for path, card in cards(v, "%s/climate" % label):
+                if card.get("type") == "custom:auto-entities":
+                    continue
+                eid = card.get("entity")
+                if isinstance(eid, str) and "." in eid and eid != "this.entity_id":
+                    seen.setdefault(eid, []).append(path)
+            again += ["%s appears %d times: %s" % (e, len(p_), ", ".join(p_))
+                      for e, p_ in sorted(seen.items()) if len(p_) > 1]
             if again:
                 fail("C40", "%s: the Climate tab repeats a reading shown elsewhere" % label, again)
 
@@ -1675,6 +1713,70 @@ def main():
                      for e, p in sorted(seen.items()) if len(p) > 1]
             if busy:
                 fail("C43", "%s: Appliances is busier than a glance" % label, busy)
+
+        # C44 - every floor is reachable: its own section on Home, and a button to it.
+        homes = [v for v in views if v.get("path") == "home"]
+        if label == "lovelace" and homes:
+            home, far = homes[0], []
+            gen_floor = lambda c: c.get("floor") if c.get("type") == "custom:auto-entities" and "rooms" in c else None
+            for i, sec in enumerate(home.get("sections") or []):
+                fl = {gen_floor(c) for _, c in cards(sec)} - {None}
+                if len(fl) > 1:
+                    far.append("home section %d holds %d floors, so they stack" % (i, len(fl)))
+                # Each floor folds away (operator, 2026-11-13): it sits in an expander-card that
+                # remembers its state per browser, and lays its rooms out three across.
+                for c in sec.get("cards") or []:
+                    if gen_floor(c):
+                        far.append("home section %d: floor %s is not collapsible" % (i, gen_floor(c)))
+                    if c.get("type") == "custom:expander-card":
+                        inner = [x for _, x in cards({"c": c.get("cards") or []}) if gen_floor(x)]
+                        if inner and not c.get("storage-id"):
+                            far.append("home section %d: the floor expander has no storage-id, so it "
+                                       "forgets being folded" % i)
+                        for g in inner:
+                            if (g.get("card") or {}).get("columns") != FLOOR_COLUMNS:
+                                far.append("home section %d: floor %s lays rooms %s across, not %d"
+                                           % (i, g.get("floor"), (g.get("card") or {}).get("columns"), FLOOR_COLUMNS))
+            if far:
+                fail("C44", "%s: a floor's rooms are a long scroll away" % label, far)
+
+        # C45 - fold only what has nothing on the right; Needs attention never stays folded.
+        folds = []
+        for v in views:
+            for _, c in cards(v, "%s/%s" % (label, v.get("path"))):
+                if c.get("type") != "custom:expander-card":
+                    continue
+                t = c.get("title-card") or {}
+                if t.get("badges") or t.get("tap_action"):
+                    folds.append("%s/%s: %r folds, hiding what its heading carries on the right"
+                                 % (label, v.get("path"), t.get("heading")))
+                if t.get("heading") == "Needs attention" and c.get("storage-id"):
+                    folds.append("%s/%s: Needs attention remembers being folded" % (label, v.get("path")))
+        if folds:
+            fail("C45", "%s: a fold hides something it should not" % label, folds)
+
+        # C46 - mostly-idle lists show what is active and summarise the rest.
+        quiet = []
+        en_v = next((v for v in views if v.get("path") == "energy"), None)
+        if en_v is not None:
+            acs = [c for _, c in cards(en_v) if str(c.get("entity", "")).startswith("sensor.climate_ac_power_")]
+            for c in acs:
+                if not any(x.get("condition") == "numeric_state" for x in c.get("visibility") or []):
+                    quiet.append("energy: %s shows while the unit is off" % c["entity"])
+            if acs and not any(c.get("type") == "markdown" and "off" in c.get("content", "")
+                               and c.get("visibility") for _, c in cards(en_v)):
+                quiet.append("energy: nothing says the air conditioners are all off")
+            gens = [c for _, c in cards(en_v) if c.get("sockets")]
+            if gens and not any("idle" in (g.get("filter") or {}).get("template", "") for g in gens):
+                quiet.append("energy: the sockets generator lists idle sockets one card each")
+        sec_v = next((v for v in views if v.get("path") == "security"), None)
+        if sec_v is not None:
+            sg = [c for _, c in cards(sec_v) if c.get("type") == "custom:auto-entities"
+                  and "word" in (c.get("filter") or {}).get("template", "")]
+            if sg and not any("All clear" in (g.get("filter") or {}).get("template", "") for g in sg):
+                quiet.append("security: an all-clear room still lists every sensor")
+        if quiet:
+            fail("C46", "%s: an idle list spends a card per idle thing" % label, quiet)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
