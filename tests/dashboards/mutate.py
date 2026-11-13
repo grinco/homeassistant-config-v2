@@ -841,6 +841,24 @@ def m_advanced_third_section(d):
     return "C41"
 
 
+def m_energy_badge_repeat(d):
+    """2026-11-13: the Energy tab's badge row repeats the socket load the graph shows."""
+    doc = _cfg(d, LOV)
+    en = [v for v in doc["data"]["config"]["views"] if v.get("path") == "energy"][0]
+    en["badges"] = [{"type": "entity", "entity": "sensor.socket_power_total"}]
+    _save(d, LOV, doc)
+    return "C42"
+
+
+def m_energy_history_chart(d):
+    """2026-11-13: a 14-day statistics chart comes back to the Energy tab."""
+    doc = _cfg(d, LOV)
+    _section(doc, "energy", "Load now").append(
+        {"type": "statistics-graph", "entities": ["sensor.all_lights_energy"], "days_to_show": 14})
+    _save(d, LOV, doc)
+    return "C42"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1110,6 +1128,8 @@ MUTATIONS = [
     ("a Climate view loses every (i)", m_guide_view_without_info),
     ("a room switch on Advanced grows its toggle bar", m_advanced_toggle_feature),
     ("Climate - advanced splits into a third section", m_advanced_third_section),
+    ("the Energy badge row repeats a graph", m_energy_badge_repeat),
+    ("a statistics chart comes back to Energy", m_energy_history_chart),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

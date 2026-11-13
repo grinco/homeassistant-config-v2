@@ -106,6 +106,12 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **The Energy tab names each entity once (lint C42, 2026-11-13).** No view badges (AC load, socket
+  load and spot price were each also a graph right below), no load badge on the Sockets heading, and
+  no statistics-graph: the 14-day modelled-lights chart went, since Home Assistant's own Energy panel
+  keeps that history; *Lights (modelled)* now sits under the AC graph in *Load now*. *Electricity
+  now* reads the hour-rank sensor and colours itself from the price, so it no longer repeats the
+  price graph's entity. 1,595 → ~1,100 px at 1280; 3,098 → 2,626 px on a phone.
 - **The Climate tab shows a reading once (lint C40, 2026-11-13).** No forecast (Home's weather card
   has it), no day/night alarm control (Home and Climate — advanced), no hand-placed copy of a reading
   the Temperature/Humidity generators already list, no Tado heating % graphs. The Floors section keeps

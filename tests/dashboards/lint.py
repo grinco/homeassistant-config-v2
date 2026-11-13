@@ -257,6 +257,12 @@ Checks, each one written because something it catches actually shipped:
                          and per-room, so a wide screen fills one row instead of leaving
                          a column empty under the shorter one. 2026-11-13: five rooms of
                          five tiles made the page 3,900 px at 1280.
+  C42 energy-once        the Energy tab names each entity once - view badges, heading
+                         badges, cards and graph lines together - and draws no
+                         statistics-graph (long history lives in Home Assistant's own
+                         Energy panel). 2026-11-13: socket load was on screen three times
+                         and spot price twice in the first screenful, and a 14-day bar
+                         chart of the lights' modelled kWh filled half a desktop.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1610,6 +1616,24 @@ def main():
                 bulky.append("climate-advanced has %d sections, not 2" % n)
             if bulky:
                 fail("C41", "%s: Climate - advanced is longer than it needs to be" % label, bulky)
+
+        # C42 - the Energy tab names each entity once.
+        en = [v for v in views if v.get("path") == "energy"]
+        if en:
+            seen, twice = {}, []
+            for path, card in cards(en[0], "%s/energy" % label):
+                if card.get("type") == "statistics-graph":
+                    twice.append("%s is a statistics-graph" % path)
+                if card.get("type") == "custom:auto-entities":
+                    continue
+                ids = [card.get("entity")] + [x.get("entity") if isinstance(x, dict) else x
+                                              for x in card.get("entities") or []]
+                for eid in {i for i in ids if isinstance(i, str) and "." in i}:
+                    seen.setdefault(eid, []).append(path)
+            twice += ["%s appears %d times: %s" % (e, len(p), ", ".join(p))
+                      for e, p in sorted(seen.items()) if len(p) > 1]
+            if twice:
+                fail("C42", "%s: the Energy tab repeats itself" % label, twice)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
