@@ -62,6 +62,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -118,13 +120,17 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -280,6 +286,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -407,6 +415,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -487,6 +497,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -527,6 +539,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },

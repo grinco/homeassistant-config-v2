@@ -181,7 +181,7 @@ def _body(sec):
 def _flat_body(sec):
     out = []
     for c in _body(sec):
-        out.extend(c.get("cards") or [] if c.get("type") == "horizontal-stack" else [c])
+        out.extend(c.get("cards") or [] if c.get("type") in ("horizontal-stack", "grid") else [c])
     return out
 
 

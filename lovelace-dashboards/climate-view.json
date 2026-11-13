@@ -96,7 +96,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "cards": [
@@ -123,13 +125,17 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -241,6 +247,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -331,7 +339,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "cards": [
@@ -356,7 +366,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "heading": "Air quality — outside",
@@ -421,7 +433,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "cards": [
@@ -446,13 +460,17 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -535,7 +553,9 @@
          }
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "content": "{% set ns = namespace(worst = -1, room = '') %}{% for r, n in [('living_room','Living room'), ('office','Office')] %}{% set v = states('sensor.climate_co2_' ~ r) | float(-1) %}{% if v > ns.worst %}{% set ns.worst = v %}{% set ns.room = n %}{% endif %}{% endfor %}{% if ns.worst < 0 %}No CO₂ reading.{% elif ns.worst >= 1400 %}**{{ ns.room }} {{ ns.worst | int }} ppm — open a window.**{% elif ns.worst >= 1000 %}**{{ ns.room }} {{ ns.worst | int }} ppm** — stuffy{% else %}Highest {{ ns.room }} {{ ns.worst | int }} ppm — fresh{% endif %}\n\n<details><summary><ha-icon icon=\"mdi:information-outline\"></ha-icon></summary>\n\nBelow 1000 ppm the air is fresh. From 1000 ppm a room is stuffy, the usual sign it has been shut too long: worth airing. From 1400 ppm, open a window.\n\n</details>",
@@ -653,7 +673,9 @@
          }
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "entity": "fan.ac2889_10",
@@ -724,7 +746,9 @@
          }
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "cards": [
@@ -759,7 +783,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "badges": [
@@ -822,6 +848,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -894,6 +922,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -965,6 +995,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -1106,6 +1138,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },

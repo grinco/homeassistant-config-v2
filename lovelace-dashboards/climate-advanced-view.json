@@ -51,7 +51,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "content": "{% set z = [('Living room','living_room'),('Bedroom','bedroom'),('Kids room 1','kid1'),('Kids room 2','kid2')] %}{% set ns = namespace(l=[]) %}{% for n, k in z %}{% set h = state_attr('input_datetime.climate_rad_hold_' ~ k, 'timestamp') | float(0) %}{% if h > now().timestamp() + 1800 %}{% set ns.l = ns.l + ['**' ~ n ~ '** set by hand until ' ~ (h | timestamp_custom('%H:%M'))] %}{% endif %}{% endfor %}{{ ns.l | join('  \\n') if ns.l else 'Every radiator follows its room target.' }}\n\n<details><summary><ha-icon icon=\"mdi:information-outline\"></ha-icon></summary>\n\nWith **Radiators follow room targets** on, each radiator valve is set from its room's day or night target; off, the Tado schedules run. A radiator changed by hand keeps its setting until the time shown.\n\n**AC boosts when behind by**: the room's AC helps only once the room is this far below target. **Morning warm-up lead**: how many minutes before the night ends the warm-up starts.\n\n</details>",
@@ -108,7 +110,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "heading": "Day / night",
@@ -194,7 +198,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "heading": "Safety",
@@ -252,7 +258,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "color": "purple",
@@ -313,13 +321,17 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -430,7 +442,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "badges": [
@@ -516,7 +530,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "badges": [
@@ -602,7 +618,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "badges": [
@@ -688,7 +706,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "badges": [
@@ -774,7 +794,9 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "heading": "Manual control",
@@ -846,13 +868,17 @@
          "type": "tile"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },

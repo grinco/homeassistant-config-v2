@@ -427,7 +427,7 @@ def sec_cards(sec):
     for c in sec.get("cards") or []:
         for k in (c.get("cards") or [] if c.get("type") == "custom:expander-card" else [c]):
             # a row of cards that shared a line in the section (collapse_all, 2026-11-13)
-            out.extend(k.get("cards") or [] if k.get("type") == "horizontal-stack" else [k])
+            out.extend(k.get("cards") or [] if k.get("type") in ("horizontal-stack", "grid") else [k])
     return out
 
 

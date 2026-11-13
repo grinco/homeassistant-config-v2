@@ -47,7 +47,9 @@
          ]
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "entities": [
@@ -153,7 +155,9 @@
          }
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "cards": [
@@ -208,7 +212,9 @@
          }
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "entity": "sensor.climate_ac_power_kid2",
@@ -240,6 +246,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -383,6 +391,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -484,7 +494,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "entity": "binary_sensor.spot_electricity_is_cheapest",
@@ -560,7 +572,9 @@
          ]
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "heading": "Gas",
@@ -600,13 +614,17 @@
          ]
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       }
      ],
      "child-padding": "0",
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
@@ -667,7 +685,9 @@
          "type": "custom:button-card"
         }
        ],
-       "type": "horizontal-stack"
+       "columns": 2,
+       "square": false,
+       "type": "grid"
       },
       {
        "entity": "sensor.volvo_xc40_charging_power",
@@ -699,6 +719,8 @@
      "clear": true,
      "expanded": true,
      "expanded-gap": "8px",
+     "expander-card-display": "grid",
+     "gap": "8px",
      "grid_options": {
       "columns": "full"
      },
