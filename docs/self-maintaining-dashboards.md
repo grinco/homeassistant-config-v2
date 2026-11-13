@@ -106,6 +106,18 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
+- **Show what is active, say the rest in one line (lint C46, C40e, 2026-11-13).** Energy: each AC
+  card shows only above 10 W, and "All air conditioners are off." stands in when the total is below
+  10 W; the socket generator lists sockets drawing 2 W or more and ends with one line naming the idle
+  ones ("6 idle · Toilet down · ..."). Security: rooms whose sensors all read off collapse into one
+  "All clear · Bathroom · ..." line; a room with anything on, unavailable or unknown keeps all its
+  cards (`show_all` in the generator's config lists every room, which `security_names.py` uses so
+  every name is still checked). Climate: one generated card per room in *Rooms*, temperature as the
+  line and humidity as a second state (no second line, so no legend), with the two all-rooms graphs
+  kept for both trends; the Auto badge on *Automatic climate* is the toggle (the separate toggle tile
+  repeated it) and the status is two short lines. C40(e): an entity appears once on the Climate tab,
+  badges included, so the Outside heading no longer repeats the outdoor temperature from the badge
+  row.
 - **Folding is for long lists with nothing on the right (lint C45, 2026-11-13).** Foldable
   (`expander-card`, heading as title card, open by default): Home's Downstairs, Upstairs, Needs
   attention and Comfort; Security's Sensors and Cameras. Every other section stays a plain heading,

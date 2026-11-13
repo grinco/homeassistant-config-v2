@@ -968,6 +968,27 @@ def m_attention_remembers_fold(d):
     return "C45"
 
 
+def m_ac_card_always_shown(d):
+    """2026-11-13: an air conditioner's card shows at 0 W again."""
+    doc = _cfg(d, LOV)
+    en = [v for v in doc["data"]["config"]["views"] if v.get("path") == "energy"][0]
+    c = next(c for c in _walk(en["sections"]) if str(c.get("entity", "")).startswith("sensor.climate_ac_power_"))
+    c.pop("visibility", None)
+    _save(d, LOV, doc)
+    return "C46"
+
+
+def m_security_lists_clear_rooms(d):
+    """2026-11-13: an all-clear room lists every sensor again."""
+    doc = _cfg(d, LOV)
+    se = [v for v in doc["data"]["config"]["views"] if v.get("path") == "security"][0]
+    g = next(c for c in _walk(se["sections"]) if c.get("type") == "custom:auto-entities"
+             and "set word" in (c.get("filter") or {}).get("template", ""))
+    g["filter"]["template"] = g["filter"]["template"].replace("All clear", "Fine")
+    _save(d, LOV, doc)
+    return "C46"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1226,6 +1247,8 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
+    ("an AC card shows at 0 W again", m_ac_card_always_shown),
+    ("an all-clear room lists every sensor again", m_security_lists_clear_rooms),
     ("a section with a heading toggle folds again", m_fold_hides_badge),
     ("Needs attention remembers being folded", m_attention_remembers_fold),
     ("a floor back to two rooms per row", m_floor_two_across),

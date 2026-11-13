@@ -282,6 +282,11 @@ Checks, each one written because something it catches actually shipped:
                          toggle, info or action rather than the fold). Needs attention
                          may fold but never remembers it (no storage-id): a phone that
                          kept it folded would hide the next smoke or leak alarm.
+  C46 quiet-when-idle    lists of mostly-idle things show what is active and say the rest in
+                         one line (operator, 2026-11-13): Energy's per-AC cards each carry a
+                         numeric_state visibility and an "all off" line stands in for them;
+                         the sockets generator lists idle sockets in one summary; Security's
+                         sensor generator folds an all-clear room into one line.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -384,8 +389,7 @@ GENERATED = [
     ("lovelace", "security", "Sensors"),
     ("lovelace", "security", "Cameras"),
     ("lovelace", "climate", "Heating & hot water"),
-    ("lovelace", "climate", "Temperature"),
-    ("lovelace", "climate", "Humidity"),
+    ("lovelace", "climate", "Rooms"),
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
@@ -1633,6 +1637,17 @@ def main():
                     for r in ((card.get("filter") or {}).get("include") or []):
                         if r.get("integration") == "tado" and "_heating" in str(r.get("entity_id", "")):
                             again.append("%s generates the Tado zone heating %% graphs" % path)
+            # (e) one entity, one place: a heading badge and a card for the same entity repeat
+            # each other (2026-11-13: the Auto badge and the big Automatic climate toggle).
+            seen = {}
+            for path, card in cards(v, "%s/climate" % label):
+                if card.get("type") == "custom:auto-entities":
+                    continue
+                eid = card.get("entity")
+                if isinstance(eid, str) and "." in eid and eid != "this.entity_id":
+                    seen.setdefault(eid, []).append(path)
+            again += ["%s appears %d times: %s" % (e, len(p_), ", ".join(p_))
+                      for e, p_ in sorted(seen.items()) if len(p_) > 1]
             if again:
                 fail("C40", "%s: the Climate tab repeats a reading shown elsewhere" % label, again)
 
@@ -1737,6 +1752,29 @@ def main():
                     folds.append("%s/%s: Needs attention remembers being folded" % (label, v.get("path")))
         if folds:
             fail("C45", "%s: a fold hides something it should not" % label, folds)
+
+        # C46 - mostly-idle lists show what is active and summarise the rest.
+        quiet = []
+        en_v = next((v for v in views if v.get("path") == "energy"), None)
+        if en_v is not None:
+            acs = [c for _, c in cards(en_v) if str(c.get("entity", "")).startswith("sensor.climate_ac_power_")]
+            for c in acs:
+                if not any(x.get("condition") == "numeric_state" for x in c.get("visibility") or []):
+                    quiet.append("energy: %s shows while the unit is off" % c["entity"])
+            if acs and not any(c.get("type") == "markdown" and "off" in c.get("content", "")
+                               and c.get("visibility") for _, c in cards(en_v)):
+                quiet.append("energy: nothing says the air conditioners are all off")
+            gens = [c for _, c in cards(en_v) if c.get("sockets")]
+            if gens and not any("idle" in (g.get("filter") or {}).get("template", "") for g in gens):
+                quiet.append("energy: the sockets generator lists idle sockets one card each")
+        sec_v = next((v for v in views if v.get("path") == "security"), None)
+        if sec_v is not None:
+            sg = [c for _, c in cards(sec_v) if c.get("type") == "custom:auto-entities"
+                  and "word" in (c.get("filter") or {}).get("template", "")]
+            if sg and not any("All clear" in (g.get("filter") or {}).get("template", "") for g in sg):
+                quiet.append("security: an all-clear room still lists every sensor")
+        if quiet:
+            fail("C46", "%s: an idle list spends a card per idle thing" % label, quiet)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

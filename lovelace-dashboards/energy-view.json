@@ -99,6 +99,18 @@
      "type": "heading"
     },
     {
+     "content": "All air conditioners are off.",
+     "text_only": true,
+     "type": "markdown",
+     "visibility": [
+      {
+       "below": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.ac_power_total"
+      }
+     ]
+    },
+    {
      "entity": "sensor.climate_ac_power_living_room",
      "grid_options": {
       "columns": 6,
@@ -121,7 +133,14 @@
      "variables": {
       "max": 1500,
       "tint": "orange"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_living_room"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_office",
@@ -146,7 +165,14 @@
      "variables": {
       "max": 1500,
       "tint": "indigo"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_office"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_bedroom",
@@ -171,7 +197,14 @@
      "variables": {
       "max": 1500,
       "tint": "purple"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_bedroom"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_kid1",
@@ -196,7 +229,14 @@
      "variables": {
       "max": 1500,
       "tint": "pink"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_kid1"
+      }
+     ]
     },
     {
      "entity": "sensor.climate_ac_power_kid2",
@@ -221,7 +261,14 @@
      "variables": {
       "max": 1500,
       "tint": "cyan"
-     }
+     },
+     "visibility": [
+      {
+       "above": 10,
+       "condition": "numeric_state",
+       "entity": "sensor.climate_ac_power_kid2"
+      }
+     ]
     }
    ],
    "column_span": 1,
@@ -265,13 +312,11 @@
     },
     {
      "card": {
-      "columns": 2,
-      "square": false,
-      "type": "grid"
+      "type": "vertical-stack"
      },
      "card_param": "cards",
      "filter": {
-      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- endfor -%}\n{{ out.l }}"
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[], idle=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- if not is_number(states(s.power)) or states(s.power) | float(0) >= 2 -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- else -%}{%- set out.idle = out.idle + [o.get('name') or s.name] -%}{%- endif -%}\n{%- endfor -%}\n{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': out.l}] if out.l else []) + ([{'type': 'markdown', 'text_only': true, 'content': '**' ~ (out.idle | count) ~ ' idle** · ' ~ (out.idle | join(' · '))}] if out.idle else []) }}"
      },
      "grid_options": {
       "columns": "full"

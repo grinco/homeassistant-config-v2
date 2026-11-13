@@ -246,7 +246,7 @@
      "expanded": true,
      "expanded-gap": "8px",
      "expander-card-display": "grid",
-     "gap": "8px",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
@@ -374,7 +374,7 @@
      "expanded": true,
      "expanded-gap": "8px",
      "expander-card-display": "grid",
-     "gap": "8px",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
@@ -456,7 +456,7 @@
      "expanded": true,
      "expanded-gap": "8px",
      "expander-card-display": "grid",
-     "gap": "8px",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },
@@ -498,7 +498,7 @@
      "expanded": true,
      "expanded-gap": "8px",
      "expander-card-display": "grid",
-     "gap": "8px",
+     "gap": "0px",
      "grid_options": {
       "columns": "full"
      },

@@ -35,10 +35,16 @@ def generator():
         cfg = json.load(fh)["data"]["config"]
     view = [v for v in cfg["views"] if v.get("path") == "security"][0]
     for sec in view["sections"]:
-        if sec["cards"] and sec["cards"][0].get("heading") == "Sensors":
+        cs = sec["cards"]
+        # Since 2026-11-13 the section folds: its heading is an expander-card's title card.
+        if cs and cs[0].get("type") == "custom:expander-card":
+            head, body = (cs[0].get("title-card") or {}), cs[0].get("cards") or []
+        else:
+            head, body = (cs[0] if cs else {}), cs[1:]
+        if head.get("heading") == "Sensors":
             # Only the cards under the Sensors heading: Presence shares the section.
             mine = []
-            for c in sec["cards"][1:]:
+            for c in body:
                 if c.get("type") == "heading":
                     break
                 mine.append(c)
@@ -52,7 +58,10 @@ def generator():
 def main():
     gen = generator()
     tpl = gen["filter"]["template"]
-    pre = "{%% set config = %s %%}" % json.dumps({k: v for k, v in gen.items() if k != "filter"})
+    # show_all: name every room's sensors, not only rooms with something active - an all-clear
+    # room otherwise collapses into the summary line and its names would go untested.
+    conf = dict({k: v for k, v in gen.items() if k != "filter"}, show_all=True)
+    pre = "{%% set config = %s %%}" % json.dumps(conf)
     out = harness.evaluate(harness.SENTINEL + pre + tpl + harness.SENTINEL)
     body = out.split(harness.SENTINEL)[1].strip()
     cards = ast.literal_eval(body)
@@ -68,6 +77,8 @@ def main():
                 bad.append("S1 a sensor grid comes before any room heading")
                 continue
             groups[-1][1].extend(x.get("name", "") for x in c.get("cards", []))
+        elif c.get("type") == "markdown" and "All clear" in c.get("content", ""):
+            continue
         else:
             bad.append("S1 ungrouped card %s (%s)" % (c.get("entity"), c.get("name")))
     if not groups:
