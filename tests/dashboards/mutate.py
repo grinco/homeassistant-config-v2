@@ -780,6 +780,24 @@ def m_guide_summary_not_info(d):
     return "C39"
 
 
+def m_climate_repeats_forecast(d):
+    """2026-11-13: the Climate tab grows its own forecast tile again."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Outside").append(
+        {"type": "tile", "entity": "weather.home", "features": [{"type": "temperature-forecast"}]})
+    _save(d, LOV, doc)
+    return "C40"
+
+
+def m_climate_repeats_reading(d):
+    """2026-11-13: a room reading the Temperature generator shows is placed by hand as well."""
+    doc = _cfg(d, LOV)
+    _section(doc, "climate", "Outside").append(
+        {"type": "custom:button-card", "entity": "sensor.climate_temp_corridor", "template": "vg_stat"})
+    _save(d, LOV, doc)
+    return "C40"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -1045,6 +1063,8 @@ MUTATIONS = [
     ("a transform leaves a scratch key", m_scratch_key),
     ("a Climate heading explains itself again", m_guide_on_show),
     ("a Climate guide expands from text, not the (i)", m_guide_summary_not_info),
+    ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
+    ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]
 
 

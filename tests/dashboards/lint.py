@@ -241,6 +241,13 @@ Checks, each one written because something it catches actually shipped:
                          2026-11-13 the operator asked for the guides out of sight:
                          headings read "Safety — runs even with the master switch
                          off" and status lines carried a sentence of rationale each.
+  C40 climate-once       the Climate tab shows a reading once. Fails on (a) a hand-placed
+                         card naming an entity a generator on the same tab already
+                         renders; (b) a weather forecast (Home's weather card owns it);
+                         (c) the alarm's day/night control (Home and Climate - advanced
+                         own it); (d) the per-zone Tado heating % graphs (the zone tile
+                         already says Heating or Idle). 2026-11-13: the phone render was
+                         7,300 px, most of it repeats.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1533,6 +1540,43 @@ def main():
                 loud.append("%s/%s has no (i) guide at all" % (label, v.get("path")))
         if guide_views and loud:
             fail("C39", "%s: a Climate guide is on show instead of behind its (i)" % label, loud)
+
+        # C40 - the Climate tab shows a reading once.
+        clim = [v for v in views if v.get("path") == "climate"]
+        if clim:
+            v = clim[0]
+            ents = registry_entities()
+            area_name_of = {a["id"]: a["name"] for a in _store("core.area_registry", "areas")}
+            by_id = {e["entity_id"]: e for e in ents}
+            gens = generators(v)
+            floored = area_names()
+            again = []
+            for path, card in cards(v, "%s/climate" % label):
+                eid = card.get("entity")
+                if card.get("type") == "custom:auto-entities" or not isinstance(eid, str):
+                    pass
+                elif eid in by_id and any(
+                        any(rule_matches(r, by_id[eid], area_name_of) for r in inc)
+                        and not any(rule_matches(x, by_id[eid], area_name_of) for x in exc)
+                        for _, inc, exc in gens):
+                    again.append("%s %s is also generated on this tab" % (path, eid))
+                elif (eid in by_id and "on_room_page" in by_id[eid]["labels"]
+                        and by_id[eid]["area"] in floored
+                        and by_id[eid]["device_class"] in ("temperature", "humidity")):
+                    # The Temperature and Humidity sections are Jinja generators whose
+                    # contract is exactly this: every on_room_page reading of the class.
+                    again.append("%s %s is also in the %s section" % (path, eid, by_id[eid]["device_class"]))
+                feats = [f.get("type") for f in card.get("features") or [] if isinstance(f, dict)]
+                if any(f in ("temperature-forecast", "precipitation-forecast") for f in feats):
+                    again.append("%s carries a weather forecast" % path)
+                if str(eid).startswith("alarm_control_panel."):
+                    again.append("%s is the alarm's day/night control" % path)
+                if card.get("type") == "custom:auto-entities":
+                    for r in ((card.get("filter") or {}).get("include") or []):
+                        if r.get("integration") == "tado" and "_heating" in str(r.get("entity_id", "")):
+                            again.append("%s generates the Tado zone heating %% graphs" % path)
+            if again:
+                fail("C40", "%s: the Climate tab repeats a reading shown elsewhere" % label, again)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
