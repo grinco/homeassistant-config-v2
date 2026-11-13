@@ -11800,5 +11800,147 @@
   "subview": true,
   "title": "Tea Room",
   "type": "sections"
+ },
+ {
+  "back_path": "/lovelace/home",
+  "icon": "mdi:home-floor-1",
+  "max_columns": 1,
+  "path": "downstairs",
+  "sections": [
+   {
+    "cards": [
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
+      },
+      "floor": "lower_floor",
+      "grid_options": {
+       "columns": "full"
+      },
+      "rooms": {
+       "bedroom": {
+        "icon": "mdi:desk",
+        "name": "Office",
+        "page": "guest-room"
+       },
+       "corridor": {
+        "icon": "mdi:stairs",
+        "name": "Corridor",
+        "page": "corridor"
+       },
+       "kitchen": {
+        "icon": "mdi:countertop-outline",
+        "name": "Kitchen",
+        "page": "kitchen",
+        "special": "kitchen"
+       },
+       "laundry_room": {
+        "icon": "mdi:washing-machine",
+        "name": "Laundry",
+        "page": "laundry-room"
+       },
+       "living_room": {
+        "icon": "mdi:sofa-outline",
+        "name": "Living room",
+        "page": "living-room"
+       },
+       "shower": {
+        "icon": "mdi:shower-head",
+        "name": "Shower",
+        "page": "shower",
+        "special": "shower"
+       },
+       "stairs": {
+        "icon": "mdi:stairs-down",
+        "name": "Stairs",
+        "page": "stairs"
+       }
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities"
+     }
+    ],
+    "type": "grid"
+   }
+  ],
+  "subview": true,
+  "title": "Downstairs",
+  "type": "sections"
+ },
+ {
+  "back_path": "/lovelace/home",
+  "icon": "mdi:home-floor-2",
+  "max_columns": 1,
+  "path": "upstairs",
+  "sections": [
+   {
+    "cards": [
+     {
+      "card": {
+       "columns": 2,
+       "square": false,
+       "type": "grid"
+      },
+      "card_param": "cards",
+      "filter": {
+       "template": "{%- set ov = config.get('rooms', {}) -%}{%- set ars = floor_areas(config.get('floor')) -%}{%- set known = ov.keys() | list -%}{%- set order = (known | select('in', ars) | list) + (ars | reject('in', known) | sort | list) -%}{%- set ns = namespace(out=[]) -%}{%- for a in order if area_entities(a) | count > 0 -%}{%- set o = ov.get(a, {}) -%}{%- set nav = ('/lovelace/' ~ o.get('page')) if o.get('page') else ('/config/areas/area/' ~ a) -%}{%- set card = {'type': 'custom:button-card', 'template': 'vg_room_card', 'name': o.get('name') or area_name(a), 'variables': {'area': a, 'page': nav, 'special': o.get('special', '')}} -%}{%- if o.get('icon') %}{% set card = dict(card, icon=o.get('icon')) %}{% endif -%}{%- set ns.out = ns.out + [card] -%}{%- endfor -%}{{ ns.out }}"
+      },
+      "floor": "upper_floor",
+      "grid_options": {
+       "columns": "full"
+      },
+      "rooms": {
+       "bathroom": {
+        "icon": "mdi:bathtub-outline",
+        "name": "Bathroom",
+        "page": "bathroom"
+       },
+       "bedroom_2": {
+        "icon": "mdi:bed-king-outline",
+        "name": "Bedroom",
+        "page": "bedroom"
+       },
+       "closet": {
+        "icon": "mdi:hanger",
+        "name": "Closet",
+        "page": "closet"
+       },
+       "kid2_room": {
+        "icon": "mdi:teddy-bear",
+        "name": "Kids room 2",
+        "page": "kid2"
+       },
+       "hallway": {
+        "icon": "mdi:stairs-up",
+        "name": "Hallway",
+        "page": "hallway"
+       },
+       "kid1_room": {
+        "icon": "mdi:bed-single-outline",
+        "name": "Kids room 1",
+        "page": "kid1"
+       },
+       "tea_room": {
+        "icon": "mdi:tea-outline",
+        "name": "Tea room",
+        "page": "tea-room"
+       }
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities"
+     }
+    ],
+    "type": "grid"
+   }
+  ],
+  "subview": true,
+  "title": "Upstairs",
+  "type": "sections"
  }
 ]

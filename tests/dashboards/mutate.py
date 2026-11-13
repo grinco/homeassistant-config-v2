@@ -171,12 +171,13 @@ def m_clobbered_label(d):
 def _room_gen(cfg, floor="upper_floor"):
     """The auto-entities that generates one floor's Home tiles."""
     for v in cfg["data"]["config"]["views"]:
+        if v.get("path") != "home":
+            continue
         for sec in (v.get("sections") or []):
             cs = sec.get("cards") or []
-            if cs and cs[0].get("heading") == "Rooms":
-                for c in cs:
-                    if c.get("type") == "custom:auto-entities" and c.get("floor") == floor:
-                        return c, cs
+            for c in cs:
+                if c.get("type") == "custom:auto-entities" and c.get("floor") == floor and "rooms" in c:
+                    return c, cs
     raise SystemExit("no %s room generator found to mutate" % floor)
 
 
@@ -253,18 +254,37 @@ def m_devices_view_gone(d):
 
 
 def m_rooms_section_renamed(d):
-    """C9 and C10 both hang off finding the Rooms section. If that lookup comes
-    back empty they would pass by saying nothing, which is the failure mode this
-    whole suite exists for - so the empty case is itself a failure."""
+    """C9 and C10 hang off finding the floor generators. If that lookup comes back
+    empty they would pass by saying nothing, so the empty case is itself a failure.
+    (Since 2026-11-13 they are found by shape - `floor` and `rooms` - not a heading.)"""
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
         for sec in (v.get("sections") or []):
-            cs = sec.get("cards") or []
-            if cs and cs[0].get("heading") == "Rooms":
-                cs[0]["heading"] = "The rooms"
+            for c in sec.get("cards") or []:
+                if c.get("type") == "custom:auto-entities" and "floor" in c:
+                    c["level"] = c.pop("floor")
     _save(d, LOV, doc)
     return "C10"
 
+
+def m_floors_stacked(d):
+    """2026-11-13: both floors back in one Home section, so they stack on every screen."""
+    doc = _cfg(d, LOV)
+    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
+    secs = [s for s in home["sections"] if any("rooms" in c for c in s["cards"])]
+    secs[0]["cards"] += secs[1]["cards"]
+    home["sections"].remove(secs[1])
+    _save(d, LOV, doc)
+    return "C44"
+
+
+def m_floor_button_gone(d):
+    """2026-11-13: the Upstairs button disappears; the bedroom is two screens down again."""
+    doc = _cfg(d, LOV)
+    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
+    home["badges"] = [b for b in home.get("badges") or [] if "upstairs" not in json.dumps(b)]
+    _save(d, LOV, doc)
+    return "C44"
 
 def m_room_loses_lights(d):
     """A room page built by hand again: the generative rule for its lights is
@@ -1151,6 +1171,8 @@ MUTATIONS = [
     ("a statistics chart comes back to Energy", m_energy_history_chart),
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
+    ("both floors stacked in one Home section", m_floors_stacked),
+    ("the Upstairs button disappears", m_floor_button_gone),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

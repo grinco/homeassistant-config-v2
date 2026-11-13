@@ -159,6 +159,7 @@ def build_house():
              {"temperature": 14, "temperature_unit": "°C", "humidity": 62, "pressure": 1017,
               "pressure_unit": "hPa", "wind_speed": 9, "wind_speed_unit": "km/h", "supported_features": 0},
              platform="weather_ci")
+    h.entity("sensor.weather_ahead", "Weather ahead", "partlycloudy", {"scene": "cloudy"}, platform="template")
     h.entity("alarm_control_panel.home", "Alarm", "disarmed",
              {"code_arm_required": False, "supported_features": 63}, platform="alarm_ci")
     h.entity("binary_sensor.lighting_night", "Lighting night", "off", platform="template")

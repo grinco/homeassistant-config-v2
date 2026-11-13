@@ -209,8 +209,11 @@ button_card_templates:
         \ style=\"color:#ff5722\">Cooktop on</b>');\n  if (ov && (ov.state === 'run' || ov.state === 'delayedstart'))\
         \ p.push('<b style=\"color:#ff5722\">Oven on</b>');\n}\nif (variables.special === 'terrace') {\
         \ var mo = states['binary_sensor.outdoor_motion_occupancy']; if (mo && mo.state === 'on') p.push('Motion');\
-        \ }\nvar pr = i.pres ? states[i.pres] : null;\nif (pr && pr.state === 'on') p.push('<span style=\"\
-        color:#4caf50\">&#9679;</span> Someone here');\nreturn p.join(' · ') || '&nbsp;';\n]]]"
+        \ }\nvar pr = i.pres ? states[i.pres] : null;\nvar ps = pr ? (pr.attributes.presence_sensors ||\
+        \ []).filter(function (x) { return x.indexOf('binary_sensor.') === 0; }) : [];\nif (ps.length\
+        \ && pr.state === 'on') p.push('<span style=\"color:#4caf50\">&#9679;</span> Someone here');\n\
+        else if (ps.length && pr.state === 'off') p.push('<span style=\"color:var(--disabled-text-color)\"\
+        >&#9675;</span> No one here');\nreturn p.join(' · ') || '&nbsp;';\n]]]"
       lamp:
         card:
           type: custom:button-card
@@ -328,3 +331,117 @@ button_card_templates:
       - color: '[[[ return entity.state === ''on'' ? variables.base : ''#9e9e9e''; ]]]'
     variables:
       base: '#2196f3'
+  vg_kitchen:
+    template: vg_stat
+    variables:
+      kind: ''
+      finish: ''
+      progress: ''
+      timer: ''
+      temp: ''
+      door: ''
+      program: ''
+      info: "[[[\nvar V = variables, S = states, now = Date.now(), s = entity ? entity.state : '';\nvar\
+        \ raw = function (id) { var o = id && S[id]; return (o && o.state !== 'unavailable' && o.state\
+        \ !== 'unknown') ? o : null; };\nvar f = function (id) { var o = raw(id); if (!o) return ''; return\
+        \ (hass && hass.formatEntityState) ? hass.formatEntityState(o) : o.state; };\nvar n = function\
+        \ (id) { var o = raw(id); var v = o ? parseFloat(o.state) : NaN; return isNaN(v) ? null : v; };\n\
+        var hm = function (t) { var d = new Date(t), h = d.getHours(), m = d.getMinutes(); return (h <\
+        \ 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; };\nvar p = [], fin = raw(V.finish), t =\
+        \ fin ? Date.parse(fin.state) : NaN;\nif (s === 'run' || s === 'pause') {\n  if (s === 'pause')\
+        \ p.push('paused');\n  if (!isNaN(t)) {\n    var mins = Math.round((t - now) / 60000), h = Math.floor(mins\
+        \ / 60), m = mins % 60;\n    p.push(mins < 1 ? 'finishing' : (h ? h + ' h' + (m ? ' ' + m + '\
+        \ min' : '') : mins + ' min') + ' left');\n  }\n  var pr = n(V.progress);\n  if (pr !== null &&\
+        \ V.kind !== 'cooktop') p.push(Math.round(pr) + '%');\n} else if (s === 'delayedstart') {\n  p.push('starts\
+        \ later');\n  if (!isNaN(t)) p.push('done ' + hm(t));\n} else {\n  if (V.temp) { var tv = f(V.temp);\
+        \ if (tv) p.push(tv); }\n  if (V.program) { var g = f(V.program); if (g) p.push(g); }\n  if (V.door)\
+        \ { var d = f(V.door); if (d) p.push('door ' + d.toLowerCase()); }\n}\nvar tm = n(V.timer);\n\
+        if (tm !== null && tm > 0) p.push('timer ' + Math.ceil(tm / 60) + ' min');\nreturn p.join(' \\\
+        u00b7 ');\n]]]"
+    show_icon: false
+    show_label: true
+    custom_fields:
+      art: "[[[\nvar s = entity ? entity.state : '', k = variables.kind, on = s === 'run';\nvar i = {tone:\
+        \ s === 'actionrequired' ? 'warn' : (s === 'error' ? 'bad' : (on || s === 'pause' || s === 'delayedstart'\
+        \ ? 'busy' : (s === 'ready' || s === 'finished' ? 'ok' : 'idle'))), label: s === 'finished' ?\
+        \ 'Finished' : ''};\nvar T = {busy: '#ff9800', ok: '#43a047', warn: '#fb8c00', bad: '#e53935',\
+        \ idle: '#90a4ae'}, c = T[i.tone];\nvar pulse = '<animate attributeName=\"opacity\" values=\"\
+        .55;1;.55\" dur=\"2.4s\" repeatCount=\"indefinite\"/>';\nvar svg = '';\nif (k === 'oven') {\n\
+        \  // Bosch Serie 8, black glass: slim control strip with a centred TFT, steel bar handle, full-glass\
+        \ door.\n  svg = '<defs><radialGradient id=\"g\"><stop offset=\"0\" stop-color=\"#ffe0b2\"/><stop\
+        \ offset=\"1\" stop-color=\"#ff5722\"/></radialGradient></defs>'\n    + '<rect x=\"10\" y=\"8\"\
+        \ width=\"80\" height=\"86\" rx=\"6\" fill=\"#212529\"/>'\n    + '<rect x=\"10\" y=\"8\" width=\"\
+        80\" height=\"15\" rx=\"6\" fill=\"#2f353b\"/>'\n    + '<rect x=\"38\" y=\"11\" width=\"24\" height=\"\
+        9\" rx=\"2\" fill=\"#0b0d0f\"/>'\n    + (on ? '<rect x=\"41\" y=\"14\" width=\"18\" height=\"\
+        3\" rx=\"1.5\" fill=\"' + c + '\"/>' : '<rect x=\"47\" y=\"14.5\" width=\"6\" height=\"2\" rx=\"\
+        1\" fill=\"#455a64\"/>')\n    + '<circle cx=\"20\" cy=\"15.5\" r=\"1.6\" fill=\"#455a64\"/><circle\
+        \ cx=\"80\" cy=\"15.5\" r=\"1.6\" fill=\"#455a64\"/>'\n    + '<rect x=\"18\" y=\"27\" width=\"\
+        64\" height=\"4\" rx=\"2\" fill=\"#cfd8dc\"/>'\n    + '<rect x=\"17\" y=\"36\" width=\"66\" height=\"\
+        50\" rx=\"4\" fill=\"#0b0d0f\"/>'\n    + (on ? '<rect x=\"17\" y=\"36\" width=\"66\" height=\"\
+        50\" rx=\"4\" fill=\"url(#g)\">' + pulse + '</rect>'\n          + '<path d=\"M26 79 h48\" stroke=\"\
+        #ff3d00\" stroke-width=\"2\" stroke-linecap=\"round\"/>' : '')\n    + '<path d=\"M20 40 L34 40\
+        \ L22 60 Z\" fill=\"#ffffff\" opacity=\".07\"/>';\n} else if (k === 'cooktop') {\n  // Bosch induction,\
+        \ black glass: FlexInduction zone on the left, two rings right, touch strip at the front.\n  var\
+        \ glow = function (shape) { return on ? shape.replace('/>', ' fill=\"#ff5722\" opacity=\".4\"\
+        >' + pulse + '</' + shape.split(' ')[0].slice(1) + '>') : ''; };\n  var st2 = on ? '#ff7043' :\
+        \ '#6b7780';\n  svg = '<rect x=\"4\" y=\"16\" width=\"92\" height=\"68\" rx=\"6\" fill=\"#16191c\"\
+        />'\n    + '<rect x=\"4\" y=\"16\" width=\"92\" height=\"68\" rx=\"6\" fill=\"none\" stroke=\"\
+        #3a4148\" stroke-width=\"1.5\"/>'\n    + glow('<rect x=\"12\" y=\"23\" width=\"30\" height=\"\
+        44\" rx=\"5\"/>')\n    + '<rect x=\"12\" y=\"23\" width=\"30\" height=\"44\" rx=\"5\" fill=\"\
+        none\" stroke=\"' + st2 + '\" stroke-width=\"2\"/>'\n    + '<path d=\"M12 45 h30\" stroke=\"'\
+        \ + st2 + '\" stroke-width=\"1\" stroke-dasharray=\"2 2\"/>'\n    + glow('<circle cx=\"68\" cy=\"\
+        34\" r=\"12\"/>')\n    + '<circle cx=\"68\" cy=\"34\" r=\"12\" fill=\"none\" stroke=\"' + st2\
+        \ + '\" stroke-width=\"2\"/>'\n    + glow('<circle cx=\"68\" cy=\"60\" r=\"9\"/>')\n    + '<circle\
+        \ cx=\"68\" cy=\"60\" r=\"9\" fill=\"none\" stroke=\"' + st2 + '\" stroke-width=\"2\"/>'\n   \
+        \ + '<rect x=\"22\" y=\"73\" width=\"56\" height=\"6\" rx=\"3\" fill=\"#252a2f\"/>'\n    + '<circle\
+        \ cx=\"30\" cy=\"76\" r=\"1.3\" fill=\"#8d6e63\"/><circle cx=\"40\" cy=\"76\" r=\"1.3\" fill=\"\
+        #8d6e63\"/><circle cx=\"60\" cy=\"76\" r=\"1.3\" fill=\"#8d6e63\"/><circle cx=\"70\" cy=\"76\"\
+        \ r=\"1.3\" fill=\"#8d6e63\"/>';\n} else if (k === 'dishwasher') {\n  // Siemens built-in: the\
+        \ cabinet front hides it; while it runs a red light falls on the floor.\n  var bub = function\
+        \ (x, d, r) {\n    return '<circle cx=\"' + x + '\" cy=\"70\" r=\"' + r + '\" fill=\"#81d4fa\"\
+        \ opacity=\".8\">'\n      + '<animate attributeName=\"cy\" values=\"70;30\" dur=\"2.8s\" begin=\"\
+        ' + d + 's\" repeatCount=\"indefinite\"/>'\n      + '<animate attributeName=\"opacity\" values=\"\
+        .8;0\" dur=\"2.8s\" begin=\"' + d + 's\" repeatCount=\"indefinite\"/></circle>';\n  };\n  svg\
+        \ = '<rect x=\"4\" y=\"4\" width=\"92\" height=\"6\" rx=\"2\" fill=\"#a1887f\"/>'\n    + '<rect\
+        \ x=\"16\" y=\"12\" width=\"68\" height=\"74\" rx=\"3\" fill=\"#eceff1\" stroke=\"#cfd8dc\" stroke-width=\"\
+        1.5\"/>'\n    + '<rect x=\"38\" y=\"18\" width=\"24\" height=\"3.5\" rx=\"1.75\" fill=\"#90a4ae\"\
+        />'\n    + '<rect x=\"16\" y=\"86\" width=\"68\" height=\"6\" fill=\"#455a64\"/>'\n    + '<path\
+        \ d=\"M4 94 H96\" stroke=\"#b0bec5\" stroke-width=\"1.5\"/>'\n    + (on ? '<ellipse cx=\"50\"\
+        \ cy=\"96\" rx=\"10\" ry=\"2.6\" fill=\"#ff1744\">' + pulse + '</ellipse>'\n          + bub(36,\
+        \ 0, 3) + bub(50, .9, 4) + bub(63, 1.8, 2.6) : '')\n    + (i.tone === 'warn' ? '<ellipse cx=\"\
+        50\" cy=\"96\" rx=\"10\" ry=\"2.6\" fill=\"#ffab00\"/>' : '')\n    + (i.label === 'Finished' ?\
+        \ '<path d=\"M40 50 l7 7 l14 -14\" stroke=\"#43a047\" stroke-width=\"5\" fill=\"none\" stroke-linecap=\"\
+        round\" stroke-linejoin=\"round\"/>' : '');\n}\n\nreturn '<svg viewBox=\"0 0 100 100\" width=\"\
+        100%\" height=\"100%\">' + svg + '</svg>';\n]]]"
+    styles:
+      card:
+      - height: 100%
+      - min-height: 168px
+      - padding: 10px 6px
+      grid:
+      - grid-template-areas: '"art" "n" "s" "l"'
+      - grid-template-columns: minmax(0, 1fr)
+      - grid-template-rows: 64px auto auto auto
+      - justify-items: center
+      - align-content: start
+      - gap: 2px
+      custom_fields:
+        art:
+        - width: 64px
+        - height: 64px
+      name:
+      - justify-self: center
+      - font-size: 12px
+      - font-weight: '500'
+      - color: var(--primary-text-color)
+      - margin-top: 4px
+      state:
+      - justify-self: center
+      label:
+      - justify-self: center
+      - font-size: 11px
+      - color: var(--secondary-text-color)
+      - white-space: normal
+      - text-align: center
+      - line-height: '1.3'
+    label: '[[[ return variables.info; ]]]'

@@ -272,6 +272,10 @@ Checks, each one written because something it catches actually shipped:
                          finish time shows only while a program runs (the card carries a
                          visibility condition). 2026-11-13: the least-used tab was
                          3,400 px on a phone, mostly toggles and idle readings.
+  C44 floor-reach        Home shows each floor's rooms in a section of its own, so floors sit
+                         side by side once the screen has two columns, and Home carries a
+                         button per floor that opens a view showing that floor's rooms.
+                         2026-11-13: on a phone the upstairs rooms began two screens down.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -308,10 +312,11 @@ MUSHROOM_ONLY = ("primary", "secondary", "icon_color", "fill_container",
                  "icon_tap_action", "badge_icon", "badge_color", "multiline_secondary")
 FOREIGN = {"custom:button-card": TILE_ONLY + MUSHROOM_ONLY}
 
-# Entity ids appear inside button-card JS templates as plain strings, so a text
+# The lookbehind, not \b: "rain-light.webp" in a background URL is a file, not light.webp
+# (2026-11-13). Entity ids appear inside button-card JS templates as plain strings, so a text
 # scan reaches them; a structural walk over `entity:` keys would not.
 ENTITY_RE = re.compile(
-    r"\b(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
+    r"(?<![\w./-])(?:sensor|binary_sensor|switch|light|climate|media_player|fan|vacuum|camera|"
     r"alarm_control_panel|person|weather|input_boolean|input_number|input_select|"
     r"input_datetime|input_text|counter|schedule|automation|button|number|select|"
     r"update|remote|lock|image|event|zone|sun)\.[a-z0-9_]+")
@@ -366,7 +371,8 @@ NIGHT_HELPER = "binary_sensor.lighting_night"
 # Sections that list devices and must therefore be generated (C13):
 # (dashboard, view path, first heading of the section, or None for every section).
 GENERATED = [
-    ("lovelace", "home", "Rooms"),
+    ("lovelace", "home", "Downstairs"),
+    ("lovelace", "home", "Upstairs"),
     ("lovelace", "home", "Comfort"),
     ("lovelace", "energy", "Sockets"),
     ("lovelace", "security", "Sensors"),
@@ -404,6 +410,12 @@ RESOURCE_SLUG = {
 def load(name):
     with io.open(os.path.join(STORAGE, name), encoding="utf-8") as fh:
         return json.load(fh)["data"]["config"]
+
+
+def is_floor_page(view):
+    """A floor page (2026-11-13, C44) lists one floor's room tiles; it is not a room page."""
+    found = [c for _, c in cards(view) if c.get("type") == "custom:auto-entities" and "floor" in c and "rooms" in c]
+    return bool(found) and view.get("path") != "home"
 
 
 def registry():
@@ -929,15 +941,15 @@ def main():
             gens = []
             for view in views:
                 for sec in (view.get("sections") or []):
+                    # Found by what it is (an auto-entities carrying `floor` and `rooms`), not by
+                    # a heading: since 2026-11-13 each floor is its own section (C44).
                     cs = sec.get("cards") or []
-                    if not cs or cs[0].get("heading") != "Rooms":
-                        continue
                     for i, c in enumerate(cs):
-                        if c.get("type") == "custom:auto-entities" and "floor" in c:
-                            gens.append(("%s/rooms/%d" % (label, i), c))
+                        if c.get("type") == "custom:auto-entities" and "floor" in c and "rooms" in c:
+                            gens.append(("%s/%s/rooms/%d" % (label, view.get("path"), i), c))
             if not gens:
-                fail("C10", "%s: found no room-tile generator at all - the Rooms section "
-                            "is gone or renamed, and C9/C10 would pass by default" % label)
+                fail("C10", "%s: found no room-tile generator at all - the floor sections "
+                            "are gone, and C9/C10 would pass by default" % label)
 
             tile_area, stale, unknown = {}, [], []
             tpls = {json.dumps((c.get("filter") or {}).get("template")) for _, c in gens}
@@ -1055,7 +1067,7 @@ def main():
             for view in views:
                 if not view.get("subview") or view.get("back_path") != "/lovelace/home":
                     continue
-                if view.get("path") == "home-classic":
+                if view.get("path") == "home-classic" or is_floor_page(view):
                     continue
                 for path, card in cards(view, "%s/%s" % (label, view.get("path"))):
                     if card.get("type") != "custom:auto-entities":
@@ -1142,7 +1154,7 @@ def main():
         # C14 / C15 - room pages: one skeleton, and focused.
         if label == "lovelace":
             rooms = [v for v in views if v.get("subview") and v.get("back_path") == "/lovelace/home"
-                     and v.get("path") != "home-classic"]
+                     and v.get("path") != "home-classic" and not is_floor_page(v)]
             shapes = {}
             unfocused = []
             for v in rooms:
@@ -1675,6 +1687,31 @@ def main():
                      for e, p in sorted(seen.items()) if len(p) > 1]
             if busy:
                 fail("C43", "%s: Appliances is busier than a glance" % label, busy)
+
+        # C44 - every floor is reachable: its own section on Home, and a button to it.
+        homes = [v for v in views if v.get("path") == "home"]
+        if label == "lovelace" and homes:
+            home, far = homes[0], []
+            gen_floor = lambda c: c.get("floor") if c.get("type") == "custom:auto-entities" and "rooms" in c else None
+            floors_by_view = {}
+            for v in views:
+                for _, c in cards(v):
+                    if gen_floor(c):
+                        floors_by_view.setdefault(v.get("path"), set()).add(gen_floor(c))
+            for i, sec in enumerate(home.get("sections") or []):
+                fl = {gen_floor(c) for _, c in cards(sec)} - {None}
+                if len(fl) > 1:
+                    far.append("home section %d holds %d floors, so they stack" % (i, len(fl)))
+            targets = set()
+            for _, c in cards({"b": home.get("badges") or [], "s": home.get("sections") or []}):
+                nav = (c.get("tap_action") or {}).get("navigation_path", "")
+                if isinstance(nav, str) and nav.startswith("/%s/" % label):
+                    targets |= floors_by_view.get(nav.split("/")[2], set())
+            for fl in sorted(floors_by_view.get("home", set())):
+                if fl not in targets:
+                    far.append("no button on home opens a view showing floor %s" % fl)
+            if far:
+                fail("C44", "%s: a floor's rooms are a long scroll away" % label, far)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
