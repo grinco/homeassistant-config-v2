@@ -273,9 +273,10 @@ Checks, each one written because something it catches actually shipped:
                          visibility condition). 2026-11-13: the least-used tab was
                          3,400 px on a phone, mostly toggles and idle readings.
   C44 floor-reach        Home shows each floor's rooms in a section of its own, so floors sit
-                         side by side once the screen has two columns, and Home carries a
-                         button per floor that opens a view showing that floor's rooms.
-                         2026-11-13: on a phone the upstairs rooms began two screens down.
+                         side by side once the screen has two columns; each floor folds away
+                         (an expander-card with a storage-id, so a phone remembers it) and
+                         lays its rooms out FLOOR_COLUMNS across. 2026-11-13: on a phone the
+                         upstairs rooms began two screens down.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -397,6 +398,7 @@ RESOURCE_SLUG = {
     "slider-entity-row": "lovelace-slider-entity-row",
     "mini-media-player": "mini-media-player",
     "mini-graph-card": "mini-graph-card",
+    "expander-card": "lovelace-expander-card",
     "simple-thermostat": "simple-thermostat",
     "simple-weather-card": "simple-weather-card",
     "stack-in-card": "stack-in-card",
@@ -410,6 +412,22 @@ RESOURCE_SLUG = {
 def load(name):
     with io.open(os.path.join(STORAGE, name), encoding="utf-8") as fh:
         return json.load(fh)["data"]["config"]
+
+
+def sec_heading(sec):
+    """A section's heading: its first card's, or the title card of an expander it opens with."""
+    first = (sec.get("cards") or [{}])[0]
+    if first.get("type") == "custom:expander-card":
+        return (first.get("title-card") or {}).get("heading")
+    return first.get("heading")
+
+
+def sec_cards(sec):
+    """A section's cards, with an expander-card replaced by the cards it folds (C44)."""
+    out = []
+    for c in sec.get("cards") or []:
+        out.extend(c.get("cards") or [] if c.get("type") == "custom:expander-card" else [c])
+    return out
 
 
 def is_floor_page(view):
@@ -742,6 +760,9 @@ def effective(card, lib):
     return eff
 
 
+# C44: rooms per row in a floor's grid.
+FLOOR_COLUMNS = 3
+
 # C3/C7: a card nested in another card's `cards` list is laid out by that card, not the section.
 NESTED_IN_GRID = re.compile(r"/cards/\d+/cards/\d+$")
 
@@ -943,8 +964,7 @@ def main():
                 for sec in (view.get("sections") or []):
                     # Found by what it is (an auto-entities carrying `floor` and `rooms`), not by
                     # a heading: since 2026-11-13 each floor is its own section (C44).
-                    cs = sec.get("cards") or []
-                    for i, c in enumerate(cs):
+                    for i, (_, c) in enumerate(cards(sec)):
                         if c.get("type") == "custom:auto-entities" and "floor" in c and "rooms" in c:
                             gens.append(("%s/%s/rooms/%d" % (label, view.get("path"), i), c))
             if not gens:
@@ -1104,7 +1124,7 @@ def main():
             view = next((v for v in views if v.get("path") == vpath), None)
             secs = [] if view is None else [
                 s for s in (view.get("sections") or [])
-                if heading is None or ((s.get("cards") or [{}])[0].get("heading") == heading)]
+                if heading is None or sec_heading(s) == heading]
             if not secs:
                 fail("C13", "%s: %s has no %s section - a generated list that is "
                             "missing passes every other check"
@@ -1112,7 +1132,7 @@ def main():
                 continue
             listed = []
             for s in secs:
-                for i, c in enumerate(s.get("cards") or []):
+                for i, c in enumerate(sec_cards(s)):
                     t_ = c.get("type")
                     if t_ in ("heading", "markdown"):
                         continue
@@ -1693,23 +1713,24 @@ def main():
         if label == "lovelace" and homes:
             home, far = homes[0], []
             gen_floor = lambda c: c.get("floor") if c.get("type") == "custom:auto-entities" and "rooms" in c else None
-            floors_by_view = {}
-            for v in views:
-                for _, c in cards(v):
-                    if gen_floor(c):
-                        floors_by_view.setdefault(v.get("path"), set()).add(gen_floor(c))
             for i, sec in enumerate(home.get("sections") or []):
                 fl = {gen_floor(c) for _, c in cards(sec)} - {None}
                 if len(fl) > 1:
                     far.append("home section %d holds %d floors, so they stack" % (i, len(fl)))
-            targets = set()
-            for _, c in cards({"b": home.get("badges") or [], "s": home.get("sections") or []}):
-                nav = (c.get("tap_action") or {}).get("navigation_path", "")
-                if isinstance(nav, str) and nav.startswith("/%s/" % label):
-                    targets |= floors_by_view.get(nav.split("/")[2], set())
-            for fl in sorted(floors_by_view.get("home", set())):
-                if fl not in targets:
-                    far.append("no button on home opens a view showing floor %s" % fl)
+                # Each floor folds away (operator, 2026-11-13): it sits in an expander-card that
+                # remembers its state per browser, and lays its rooms out three across.
+                for c in sec.get("cards") or []:
+                    if gen_floor(c):
+                        far.append("home section %d: floor %s is not collapsible" % (i, gen_floor(c)))
+                    if c.get("type") == "custom:expander-card":
+                        inner = [x for _, x in cards({"c": c.get("cards") or []}) if gen_floor(x)]
+                        if inner and not c.get("storage-id"):
+                            far.append("home section %d: the floor expander has no storage-id, so it "
+                                       "forgets being folded" % i)
+                        for g in inner:
+                            if (g.get("card") or {}).get("columns") != FLOOR_COLUMNS:
+                                far.append("home section %d: floor %s lays rooms %s across, not %d"
+                                           % (i, g.get("floor"), (g.get("card") or {}).get("columns"), FLOOR_COLUMNS))
             if far:
                 fail("C44", "%s: a floor's rooms are a long scroll away" % label, far)
 

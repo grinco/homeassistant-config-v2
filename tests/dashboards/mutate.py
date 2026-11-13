@@ -278,14 +278,6 @@ def m_floors_stacked(d):
     return "C44"
 
 
-def m_floor_button_gone(d):
-    """2026-11-13: the Upstairs button disappears; the bedroom is two screens down again."""
-    doc = _cfg(d, LOV)
-    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
-    home["badges"] = [b for b in home.get("badges") or [] if "upstairs" not in json.dumps(b)]
-    _save(d, LOV, doc)
-    return "C44"
-
 def m_room_loses_lights(d):
     """A room page built by hand again: the generative rule for its lights is
     gone, so a bulb added to that area would appear nowhere."""
@@ -1172,7 +1164,6 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
-    ("the Upstairs button disappears", m_floor_button_gone),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

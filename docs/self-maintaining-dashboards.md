@@ -106,13 +106,15 @@ legend on (lint C37), or its header names only the first line.
   beside the room name at 390 px). No breaker counters: the Circuit breaker line names a tripped
   unit. *Safety limits always* opens its dialog on tap rather than toggling, so one stray tap cannot
   turn safety off. 3,859 → 1,602 px at 1280; 4,013 → 2,952 px on a phone.
-- **Floors side by side, and a button per floor (lint C44, 2026-11-13).** Home shows each floor's
-  room cards in a section of its own (Downstairs, Upstairs), placed together after Weather, so from
-  two columns up they sit side by side. On a phone they stack, so the header carries a Downstairs
-  and an Upstairs shortcut (phones only, before the people) that open `/lovelace/downstairs` and
-  `/lovelace/upstairs`: subviews holding the same generator for one floor. The upstairs rooms had
-  begun two screens down. C10 finds the floor generators by shape (`floor` + `rooms`), not by a
-  heading; floor pages are not room pages (C12/C14/C24 skip them).
+- **Floors side by side, collapsible, three across (lint C44, 2026-11-13).** Home shows each floor's
+  room cards in a section of its own (Downstairs, Upstairs), placed together after Weather and Needs
+  attention, so from two columns up they sit side by side. Each floor is an `expander-card`
+  (MelleD/lovelace-expander-card, Marketplace) whose title card is the floor heading: tap it to fold
+  the floor; `storage-id` makes each phone remember its own choice. Rooms are three across; the room
+  card adapts to its own width with a CSS container query (`extra_styles`), so below 170 px the icon
+  and lamp shrink, humidity hides and the status line clips to one line. The upstairs rooms had begun
+  two screens down on a phone. Floor jump buttons were tried and dropped (operator). C10 and C13 find
+  the floor generators inside the expander (`sec_heading`, `sec_cards`).
 - **Appliances is a glance (lint C43, 2026-11-13).** Three sections, one card style (the one-row
   stat pill). *Kitchen* is one row of three compact cards (a grid card, so it stays three across
   on a phone; template `vg_kitchen`): a 64px sketch of the real model that glows or bubbles while it
