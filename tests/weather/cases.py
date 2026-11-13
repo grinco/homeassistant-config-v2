@@ -74,13 +74,6 @@ CASES = [
          forecast=with_(CLOUDY_DAY, 11, "windy-variant"), finding="scene map"),
     dict(name="exceptional -> cloudy scene", field="scene", expect="cloudy",
          forecast=[row(h, "exceptional") for h in range(10, 14)], finding="scene map"),
-    # Day/night follows the hour in progress, not the rest of the window.
-    dict(name="night now, day later -> night", field="daytime", expect="False",
-         forecast=[row(10, "cloudy", day=False)] + [row(h, "cloudy") for h in (11, 12, 13)],
-         finding="day/night from the current hour"),
-    dict(name="day now, night later -> day", field="daytime", expect="True",
-         forecast=[row(10, "cloudy")] + [row(h, "cloudy", day=False) for h in (11, 12, 13)],
-         finding="day/night from the current hour"),
     # Dressing numbers over the window only (14:00 is outside and must not leak in).
     dict(name="feels-like minimum over the window", field="feels_min", expect="1",
          forecast=[row(10, "cloudy", feels=5), row(11, "cloudy", feels=3),

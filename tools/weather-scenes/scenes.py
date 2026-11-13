@@ -53,24 +53,48 @@ def glow(img, cx, cy, r, color, strength):
 def disc(img, cx, cy, r, color):
     d = ImageDraw.Draw(img); d.ellipse((cx-r, cy-r, cx+r, cy+r), fill=color)
 
-def clouds(img, n, color, ymax, alpha, seed, stretch=1.0, size=1.0):
-    """Clouds on their own layer, seamless left-to-right so the strip can drift."""
-    rnd = random.Random(seed)
-    wide = Image.new('RGBA', (3 * W, H), color + (0,)); d = ImageDraw.Draw(wide)
-    for _ in range(n):
-        cx, cy = rnd.uniform(0, W), rnd.uniform(-40, ymax)
-        for _ in range(rnd.randint(5, 9)):
-            rx = rnd.uniform(40, 110) * stretch * size; ry = rnd.uniform(25, 60) * size
-            ox, oy = rnd.uniform(-120, 120) * stretch * size, rnd.uniform(-25, 20) * size
-            shade = rnd.uniform(0.9, 1.05)
-            c = tuple(int(min(255, v * shade)) for v in color)
-            for k in (0, 1, 2):   # draw every copy, so the strip wraps
-                x = cx + ox + k * W
-                d.ellipse((x-rx, cy+oy-ry, x+rx, cy+oy+ry), fill=c + (alpha,))
-    img.alpha_composite(wide.filter(ImageFilter.GaussianBlur(14)).crop((W, 0, 2 * W, H)))
+def _field(seed, stretch, beta, lo=2.0):
+    """Fractal noise (power-law spectrum). The FFT makes it periodic, so the strip wraps."""
+    rng = np.random.default_rng(seed)
+    ky = np.fft.fftfreq(H)[:, None] * H; kx = np.fft.fftfreq(W)[None, :] * W
+    k = np.sqrt((kx * stretch) ** 2 + ky ** 2); k[0, 0] = 1
+    amp = 1 / np.maximum(k, lo) ** (beta / 2); amp[0, 0] = 0
+    f = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((H, W))) * amp))
+    return (f - f.mean()) / f.std()
 
-def overcast(img, color, alpha, seed, ymax=H):
-    clouds(img, 26, color, ymax, alpha, seed, stretch=1.6, size=1.3)
+def _blur(a, sigma):
+    """Gaussian blur done in frequency space, so it keeps the strip seamless."""
+    ky = np.fft.fftfreq(a.shape[0])[:, None]; kx = np.fft.fftfreq(a.shape[1])[None, :]
+    return np.real(np.fft.ifft2(np.fft.fft2(a) * np.exp(-2 * (np.pi * sigma) ** 2 * (kx ** 2 + ky ** 2))))
+
+def clouds(img, cover, top, under, ymax, seed, stretch=1.6, density=1.0, lo=4.0, deck=False):
+    """Clouds as a seamless strip. Fractal billows; light comes from above and fades with the
+    cloud mass it has passed through, so tops are bright and bellies grey, and the billow
+    texture re-lights the bumps. cover: share of sky (0..1); ymax: lowest cloud line as a
+    fraction of the height; top/under: lit and shaded colours; deck: a closed overcast layer."""
+    f = 0.8 * _field(seed, stretch, 3.6, lo=lo) + 0.2 * _field(seed + 1, stretch * 0.8, 3.0, lo=10)
+    yy = np.linspace(0, 1, H)[:, None]
+    f = f - 2.2 * np.clip((yy - ymax * 0.5) / (ymax * 0.5 + 1e-6), 0, 1)   # thin out towards ymax
+    th = np.quantile(f, 1 - cover)
+    a = np.clip((f - th) / 1.1, 0, 1); a = _blur(a * a * (3 - 2 * a), 1.2).clip(0, 1)
+    billow = _blur(_field(seed + 2, stretch * 0.9, 3.0, lo=12), 1.0); billow = np.clip(billow * 0.3 + 0.5, 0, 1)
+    if deck:
+        a = np.clip(0.82 + 0.25 * (f - f.mean()) / f.std(), 0.55, 1)
+    mass = np.zeros_like(a); acc = np.zeros(W)
+    for y in range(H):                        # light used up by the cloud above, ~35 px memory
+        acc = acc * 0.972 + a[y]; mass[y] = acc
+    light = np.exp(-mass / (10 if not deck else 26)) * (0.55 + 0.45 * billow) + 0.22 * billow
+    if not deck:
+        light = light + 0.35 * (1 - a)       # thin edges let the light through
+    shade = 1 - np.clip(light, 0, 1)
+    rgb = np.array(top)[None, None] * (1 - shade[..., None]) + np.array(under)[None, None] * shade[..., None]
+    out = np.dstack([rgb, a * 255 * density]).clip(0, 255).astype(np.uint8)
+    img.alpha_composite(Image.fromarray(out, 'RGBA'))
+
+def overcast(img, color, alpha, seed, ymax=1.0):
+    c = np.array(color, float)
+    clouds(img, 1.0, tuple((c * 1.18).clip(0, 255)), tuple(c * 0.7), ymax, seed, stretch=2.4,
+           density=alpha / 255, lo=2.0, deck=True)
 
 def stars(img, seed):
     rnd = random.Random(seed); d = ImageDraw.Draw(img)
@@ -156,10 +180,12 @@ def render(scene, night):
     front = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     if scene in ('sunny', 'partlycloudy', 'windy'):
         sky = grad((14, 22, 52), (40, 58, 102)) if night else grad((38, 110, 205), (150, 200, 240))
-        if night: stars(sky, R); disc(sky, int(W*.18), int(H*.2), 34, (245, 240, 220, 255)); glow(sky, int(W*.18), int(H*.2), 140, (200, 210, 255), 0.35)
-        else: glow(sky, int(W*.18), int(H*.2), 380, (255, 245, 200), 0.85); disc(sky, int(W*.18), int(H*.2), 48, (255, 252, 235, 255))
-        if scene == 'partlycloudy': clouds(cl, 6, (70, 80, 110) if night else (250, 250, 252), H * 0.6, 235, R)
-        if scene == 'windy': clouds(cl, 7, (70, 80, 110) if night else (245, 247, 250), H * 0.7, 200, R, stretch=2.6, size=0.7)
+        # no sun or moon: the card's own icon sits top left and already shows which
+        if night: stars(sky, R)
+        # at night clouds over the city are lit from below (orange street light), not from above
+        top, under = ((52, 58, 78), (82, 74, 80)) if night else ((255, 255, 255), (150, 158, 176))
+        if scene == 'partlycloudy': clouds(cl, 0.38, top, under, 0.62, R, density=0.85 if night else 1.0)
+        if scene == 'windy': clouds(cl, 0.28, top, under, 0.7, R, stretch=4.0, density=0.85)
         front.alpha_composite(lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0), (TX, TY))
     elif scene == 'cloudy':
         sky = grad((28, 32, 44), (52, 56, 70)) if night else grad((138, 148, 162), (196, 202, 210))

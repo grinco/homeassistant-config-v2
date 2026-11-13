@@ -48,7 +48,7 @@ tests call the same code the sensor runs.
   pouring (also hail), storm (lightning, lightning-rainy), snowy, sleet (snowy-rainy), fog,
   windy (windy, windy-variant). clear-night is the sunny scene at night, and exceptional is
   cloudy.
-- **Day or night:** `is_daytime` of the hour in progress, falling back to `sun.sun`.
+- **Day or night is not the macro's job.** The card reads `sun.sun` itself (see below).
 - **Numbers, over the window only:** temperature min/max, feels-like minimum, precipitation
   sum, highest precipitation probability and highest wind speed.
 - **No forecast** (integration down): the macro returns `{}` and the sensor goes
@@ -70,15 +70,26 @@ Both left the sensor `unavailable` with nothing in the log:
 They are drawn, not photographed. One public-domain photo of the tower against a clear
 blue sky ([Wikimedia Commons, "Zizkov tv tower.jpg"](https://commons.wikimedia.org/wiki/File:Zizkov_tv_tower.jpg),
 by Orange.man) is cut out of its sky, and `scenes.py` paints each scene around it: sky,
-sun or moon and stars, clouds, rain, snow, a lightning bolt, wind streaks and fog. The tower
-is relit for each scene, and at night the red obstruction light on the antenna is on.
+stars, clouds, rain, snow, a lightning bolt, wind streaks and fog. The tower is relit for
+each scene, and at night the red obstruction light on the antenna is on.
+
+**No sun and no moon** (operator, 2026-11-13): the card's own condition icon sits top left
+and already shows one, so a painted one overlapped it. A clear sky is just the sky: blue by
+day, dark with stars by night.
+
+**Clouds are fractal noise, not shapes** (operator, 2026-11-13: the earlier blurred
+ellipses looked cartoonish). `clouds()` sums two power-law noise fields made by FFT, which
+are periodic, so the strip still wraps for the drift. Light comes from above and is used up
+by the cloud mass it passes through, so tops are bright and bellies grey; a third field
+re-lights the billows. Overcast scenes use the same code as a closed deck. At night the
+undersides are a little warm, as clouds over a city are lit from below.
 
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
 layers rather than one picture:
 
 | layer | element | motion |
 |---|---|---|
-| `<scene>-<dn>-back.jpg`: sky, sun/moon, stars, bolt | `ha-card` background | none |
+| `<scene>-<dn>-back.jpg`: sky, stars, bolt | `ha-card` background | none |
 | `<scene>-<dn>-clouds.webp`: a strip that wraps left to right | `ha-card::before`, 200 % wide | `transform` drift: 90 s per loop (partly cloudy), 30 s (windy), 160 s (overcast); storms also flash every 7 s |
 | precipitation tiles `rain-light`, `rain-heavy`, `snow-near`, `snow-far`, `wind-day/night` | `ha-card::after` | `background-position`; rain falls on a 1:4 slant and snow sways, each loop an exact number of tiles, so there is no seam |
 | scrim and `<scene>-<dn>-front.webp`: the tower, fog, obstruction light | `ha-card::after`, under the tiles | none |
@@ -96,7 +107,7 @@ python3 tools/weather-scenes/cutout.py src.jpg tower.png 12   # 12 = how far the
 python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size, tower centre, tower height
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 6 > style.jinja    # 6 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 7 > style.jinja    # 7 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -176,7 +187,6 @@ template:
         state: "{{ ahead.condition }}"
         attributes:
           scene: "{{ ahead.scene }}"
-          daytime: "{{ ahead.daytime }}"
           temp_min: "{{ ahead.temp_min }}"
           temp_max: "{{ ahead.temp_max }}"
           feels_min: "{{ ahead.feels_min }}"
@@ -195,9 +205,15 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 6
+    # the output of: python3 tools/weather-scenes/card_style.py 7
 ```
 
-The style picks `scene` and `daytime` from `sensor.weather_ahead` (falling back to cloudy
-and `sun.sun`), stacks the layers above for that scene, and replaces the location line
-with "Next 3 h: <condition>".
+The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or
+night from `sun.sun`, stacks the layers above for that scene, and replaces the location line
+with "Next 3 h: <condition>" ("clear" rather than "sunny" after dark).
+
+Day or night used to come from the forecast's `is_daytime` for the hour in progress. That
+hour can start before sunset, so for up to an hour after dark the card showed the day
+picture (seen 2026-11-13 at 16:35, sun 3° below the horizon). `sun.sun` changes at sunset
+itself and the card re-renders on it. `test_card_style.py` renders the style with Jinja and
+checks both directions: a stale "day" after sunset and a stale "night" after sunrise.
