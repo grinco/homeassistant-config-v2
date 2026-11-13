@@ -51,6 +51,8 @@ def room(entities, states, special=""):
 AC = "climate.room_ac"
 ZONE = "climate.room_thermostat"
 TRV = "climate.room_trv_room_trv"
+PRES = "binary_sensor.magic_areas_presence_tracking_room_area_state"
+MOTION = "binary_sensor.room_motion_occupancy"
 
 CASES = [
     dict(name="a boiler zone that is heating says Heating, even with the AC off",
@@ -117,6 +119,28 @@ CASES = [
          room=room([ent("binary_sensor.alarm_smoke")],
                    [st("binary_sensor.alarm_smoke", "on", device_class="smoke")]),
          say=["Smoke"]),
+    dict(name="a room with a presence sensor says when it is empty",
+         finding="2026-11-13: only occupied rooms said anything, so an empty room looked the same"
+                 " as one that cannot sense presence",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "off", device_class="occupancy", presence_sensors=[MOTION])]),
+         say=["No one here"], never=["Someone here"]),
+    dict(name="a room with a presence sensor says when someone is there",
+         finding="2026-11-13: the occupied half of the same rule",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "on", device_class="occupancy", presence_sensors=[MOTION])]),
+         say=["Someone here"], never=["No one here"]),
+    dict(name="a room with no presence sensor says nothing about presence",
+         finding="2026-11-13: Magic Areas makes an occupancy entity in every room; with no sensor"
+                 " behind it 'No one here' would be a guess",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "off", device_class="occupancy", presence_sensors=[])]),
+         never=["No one here", "Someone here"]),
+    dict(name="a speaker alone is not a presence sensor",
+         finding="2026-11-13: Magic Areas counts a room's Echo; a playing speaker is not a person",
+         room=room([ent(PRES, "magic_areas")],
+                   [st(PRES, "on", device_class="occupancy", presence_sensors=["media_player.room_echo"])]),
+         never=["No one here", "Someone here"]),
 ]
 
 RUNNER = """
