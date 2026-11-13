@@ -174,10 +174,12 @@ def _room_gen(cfg, floor="upper_floor"):
         if v.get("path") != "home":
             continue
         for sec in (v.get("sections") or []):
-            cs = sec.get("cards") or []
-            for c in cs:
-                if c.get("type") == "custom:auto-entities" and c.get("floor") == floor and "rooms" in c:
-                    return c, cs
+            lists = [sec.get("cards") or []]
+            lists += [c.get("cards") or [] for c in lists[0] if c.get("type") == "custom:expander-card"]
+            for cs in lists:
+                for c in cs:
+                    if c.get("type") == "custom:auto-entities" and c.get("floor") == floor and "rooms" in c:
+                        return c, cs
     raise SystemExit("no %s room generator found to mutate" % floor)
 
 
@@ -260,7 +262,12 @@ def m_rooms_section_renamed(d):
     doc = _cfg(d, LOV)
     for v in doc["data"]["config"]["views"]:
         for sec in (v.get("sections") or []):
-            for c in sec.get("cards") or []:
+            stack = list(sec.get("cards") or [])
+            for _ in range(10000):
+                if not stack:
+                    break
+                c = stack.pop()
+                stack.extend(c.get("cards") or [])
                 if c.get("type") == "custom:auto-entities" and "floor" in c:
                     c["level"] = c.pop("floor")
     _save(d, LOV, doc)
@@ -271,7 +278,7 @@ def m_floors_stacked(d):
     """2026-11-13: both floors back in one Home section, so they stack on every screen."""
     doc = _cfg(d, LOV)
     home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
-    secs = [s for s in home["sections"] if any("rooms" in c for c in s["cards"])]
+    secs = [s for s in home["sections"] if '"rooms"' in json.dumps(s)]
     secs[0]["cards"] += secs[1]["cards"]
     home["sections"].remove(secs[1])
     _save(d, LOV, doc)
@@ -838,7 +845,7 @@ def m_advanced_toggle_feature(d):
     doc = _cfg(d, LOV)
     adv = [v for v in doc["data"]["config"]["views"] if v.get("path") == "climate-advanced"][0]
     c = next(c for s in adv["sections"] for c in s["cards"]
-             if str(c.get("entity", "")).startswith("input_boolean.climate_room_"))
+             if str(c.get("entity", "")).startswith("input_boolean."))
     c["features"] = [{"type": "toggle"}]
     _save(d, LOV, doc)
     return "C41"
@@ -890,6 +897,27 @@ def m_appliances_kitchen_control(d):
     return "C43"
 
 
+def m_floor_two_across(d):
+    """2026-11-13: a floor goes back to two rooms per row."""
+    doc = _cfg(d, LOV)
+    gen, _ = _room_gen(doc, "upper_floor")
+    gen["card"]["columns"] = 2
+    _save(d, LOV, doc)
+    return "C44"
+
+
+def m_floor_forgets_fold(d):
+    """2026-11-13: a floor's expander loses its storage-id, so folding it does not stick."""
+    doc = _cfg(d, LOV)
+    home = [v for v in doc["data"]["config"]["views"] if v.get("path") == "home"][0]
+    for s_ in home["sections"]:
+        for c in s_["cards"]:
+            if c.get("type") == "custom:expander-card":
+                c.pop("storage-id", None)
+    _save(d, LOV, doc)
+    return "C44"
+
+
 def m_occupancy_tile_dropped(d):
     """Every room page goes back to the badge-only occupancy of 2026-10-11."""
     doc = _cfg(d, LOV)
@@ -918,20 +946,6 @@ def m_room_page_one_column(d):
         v["sections"] = [{"type": "grid", "column_span": 1, "cards": _flat(v)}]
     _save(d, LOV, doc)
     return "C24"
-
-
-def m_home_tablet_gap(d):
-    """The pre-2026-10-12 breakpoints: a tablet is treated as a big phone."""
-    doc = _cfg(d, LOV)
-    for v in doc["data"]["config"]["views"]:
-        if v.get("path") != "home":
-            continue
-        for c in _flat(v):
-            for cond in c.get("visibility") or []:
-                if cond.get("condition") == "screen":
-                    cond["media_query"] = cond["media_query"].replace("599px", "1023px").replace("600px", "1024px")
-    _save(d, LOV, doc)
-    return "C25"
 
 
 def m_energy_not_dense(d):
@@ -1117,7 +1131,6 @@ MUTATIONS = [
     ("room pages are one narrow column", m_room_page_one_column),
     ("Energy stops packing densely", m_energy_not_dense),
     ("Home goes back to four columns", m_home_four_columns),
-    ("a tablet is treated as a big phone", m_home_tablet_gap),
     ("the occupancy tile no longer opens details", m_occupancy_tile_not_tappable),
     ("room pages lose the Environment block", m_env_block_dropped),
     ("environment readings need the label again", m_env_needs_label),
@@ -1164,6 +1177,8 @@ MUTATIONS = [
     ("a settings toggle comes back to Appliances", m_appliances_setting),
     ("a kitchen appliance gets a control again", m_appliances_kitchen_control),
     ("both floors stacked in one Home section", m_floors_stacked),
+    ("a floor back to two rooms per row", m_floor_two_across),
+    ("a floor forgets being folded", m_floor_forgets_fold),
     ("the Climate tab grows a forecast again", m_climate_repeats_forecast),
     ("the Climate tab hand-places a generated reading", m_climate_repeats_reading),
 ]

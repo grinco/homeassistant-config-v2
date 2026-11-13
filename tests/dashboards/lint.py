@@ -141,11 +141,10 @@ Checks, each one written because something it catches actually shipped:
                          laptop it fills two columns instead of one 400 px strip
                          with blank margins either side (seen at 820 and 1280 px,
                          2026-10-12).
-  C25 breakpoints-tile   a Home floor is generated for phones (max-width 599px)
-                         and for wider screens (min-width 600px), and the two
-                         meet with no gap and no overlap. Until 2026-10-12 the
-                         split was 1023/1024, so a tablet got the phone layout
-                         stretched: two enormous room tiles per row.
+  C25 (retired 2026-11-13) Home floors were generated twice, for phones and wide
+                         screens, and C25 checked the breakpoints met. Each floor is now
+                         one three-across grid whose room cards adapt to their own width
+                         (C44), so there is no breakpoint left to check.
   C26 dense-columns      the main tabs (Home, Climate, Energy, Security, Appliances) pack
                          their sections densely (`dense_section_placement`) at
                          `max_columns: 3`, which is what 1024 to 1500 px holds. Without
@@ -1230,24 +1229,6 @@ def main():
             if narrow:
                 fail("C24", "%s: %d room page(s) are a single section - one narrow column on "
                             "a tablet or laptop" % (label, len(narrow)), sorted(narrow))
-            home_v = next((v for v in views if v.get("path") == "home"), None)
-            seen = {}
-            for _, card in cards(home_v or {}):
-                if card.get("type") == "custom:auto-entities" and card.get("floor"):
-                    for cond in card.get("visibility") or []:
-                        m = re.search(r"\((max|min)-width:\s*(\d+)px\)", cond.get("media_query") or "")
-                        if cond.get("condition") == "screen" and m:
-                            seen.setdefault(card["floor"], {})[m.group(1)] = int(m.group(2))
-            bad = []
-            for fl, b in sorted(seen.items()):
-                if b.get("max") is None or b.get("min") is None:
-                    bad.append("%s has only one of the two screen variants: %r" % (fl, b))
-                elif b["min"] != b["max"] + 1 or b["max"] != 599:
-                    bad.append("%s: phone up to %spx, wide from %spx (want 599 / 600, no gap)"
-                               % (fl, b["max"], b["min"]))
-            if bad:
-                fail("C25", "%s: Home room tiles do not switch layout at the tablet breakpoint"
-                     % label, bad)
 
         # C18 / C19 - environmental readings reach their room, and a fixed tile
         # name belongs to one entity.
