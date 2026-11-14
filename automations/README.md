@@ -101,11 +101,12 @@ a different level of protection, and Away maps to Away. When the panel refuses t
 back where the panel is and both adults are told why: open zones, a trouble, or the panel being
 offline. An Alarmo trigger (leak sensors, once they are added) sends the panel a panic.
 
-A panel arm reported straight from Disarmed is not followed (2026-11-14): a real arm always passes
-through the panel's exit delay, and PAI once reported Away for ten seconds right after a keypad
-disarm, which put the house in Away and switched every light off as people came in. The ignored
-arm is written to the logbook, so a real arm that PAI reported without its exit delay would show
-there. A panel coming back from offline already armed is still followed.
+A panel arm reported straight from Disarmed is not followed (2026-11-14). A real arm always passes
+through the panel's exit delay. PAI once reported Away for ten seconds right after a keypad disarm;
+the house went to Away and every light switched off as people came in. An ignored arm that
+disagrees with the house is written to the logbook and is not reconciled later. The same holds
+if PAI ever drops an armed report for a moment (armed, disarmed, armed): the house follows the
+disarm and ignores the return. A panel coming back from offline already armed is still followed.
 
 It is **disabled** on the instance until a supervised first run at the keypad. The panic mapping in
 particular is untested against the panel. The notification targets are neutral placeholders.
