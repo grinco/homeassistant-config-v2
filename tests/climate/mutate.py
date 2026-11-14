@@ -285,9 +285,9 @@ BUGS = [
   lambda t: t.replace("{% elif want == 'armed_away' %}arm_panel{% else %}disarm_panel{% endif %}", "{% elif want == 'disarmed' %}disarm_panel{% else %}arm_panel{% endif %}"), "1790400000001"),
 # 2026-11-14 live: PAI reported Away for 10 s right after a keypad disarm; the house went dark.
 ("alarm sync: a panel blip straight from disarmed arms the house", "expr2", "plan",
-  lambda t: t.replace("{% elif e_now in modes and prev == 'disarmed' %}none", ""), "1790400000001"),
+  lambda t: t.replace("{% elif e_now in modes and prev == 'disarmed' %}blip", ""), "1790400000001"),
 ("alarm sync: the blip guard also swallows a real keypad arm", "expr2", "plan",
-  lambda t: t.replace("prev == 'disarmed' %}none", "prev in ['disarmed', 'arming'] %}none"), "1790400000001"),
+  lambda t: t.replace("prev == 'disarmed' %}blip", "prev in ['disarmed', 'arming'] %}blip"), "1790400000001"),
 ("alarm sync: Night is sent to the panel as Stay again", "expr2", "panel_cmd",
   lambda t: t.replace("'armed_night': 'disarm'", "'armed_night': 'arm_stay'"), "1790400000001"),
 ("alarm sync: the widened ok set swallows a leak alarm", "expr2", "plan",

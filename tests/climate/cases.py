@@ -2055,8 +2055,17 @@ A(plan("Away on the keypad arms Alarmo away", "arm_alarmo", "evo", "armed_home",
 # asked for no waits. Cost: if PAI ever drops the 'arming' report of a real arm, the house stays in
 # its mode while the panel guards - the panel still protects, nothing goes dark.
 BLIP = "2026-11-14 live: PAI reported Away for 10 s right after a keypad disarm; the house went dark"
-A(plan("a panel arm straight from disarmed is a blip, not followed", "none", "evo", "disarmed",
+# Review 2026-11-14 F2: the ignored arm is written to the logbook ('blip'), so a real arm that PAI
+# reported without its exit delay is visible, not silently dropped. F3: a panel coming back from
+# unavailable already armed is still followed - the panel is the truth after a reconnect.
+A(plan("a panel arm straight from disarmed is a blip, not followed", "blip", "evo", "disarmed",
        "armed_away", prev="disarmed", finding=BLIP))
+A(plan("a Stay blip straight from disarmed is not followed either", "blip", "evo", "disarmed",
+       "armed_home", prev="disarmed", finding=BLIP + "; review F: the guard covers every mode"))
+A(plan("a Night blip straight from disarmed is not followed either", "blip", "evo", "disarmed",
+       "armed_night", prev="disarmed", finding=BLIP + "; review F: the guard covers every mode"))
+A(plan("a panel back from offline already in Away is followed", "arm_alarmo", "evo", "disarmed",
+       "armed_away", prev="unavailable", finding="review 2026-11-14 F3: accepted, the panel is the truth"))
 A(plan("a keypad Away after its exit delay arms Alarmo away", "arm_alarmo", "evo", "disarmed",
        "armed_away", prev="arming", finding=BLIP + " - the real arm still follows"))
 A(plan("a keypad disarm leaves a Night house alone", "none", "evo", "armed_night", "disarmed",

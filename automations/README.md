@@ -103,7 +103,9 @@ offline. An Alarmo trigger (leak sensors, once they are added) sends the panel a
 
 A panel arm reported straight from Disarmed is not followed (2026-11-14): a real arm always passes
 through the panel's exit delay, and PAI once reported Away for ten seconds right after a keypad
-disarm, which put the house in Away and switched every light off as people came in.
+disarm, which put the house in Away and switched every light off as people came in. The ignored
+arm is written to the logbook, so a real arm that PAI reported without its exit delay would show
+there. A panel coming back from offline already armed is still followed.
 
 It is **disabled** on the instance until a supervised first run at the keypad. The panic mapping in
 particular is untested against the panel. The notification targets are neutral placeholders.

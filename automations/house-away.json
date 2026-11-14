@@ -76,7 +76,7 @@
       },
       {
        "variables": {
-        "note": "{% set n = ['Lights and media are off; presence lighting is paused in ' ~ (paused | count) ~ ' room' ~ ('' if paused | count == 1 else 's') ~ '.'] %}{% if open_now %}{% set n = n + ['Still open: ' ~ open_now | join(', ') ~ '.'] %}{% else %}{% set n = n + ['Nothing open.'] %}{% endif %}{{ n | join(' ') }}"
+        "note": "{% set n = ['Lights and media were switched off; presence lighting is paused in ' ~ (paused | count) ~ ' room' ~ ('' if paused | count == 1 else 's') ~ '.'] %}{% if open_now %}{% set n = n + ['Still open: ' ~ open_now | join(', ') ~ '.'] %}{% else %}{% set n = n + ['Nothing open.'] %}{% endif %}{{ n | join(' ') }}"
        }
       },
       {
@@ -143,7 +143,7 @@
  ],
  "alias": "House — away",
  "conditions": [],
- "description": "Operator 2026-10-13/14: leaving = Away, and Away turns the house's automations off. On Away: presence lighting (each room's Magic Areas light_control) is paused - only the rooms where it was on, remembered in input_text.house_away_paused so a restart loses nothing - then every indoor light and media player is switched off, and both adults get one note naming anything still open. The corridor keeps its presence lighting: it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms that were paused. Climate is not here: the climate loop already drops to its away band after 30 min of Away. Tests: tests/climate/cases.py (away). Review 2026-10-14: M1 - an alarm or entry delay ending back in Away does not run the sequence again; M2 - an Away cancelled within the minute sends no note. 2026-11-14 (operator: no waits): the note no longer waits a minute. The wait held the queued run, so a disarm right after an Away could not restore the rooms for a minute and the house came home dark; the 'still on' list went with it (with no wait it would list the lights just switched off).",
+ "description": "Operator 2026-10-13/14: leaving = Away, and Away turns the house's automations off. On Away: presence lighting (each room's Magic Areas light_control) is paused - only the rooms where it was on, remembered in input_text.house_away_paused so a restart loses nothing - then every indoor light and media player is switched off, and both adults get one note naming anything still open. The corridor keeps its presence lighting: it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms that were paused. Climate is not here: the climate loop already drops to its away band after 30 min of Away. Tests: tests/climate/cases.py (away). Review 2026-10-14: M1 - an alarm or entry delay ending back in Away does not run the sequence again. 2026-11-14 (operator: no waits): the note is sent at once, no longer a minute later. The wait held the queued run: a disarm right after an Away left the rooms unrestored for a minute, and the house came home dark. M2 (an Away cancelled within the minute sends no note) is retracted with it. The 'still on' list went with the wait: read at once it would list the lights just switched off, so the note says they were switched off, not that they are off.",
  "id": "1790500000001",
  "max": 5,
  "mode": "queued",
