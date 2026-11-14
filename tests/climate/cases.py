@@ -2048,6 +2048,26 @@ A(plan("Alarmo's entry delay is not a command", "none", "alarmo", "pending", "ar
 # The panel moved (the keypad, or the panel itself).
 A(plan("Away on the keypad arms Alarmo away", "arm_alarmo", "evo", "armed_home", "armed_away",
        finding="2026-10-13 operator: leaving = arm EVO away, the house follows"))
+# 2026-11-14 live: a keypad disarm (20:30:07.8) was followed 0.6 s later by PAI reporting the panel
+# armed_away for 10 s, straight from disarmed. The sync armed Alarmo Away, Away switched every light
+# off, and the house came home dark. A real arm always passes through the panel's exit delay
+# ('arming'), so an arm reported straight from 'disarmed' is not followed. No timer: the operator
+# asked for no waits. Cost: if PAI ever drops the 'arming' report of a real arm, the house stays in
+# its mode while the panel guards - the panel still protects, nothing goes dark.
+BLIP = "2026-11-14 live: PAI reported Away for 10 s right after a keypad disarm; the house went dark"
+# Review 2026-11-14 F2: the ignored arm is written to the logbook ('blip'), so a real arm that PAI
+# reported without its exit delay is visible, not silently dropped. F3: a panel coming back from
+# unavailable already armed is still followed - the panel is the truth after a reconnect.
+A(plan("a panel arm straight from disarmed is a blip, not followed", "blip", "evo", "disarmed",
+       "armed_away", prev="disarmed", finding=BLIP))
+A(plan("a Stay blip straight from disarmed is not followed either", "blip", "evo", "disarmed",
+       "armed_home", prev="disarmed", finding=BLIP + "; review F: the guard covers every mode"))
+A(plan("a Night blip straight from disarmed is not followed either", "blip", "evo", "disarmed",
+       "armed_night", prev="disarmed", finding=BLIP + "; review F: the guard covers every mode"))
+A(plan("a panel back from offline already in Away is followed", "arm_alarmo", "evo", "disarmed",
+       "armed_away", prev="unavailable", finding="review 2026-11-14 F3: accepted, the panel is the truth"))
+A(plan("a keypad Away after its exit delay arms Alarmo away", "arm_alarmo", "evo", "disarmed",
+       "armed_away", prev="arming", finding=BLIP + " - the real arm still follows"))
 A(plan("a keypad disarm leaves a Night house alone", "none", "evo", "armed_night", "disarmed",
        finding=AWAY_ONLY))
 A(plan("a keypad disarm after Away disarms Alarmo", "disarm_alarmo", "evo", "armed_away", "disarmed",
