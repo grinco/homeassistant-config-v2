@@ -101,6 +101,10 @@ a different level of protection, and Away maps to Away. When the panel refuses t
 back where the panel is and both adults are told why: open zones, a trouble, or the panel being
 offline. An Alarmo trigger (leak sensors, once they are added) sends the panel a panic.
 
+A panel arm reported straight from Disarmed is not followed (2026-11-14): a real arm always passes
+through the panel's exit delay, and PAI once reported Away for ten seconds right after a keypad
+disarm, which put the house in Away and switched every light off as people came in.
+
 It is **disabled** on the instance until a supervised first run at the keypad. The panic mapping in
 particular is untested against the panel. The notification targets are neutral placeholders.
 
@@ -109,8 +113,9 @@ particular is untested against the panel. The notification targets are neutral p
 Leaving means arming Away, and Away turns the house's automations off (2026-10-14). Each room's
 presence lighting is paused, but only in rooms where it was on, so a room someone switched off by
 hand stays off on return. The paused list is kept in a text helper, so a restart while away loses
-nothing. Then every indoor light and media player is switched off, and a minute later both adults
-get one note naming anything still open or on. The corridor keeps its presence lighting, because
+nothing. Then every indoor light and media player is switched off, and both adults at once get one
+note naming anything still open. There is no wait in it (2026-11-14): a one-minute wait before the
+note held the queued run, so a disarm right after an Away restored nothing for a minute. The corridor keeps its presence lighting, because
 it is the way in to the keypad. Coming back (Disarmed, Home or Night) restores exactly the rooms
 that were paused. Climate is not here: the climate loop already has its own away band.
 
