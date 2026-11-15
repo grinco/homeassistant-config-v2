@@ -10,7 +10,7 @@
                                       keep the higher reading so the recovery is not counted twice
     Returns JSON {"total": kWh, "last": {meter: reading}}. Cases: tests/energy/. -#}
 {%- macro metered_step(total, last, entity, value) -%}
-{%- if last is string and last -%}{%- set last = last | from_json -%}{%- endif -%}
+{%- if last is string and last -%}{%- set last = last | from_json(default={}) -%}{%- endif -%}
 {%- set last = last if last is mapping else {} -%}
 {%- set prev = last.get(entity) | float(none) -%}
 {%- set v = value | float(none) -%}

@@ -54,13 +54,33 @@ adds only what it rose by:
 | below a tenth of last (a counter reset) | the reading | the reading |
 | otherwise lower (a group meter losing a member) | 0 | unchanged, so the recovery is not counted twice |
 
-Tests: `tests/energy/run.py` (18 cases against the deployed macro, both sides of the tenth),
-`tests/energy/mutate.py` (9 mutations). `tests/climate/wiring.py` fails if the template's meter
-list differs from the dashboard's device list in either direction, or if anything other than
-this sensor is the dashboard's grid.
+Tests: `tests/energy/run.py` (19 cases against the deployed macro, both sides of the tenth),
+`tests/energy/mutate.py` (10 mutations). `tests/climate/wiring.py` fails if the template's meter
+list differs from the dashboard's device list (less any `included_in_stat` meter) in either
+direction, if anything other than this sensor is the dashboard's grid, if the sensor is not
+`total_increasing` kWh energy computed by `metered_step`, or if the repo's macro differs from
+the deployed one.
 
-**Accepted:** the grid starts on 2026-11-15; days before it keep the old, unbalanced picture. A
-meter whose counter jumps by a glitch is counted, the same as the device's own statistics count it.
+**History is backfilled.** The sensor went live at 22:53 on 2026-11-15. Its hourly statistics
+before that (from 2026-09-17, where the device statistics stop being continuous) were imported
+with `recorder/import_statistics`: each hour is the sum of the device meters' own hourly changes,
+and the imported sums end exactly at the sensor's first live row, so the join books no jump. Daily
+grid then equals the daily device total on every day checked. The database was copied to
+`home-assistant_v2.db.bak-20261115-prebackfill` first.
+
+**Restart.** The sensor restores its state and `last` after a template reload (checked
+2026-11-15: 0.1 kWh and all meters kept; `last` came back as a mapping, which the macro accepts
+as well as JSON text). If either were ever lost, the meters re-seed: an undercount until each
+reports again, never a double count.
+
+**Accepted:**
+- a group meter that falls **below a tenth** of its last reading is taken for a reset: the small
+  reading is added, and the recovery to the old level is added again. A powercalc group losing
+  90 % of its members at once is the case; it has not been seen;
+- a meter whose counter jumps by a glitch is counted, exactly as the recorder counts that
+  device's own `total_increasing` statistics;
+- trigger renders are serial today; if the sensor ever renders from two paths at once, one
+  increase could be lost.
 
 ## The digest, as built
 

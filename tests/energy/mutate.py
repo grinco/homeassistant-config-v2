@@ -23,7 +23,8 @@ MUTATIONS = [
      "{%- if ns.keep is not none -%}{%- set out = dict(out, **{entity: ns.keep}) -%}{%- endif -%}",
      "{%- if v is none -%}{%- set out = dict(out, **{entity: v}) -%}{%- else -%}{%- set out = dict(out, **{entity: ns.keep}) -%}{%- endif -%}"),
     ("negative readings accepted", "{%- set v = none if v is not none and v < 0 else v -%}", ""),
-    ("text attribute not parsed", "{%- set last = last | from_json -%}", ""),
+    ("text attribute not parsed", "{%- set last = last | from_json(default={}) -%}", ""),
+    ("malformed text is fatal", "from_json(default={})", "from_json"),
     ("other meters dropped", "{%- set out = dict(last) -%}", "{%- set out = {} -%}"),
 ]
 

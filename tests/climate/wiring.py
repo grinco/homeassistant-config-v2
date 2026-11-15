@@ -191,9 +191,22 @@ def grid_meters(prefs_path=ENERGY):
         ids += [e] if isinstance(e, str) else e
     grids = [s for s in prefs.get("energy_sources") or [] if s.get("type") == "grid"]
     problem = None
+    sensor = next(s for s in block["sensor"] if s.get("unique_id") == GRID_ID)
+    body = (sensor.get("state") or "") + json.dumps(sensor.get("attributes") or {})
+    repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                        "custom_templates", "metered_total.jinja")
+    live = os.path.join(os.path.dirname(cfg), "custom_templates", "metered_total.jinja")
     if [g.get("stat_energy_from") for g in grids] != ["sensor." + GRID_ID]:
         problem = ("the Energy dashboard's grid must be exactly sensor.%s, found %s"
                    % (GRID_ID, [g.get("stat_energy_from") for g in grids]))
+    elif (sensor.get("state_class"), sensor.get("unit_of_measurement"),
+          sensor.get("device_class")) != ("total_increasing", "kWh", "energy"):
+        problem = "the sensor must be total_increasing, kWh, energy"
+    elif body.count("metered_step(") != 2:
+        problem = "state and the 'last' attribute must both be computed by metered_step"
+    elif not os.path.exists(live) or io.open(repo, encoding="utf-8").read() != io.open(
+            live, encoding="utf-8").read():
+        problem = "custom_templates/metered_total.jinja differs from the deployed copy"
     return sorted(set(want) - set(ids)), sorted(set(ids) - set(want)), problem
 
 
