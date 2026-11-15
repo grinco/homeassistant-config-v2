@@ -1,0 +1,31 @@
+{#- One step of sensor.metered_grid_import: the house's grid import, made up from the
+    metered devices because there is no mains meter. docs/energy-digest.md explains why.
+
+    Adds one meter's INCREASE since its last reading, never the raw sum of the meters:
+      first reading of a meter     -> remember it, add nothing (its lifetime is not today's use)
+      unavailable / not a number   -> add nothing, keep the last reading (counted on return)
+      higher than last             -> add the difference
+      below a tenth of last        -> the counter was reset: add the new reading
+      otherwise lower than last    -> a dip (a group meter losing a member): add nothing,
+                                      keep the higher reading so the recovery is not counted twice
+    Returns JSON {"total": kWh, "last": {meter: reading}}. Cases: tests/energy/. -#}
+{%- macro metered_step(total, last, entity, value) -%}
+{%- if last is string and last -%}{%- set last = last | from_json -%}{%- endif -%}
+{%- set last = last if last is mapping else {} -%}
+{%- set prev = last.get(entity) | float(none) -%}
+{%- set v = value | float(none) -%}
+{%- set v = none if v is not none and v < 0 else v -%}
+{%- set ns = namespace(add=0, keep=prev) -%}
+{%- if v is not none -%}
+  {%- if prev is none -%}
+    {%- set ns.keep = v -%}
+  {%- elif v >= prev -%}
+    {%- set ns.add = v - prev -%}{%- set ns.keep = v -%}
+  {%- elif v < prev * 0.1 -%}
+    {%- set ns.add = v -%}{%- set ns.keep = v -%}
+  {%- endif -%}
+{%- endif -%}
+{%- set out = dict(last) -%}
+{%- if ns.keep is not none -%}{%- set out = dict(out, **{entity: ns.keep}) -%}{%- endif -%}
+{{- {'total': ((total | float(0)) + ns.add) | round(4), 'last': out} | to_json -}}
+{%- endmacro -%}

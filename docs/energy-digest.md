@@ -15,6 +15,53 @@ model, seven sockets and the PoE switch. "The house used X kWh" cannot be measur
 be said, and what the digest says, is **what the metered devices used**. The wording in the
 briefing is exact for that reason.
 
+### A made-up grid, so the Energy dashboard balances (2026-11-15)
+
+> "the energy dashboard doesnt display correctly ... it looks like the battery supplies energy
+> non stop. also the devices are consuming but also returning energy"
+
+With no grid source, the dashboard's only sources were the Solix C2000: solar (0 kWh) and its
+battery (about 0.03 kWh a day, the USB trickle). It computes the house's use as grid + solar +
+battery out − battery in, so it believed the house used ~30 Wh a day while the device meters
+reported ~13 kWh. The difference was drawn as a large negative *untracked consumption*, which
+reads as devices returning energy, and the battery was the only thing that could have supplied
+any of it.
+
+**The fix is a grid that is the sum of the device meters.** `sensor.metered_grid_import`, a
+trigger template in `configuration.yaml`, is the dashboard's one grid source. With it, untracked use is only what the Solix's battery and panel
+add or take, which is what it really is: the Solix is plugged in **behind the mini rack socket**
+(operator), so whatever it draws from the wall is already inside `sensor.mini_rack_energy`. Its
+battery and solar stay as sources. Charging it from the wall shows briefly as negative untracked
+(the mini rack meter counted energy that went into the battery), discharging as positive; they
+cancel over a cycle.
+
+What it is not: a mains meter. Anything not on a metered plug is invisible, so "grid" is a lower
+bound, and a real meter (a clamp meter in the panel, or the utility meter's P1/HAN port if it has
+one) replaces it the day one exists.
+
+**It adds increases, never the raw sum.** The meters' readings add up to ~14 000 kWh. A sum of
+them breaks the first time a plug resets its counter: one plug going to 0 takes ~1000 kWh off,
+which the recorder books as a ~1000 kWh negative day (a `total_increasing` drop under 10 % is a
+"dip", not a reset), and a drop over 10 % is taken as a meter reset that re-counts the whole sum.
+So `custom_templates/metered_total.jinja` keeps each meter's last reading in an attribute and
+adds only what it rose by:
+
+| new reading | added | remembered |
+|---|---|---|
+| first ever for this meter | 0 | the reading |
+| unavailable, not a number, negative | 0 | unchanged (the gap is counted on return) |
+| higher than last | the difference | the reading |
+| below a tenth of last (a counter reset) | the reading | the reading |
+| otherwise lower (a group meter losing a member) | 0 | unchanged, so the recovery is not counted twice |
+
+Tests: `tests/energy/run.py` (18 cases against the deployed macro, both sides of the tenth),
+`tests/energy/mutate.py` (9 mutations). `tests/climate/wiring.py` fails if the template's meter
+list differs from the dashboard's device list in either direction, or if anything other than
+this sensor is the dashboard's grid.
+
+**Accepted:** the grid starts on 2026-11-15; days before it keep the old, unbalanced picture. A
+meter whose counter jumps by a glitch is counted, the same as the device's own statistics count it.
+
 ## The digest, as built
 
 `automations/energy-digest.json`, at 00:10. It calls `recorder.get_statistics` for yesterday
