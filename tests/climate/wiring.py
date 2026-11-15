@@ -127,6 +127,10 @@ def sockets_on_energy(prefs_path=ENERGY):
     with io.open(prefs_path, encoding="utf-8") as fh:
         prefs = json.load(fh)["data"]
     on = {d["stat_consumption"] for d in prefs.get("device_consumption") or []}
+    # A device already on the dashboard as a source (the Solix: solar + battery) is
+    # placed; listing it as a consumer too would count it twice.
+    sources = {v for s in prefs.get("energy_sources") or [] for k, v in s.items()
+               if k.startswith("stat_energy") and v}
     cls = lambda e: e.get("device_class") or e.get("original_device_class")
     by_dev = {}
     for e in ents:
@@ -142,13 +146,68 @@ def sockets_on_energy(prefs_path=ENERGY):
             continue
         meters = sorted(e["entity_id"] for e in mine
                         if cls(e) == "energy" and e["entity_id"].startswith("sensor."))
-        if meters and not on & set(meters):
+        if meters and not (on | sources) & set(meters):
             missing.append(meters[0])
     known = {e["entity_id"] for e in ents}
     return sorted(missing), sorted(on - known)
 
 
 DIGEST_ID = "1792100000001"
+GRID_ID = "metered_grid_import"
+
+
+def grid_meters(prefs_path=ENERGY):
+    """sensor.metered_grid_import sums exactly the Energy dashboard's meters, and is its grid.
+
+    There is no mains meter; the grid import is made up from the device meters
+    (docs/energy-digest.md). Its trigger list is a copy of the dashboard's device list,
+    so a meter added to one and not the other makes the dashboard's balance wrong
+    silently: a missing meter shows as negative untracked use, an extra one as phantom
+    use. Returns (missing, extra, problem) where problem names a wiring error or is None.
+    """
+    import io
+    import json
+    import os
+    import yaml
+
+    class Loader(yaml.SafeLoader):
+        pass
+    Loader.add_multi_constructor("!", lambda loader, suffix, node: None)
+    with io.open(prefs_path, encoding="utf-8") as fh:
+        prefs = json.load(fh)["data"]
+    want = [d["stat_consumption"] for d in prefs.get("device_consumption") or []
+            if not d.get("included_in_stat")]
+    cfg = os.path.join(os.path.dirname(harness.AUTOMATIONS), "configuration.yaml")
+    with io.open(cfg, encoding="utf-8") as fh:
+        conf = yaml.load(fh, Loader=Loader) or {}
+    blocks = conf.get("template") or []
+    block = next((b for b in blocks for s in b.get("sensor") or []
+                  if s.get("unique_id") == GRID_ID), None)
+    if block is None:
+        return want, [], "no template sensor with unique_id %s in configuration.yaml" % GRID_ID
+    ids = []
+    for t in block.get("triggers") or block.get("trigger") or []:
+        e = t.get("entity_id") or []
+        ids += [e] if isinstance(e, str) else e
+    grids = [s for s in prefs.get("energy_sources") or [] if s.get("type") == "grid"]
+    problem = None
+    sensor = next(s for s in block["sensor"] if s.get("unique_id") == GRID_ID)
+    body = (sensor.get("state") or "") + json.dumps(sensor.get("attributes") or {})
+    repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                        "custom_templates", "metered_total.jinja")
+    live = os.path.join(os.path.dirname(cfg), "custom_templates", "metered_total.jinja")
+    if [g.get("stat_energy_from") for g in grids] != ["sensor." + GRID_ID]:
+        problem = ("the Energy dashboard's grid must be exactly sensor.%s, found %s"
+                   % (GRID_ID, [g.get("stat_energy_from") for g in grids]))
+    elif (sensor.get("state_class"), sensor.get("unit_of_measurement"),
+          sensor.get("device_class")) != ("total_increasing", "kWh", "energy"):
+        problem = "the sensor must be total_increasing, kWh, energy"
+    elif body.count("metered_step(") != 2:
+        problem = "state and the 'last' attribute must both be computed by metered_step"
+    elif not os.path.exists(live) or io.open(repo, encoding="utf-8").read() != io.open(
+            live, encoding="utf-8").read():
+        problem = "custom_templates/metered_total.jinja differs from the deployed copy"
+    return sorted(set(want) - set(ids)), sorted(set(ids) - set(want)), problem
 
 
 def main():
@@ -161,6 +220,19 @@ def main():
         print("\nThe energy digest must sum exactly the Energy dashboard's meters.")
         return 1
     print("  the energy digest sums exactly the Energy dashboard's meters")
+
+    missing, extra, problem = grid_meters()
+    for m in missing:
+        print("  GRID MISSES    %s is on the Energy dashboard but not in the metered grid" % m)
+    for m in extra:
+        print("  GRID EXTRA     %s is in the metered grid but not on the Energy dashboard" % m)
+    if problem:
+        print("  GRID WIRING    %s" % problem)
+    if missing or extra or problem:
+        print("\nsensor.%s must sum exactly the Energy dashboard's meters and be its grid."
+              % GRID_ID)
+        return 1
+    print("  the metered grid sums exactly the Energy dashboard's meters and is its grid")
 
     unlisted, gone = sockets_on_energy()
     for m in unlisted:
