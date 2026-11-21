@@ -16,14 +16,14 @@ import numpy as np
 
 WEBP_QUALITY = 78
 SS = 1.2          # strip px per scene px: a 3x phone draws the 900 px scene over ~1060 px
-HORIZON = 0.72    # the horizon, as a fraction of the height from the top: behind the city,
-                  # under the scrim and the tower's base
-WIDTH_K = 0.6    # cloud width / its base's height above the horizon (both on screen)
+HORIZON = 1.0     # the horizon is the bottom edge: seen from below, the sky runs down to the
+                  # skyline (operator: clouds stopping at 2/3 of the height looked wrong)
+WIDTH_K = 0.43   # cloud width / its base's height above the horizon (both on screen)
 DOME = 0.42       # height of a distant cloud's lit dome / its width
 UNDER = 0.20      # depth of an overhead cloud's visible underside / its width
 SOFT_K = 0.16    # edge softness / cloud width
 SOFT_MIN = 6.0    # scene px
-MIN_COUNT = 25    # a few big clouds must not use up the whole sky
+MIN_COUNT = 40    # a few big clouds must not use up the whole sky
 FRAY = 0.14       # how much the outline billows, / cloud width
 
 

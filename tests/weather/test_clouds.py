@@ -13,12 +13,12 @@ clouds, not one cloud with holes". So this locks down:
   and the sky between them is sky, not holes: sky enclosed by cloud is at most HOLES_MAX
   of the cloud area (HOLES_MAX_WINDY for torn wind clouds). The old noise-threshold sheet was one cloud full of holes;
 - perspective: clouds sit on a layer above the city, so they shrink and bunch towards the
-  skyline: there are at least BUNCH_MIN times as many separate clouds just above it (0.28-0.45 of
-  the height, from the bottom) as near the top (above 0.7). (A width/height correlation was
+  skyline: there are at least BUNCH_MIN times as many separate clouds just above it (5-30 %
+  of the way from the horizon to the top) as near the top (above 60 %). (A width/height correlation was
   tried first and swung 0.5-0.9 between seeds; "the widest cloud is in the top half" was
   dropped because a sky without perspective passed it too.) Noise has no reason to do either. An overcast deck
-  shows the same thing in its texture: just above the horizon (0.5-0.62 of the height;
-  below that a deck is haze) it is at least DECK_DEPTH times finer than near the top;
+  shows the same thing in its texture: just above the horizon (0.1-0.22 of the height above
+  it; lower down a deck is haze) it is at least DECK_DEPTH times finer than near the top;
 - random, like real clouds (operator, after the perspective version: "still a little
   cartoonish... all clouds are more or less the same shape and size, real clouds are
   random", and the spacing "doesn't seem natural, especially in the distance"). With the
@@ -29,6 +29,10 @@ clouds, not one cloud with holes". So this locks down:
   only. NOT covered, checked by eye: shape variety (lobes, height, fraying: a height/width
   spread could not tell them from identical domes) and the grouping into clusters (the
   spacing check catches an even layout, but not clusters removed from a log-normal one).
+- the whole sky (operator: "your horizon ends at around 2/3 from the top, but the view from
+  below shows the entire skyline, so the clouds would cover all of it"): the band just above
+  the bottom edge, 0.8-0.95 of the height, has at least LOW_COVER_MIN cloud. Bands for the
+  perspective and deck checks are measured from the horizon, wherever it is;
 - soft: the operator liked the original soft edges, so the alpha ramp at a cloud's edge is
   at least EDGE_SOFT scene px (the crisp version that was rejected had under 4);
 - NOT covered: the overcast deck's rolls fade out together above the skyline instead of
@@ -49,6 +53,7 @@ import clouds  # noqa: E402
 SCENE = (900, 620)
 MIN_SS = 1.18        # 354 CSS px x 3 / 900
 KB_MAX = 250
+LOW_COVER_MIN = 0.1  # the band above the skyline is not empty
 MIN_CLOUDS = 6       # a floor, not a discriminator: ~60 here, and the noise sheet passed it too
 HOLES_MAX = 0.01     # partly cloudy: 0.1-0.5 % over seeds; 1.5 % if the noise may punch holes
 HOLES_MAX_WINDY = 0.025  # torn wind clouds: up to 2 % over seeds
@@ -64,9 +69,9 @@ EDGE_SOFT = 6.0      # scene px: 7.2-7.8 over seeds; 5.2 without the distance no
 # the scenes.py calls (keep in step with scenes.py; the deck's colours are one example,
 # scenes.py derives them from each scene's colour)
 OPEN = {
-    "partlycloudy-day": dict(cover=0.3, top=(255, 255, 255), under=(150, 158, 176), ymax=0.7, seed=7),
-    "partlycloudy-night": dict(cover=0.3, top=(52, 58, 78), under=(82, 74, 80), ymax=0.7, seed=7, density=0.85),
-    "windy": dict(cover=0.28, top=(255, 255, 255), under=(150, 158, 176), ymax=0.7, seed=7, stretch=3.0, density=0.85),
+    "partlycloudy-day": dict(cover=0.3, top=(255, 255, 255), under=(150, 158, 176), ymax=1.0, seed=7),
+    "partlycloudy-night": dict(cover=0.3, top=(52, 58, 78), under=(82, 74, 80), ymax=1.0, seed=7, density=0.85),
+    "windy": dict(cover=0.28, top=(255, 255, 255), under=(150, 158, 176), ymax=1.0, seed=7, stretch=3.0, density=0.85),
 }
 DECK = dict(cover=1.0, top=(255, 255, 255), under=(155, 158, 161), ymax=1.0, seed=7, stretch=2.0,
             density=220 / 255, deck=True)
@@ -203,10 +208,15 @@ def main():
         if kb(s) > KB_MAX:
             fails.append("%s: %.0f KB encoded, budget %d" % (name, kb(s), KB_MAX))
         if name == "overcast":
-            near, far = texture_scale(s, 0, 0.2), texture_scale(s, 0.5, 0.62)
+            near, far = texture_scale(s, 0, 0.2), texture_scale(s, clouds.HORIZON - 0.22, clouds.HORIZON - 0.1)
             if far < DECK_DEPTH * near:
                 fails.append("overcast: texture %.1f cycles at the top, %.1f near the horizon: no depth" % (near, far))
             continue
+        a = s[..., 3].astype(float) / 255
+        low = a[int(0.8 * a.shape[0]):int(0.95 * a.shape[0])]
+        if (low > 0.3).mean() < LOW_COVER_MIN:
+            fails.append("%s: %.0f %% cloud just above the skyline (0.8-0.95 of the height), want %.0f %%"
+                         % (name, 100 * (low > 0.3).mean(), 100 * LOW_COVER_MIN))
         cl = clouds_of(s)
         if not cl:
             fails.append("%s: no clouds at all" % name)
@@ -218,7 +228,8 @@ def main():
             fails.append("%s: %.1f %% of the cloud is enclosed sky (holes), max %.1f %%" % (name, 100 * h, 100 * limit))
         w, y = np.array(cl).T
         H = SCENE[1]
-        near, far = (y > 0.7 * H).sum(), ((y > 0.28 * H) & (y < 0.45 * H)).sum()
+        q = (y - (1 - clouds.HORIZON) * H) / (clouds.HORIZON * H)   # height above the skyline, 0..1
+        near, far = (q > 0.6).sum(), ((q > 0.05) & (q < 0.3)).sum()
         if far < BUNCH_MIN * max(near, 1):
             fails.append("%s: %d clouds just above the skyline, %d near the top: no perspective" % (name, far, near))
         if name.startswith("partlycloudy"):

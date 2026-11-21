@@ -15,7 +15,7 @@ Everything stops under prefers-reduced-motion: the glass swaps to a still frame.
 """
 import sys
 
-V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '13'
+V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '14'
 URL = "/local/zizkov/anim/%s.%s?v=" + V
 TILE = 200            # CSS px a 400 px tile is shown at
 STOPS = (0, 25, 50, 75, 100)
