@@ -23,6 +23,7 @@ DOME = 0.42       # height of a distant cloud's lit dome / its width
 UNDER = 0.20      # depth of an overhead cloud's visible underside / its width
 SOFT_K = 0.16    # edge softness / cloud width
 SOFT_MIN = 6.0    # scene px
+MIN_COUNT = 25    # a few big clouds must not use up the whole sky
 FRAY = 0.14       # how much the outline billows, / cloud width
 
 
@@ -49,10 +50,25 @@ def _smooth(x):
     return x * x * (3 - 2 * x)
 
 
-def _cloud(w, t, aspect, rng, top, under, deck=False):
+def _shape(rng):
+    """A random cloud's character: no two alike (operator: "real clouds are random").
+    tall: height over a typical cumulus; lobes: (centre, half-width, height) of the one to
+    three domes it is built from, across -1..1; fray: how torn its outline is."""
+    n = int(rng.choice([1, 2, 2, 3, 3]))
+    lobes = []
+    for i in range(n):
+        c = 0.0 if n == 1 else rng.uniform(-0.55, 0.55)
+        hw = min(rng.uniform(0.45, 1.0), 1 - abs(c)) if n > 1 else 1.0   # stays within the width
+        lobes.append((c, hw, rng.uniform(0.45, 1.0) if i else 1.0))
+    return dict(tall=float(np.clip(np.exp(rng.normal(0, 0.4)), 0.5, 1.7)), lobes=lobes, fray=FRAY * rng.uniform(0.6, 1.5))
+
+
+def _cloud(w, t, aspect, rng, top, under, deck=False, shape=None):
     """One cloud: premultiplied RGB, alpha, and the row of its flat bottom in the patch.
     w: width (px); t: nearness, 0 at the lowest base line to 1 overhead; aspect: >1 flattens
-    (wind, decks)."""
+    (wind, decks); shape: from _shape (a plain dome if None)."""
+    shape = shape or dict(tall=1.0, lobes=[(0.0, 1.0, 1.0)], fray=FRAY)
+    aspect = aspect / shape["tall"]
     dome = w * DOME * (1 - 0.65 * t) / aspect        # seen from the side far away, hidden overhead
     und = w * UNDER * t / aspect                      # the flat base, foreshortened: thin far away
     hgt = dome + und
@@ -68,12 +84,15 @@ def _cloud(w, t, aspect, rng, top, under, deck=False):
     n = 0.75 * _field((ph, pw), seed, 3.6, lo=lo) + 0.25 * _field((ph, pw), seed + 1, 2.6, lo=lo * 3)
     n = _blur(n, 0.008 * w); n = n / n.std()
     billow = _blur(_field((ph, pw), seed + 2, 3.0, lo=lo * 2), 0.01 * w); billow = billow / billow.std()
-    env = 1 - np.abs(u) ** 2.2                         # a dome; finite slope at the sides (a
-                                                       # |1-u^2|^0.55 dome drew a line at u = +-1)
+    # domes, finite slope at their sides (a |1-u^2|^0.55 dome drew a line at u = +-1); the
+    # lobes are joined with a soft maximum so the outline has no creases
+    e = 2.2                                            # rounded domes: pointed ones read as cartoons
+    parts = [hl * (1 - np.abs((u - c) / hw) ** e) for c, hw, hl in shape["lobes"]]
+    env = 0.12 * np.logaddexp.reduce(np.array(parts) / 0.12, axis=0)   # stable soft maximum
     side = np.clip(v * 2.5, 0.25, 1)                   # the base stays flat, the dome billows
     depth = np.minimum((env - v) * hgt, v * hgt)       # px inside the plain outline
     reach = np.clip(1 - depth / (0.12 * w), 0.15, 1)    # the noise frays the edge, never punches holes
-    d1, d2, k = (env - v) * hgt + FRAY * w * n * side * reach, v * hgt + 0.03 * w * n, 0.06 * w
+    d1, d2, k = (env - v) * hgt + shape["fray"] * w * n * side * reach, v * hgt + 0.03 * w * n, 0.06 * w
     d = -k * np.logaddexp(-d1 / k, -d2 / k)            # a soft minimum: the base's corners are round
     soft = max(SOFT_K * w, SOFT_MIN * SS)
     gy, gx = np.gradient(d)
@@ -123,25 +142,44 @@ def strip(size, cover, top, under, ymax, seed, stretch=1.0, density=1.0, deck=Fa
     aspect = stretch ** 0.5
     placed, covered = [], 0.0
     target = cover * W * ymax * H * (2.5 if deck else 1.0)
-    for _ in range(20000):
-        if covered >= target:
+    # clouds come in groups with clear sky between (an even scatter read as cartoonish):
+    # a few clusters on the layer, each spread in proportion to its distance on screen
+    lp_lo, lp_hi = np.log(p_lo), np.log(p_hi)
+    clusters = [(rng.uniform(0, W), rng.uniform(lp_lo, lp_hi), rng.uniform(0.4, 1.1), rng.uniform(0.1, 0.25))
+                for _ in range(int(rng.integers(5, 9)))]
+    def crowd(x, p):
+        d = 0.0
+        for cx, clp, sx, slp in clusters:
+            dx = (x - cx + W / 2) % W - W / 2
+            d += np.exp(-0.5 * ((dx / (sx * p)) ** 2 + ((np.log(p) - clp) / slp) ** 2))
+        return d
+    for _ in range(60000):
+        if covered >= target and len(placed) >= (0 if deck else MIN_COUNT):
             break
         p = 1 / rng.uniform(1 / p_hi, 1 / p_lo)         # uniform in distance ~ 1/p
-        w = WIDTH_K * p * aspect * rng.uniform(0.7, 1.25)
+        x = rng.uniform(0, W)
+        if not deck and rng.uniform() > 0.02 + crowd(x, p):
+            continue
+        # sizes are log-normal: many small clouds and a few big ones
+        w = WIDTH_K * p * aspect * float(np.clip(np.exp(rng.normal(-0.2, 0.75)), 0.25, 2.0))
         if int(w * 1.6) + 8 > W:                       # its patch would not fit the strip
             continue
-        x, yb = rng.uniform(0, W), yh - p
-        box = (x - w / 2, yb - w * 0.45 / aspect, x + w / 2, yb)
+        shape = _shape(rng)
+        yb = yh - p
+        box = (x - w / 2, yb - w * 0.45 * shape["tall"] / aspect, x + w / 2, yb)
         # keep apart with room for the frayed outline, so two clouds never close a pocket of sky
         pad = (box[0] - 0.12 * w, box[1] - 0.1 * w, box[2] + 0.12 * w, box[3])
-        if not deck and any(_overlap(pad, b, W) > 0.04 for b in placed):
+        # near clouds stay apart; distant ones may overlap on screen, as they do in a real sky,
+        # where they are far apart in depth and merge into bands towards the skyline
+        t = (p - p_lo) / (p_hi - p_lo)
+        if not deck and any(_overlap(pad, b, W) > 0.04 + 0.3 * (1 - t) ** 3 for b, _ in placed):
             continue
-        placed.append(box); covered += w * w * 0.3 / aspect
+        placed.append((box, shape)); covered += w * w * 0.3 * shape["tall"] / aspect
     acc_rgb = np.zeros((H, W, 3)); acc_a = np.zeros((H, W))
-    for box in sorted(placed, key=lambda b: -b[3]):    # far (low on screen) first, near last
+    for box, shape in sorted(placed, key=lambda b: -b[0][3]):   # far (low on screen) first, near last
         x0, _, x1, base = box; w = x1 - x0
         t = np.clip((yh - base - p_lo) / (p_hi - p_lo), 0, 1)
-        rgb, a, yb = _cloud(w, t, aspect, rng, top, under, deck)
+        rgb, a, yb = _cloud(w, t, aspect, rng, top, under, deck, shape)
         ph, pw = a.shape
         oy, ox = int(round(base - yb)), int(round((x0 + x1) / 2 - pw / 2))
         y0, y1 = max(oy, 0), min(oy + ph, H)

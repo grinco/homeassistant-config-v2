@@ -103,15 +103,25 @@ close a pocket of sky. An overcast deck is the same layer packed with overlappin
 over a fill; the rolls fade out together above the skyline (dozens of distant ones
 overlap there, and stopped in a hard line until they did).
 
+**Random, like real clouds** (operator, same day: "still a little cartoonish... all clouds
+are more or less the same shape and size, real clouds are random", and the distribution
+"doesn't seem natural, especially in the distance"). Sizes are log-normal (many small, a
+few big), each cloud is one to three lobes with its own height and fraying, and clouds
+gather in a few clusters on the layer with clear sky between. Distant clouds may overlap
+on screen, as they do in a real sky, and merge into bands towards the skyline; near ones
+stay apart. Tall clouds keep rounded domes: pointed ones were tried and read as cartoons.
+
 The drift is about 1.7x slower than before (operator: a little too fast): 150 s per loop
 partly cloudy, 270 s overcast and rain, 50 s windy.
 
 `tests/weather/test_clouds.py` (CI) locks: at least 6 separate clouds and under 1 % enclosed
-sky (2.5 % for torn wind clouds); 2x more clouds just above the skyline than near the top,
+sky (2.5 % for torn wind clouds); a size spread (CV >= 0.6) and near clouds not evenly
+spaced; 1.5x more separate clouds just above the skyline than near the top,
 a deck texture finer near the horizon; soft edges
 (at least 6 scene px); the seamless wrap; 1.2x resolution; at most 250 KB per strip.
-The old noise sheet fails 11 of these. Not covered by a test: the deck's fade above the
-skyline (checked by eye on all 16 strips).
+The old noise sheet fails 11 of these. Not covered by a test, checked by eye on all 16
+strips: the deck's fade above the skyline, shape variety, and the clustering itself (the
+spacing check catches an even layout, not clusters taken out of a random one).
 
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
 layers rather than one picture:
@@ -137,7 +147,7 @@ python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size
 # or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 12 > style.jinja   # 12 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 13 > style.jinja   # 13 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -235,7 +245,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 12
+    # the output of: python3 tools/weather-scenes/card_style.py 13
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or

@@ -13,12 +13,22 @@ clouds, not one cloud with holes". So this locks down:
   and the sky between them is sky, not holes: sky enclosed by cloud is at most HOLES_MAX
   of the cloud area (HOLES_MAX_WINDY for torn wind clouds). The old noise-threshold sheet was one cloud full of holes;
 - perspective: clouds sit on a layer above the city, so they shrink and bunch towards the
-  skyline: there are at least BUNCH_MIN times as many clouds just above it (0.28-0.45 of
+  skyline: there are at least BUNCH_MIN times as many separate clouds just above it (0.28-0.45 of
   the height, from the bottom) as near the top (above 0.7). (A width/height correlation was
   tried first and swung 0.5-0.9 between seeds; "the widest cloud is in the top half" was
   dropped because a sky without perspective passed it too.) Noise has no reason to do either. An overcast deck
   shows the same thing in its texture: just above the horizon (0.5-0.62 of the height;
   below that a deck is haze) it is at least DECK_DEPTH times finer than near the top;
+- random, like real clouds (operator, after the perspective version: "still a little
+  cartoonish... all clouds are more or less the same shape and size, real clouds are
+  random", and the spacing "doesn't seem natural, especially in the distance"). With the
+  perspective factored out (width over height above the horizon), cloud sizes spread with
+  a coefficient of variation of at least CV_SIZE_MIN (log-normal sizes: many small, a few
+  big); and near clouds are not evenly spaced: their nearest-neighbour distance is at most
+  CLUSTER_MAX of random points' (the evenly spaced layout scored 1.28-1.46). Partly cloudy
+  only. NOT covered, checked by eye: shape variety (lobes, height, fraying: a height/width
+  spread could not tell them from identical domes) and the grouping into clusters (the
+  spacing check catches an even layout, but not clusters removed from a log-normal one).
 - soft: the operator liked the original soft edges, so the alpha ramp at a cloud's edge is
   at least EDGE_SOFT scene px (the crisp version that was rejected had under 4);
 - NOT covered: the overcast deck's rolls fade out together above the skyline instead of
@@ -42,8 +52,10 @@ KB_MAX = 250
 MIN_CLOUDS = 6       # a floor, not a discriminator: ~60 here, and the noise sheet passed it too
 HOLES_MAX = 0.01     # partly cloudy: 0.1-0.5 % over seeds; 1.5 % if the noise may punch holes
 HOLES_MAX_WINDY = 0.025  # torn wind clouds: up to 2 % over seeds
-BUNCH_MIN = 2.0      # seeds 7-9: 2.5-4.7 with perspective, 0.1-0.9 without
+BUNCH_MIN = 1.5      # with perspective 1.6-4.7 (distant clouds may merge, which lowers it); without 0.1-0.9
 DECK_DEPTH = 1.35    # new deck 1.6-2.0 over seeds, the flat noise deck ~0.93
+CV_SIZE_MIN = 0.6    # seeds 7-10: 0.63-0.70; the even layout 0.39-0.53
+CLUSTER_MAX = 1.2    # seeds 7, 8, 10: 1.01-1.14; the even layout 1.28-1.46
 EDGE_SOFT = 6.0      # scene px: 7.2-7.8 over seeds; 5.2 without the distance normalisation
 # the scenes.py calls (keep in step with scenes.py; the deck's colours are one example,
 # scenes.py derives them from each scene's colour)
@@ -90,6 +102,38 @@ def clouds_of(rgba):
         cols = np.unique(xs)
         out.append((len(cols) * 4, (m.shape[0] - ys.mean()) * 4))
     return out
+
+
+def layout(rgba):
+    """Per cloud: (width, height, x centre, y centre, px above the horizon), at mask scale."""
+    m = mask(rgba); lab, n = components(m); H, W = m.shape; out = []
+    for i in range(1, n + 1):
+        ys, xs = np.nonzero(lab == i)
+        if len(ys) < 6:
+            continue
+        ang = xs / W * 2 * np.pi                       # circular mean: a cloud may straddle the seam
+        xc = (np.arctan2(np.sin(ang).mean(), np.cos(ang).mean()) % (2 * np.pi)) / (2 * np.pi) * W
+        p = clouds.HORIZON * H - ys.mean()
+        if p > 1:
+            out.append((len(np.unique(xs)), len(np.unique(ys)), xc, ys.mean(), p))
+    return np.array(out)
+
+
+def variety(rgba):
+    """(size CV, spacing ratio). Size: width over height above the horizon, so perspective is
+    factored out. Spacing: mean nearest-neighbour distance of the near clouds (more than 35 %
+    of the horizon's height above it, where none merge) on the layer (x over distance, log
+    distance), against random points in the same box: under 1 is clustered, over 1 even."""
+    w, h, xc, yc, p = layout(rgba).T
+    size = w / p
+    near = p > 0.35 * clouds.HORIZON * mask(rgba).shape[0]
+    pts = np.c_[(xc / p)[near], np.log(p[near])]
+    def nn(P):
+        d = np.sqrt(((P[:, None, :] - P[None, :, :]) ** 2).sum(-1)); np.fill_diagonal(d, np.inf)
+        return d.min(1).mean()
+    rng = np.random.default_rng(0); lo, hi = pts.min(0), pts.max(0)
+    rand = np.mean([nn(rng.uniform(lo, hi, pts.shape)) for _ in range(30)])
+    return size.std() / size.mean(), nn(pts) / rand
 
 
 def holes(rgba):
@@ -171,6 +215,12 @@ def main():
         near, far = (y > 0.7 * H).sum(), ((y > 0.28 * H) & (y < 0.45 * H)).sum()
         if far < BUNCH_MIN * max(near, 1):
             fails.append("%s: %d clouds just above the skyline, %d near the top: no perspective" % (name, far, near))
+        if name.startswith("partlycloudy"):
+            cs, cr = variety(s)
+            if cs < CV_SIZE_MIN:
+                fails.append("%s: cloud sizes vary by %.2f (CV), want %.2f: all the same size" % (name, cs, CV_SIZE_MIN))
+            if cr > CLUSTER_MAX:
+                fails.append("%s: spacing %.2f of random, want at most %.2f: too even" % (name, cr, CLUSTER_MAX))
         r = edge_ramp(s, ss)
         if r < EDGE_SOFT:
             fails.append("%s: edges fade over %.1f scene px, want at least %.1f (soft)" % (name, r, EDGE_SOFT))
