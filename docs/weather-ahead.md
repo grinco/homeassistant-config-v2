@@ -85,14 +85,34 @@ re-lights the billows. Overcast scenes use the same code as a closed deck. At ni
 undersides are a little warm, as clouds over a city are lit from below.
 
 **Clouds as sharp as the tower** (operator, 2026-11-21: they looked much lower resolution
-than the tower in front of them). Both layers were 900 px, but the clouds' alpha faded over
-~11 scene px at every edge and was blurred again, so half of each cloud was a soft fringe,
-and soft shapes show upscaling (a 3x phone draws the scene over ~1060 px) where the tower's
-hard edges hide it. The strips are now rendered at 2x (`clouds.SS`) with a ramp under 4
-scene px, and a faint fine-noise field frays the crisp edge into wisps so it does not read
-as a cut-out. `tests/weather/test_clouds.py` locks the resolution, the edge width and the
-seamless wrap; it runs in CI. Cost: an overcast strip is ~650 KB instead of ~175 KB,
-loaded once per scene and cached.
+than the tower in front of them). Two rounds. Sharper edges and a 2x strip (PR #40) were not
+enough: the operator saw no change. A 3x screenshot of the live card, measured, showed why:
+
+| live card, 3x | tower | clouds before | clouds after |
+|---|---|---|---|
+| tonal range (p5-p95) | 40-212 | 63-123 | 63-158 |
+| fine detail (mean abs Laplacian) | 8-12 | 2.3 | 5.7 |
+| horizontal / vertical detail | | 0.57 | 0.80 |
+
+- **Flat grey.** Light from above was used up within ~10 px of cloud, so nearly every pixel
+  was the shaded colour. Now the light reaches ~22 scene px in, and a **billow height field**
+  (|band-pass noise| summed over four octaves: rounded lobes, sharp creases) is lit by a high
+  sun, so each lobe has a white top and a grey underside; undersides of the whole cloud
+  shade too. The height field is smoothed by ~1 scene px: unsmoothed, the creases ring down
+  to the pixel and read as sand. An overcast deck uses the same octaves signed (smooth rolls,
+  no creases) and half the relief: a deck is seen from below.
+- **Stretched sideways.** `_field` counted horizontal frequencies per strip *width* and
+  vertical per *height*; on the 1.45:1 strip every field was 1.45x wider than tall, and the
+  partly cloudy stretch of 1.6 made it 2.3:1, which is what a stretched, upscaled image looks
+  like. Both now count per strip height; partly cloudy is 1.1:1, and windy (5.8) and overcast
+  (3.5) were rescaled to keep their old look.
+- **Resolution** is back down to 1.2x (1080 px; a 3x phone needs ~1060): the detail now lives
+  in the lighting, not in pixels. Strips are 110-230 KB (the 2x ones were up to 650 KB).
+
+`tests/weather/test_clouds.py` (CI) locks each of these on the strip itself: brightest tops,
+light-to-shade spread, fine detail within a band (too little is mush, too much is sand),
+shape anisotropy, encoded size, edge width, resolution and the seamless wrap. Removing the
+relief, the smoothing or the frequency fix each turns it red.
 
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
 layers rather than one picture:
@@ -118,7 +138,7 @@ python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size
 # or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 9 > style.jinja    # 9 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 10 > style.jinja   # 10 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -216,7 +236,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 9
+    # the output of: python3 tools/weather-scenes/card_style.py 10
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or
