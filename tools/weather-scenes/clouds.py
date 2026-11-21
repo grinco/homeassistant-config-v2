@@ -128,6 +128,8 @@ def strip(size, cover, top, under, ymax, seed, stretch=1.0, density=1.0, deck=Fa
             break
         p = 1 / rng.uniform(1 / p_hi, 1 / p_lo)         # uniform in distance ~ 1/p
         w = WIDTH_K * p * aspect * rng.uniform(0.7, 1.25)
+        if int(w * 1.6) + 8 > W:                       # its patch would not fit the strip
+            continue
         x, yb = rng.uniform(0, W), yh - p
         box = (x - w / 2, yb - w * 0.45 / aspect, x + w / 2, yb)
         # keep apart with room for the frayed outline, so two clouds never close a pocket of sky
@@ -146,8 +148,6 @@ def strip(size, cover, top, under, ymax, seed, stretch=1.0, density=1.0, deck=Fa
         if y0 >= y1:
             continue
         rows, cols = np.arange(y0, y1), (np.arange(pw) + ox) % W   # wrap left to right
-        if pw > W:
-            continue
         r, al = rgb[y0 - oy:y1 - oy], a[y0 - oy:y1 - oy]
         ix = np.ix_(rows, cols)
         acc_rgb[ix] = r + acc_rgb[ix] * (1 - al[..., None])

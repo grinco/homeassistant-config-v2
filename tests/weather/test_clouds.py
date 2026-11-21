@@ -14,8 +14,9 @@ clouds, not one cloud with holes". So this locks down:
   of the cloud area (HOLES_MAX_WINDY for torn wind clouds). The old noise-threshold sheet was one cloud full of holes;
 - perspective: clouds sit on a layer above the city, so they shrink and bunch towards the
   skyline: there are at least BUNCH_MIN times as many clouds just above it (0.28-0.45 of
-  the height, from the bottom) as near the top (above 0.7), and the widest cloud is in the
-  top half. (A width/height correlation was tried first; it swung 0.5-0.9 between seeds.) Noise has no reason to do either. An overcast deck
+  the height, from the bottom) as near the top (above 0.7). (A width/height correlation was
+  tried first and swung 0.5-0.9 between seeds; "the widest cloud is in the top half" was
+  dropped because a sky without perspective passed it too.) Noise has no reason to do either. An overcast deck
   shows the same thing in its texture: just above the horizon (0.5-0.62 of the height;
   below that a deck is haze) it is at least DECK_DEPTH times finer than near the top;
 - soft: the operator liked the original soft edges, so the alpha ramp at a cloud's edge is
@@ -38,13 +39,14 @@ import clouds  # noqa: E402
 SCENE = (900, 620)
 MIN_SS = 1.18        # 354 CSS px x 3 / 900
 KB_MAX = 250
-MIN_CLOUDS = 6
+MIN_CLOUDS = 6       # a floor, not a discriminator: ~60 here, and the noise sheet passed it too
 HOLES_MAX = 0.01     # partly cloudy: 0.1-0.5 % over seeds; 1.5 % if the noise may punch holes
 HOLES_MAX_WINDY = 0.025  # torn wind clouds: up to 2 % over seeds
 BUNCH_MIN = 2.0      # seeds 7-9: 2.5-4.7 with perspective, 0.1-0.9 without
 DECK_DEPTH = 1.35    # new deck 1.6-2.0 over seeds, the flat noise deck ~0.93
 EDGE_SOFT = 6.0      # scene px: 7.2-7.8 over seeds; 5.2 without the distance normalisation
-# the scenes.py calls (keep in step with scenes.py)
+# the scenes.py calls (keep in step with scenes.py; the deck's colours are one example,
+# scenes.py derives them from each scene's colour)
 OPEN = {
     "partlycloudy-day": dict(cover=0.3, top=(255, 255, 255), under=(150, 158, 176), ymax=0.7, seed=7),
     "partlycloudy-night": dict(cover=0.3, top=(52, 58, 78), under=(82, 74, 80), ymax=0.7, seed=7, density=0.85),
@@ -156,6 +158,9 @@ def main():
                 fails.append("overcast: texture %.1f cycles at the top, %.1f near the horizon: no depth" % (near, far))
             continue
         cl = clouds_of(s)
+        if not cl:
+            fails.append("%s: no clouds at all" % name)
+            continue
         if len(cl) < MIN_CLOUDS:
             fails.append("%s: %d separate clouds, need %d" % (name, len(cl), MIN_CLOUDS))
         h, limit = holes(s), HOLES_MAX_WINDY if name == "windy" else HOLES_MAX
@@ -166,8 +171,6 @@ def main():
         near, far = (y > 0.7 * H).sum(), ((y > 0.28 * H) & (y < 0.45 * H)).sum()
         if far < BUNCH_MIN * max(near, 1):
             fails.append("%s: %d clouds just above the skyline, %d near the top: no perspective" % (name, far, near))
-        if y[np.argmax(w)] < H / 2:
-            fails.append("%s: the widest cloud is in the bottom half" % name)
         r = edge_ramp(s, ss)
         if r < EDGE_SOFT:
             fails.append("%s: edges fade over %.1f scene px, want at least %.1f (soft)" % (name, r, EDGE_SOFT))

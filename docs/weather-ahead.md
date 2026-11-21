@@ -108,9 +108,9 @@ partly cloudy, 270 s overcast and rain, 50 s windy.
 
 `tests/weather/test_clouds.py` (CI) locks: at least 6 separate clouds and under 1 % enclosed
 sky (2.5 % for torn wind clouds); 2x more clouds just above the skyline than near the top,
-and the widest cloud in the top half; a deck texture finer near the horizon; soft edges
+a deck texture finer near the horizon; soft edges
 (at least 6 scene px); the seamless wrap; 1.2x resolution; at most 250 KB per strip.
-Master's noise sheet fails 11 of these. Not covered by a test: the deck's fade above the
+The old noise sheet fails 11 of these. Not covered by a test: the deck's fade above the
 skyline (checked by eye on all 16 strips).
 
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
