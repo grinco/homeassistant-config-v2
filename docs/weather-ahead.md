@@ -111,10 +111,27 @@ gather in a few clusters on the layer with clear sky between. Distant clouds may
 on screen, as they do in a real sky, and merge into bands towards the skyline; near ones
 stay apart. Tall clouds keep rounded domes: pointed ones were tried and read as cartoons.
 
+**Overcast is a real photo** (operator, 2026-11-21). Generated clouds never quite looked like
+the real sky, so real sky photos were tried: cut out of their blue and laid over the card.
+For partly cloudy every cut-out had artifacts (halos, a ghost where the strip wraps) and the
+generated clouds stayed. For overcast, rain, snow and storms, the operator chose
+["Alma Verde sky 01HDR"](https://commons.wikimedia.org/wiki/File:Alma_Verde_sky_01HDR_(3181622319).jpg)
+by michael clarke stuff, **CC BY-SA 2.0**. Only its texture is used: `clouds.photo_deck`
+maps its brightness onto each scene's own deck colour (bright cloudy, darker rain, darkest
+storms and nights), compresses highlights instead of clipping them, and crossfades the ends
+so it still wraps. The photo is not in this repo: `scenes.py` fetches the pinned thumbnail
+into `tools/weather-scenes/.cache/` (gitignored), and without it falls back to the
+generated deck with a warning. The strips made from it (`<scene>-clouds.webp` in
+`www/zizkov/anim/`) are derived works under the same licence. Cloudy by day went from
+(222, 225, 230) to (190, 194, 200) so the deck keeps the photo's mood without dropping
+below rain.
+
 The drift is about 1.7x slower than before (operator: a little too fast): 150 s per loop
 partly cloudy, 270 s overcast and rain, 50 s windy.
 
-`tests/weather/test_clouds.py` (CI) locks: cloud in the band just above the skyline; at least
+`tests/weather/test_clouds.py` (CI) locks the photo deck on a synthetic photo (scene tone,
+texture kept, no gaps, no ground, wraps) and, for the generated clouds: cloud in the band
+just above the skyline; at least
 6 separate clouds and under 1 % enclosed
 sky (2.5 % for torn wind clouds); a size spread (CV >= 0.6) and near clouds not evenly
 spaced; 1.5x more separate clouds just above the skyline than near the top,
@@ -148,7 +165,7 @@ python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size
 # or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 14 > style.jinja   # 14 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 15 > style.jinja   # 15 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -246,7 +263,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 14
+    # the output of: python3 tools/weather-scenes/card_style.py 15
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or

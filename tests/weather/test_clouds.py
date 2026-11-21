@@ -38,6 +38,9 @@ clouds, not one cloud with holes". So this locks down:
 - NOT covered: the overcast deck's rolls fade out together above the skyline instead of
   stopping in a line. That was checked by eye on all 16 strips; a row-step metric could
   not tell the two apart reliably (0.44 vs 0.65).
+- the overcast deck made from a photo (operator, 2026-11-21: of real photos laid on the card,
+  "12 is best for overcast"): it keeps the scene's own tone, its texture, no gaps, no ground
+  from the photo, and it wraps. Checked on a synthetic photo, so CI needs no network;
 - the strip still wraps, has enough pixels for a 3x phone (SS >= MIN_SS) and costs at
   most KB_MAX encoded.
 Numbers are in scene px, so they hold whatever clouds.SS is.
@@ -194,8 +197,40 @@ def kb(rgba):
     return len(b.getvalue()) / 1024
 
 
-def main():
+def photo_deck_fails():
+    """The overcast deck made from a photo (clouds.photo_deck), checked on a synthetic photo so
+    CI needs no network: a smooth cloud texture with dark ground across its bottom fifth."""
     fails = []
+    rng = np.random.default_rng(3)
+    H, W = 900, 1200
+    f = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((H, W))) / np.maximum(
+        np.hypot(*np.meshgrid(np.fft.fftfreq(W) * W, np.fft.fftfreq(H) * H)), 2) ** 1.6))
+    sky = 0.6 + 0.12 * f / f.std()
+    sky[int(H * 0.8):] = 0.08                           # ground: must be cropped away
+    photo = (np.repeat(sky[..., None], 3, -1) * 255).clip(0, 255).astype(np.uint8)
+    for color, density in (((222, 225, 230), 220 / 255), ((40, 44, 56), 230 / 255)):
+        s = clouds.photo_deck(photo, SCENE, color, density, keep=0.78)
+        name = "photo deck %s" % (color,)
+        if s.shape[:2] != (round(SCENE[1] * clouds.SS), round(SCENE[0] * clouds.SS)):
+            fails.append("%s: strip %s is not the scene's shape" % (name, s.shape[:2]))
+            continue
+        if seam(s) > 2.0:
+            fails.append("%s: wrap step %.1fx a neighbour step: the drift shows a seam" % (name, seam(s)))
+        if s[..., 3].min() < 0.85 * density * 255:
+            fails.append("%s: the deck has gaps (alpha down to %d)" % (name, s[..., 3].min()))
+        mean = s[..., :3].reshape(-1, 3).mean(0)
+        if np.abs(mean - np.array(color)).max() > 8:
+            fails.append("%s: tone %s, want the scene's %s" % (name, mean.round(), color))
+        lum = s[..., :3].astype(float).mean(-1)
+        if lum.std() < 0.04 * max(np.mean(color), 60):
+            fails.append("%s: texture flattened (std %.1f)" % (name, lum.std()))
+        if lum[-lum.shape[0] // 20:].mean() < 0.85 * lum.mean():
+            fails.append("%s: the bottom is dark: ground left in the photo" % name)
+    return fails
+
+
+def main():
+    fails = photo_deck_fails()
     for name, kw in list(OPEN.items()) + [("overcast", DECK)]:
         s = clouds.strip(SCENE, **kw)
         ss = s.shape[1] / SCENE[0]
