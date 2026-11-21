@@ -72,7 +72,7 @@ def overcast(img, color, alpha, seed, ymax=1.0):
     """A closed deck: alpha never drops below 0.55, but the texture thins towards the bottom,
     as a real deck looks thinner towards the horizon. Intended."""
     c = np.array(color, float)
-    clouds(img, 1.0, tuple((c * 1.18).clip(0, 255)), tuple(c * 0.7), ymax, seed, stretch=2.4,
+    clouds(img, 1.0, tuple((c * 1.18).clip(0, 255)), tuple(c * 0.7), ymax, seed, stretch=3.5,
            density=alpha / 255, lo=2.0, deck=True)
 
 def stars(img, seed):
@@ -164,7 +164,7 @@ def render(scene, night):
         # at night clouds over the city are lit from below (orange street light), not from above
         top, under = ((52, 58, 78), (82, 74, 80)) if night else ((255, 255, 255), (150, 158, 176))
         if scene == 'partlycloudy': clouds(cl, 0.38, top, under, 0.62, R, density=0.85 if night else 1.0)
-        if scene == 'windy': clouds(cl, 0.28, top, under, 0.7, R, stretch=4.0, density=0.85)
+        if scene == 'windy': clouds(cl, 0.28, top, under, 0.7, R, stretch=5.8, density=0.85)
         front.alpha_composite(lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0), (TX, TY))
     elif scene == 'cloudy':
         sky = grad((28, 32, 44), (52, 56, 70)) if night else grad((138, 148, 162), (196, 202, 210))
@@ -188,7 +188,7 @@ def render(scene, night):
         fog(front, (70, 74, 82) if night else (226, 228, 230), 0.55, 0.3)
     if night: aviation(front)
     name = f"{scene}-{'night' if night else 'day'}"
-    if cl.getbbox(): cl.save(os.path.join(outdir, name + '-clouds.webp'), quality=78, method=4)
+    if cl.getbbox(): cl.save(os.path.join(outdir, name + '-clouds.webp'), quality=cloudlib.WEBP_QUALITY, method=4)
     if CLOUDS_ONLY: return
     sky.convert('RGB').save(os.path.join(outdir, name + '-back.jpg'), quality=84, optimize=True, progressive=True)
     front.save(os.path.join(outdir, name + '-front.webp'), quality=88)
