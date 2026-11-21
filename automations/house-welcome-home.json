@@ -9,52 +9,83 @@
    ],
    "then": [
     {
-     "condition": "state",
-     "entity_id": "alarm_control_panel.home",
-     "note": "never re-arm over an alarm that is going off, counting down, or already arming",
-     "state": [
-      "armed_home",
-      "armed_night",
-      "disarmed"
+     "else": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "welcome-home"
+        },
+        "message": "{{ 'The alarm is ' ~ states('alarm_control_panel.home') ~ ', so the welcome-home note did not arm Away. Use the keypad.' }}",
+        "title": "Alarm NOT armed"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "welcome-home"
+        },
+        "message": "{{ 'The alarm is ' ~ states('alarm_control_panel.home') ~ ', so the welcome-home note did not arm Away. Use the keypad.' }}",
+        "title": "Alarm NOT armed"
+       }
+      }
+     ],
+     "if": [
+      {
+       "condition": "state",
+       "entity_id": "alarm_control_panel.home",
+       "state": [
+        "armed_home",
+        "armed_night",
+        "disarmed"
+       ]
+      }
+     ],
+     "note": "review round 2: an explicit else, never a fall-through into the arrival logic; never re-arm over an alarm that is going off, counting down or already arming",
+     "then": [
+      {
+       "action": "alarm_control_panel.alarm_arm_away",
+       "continue_on_error": true,
+       "target": {
+        "entity_id": "alarm_control_panel.home"
+       }
+      },
+      {
+       "note": "review round 2: arming counts only when it is arming Away",
+       "timeout": "00:00:30",
+       "wait_template": "{{ is_state('alarm_control_panel.home', 'armed_away') or (is_state('alarm_control_panel.home', 'arming') and state_attr('alarm_control_panel.home', 'arm_mode') == 'armed_away') }}"
+      },
+      {
+       "variables": {
+        "ok": "{{ wait.completed }}"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "welcome-home"
+        },
+        "message": "{{ 'Set from the welcome-home note.' if ok else 'Arming Away from the welcome-home note failed; the alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
+        "title": "{{ 'Alarm back on Away' if ok else 'Alarm NOT armed' }}"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_2",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "welcome-home"
+        },
+        "message": "{{ 'Set from the welcome-home note.' if ok else 'Arming Away from the welcome-home note failed; the alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
+        "title": "{{ 'Alarm back on Away' if ok else 'Alarm NOT armed' }}"
+       }
+      }
      ]
-    },
-    {
-     "action": "alarm_control_panel.alarm_arm_away",
-     "continue_on_error": true,
-     "target": {
-      "entity_id": "alarm_control_panel.home"
-     }
-    },
-    {
-     "timeout": "00:00:30",
-     "wait_template": "{{ states('alarm_control_panel.home') in ['arming', 'armed_away'] }}"
-    },
-    {
-     "variables": {
-      "ok": "{{ wait.completed }}"
-     }
-    },
-    {
-     "action": "notify.mobile_app_adult_phone_1",
-     "continue_on_error": true,
-     "data": {
-      "data": {
-       "tag": "welcome-home"
-      },
-      "message": "{{ 'Set from the welcome-home note.' if ok else 'Arming Away from the welcome-home note failed; the alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
-      "title": "{{ 'Alarm back on Away' if ok else 'Alarm NOT armed' }}"
-     }
-    },
-    {
-     "action": "notify.mobile_app_adult_phone_2",
-     "continue_on_error": true,
-     "data": {
-      "data": {
-       "tag": "welcome-home"
-      },
-      "message": "{{ 'Set from the welcome-home note.' if ok else 'Arming Away from the welcome-home note failed; the alarm is ' ~ states('alarm_control_panel.home') ~ '.' }}",
-      "title": "{{ 'Alarm back on Away' if ok else 'Alarm NOT armed' }}"
-     }
     },
     {
      "stop": "Not-us handled"
@@ -117,9 +148,9 @@
    ]
   },
   {
-   "note": "review F1: check the switch really happened; a failed arm after the exit-delay disarm would leave the house disarmed",
+   "note": "review F1 + round 2: success is the target mode, or arming towards it; Away's own exit delay still running (a failed cancel) is a failure",
    "timeout": "00:00:30",
-   "wait_template": "{{ states('alarm_control_panel.home') in [target, 'arming'] }}"
+   "wait_template": "{{ is_state('alarm_control_panel.home', target) or (is_state('alarm_control_panel.home', 'arming') and state_attr('alarm_control_panel.home', 'arm_mode') == target) }}"
   },
   {
    "variables": {
@@ -154,7 +185,7 @@
  ],
  "alias": "House — welcome home",
  "conditions": [],
- "description": "Operator 2026-11-21: the alarm switches back automatically when we come home. When a tracked phone (any of the three people) ARRIVES in the home zone after at least five minutes away and the alarm is Away (or still in Away's exit delay), the alarm goes to Night inside the night schedule (schedule.climate_night) and Home otherwise. Leaving Away also disarms the physical Paradox panel through the alarm sync (1790400000001), so this is an automatic disarm on purpose: it acts only on a real arrival edge (never on a restart, a tracker reconnecting, or a phone that blipped out of the zone for under five minutes) and never touches an alarm that is Home, Night, Disarmed, in an entry delay or going off. After switching it checks the alarm really is Home/Night; if not (the exit-delay path disarms first), both adults get an urgent alert. Both adults get a note saying who arrived, with 'Not us - arm Away' for a phone in the wrong hands; that button arms only from Home, Night or Disarmed and confirms only if it worked. Review 2026-11-21 (RED -> fixed): F1 failed switch after a disarm, F3 unguarded Not-us, F4 GPS blip of a phone left at home. Tests: tests/climate/cases.py (welcome home).",
+ "description": "Operator 2026-11-21: the alarm switches back automatically when we come home. When a tracked phone (any of the three people) ARRIVES in the home zone after at least five minutes away and the alarm is Away (or still in Away's exit delay), the alarm goes to Night inside the night schedule (schedule.climate_night) and Home otherwise. Leaving Away also disarms the physical Paradox panel through the alarm sync (1790400000001), so this is an automatic disarm on purpose: it acts only on a real arrival edge (never on a restart, a tracker reconnecting, or a phone that blipped out of the zone for under five minutes) and never touches an alarm that is Home, Night, Disarmed, in an entry delay or going off. After switching it checks the alarm really is Home/Night; if not (the exit-delay path disarms first), both adults get an urgent alert. Both adults get a note saying who arrived, with 'Not us - arm Away' for a phone in the wrong hands; that button arms only from Home, Night or Disarmed and confirms only if it worked. Review 2026-11-21: round 1 RED (F1 failed switch after a disarm, F3 unguarded Not-us, F4 GPS blip of a phone left at home), round 2 (arming accepted as success; Not-us fall-through) fixed. After a restart a person's away time may count from the restart, so the first arrival can need the keypad (safe direction). Tests: tests/climate/cases.py (welcome home).",
  "id": "1792110000001",
  "max": 5,
  "mode": "queued",

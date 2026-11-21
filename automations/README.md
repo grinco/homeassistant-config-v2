@@ -165,7 +165,12 @@ alarm that is Home, Night or Disarmed, counting down an entry delay, or going of
 After switching it checks the alarm really reached Home or Night. If not (the exit-delay path has
 to disarm before it can arm), both adults get a critical alert saying what state it is in. A phone
 in the wrong hands is the risk left open: the note has a "Not us - arm Away" button for exactly
-that. The button arms only from Home, Night or Disarmed, and confirms only if arming worked.
+that. The button arms only from Home, Night or Disarmed (otherwise it says why it did not), and
+confirms only if arming worked. "Worked" means the target mode, or an exit delay towards it:
+Away's own exit delay still running after a failed cancel counts as a failure, not a success.
+
+After a restart a person's away time may count from the restart, so the first arrival soon after
+one can need the keypad. That is the safe direction and is accepted.
 
 Not covered by a test: the alarm calls, the panel following, the failure alert and the button. The
 decision is tested in `tests/climate/cases.py` (welcome home) against the live expression.
