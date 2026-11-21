@@ -64,7 +64,8 @@ def disc(img, cx, cy, r, color):
     d = ImageDraw.Draw(img); d.ellipse((cx-r, cy-r, cx+r, cy+r), fill=color)
 
 def clouds(img, *args, **kw):
-    """Composite a cloud strip (clouds.strip) onto img, which is SS x the scene size."""
+    """Composite a cloud strip (clouds.strip) onto img, the render's SS-sized cloud layer."""
+    assert img.size == (round(W * cloudlib.SS), round(H * cloudlib.SS)), img.size
     img.alpha_composite(Image.fromarray(cloudlib.strip((W, H), *args, **kw), 'RGBA'))
 
 def overcast(img, color, alpha, seed, ymax=1.0):

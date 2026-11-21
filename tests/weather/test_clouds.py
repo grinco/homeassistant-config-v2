@@ -8,7 +8,8 @@ tower in front of them"):
 - the strip has at least 2 pixels per scene pixel. The card shows a 900 px scene about
   354 CSS px wide, so a 3x phone draws it over ~1060 device px. The tower's hard edges
   survive that upscale; soft cloud edges turn to mush;
-- cloud edges are crisp: the alpha ramp at a cloud's edge spans at most EDGE_MAX scene px.
+- cloud edges are crisp: the alpha ramp at a cloud's edge spans at most EDGE_MAX scene px
+  on average over the strip (a mean, so one soft edge among crisp ones can hide).
   The 1x strips ramped over ~11.5 px, so half of every cloud was semi-transparent fringe;
 - the strip still wraps: its last column meets its first as smoothly as any two
   neighbouring columns do, or the drift shows a seam once per loop.
@@ -63,7 +64,7 @@ def main():
         if not kw.get("deck"):
             r = edge_ramp(s[..., 3].astype(float), ss)
             if r > EDGE_MAX:
-                fails.append("%s: cloud edges fade over %.1f scene px, max %.1f" % (name, r, EDGE_MAX))
+                fails.append("%s: cloud edges fade over %.1f scene px on average, max %.1f" % (name, r, EDGE_MAX))
     for f in fails:
         print("FAIL", f)
     print("%d strip(s) checked, %d failure(s)" % (len(OPEN) + 1, len(fails)))
