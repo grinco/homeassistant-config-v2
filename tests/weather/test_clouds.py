@@ -103,7 +103,7 @@ def main():
             if r > EDGE_MAX:
                 fails.append("%s: cloud edges fade over %.1f scene px on average, max %.1f" % (name, r, EDGE_MAX))
         m = look(s, ss)
-        if name.endswith("-day") or name == "overcast":
+        if name.endswith("-day") or name in ("windy", "overcast"):   # the scenes lit by day
             if m["top"] < TOP_MIN and name != "overcast":
                 fails.append("%s: brightest tops %.0f, need %d (flat grey)" % (name, m["top"], TOP_MIN))
             if m["spread"] < SPREAD_MIN and name != "overcast":
