@@ -84,6 +84,16 @@ by the cloud mass it passes through, so tops are bright and bellies grey; a thir
 re-lights the billows. Overcast scenes use the same code as a closed deck. At night the
 undersides are a little warm, as clouds over a city are lit from below.
 
+**Clouds as sharp as the tower** (operator, 2026-11-21: they looked much lower resolution
+than the tower in front of them). Both layers were 900 px, but the clouds' alpha faded over
+~11 scene px at every edge and was blurred again, so half of each cloud was a soft fringe,
+and soft shapes show upscaling (a 3x phone draws the scene over ~1060 px) where the tower's
+hard edges hide it. The strips are now rendered at 2x (`clouds.SS`) with a ramp under 4
+scene px, and a faint fine-noise field frays the crisp edge into wisps so it does not read
+as a cut-out. `tests/weather/test_clouds.py` locks the resolution, the edge width and the
+seamless wrap; it runs in CI. Cost: an overcast strip is ~650 KB instead of ~175 KB,
+loaded once per scene and cached.
+
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
 layers rather than one picture:
 
@@ -105,9 +115,10 @@ included), so the CSS is generated, not hand-edited:
 ```bash
 python3 tools/weather-scenes/cutout.py src.jpg tower.png 12   # 12 = how far the sky fill may grow
 python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size, tower centre, tower height
+# or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 7 > style.jinja    # 7 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 9 > style.jinja    # 9 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -205,7 +216,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 7
+    # the output of: python3 tools/weather-scenes/card_style.py 9
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or
