@@ -5,9 +5,15 @@ drifts) and <name>-front.webp (the tower). Shared tiles: rain-light, rain-heavy,
 snow-far, wind-day, wind-night (.webp), which tile seamlessly in both directions.
 
     python3 scenes.py tower.png out/ [WxH] [tower centre x] [tower height]
+
+A tower path of '-' writes only the cloud strips (the tower layers stay as deployed).
+The clouds are rendered at clouds.SS x the scene size: soft shapes show upscaling far more
+than the tower's hard edges do, so at 1x they looked blurred next to it.
 """
 import sys, os, random, math, numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageChops
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import clouds as cloudlib
 tower_png, outdir = sys.argv[1], sys.argv[2]
 os.makedirs(outdir, exist_ok=True)
 # size WxH and the tower's horizontal centre as a fraction of the width
@@ -15,28 +21,32 @@ W, H = (int(v) for v in (sys.argv[3] if len(sys.argv) > 3 else '900x620').split(
 TOWER_X = float(sys.argv[4]) if len(sys.argv) > 4 else 0.68
 TOWER_H = float(sys.argv[5]) if len(sys.argv) > 5 else 0.98   # tower height / frame height
 
-# keep only the largest connected opaque component (drops floating sculptures cut off from the tower)
-t = Image.open(tower_png).convert('RGBA')
-a = np.asarray(t)[..., 3] > 128
-lab = np.zeros(a.shape, int); cur = 0; sizes = {}
-from collections import deque
-for y0, x0 in zip(*np.nonzero(a)):
-    if lab[y0, x0]: continue
-    cur += 1; q = deque([(y0, x0)]); lab[y0, x0] = cur; n = 0
-    while q:
-        y, x = q.popleft(); n += 1
-        for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):
-            ny, nx = y+dy, x+dx
-            if 0 <= ny < a.shape[0] and 0 <= nx < a.shape[1] and a[ny, nx] and not lab[ny, nx]:
-                lab[ny, nx] = cur; q.append((ny, nx))
-    sizes[cur] = n
-keep = max(sizes, key=sizes.get)
-arr = np.asarray(t).copy(); arr[..., 3] = np.where(lab == keep, arr[..., 3], 0)
-tower = Image.fromarray(arr)
-th = int(H * TOWER_H); tw = int(tower.width * th / tower.height)
-tower = tower.resize((tw, th), Image.LANCZOS)
-TX, TY = int(W * TOWER_X - tw / 2), H - th + int(H * 0.04)
-_al = np.asarray(tower)[..., 3]; _ty = int(np.nonzero(_al.max(1) > 128)[0][0]); TIP = (TX + int(np.nonzero(_al[_ty + 2] > 128)[0].mean()), TY + _ty)
+CLOUDS_ONLY = tower_png == '-'
+if CLOUDS_ONLY:
+    tower = Image.new('RGBA', (1, 1)); TX = TY = 0; TIP = (0, 0)
+else:
+    # keep only the largest connected opaque component (drops floating sculptures cut off from the tower)
+    t = Image.open(tower_png).convert('RGBA')
+    a = np.asarray(t)[..., 3] > 128
+    lab = np.zeros(a.shape, int); cur = 0; sizes = {}
+    from collections import deque
+    for y0, x0 in zip(*np.nonzero(a)):
+        if lab[y0, x0]: continue
+        cur += 1; q = deque([(y0, x0)]); lab[y0, x0] = cur; n = 0
+        while q:
+            y, x = q.popleft(); n += 1
+            for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):
+                ny, nx = y+dy, x+dx
+                if 0 <= ny < a.shape[0] and 0 <= nx < a.shape[1] and a[ny, nx] and not lab[ny, nx]:
+                    lab[ny, nx] = cur; q.append((ny, nx))
+        sizes[cur] = n
+    keep = max(sizes, key=sizes.get)
+    arr = np.asarray(t).copy(); arr[..., 3] = np.where(lab == keep, arr[..., 3], 0)
+    tower = Image.fromarray(arr)
+    th = int(H * TOWER_H); tw = int(tower.width * th / tower.height)
+    tower = tower.resize((tw, th), Image.LANCZOS)
+    TX, TY = int(W * TOWER_X - tw / 2), H - th + int(H * 0.04)
+    _al = np.asarray(tower)[..., 3]; _ty = int(np.nonzero(_al.max(1) > 128)[0][0]); TIP = (TX + int(np.nonzero(_al[_ty + 2] > 128)[0].mean()), TY + _ty)
 
 def grad(top, bot):
     g = np.linspace(0, 1, H)[:, None, None]
@@ -53,43 +63,9 @@ def glow(img, cx, cy, r, color, strength):
 def disc(img, cx, cy, r, color):
     d = ImageDraw.Draw(img); d.ellipse((cx-r, cy-r, cx+r, cy+r), fill=color)
 
-def _field(seed, stretch, beta, lo=2.0):
-    """Fractal noise (power-law spectrum). The FFT makes it periodic, so the strip wraps."""
-    rng = np.random.default_rng(seed)
-    ky = np.fft.fftfreq(H)[:, None] * H; kx = np.fft.fftfreq(W)[None, :] * W
-    k = np.sqrt((kx * stretch) ** 2 + ky ** 2); k[0, 0] = 1
-    amp = 1 / np.maximum(k, lo) ** (beta / 2); amp[0, 0] = 0
-    f = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((H, W))) * amp))
-    return (f - f.mean()) / f.std()
-
-def _blur(a, sigma):
-    """Gaussian blur done in frequency space, so it keeps the strip seamless."""
-    ky = np.fft.fftfreq(a.shape[0])[:, None]; kx = np.fft.fftfreq(a.shape[1])[None, :]
-    return np.real(np.fft.ifft2(np.fft.fft2(a) * np.exp(-2 * (np.pi * sigma) ** 2 * (kx ** 2 + ky ** 2))))
-
-def clouds(img, cover, top, under, ymax, seed, stretch=1.6, density=1.0, lo=4.0, deck=False):
-    """Clouds as a seamless strip. Fractal billows; light comes from above and fades with the
-    cloud mass it has passed through, so tops are bright and bellies grey, and the billow
-    texture re-lights the bumps. cover: share of sky (0..1); ymax: lowest cloud line as a
-    fraction of the height; top/under: lit and shaded colours; deck: a closed overcast layer."""
-    f = 0.8 * _field(seed, stretch, 3.6, lo=lo) + 0.2 * _field(seed + 1, stretch * 0.8, 3.0, lo=10)
-    yy = np.linspace(0, 1, H)[:, None]
-    f = f - 2.2 * np.clip((yy - ymax * 0.5) / (ymax * 0.5 + 1e-6), 0, 1)   # thin out towards ymax
-    th = np.quantile(f, 1 - cover)
-    a = np.clip((f - th) / 1.1, 0, 1); a = _blur(a * a * (3 - 2 * a), 1.2).clip(0, 1)
-    billow = _blur(_field(seed + 2, stretch * 0.9, 3.0, lo=12), 1.0); billow = np.clip(billow * 0.3 + 0.5, 0, 1)
-    if deck:
-        a = np.clip(0.82 + 0.25 * (f - f.mean()) / f.std(), 0.55, 1)
-    mass = np.zeros_like(a); acc = np.zeros(W)
-    for y in range(H):                        # light used up by the cloud above, ~35 px memory
-        acc = acc * 0.972 + a[y]; mass[y] = acc
-    light = np.exp(-mass / (10 if not deck else 26)) * (0.55 + 0.45 * billow) + 0.22 * billow
-    if not deck:
-        light = light + 0.35 * (1 - a)       # thin edges let the light through
-    shade = 1 - np.clip(light, 0, 1)
-    rgb = np.array(top)[None, None] * (1 - shade[..., None]) + np.array(under)[None, None] * shade[..., None]
-    out = np.dstack([rgb, a * 255 * density]).clip(0, 255).astype(np.uint8)
-    img.alpha_composite(Image.fromarray(out, 'RGBA'))
+def clouds(img, *args, **kw):
+    """Composite a cloud strip (clouds.strip) onto img, which is SS x the scene size."""
+    img.alpha_composite(Image.fromarray(cloudlib.strip((W, H), *args, **kw), 'RGBA'))
 
 def overcast(img, color, alpha, seed, ymax=1.0):
     """A closed deck: alpha never drops below 0.55, but the texture thins towards the bottom,
@@ -178,7 +154,7 @@ def render(scene, night):
     """Three layers: back (sky, sun/moon, stars, bolt), clouds (seamless strip), front
     (tower, fog, obstruction light). Precipitation and wind come from the shared tiles."""
     R = 7  # seed
-    cl = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    cl = Image.new('RGBA', (round(W * cloudlib.SS), round(H * cloudlib.SS)), (0, 0, 0, 0))
     front = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     if scene in ('sunny', 'partlycloudy', 'windy'):
         sky = grad((14, 22, 52), (40, 58, 102)) if night else grad((38, 110, 205), (150, 200, 240))
@@ -211,14 +187,16 @@ def render(scene, night):
         fog(front, (70, 74, 82) if night else (226, 228, 230), 0.55, 0.3)
     if night: aviation(front)
     name = f"{scene}-{'night' if night else 'day'}"
+    if cl.getbbox(): cl.save(os.path.join(outdir, name + '-clouds.webp'), quality=78, method=4)
+    if CLOUDS_ONLY: return
     sky.convert('RGB').save(os.path.join(outdir, name + '-back.jpg'), quality=84, optimize=True, progressive=True)
-    if cl.getbbox(): cl.save(os.path.join(outdir, name + '-clouds.webp'), quality=82)
     front.save(os.path.join(outdir, name + '-front.webp'), quality=88)
 
 SCENES = ['sunny', 'partlycloudy', 'cloudy', 'rainy', 'pouring', 'storm', 'snowy', 'sleet', 'fog', 'windy']
 for s in SCENES:
     for n in (False, True): render(s, n)
 
+if CLOUDS_ONLY: sys.exit(0)
 R = 7
 tiles = {
     'rain-light': rain_tile(26, 60, 170, R),
