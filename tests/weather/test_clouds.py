@@ -52,10 +52,14 @@ KB_MAX = 250
 MIN_CLOUDS = 6       # a floor, not a discriminator: ~60 here, and the noise sheet passed it too
 HOLES_MAX = 0.01     # partly cloudy: 0.1-0.5 % over seeds; 1.5 % if the noise may punch holes
 HOLES_MAX_WINDY = 0.025  # torn wind clouds: up to 2 % over seeds
-BUNCH_MIN = 1.5      # with perspective 1.6-4.7 (distant clouds may merge, which lowers it); without 0.1-0.9
+BUNCH_MIN = 1.5      # with perspective 1.6-4.7 (merged distant clouds count as one, which
+                     # lowers it); without 0.1-0.9. Accepted: a halved perspective could pass
 DECK_DEPTH = 1.35    # new deck 1.6-2.0 over seeds, the flat noise deck ~0.93
-CV_SIZE_MIN = 0.6    # seeds 7-10: 0.63-0.70; the even layout 0.39-0.53
-CLUSTER_MAX = 1.2    # seeds 7, 8, 10: 1.01-1.14; the even layout 1.28-1.46
+# These two guard the SHIPPED strip (seed 7: 0.76 and 1.10), not every seed: over seeds 7-14
+# the random layout scores 0.58-0.76 and 1.02-1.43, so a few seeds overlap the even layout
+# (0.39-0.53, 1.28-1.46 over seeds 7-10). Changing the seed means re-checking these by eye.
+CV_SIZE_MIN = 0.6
+CLUSTER_MAX = 1.2
 EDGE_SOFT = 6.0      # scene px: 7.2-7.8 over seeds; 5.2 without the distance normalisation
 # the scenes.py calls (keep in step with scenes.py; the deck's colours are one example,
 # scenes.py derives them from each scene's colour)
@@ -128,6 +132,8 @@ def variety(rgba):
     size = w / p
     near = p > 0.35 * clouds.HORIZON * mask(rgba).shape[0]
     pts = np.c_[(xc / p)[near], np.log(p[near])]
+    if len(pts) < 5:
+        return size.std() / size.mean(), float("nan")   # too few to judge: main() fails it
     def nn(P):
         d = np.sqrt(((P[:, None, :] - P[None, :, :]) ** 2).sum(-1)); np.fill_diagonal(d, np.inf)
         return d.min(1).mean()
@@ -219,7 +225,9 @@ def main():
             cs, cr = variety(s)
             if cs < CV_SIZE_MIN:
                 fails.append("%s: cloud sizes vary by %.2f (CV), want %.2f: all the same size" % (name, cs, CV_SIZE_MIN))
-            if cr > CLUSTER_MAX:
+            if not np.isfinite(cr):
+                fails.append("%s: under 5 near clouds, spacing cannot be judged" % name)
+            elif cr > CLUSTER_MAX:
                 fails.append("%s: spacing %.2f of random, want at most %.2f: too even" % (name, cr, CLUSTER_MAX))
         r = edge_ramp(s, ss)
         if r < EDGE_SOFT:
