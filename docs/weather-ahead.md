@@ -91,8 +91,8 @@ because each step was a confident fix of the wrong thing:
    with holes, and it has no depth.
 
 So `clouds.py` now places **separate clouds on a horizontal layer and projects them**. A
-cloud whose flat base sits p px above the horizon (0.72 of the height, hidden behind the
-city) is at a distance proportional to 1/p, so its size scales with p. Uniform placement in
+cloud whose flat base sits p px above the horizon (the bottom edge: seen from below, the sky runs down to the skyline; at first it was
+0.72 of the height, and the operator pointed out the clouds then stopped short) is at a distance proportional to 1/p, so its size scales with p. Uniform placement in
 distance makes clouds small and crowded towards the skyline and large overhead. Distant
 clouds show a lit dome on a flat base; overhead ones show their grey underside; distance
 lowers their contrast and thins them into the haze. Each cloud keeps the original fractal
@@ -114,7 +114,8 @@ stay apart. Tall clouds keep rounded domes: pointed ones were tried and read as 
 The drift is about 1.7x slower than before (operator: a little too fast): 150 s per loop
 partly cloudy, 270 s overcast and rain, 50 s windy.
 
-`tests/weather/test_clouds.py` (CI) locks: at least 6 separate clouds and under 1 % enclosed
+`tests/weather/test_clouds.py` (CI) locks: cloud in the band just above the skyline; at least
+6 separate clouds and under 1 % enclosed
 sky (2.5 % for torn wind clouds); a size spread (CV >= 0.6) and near clouds not evenly
 spaced; 1.5x more separate clouds just above the skyline than near the top,
 a deck texture finer near the horizon; soft edges
@@ -147,7 +148,7 @@ python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size
 # or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 13 > style.jinja   # 13 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 14 > style.jinja   # 14 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -245,7 +246,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 13
+    # the output of: python3 tools/weather-scenes/card_style.py 14
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or

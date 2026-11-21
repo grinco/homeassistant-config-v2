@@ -162,8 +162,8 @@ def render(scene, night):
         if night: stars(sky, R)
         # at night clouds over the city are lit from below (orange street light), not from above
         top, under = ((52, 58, 78), (82, 74, 80)) if night else ((255, 255, 255), (150, 158, 176))
-        if scene == 'partlycloudy': clouds(cl, 0.3, top, under, 0.7, R, density=0.85 if night else 1.0)
-        if scene == 'windy': clouds(cl, 0.28, top, under, 0.7, R, stretch=3.0, density=0.85)
+        if scene == 'partlycloudy': clouds(cl, 0.3, top, under, 1.0, R, density=0.85 if night else 1.0)
+        if scene == 'windy': clouds(cl, 0.28, top, under, 1.0, R, stretch=3.0, density=0.85)
         front.alpha_composite(lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0), (TX, TY))
     elif scene == 'cloudy':
         sky = grad((28, 32, 44), (52, 56, 70)) if night else grad((138, 148, 162), (196, 202, 210))
