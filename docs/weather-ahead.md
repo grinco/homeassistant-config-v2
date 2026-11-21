@@ -77,42 +77,51 @@ each scene, and at night the red obstruction light on the antenna is on.
 and already shows one, so a painted one overlapped it. A clear sky is just the sky: blue by
 day, dark with stars by night.
 
-**Clouds are fractal noise, not shapes** (operator, 2026-11-13: the earlier blurred
-ellipses looked cartoonish). `clouds()` sums two power-law noise fields made by FFT, which
-are periodic, so the strip still wraps for the drift. Light comes from above and is used up
-by the cloud mass it passes through, so tops are bright and bellies grey; a third field
-re-lights the billows. Overcast scenes use the same code as a closed deck. At night the
-undersides are a little warm, as clouds over a city are lit from below.
+**Clouds: separate, soft, in perspective** (operator, 2026-11-21). The history matters,
+because each step was a confident fix of the wrong thing:
 
-**Clouds as sharp as the tower** (operator, 2026-11-21: they looked much lower resolution
-than the tower in front of them). Two rounds. Sharper edges and a 2x strip (PR #40) were not
-enough: the operator saw no change. A 3x screenshot of the live card, measured, showed why:
+1. 2026-11-13: blurred ellipses looked cartoonish, so the sky became thresholded fractal
+   noise.
+2. 2026-11-21: "the clouds look much lower resolution than the tower". Sharper edges and a
+   2x strip (#40), then bump-lit billows and a fix for noise stretched 2.3:1 sideways (#41).
+   The operator: "even uglier... like cheese".
+3. The operator then named the real problem: they liked the original soft look best, but
+   the clouds "look 2D, not aligned with the skyline", and "they need to be distinct
+   clouds, not one cloud with holes". Thresholded noise cannot do either: it is one sheet
+   with holes, and it has no depth.
 
-| live card, 3x | tower | clouds before | clouds after |
-|---|---|---|---|
-| tonal range (p5-p95) | 40-212 | 63-123 | 63-158 |
-| fine detail (mean abs Laplacian) | 8-12 | 2.3 | 5.7 |
-| horizontal / vertical detail | | 0.57 | 0.80 |
+So `clouds.py` now places **separate clouds on a horizontal layer and projects them**. A
+cloud whose flat base sits p px above the horizon (0.72 of the height, hidden behind the
+city) is at a distance proportional to 1/p, so its size scales with p. Uniform placement in
+distance makes clouds small and crowded towards the skyline and large overhead. Distant
+clouds show a lit dome on a flat base; overhead ones show their grey underside; distance
+lowers their contrast and thins them into the haze. Each cloud keeps the original fractal
+texture, scaled to its own size, with the original soft edges (the edge ramp is set in real
+pixels: the outline noise made the raw distance field so steep that any softness setting
+gave a crisp edge). Clouds are kept apart with room for their frayed outline, so two never
+close a pocket of sky. An overcast deck is the same layer packed with overlapping rolls
+over a fill; the rolls fade out together above the skyline (dozens of distant ones
+overlap there, and stopped in a hard line until they did).
 
-- **Flat grey.** Light from above was used up within ~10 px of cloud, so nearly every pixel
-  was the shaded colour. Now the light reaches ~22 scene px in, and a **billow height field**
-  (|band-pass noise| summed over four octaves: rounded lobes, sharp creases) is lit by a high
-  sun, so each lobe has a white top and a grey underside; undersides of the whole cloud
-  shade too. The height field is smoothed by ~1 scene px: unsmoothed, the creases ring down
-  to the pixel and read as sand. An overcast deck uses the same octaves signed (smooth rolls,
-  no creases) and half the relief: a deck is seen from below.
-- **Stretched sideways.** `_field` counted horizontal frequencies per strip *width* and
-  vertical per *height*; on the 1.45:1 strip every field was 1.45x wider than tall, and the
-  partly cloudy stretch of 1.6 made it 2.3:1, which is what a stretched, upscaled image looks
-  like. Both now count per strip height; partly cloudy is 1.1:1, and windy (5.8) and overcast
-  (3.5) were rescaled to keep their old look.
-- **Resolution** is back down to 1.2x (1080 px; a 3x phone needs ~1060): the detail now lives
-  in the lighting, not in pixels. Strips are 110-230 KB (the 2x ones were up to 650 KB).
+**Random, like real clouds** (operator, same day: "still a little cartoonish... all clouds
+are more or less the same shape and size, real clouds are random", and the distribution
+"doesn't seem natural, especially in the distance"). Sizes are log-normal (many small, a
+few big), each cloud is one to three lobes with its own height and fraying, and clouds
+gather in a few clusters on the layer with clear sky between. Distant clouds may overlap
+on screen, as they do in a real sky, and merge into bands towards the skyline; near ones
+stay apart. Tall clouds keep rounded domes: pointed ones were tried and read as cartoons.
 
-`tests/weather/test_clouds.py` (CI) locks each of these on the strip itself: brightest tops,
-light-to-shade spread, fine detail within a band (too little is mush, too much is sand),
-shape anisotropy, encoded size, edge width, resolution and the seamless wrap. Removing the
-relief, the smoothing or the frequency fix each turns it red.
+The drift is about 1.7x slower than before (operator: a little too fast): 150 s per loop
+partly cloudy, 270 s overcast and rain, 50 s windy.
+
+`tests/weather/test_clouds.py` (CI) locks: at least 6 separate clouds and under 1 % enclosed
+sky (2.5 % for torn wind clouds); a size spread (CV >= 0.6) and near clouds not evenly
+spaced; 1.5x more separate clouds just above the skyline than near the top,
+a deck texture finer near the horizon; soft edges
+(at least 6 scene px); the seamless wrap; 1.2x resolution; at most 250 KB per strip.
+The old noise sheet fails 11 of these. Not covered by a test, checked by eye on all 16
+strips: the deck's fade above the skyline, shape variety, and the clustering itself (the
+spacing check catches an even layout, not clusters taken out of a random one).
 
 Since 2026-11-12 the scene is animated (the operator asked for it), so each one is drawn as
 layers rather than one picture:
@@ -120,7 +129,7 @@ layers rather than one picture:
 | layer | element | motion |
 |---|---|---|
 | `<scene>-<dn>-back.jpg`: sky, stars, bolt | `ha-card` background | none |
-| `<scene>-<dn>-clouds.webp`: a strip that wraps left to right | `ha-card::before`, 200 % wide | `transform` drift: 90 s per loop (partly cloudy), 30 s (windy), 160 s (overcast); storms also flash every 7 s |
+| `<scene>-<dn>-clouds.webp`: a strip that wraps left to right | `ha-card::before`, 200 % wide | `transform` drift: 150 s per loop (partly cloudy), 50 s (windy), 270 s (overcast and rain); storms also flash every 7 s |
 | precipitation tiles `rain-light`, `rain-heavy`, `snow-near`, `snow-far`, `wind-day/night` | `ha-card::after` | `background-position`; rain falls on a 1:4 slant and snow sways, each loop an exact number of tiles, so there is no seam |
 | scrim and `<scene>-<dn>-front.webp`: the tower, fog, obstruction light | `ha-card::after`, under the tiles | none |
 | `glass-<kind>.webp`: drops and flakes landing on the screen | `ha-card::after`, topmost | a looping animated WebP (8 s); drops splat in, stick, then run down under gravity with a sideways wind drift and a thinning wet trail, and evaporate; flakes slide with the wind, melt into a drop and vanish |
@@ -138,7 +147,7 @@ python3 tools/weather-scenes/scenes.py tower.png out/ 900x620 0.68 0.98   # size
 # or, without the tower source: python3 tools/weather-scenes/scenes.py - out/ 900x620  (cloud strips only)
 python3 tools/weather-scenes/glass.py out/                    # about 20 s
 sudo install -m 644 out/* /usr/share/hassio/homeassistant/www/zizkov/anim/
-python3 tools/weather-scenes/card_style.py 10 > style.jinja   # 10 = the ?v= cache-buster
+python3 tools/weather-scenes/card_style.py 13 > style.jinja   # 13 = the ?v= cache-buster
 ```
 
 After regenerating anything, bump the version: `/local/` is cached for 31 days. Then paste
@@ -236,7 +245,7 @@ show_current: true
 show_forecast: true
 card_mod:
   style: |
-    # the output of: python3 tools/weather-scenes/card_style.py 10
+    # the output of: python3 tools/weather-scenes/card_style.py 13
 ```
 
 The style picks `scene` from `sensor.weather_ahead` (falling back to cloudy) and day or

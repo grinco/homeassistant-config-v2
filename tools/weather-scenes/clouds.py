@@ -1,112 +1,204 @@
-"""Cloud strips for the weather card: fractal noise, lit from above, seamless left to right.
+"""Cloud strips for the weather card: separate soft clouds on a layer above the city, seen in
+perspective, seamless left to right.
 
 Pure numpy, no tower and no command line, so tests/weather/test_clouds.py can import it.
+
+Why objects and not a noise sheet (operator, 2026-11-21): a thresholded noise field is one
+cloud full of holes, and it is flat; the clouds "looked 2D, not aligned with the skyline".
+Here each cloud is placed on a horizontal layer and projected: a cloud whose flat base sits
+p px above the horizon on screen is at a distance proportional to 1/p, so its size scales
+with p. Distant clouds are small, low, and seen from the side (a lit dome on a flat base);
+clouds overhead are large and seen from below (mostly grey underside). Distance also fades
+them into the haze. The soft edges and gentle light are the original look the operator
+preferred to every sharper version.
 """
 import numpy as np
 
-EDGE_RAMP = 0.4   # alpha ramp at an edge, in field std (was 1.1: edges were ~11 scene px of fringe)
-EDGE_DETAIL = 0.06   # weight of the fine field that frays the edges
-FINE_LO = 25         # its coarsest wave, in cycles per strip height (lower = bigger wisps)
 WEBP_QUALITY = 78
-MACRO_PX = 22   # how far light from above reaches into a cloud, scene px
-BASE_PX = 10     # depth of the shaded underside, scene px
-HGT_BLUR = 0.8   # scene px
-DECK_BUMP = 0.5  # an overcast deck is flatter-lit than a cumulus
-BUMP = 8        # slope gain of the billow height field
-SS = 1.2   # the strip is rendered at SS x the scene size (tests/weather/test_clouds.py)
+SS = 1.2          # strip px per scene px: a 3x phone draws the 900 px scene over ~1060 px
+HORIZON = 0.72    # the horizon, as a fraction of the height from the top: behind the city,
+                  # under the scrim and the tower's base
+WIDTH_K = 0.6    # cloud width / its base's height above the horizon (both on screen)
+DOME = 0.42       # height of a distant cloud's lit dome / its width
+UNDER = 0.20      # depth of an overhead cloud's visible underside / its width
+SOFT_K = 0.16    # edge softness / cloud width
+SOFT_MIN = 6.0    # scene px
+MIN_COUNT = 25    # a few big clouds must not use up the whole sky
+FRAY = 0.14       # how much the outline billows, / cloud width
 
 
-def _field(shape, seed, stretch, beta, lo=2.0):
-    """Fractal noise (power-law spectrum). The FFT makes it periodic, so the strip wraps.
-    Frequencies count cycles per strip HEIGHT in both directions, so stretch=1 is round in
-    pixels. (Until 2026-11-21 kx counted cycles per strip width: on the 1.45:1 strip every
-    field came out 1.45x wider than tall, and the partly cloudy 1.6 meant 2.3:1, which read
-    as an image stretched sideways.)"""
+def _field(shape, seed, beta, lo=2.0):
+    """Fractal noise (power-law spectrum), unit std, periodic in both directions. Frequencies
+    count cycles per patch HEIGHT both ways, so it is round in pixels."""
     H, W = shape
     rng = np.random.default_rng(seed)
     ky = np.fft.fftfreq(H)[:, None] * H; kx = np.fft.fftfreq(W)[None, :] * H
-    k = np.sqrt((kx * stretch) ** 2 + ky ** 2); k[0, 0] = 1
+    k = np.sqrt(kx ** 2 + ky ** 2); k[0, 0] = 1
     amp = 1 / np.maximum(k, lo) ** (beta / 2); amp[0, 0] = 0
     f = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((H, W))) * amp))
     return (f - f.mean()) / f.std()
 
 
-def _band(shape, seed, k0, stretch=1.0):
-    """Band-pass noise around k0 cycles per strip height (one octave wide), unit std.
-    Periodic like _field, so the strip still wraps."""
-    H, W = shape
-    rng = np.random.default_rng(seed)
-    ky = np.fft.fftfreq(H)[:, None] * H; kx = np.fft.fftfreq(W)[None, :] * H
-    k = np.sqrt((kx * stretch) ** 2 + ky ** 2)
-    amp = np.exp(-0.5 * (np.log2(np.maximum(k, 1e-6) / k0) / 0.5) ** 2)
-    f = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((H, W))) * amp))
-    return f / f.std()
-
-
-def billows(shape, seed, octaves=(4, 8, 16, 32), stretch=1.0, crease=True):
-    """Billow noise: |band-pass| summed over octaves. Each zero crossing becomes a crease and
-    each lobe a rounded hump, so the height field looks like cumulus cauliflower. Without
-    crease the octaves add signed: smooth rolls, the underside of a deck."""
-    h = np.zeros(shape)
-    for i, k0 in enumerate(octaves):
-        b = _band(shape, seed + 10 * i, k0, stretch)
-        h += 0.3 ** i * (np.abs(b) if crease else 0.6 * b)
-    return h
-
-
 def _blur(a, sigma):
-    """Gaussian blur done in frequency space, so it keeps the strip seamless."""
+    """Gaussian blur in frequency space (periodic, like the fields)."""
     ky = np.fft.fftfreq(a.shape[0])[:, None]; kx = np.fft.fftfreq(a.shape[1])[None, :]
     return np.real(np.fft.ifft2(np.fft.fft2(a) * np.exp(-2 * (np.pi * sigma) ** 2 * (kx ** 2 + ky ** 2))))
 
 
-def strip(size, cover, top, under, ymax, seed, stretch=1.1, density=1.0, lo=4.0, deck=False):
-    """An RGBA array (H, W, 4) of clouds for a scene of size (W, H), at SS x that size.
-    cover: share of sky (0..1); ymax: lowest cloud line as a fraction of the height;
-    top/under: lit and shaded colours; deck: a closed overcast layer.
+def _smooth(x):
+    x = np.clip(x, 0, 1)
+    return x * x * (3 - 2 * x)
 
-    Shape: fractal noise thresholded into crisp, fraying edges. Light, two parts:
-    - macro: light from above is used up by the cloud mass it passes through, so tops are
-      bright and bellies grey (the memory is in scene px, so SS does not change it);
-    - bumps: a fine height field lit by a sun high in the sky, so every billow has a lit
-      top and a shaded underside. This is what gives the cloud the tower's crispness;
-      the macro term alone left a flat grey (tests/weather/test_clouds.py)."""
-    W, H = round(size[0] * SS), round(size[1] * SS)
-    shape = (H, W)
-    f = 0.8 * _field(shape, seed, stretch, 3.6, lo=lo) + 0.2 * _field(shape, seed + 1, stretch * 0.8, 3.0, lo=10)
-    # fine detail, so a sharp edge frays into wisps instead of a smooth cut-out outline
-    fine = _field(shape, seed + 3, stretch * 0.7, 2.2, lo=FINE_LO)
-    body = f                                  # without the fray: it is pixel-fine and would grain the light
-    f = f + EDGE_DETAIL * fine
-    yy = np.linspace(0, 1, H)[:, None]
-    f = f - 2.2 * np.clip((yy - ymax * 0.5) / (ymax * 0.5 + 1e-6), 0, 1)   # thin out towards ymax
-    th = np.quantile(f, 1 - cover)
-    a = np.clip((f - th) / EDGE_RAMP, 0, 1); a = _blur(a * a * (3 - 2 * a), 0.5 * SS).clip(0, 1)
-    if deck:
-        a = np.clip(0.82 + 0.25 * (f - f.mean()) / f.std(), 0.55, 1)
-    # macro light: memory MACRO_PX scene px
-    mass = np.zeros_like(a); acc = np.zeros(W); keep = np.exp(-1 / (MACRO_PX * SS))
-    for y in range(H):
+
+def _shape(rng):
+    """A random cloud's character: no two alike (operator: "real clouds are random").
+    tall: height over a typical cumulus; lobes: (centre, half-width, height) of the one to
+    three domes it is built from, across -1..1; fray: how torn its outline is."""
+    n = int(rng.choice([1, 2, 2, 3, 3]))
+    lobes = []
+    for i in range(n):
+        c = 0.0 if n == 1 else rng.uniform(-0.55, 0.55)
+        hw = min(rng.uniform(0.45, 1.0), 1 - abs(c)) if n > 1 else 1.0   # stays within the width
+        lobes.append((c, hw, rng.uniform(0.45, 1.0) if i else 1.0))
+    return dict(tall=float(np.clip(np.exp(rng.normal(0, 0.4)), 0.5, 1.7)), lobes=lobes, fray=FRAY * rng.uniform(0.6, 1.5))
+
+
+def _cloud(w, t, aspect, rng, top, under, deck=False, shape=None):
+    """One cloud: premultiplied RGB, alpha, and the row of its flat bottom in the patch.
+    w: width (px); t: nearness, 0 at the lowest base line to 1 overhead; aspect: >1 flattens
+    (wind, decks); shape: from _shape (a plain dome if None)."""
+    shape = shape or dict(tall=1.0, lobes=[(0.0, 1.0, 1.0)], fray=FRAY)
+    aspect = aspect / shape["tall"]
+    dome = w * DOME * (1 - 0.65 * t) / aspect        # seen from the side far away, hidden overhead
+    und = w * UNDER * t / aspect                      # the flat base, foreshortened: thin far away
+    hgt = dome + und
+    pw, ph = int(w * 1.6) + 8, int(hgt * 1.6 + w * 0.3) + 8
+    cx, yb = pw / 2, ph - w * 0.08 - 4                # yb: the flat bottom line
+    Y, X = np.mgrid[0:ph, 0:pw].astype(float)
+    u = (X - cx) / (w / 2)
+    v = (yb - Y) / max(hgt, 1)                         # 0 at the base, 1 at the top of the dome
+    # outline: a dome over a flat base, billowed by noise whose features scale with the cloud
+    # the original sky's fractal texture, scaled to this cloud: big billows plus finer wisps,
+    # with the finest scale tied to the cloud's size so a near cloud is not jagged
+    seed = int(rng.integers(1 << 30)); lo = max(ph / (w * 0.6), 1.5)
+    n = 0.75 * _field((ph, pw), seed, 3.6, lo=lo) + 0.25 * _field((ph, pw), seed + 1, 2.6, lo=lo * 3)
+    n = _blur(n, 0.008 * w); n = n / n.std()
+    billow = _blur(_field((ph, pw), seed + 2, 3.0, lo=lo * 2), 0.01 * w); billow = billow / billow.std()
+    # domes, finite slope at their sides (a |1-u^2|^0.55 dome drew a line at u = +-1); the
+    # lobes are joined with a soft maximum so the outline has no creases
+    e = 2.2                                            # rounded domes: pointed ones read as cartoons
+    parts = [hl * (1 - np.abs((u - c) / hw) ** e) for c, hw, hl in shape["lobes"]]
+    env = 0.12 * np.logaddexp.reduce(np.array(parts) / 0.12, axis=0)   # stable soft maximum
+    side = np.clip(v * 2.5, 0.25, 1)                   # the base stays flat, the dome billows
+    depth = np.minimum((env - v) * hgt, v * hgt)       # px inside the plain outline
+    reach = np.clip(1 - depth / (0.12 * w), 0.15, 1)    # the noise frays the edge, never punches holes
+    d1, d2, k = (env - v) * hgt + shape["fray"] * w * n * side * reach, v * hgt + 0.03 * w * n, 0.06 * w
+    d = -k * np.logaddexp(-d1 / k, -d2 / k)            # a soft minimum: the base's corners are round
+    soft = max(SOFT_K * w, SOFT_MIN * SS)
+    gy, gx = np.gradient(d)
+    slope = _blur(np.hypot(gx, gy), 0.03 * w)          # smoothed, or its ridges draw marbled lines
+    d = d / np.maximum(slope, 1)                       # px to the edge: the noise makes d steep, and
+    a = _smooth(d / soft + 0.4)                        # without this the edge was crisp at any soft
+    edge = np.minimum(np.minimum(X, pw - 1 - X) / (0.08 * pw), np.minimum(Y, ph - 1 - Y) / (0.08 * ph))
+    a = a * _smooth(edge)                              # nothing reaches the patch border: no cut lines
+    # light from above, used up by the cloud it passes (memory: a third of the cloud's height)
+    mass = np.zeros_like(a); acc = np.zeros(pw); keep = np.exp(-1 / max(hgt * 0.35, 1))
+    for y in range(ph):
         acc = acc * keep + a[y]; mass[y] = acc
-    macro = np.exp(-mass / ((MACRO_PX if not deck else 2.5 * MACRO_PX) * SS))
-    # bumps: billows at two scales, slopes per scene px, sun up and a little left
-    # a deck's rolls are soft and only a little wider than tall; its stretch shapes the gaps
-    hgt = billows(shape, seed + 2, stretch=min(stretch, 1.6) if deck else stretch, crease=not deck) + 0.5 * (body - th)   # the body bulges too
-    hgt = _blur(hgt, HGT_BLUR * SS)          # |.| creases ring down to the pixel: that read as sand
-    gy, gx = np.gradient(hgt)
-    gain = BUMP * (DECK_BUMP if deck else 1)
-    gy, gx = gy * SS * gain, gx * SS * gain
-    ndl = (0.25 * gx + 0.85 * gy + 0.45) / np.sqrt(1 + gx ** 2 + gy ** 2)   # -h' . (-0.25, -0.85) + lz
-    ndl = np.clip(ndl, 0, 1)
-    light = (0.35 + 0.65 * macro) * (0.25 + 1.55 * ndl)
-    if not deck:
-        # bases: little cloud below a point means it is near the underside, which is in shade
-        below = np.zeros_like(a); acc = np.zeros(W); keep_b = np.exp(-1 / (BASE_PX * SS))
-        for y in range(H - 1, -1, -1):
-            acc = acc * keep_b + a[y]; below[y] = acc
-        light = light * (1 - 0.4 * np.exp(-below / (BASE_PX * SS)))
-    if not deck:
-        light = light + 0.3 * (1 - a)        # thin edges let the light through
+    light = np.exp(-mass / max(hgt * 0.3, 1)) * (0.75 + 0.25 * np.tanh(billow)) + 0.12 * np.tanh(billow) + 0.3 * (1 - a)
+    # the underside is in shade, blending into the lit dome over a tenth of the cloud's height
+    light = light * (1 - 0.45 * _smooth((und / max(hgt, 1) - v) / 0.1 + 0.5))
+    light = 0.5 + (np.clip(light, 0, 1) - 0.5) * (0.45 + 0.55 * t)  # far away: lower contrast
+    if deck:                                           # rolls: low contrast, gone into the haze at the horizon
+        light = 0.5 + (light - 0.5) * 0.6
+        a = a * 0.85 * np.sqrt(t)
+    else:
+        a = a * (0.55 + 0.45 * np.sqrt(t))             # haze: distant clouds thin out
     shade = 1 - np.clip(light, 0, 1)
     rgb = np.array(top)[None, None] * (1 - shade[..., None]) + np.array(under)[None, None] * shade[..., None]
-    return np.dstack([rgb, a * 255 * density]).clip(0, 255).astype(np.uint8)
+    return rgb * a[..., None], a, yb
+
+
+def _overlap(a, b, W):
+    """Overlap of two boxes as a share of the smaller, with the strip wrapping."""
+    best = 0.0
+    for s in (-W, 0, W):
+        ix = max(0, min(a[2], b[2] + s) - max(a[0], b[0] + s))
+        iy = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+        area = min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]))
+        best = max(best, ix * iy / max(area, 1))
+    return best
+
+
+def strip(size, cover, top, under, ymax, seed, stretch=1.0, density=1.0, deck=False):
+    """An RGBA array (H, W, 4) of clouds for a scene of size (W, H), at SS x that size.
+    cover: share of the sky band covered; ymax: the lowest cloud base, as a fraction of the
+    height; top/under: lit and shaded colours; stretch: cloud width/height relative to a
+    cumulus (wind, decks); deck: a closed overcast layer of many overlapping clouds."""
+    W, H = round(size[0] * SS), round(size[1] * SS)
+    rng = np.random.default_rng(seed)
+    yh = HORIZON * H
+    p_lo, p_hi = max(yh - ymax * H, 0.05 * H), yh * 1.04   # base heights above the horizon
+    aspect = stretch ** 0.5
+    placed, covered = [], 0.0
+    target = cover * W * ymax * H * (2.5 if deck else 1.0)
+    # clouds come in groups with clear sky between (an even scatter read as cartoonish):
+    # a few clusters on the layer, each spread in proportion to its distance on screen
+    lp_lo, lp_hi = np.log(p_lo), np.log(p_hi)
+    clusters = [(rng.uniform(0, W), rng.uniform(lp_lo, lp_hi), rng.uniform(0.4, 1.1), rng.uniform(0.1, 0.25))
+                for _ in range(int(rng.integers(5, 9)))]
+    def crowd(x, p):
+        d = 0.0
+        for cx, clp, sx, slp in clusters:
+            dx = (x - cx + W / 2) % W - W / 2
+            d += np.exp(-0.5 * ((dx / (sx * p)) ** 2 + ((np.log(p) - clp) / slp) ** 2))
+        return d
+    for _ in range(60000):
+        if covered >= target and len(placed) >= (0 if deck else MIN_COUNT):
+            break
+        p = 1 / rng.uniform(1 / p_hi, 1 / p_lo)         # uniform in distance ~ 1/p
+        x = rng.uniform(0, W)
+        if not deck and rng.uniform() > 0.02 + crowd(x, p):
+            continue
+        # sizes are log-normal: many small clouds and a few big ones
+        w = WIDTH_K * p * aspect * float(np.clip(np.exp(rng.normal(-0.2, 0.75)), 0.25, 2.0))
+        if int(w * 1.6) + 8 > W:                       # its patch would not fit the strip
+            continue
+        shape = _shape(rng)
+        yb = yh - p
+        box = (x - w / 2, yb - w * 0.45 * shape["tall"] / aspect, x + w / 2, yb)
+        # keep apart with room for the frayed outline, so two clouds never close a pocket of sky
+        pad = (box[0] - 0.12 * w, box[1] - 0.1 * w, box[2] + 0.12 * w, box[3])
+        # near clouds stay apart; distant ones may overlap on screen, as they do in a real sky,
+        # where they are far apart in depth and merge into bands towards the skyline
+        t = (p - p_lo) / (p_hi - p_lo)
+        if not deck and any(_overlap(pad, b, W) > 0.04 + 0.3 * (1 - t) ** 3 for b, _ in placed):
+            continue
+        placed.append((box, shape)); covered += w * w * 0.3 * shape["tall"] / aspect
+    acc_rgb = np.zeros((H, W, 3)); acc_a = np.zeros((H, W))
+    for box, shape in sorted(placed, key=lambda b: -b[0][3]):   # far (low on screen) first, near last
+        x0, _, x1, base = box; w = x1 - x0
+        t = np.clip((yh - base - p_lo) / (p_hi - p_lo), 0, 1)
+        rgb, a, yb = _cloud(w, t, aspect, rng, top, under, deck, shape)
+        ph, pw = a.shape
+        oy, ox = int(round(base - yb)), int(round((x0 + x1) / 2 - pw / 2))
+        y0, y1 = max(oy, 0), min(oy + ph, H)
+        if y0 >= y1:
+            continue
+        rows, cols = np.arange(y0, y1), (np.arange(pw) + ox) % W   # wrap left to right
+        r, al = rgb[y0 - oy:y1 - oy], a[y0 - oy:y1 - oy]
+        ix = np.ix_(rows, cols)
+        acc_rgb[ix] = r + acc_rgb[ix] * (1 - al[..., None])
+        acc_a[ix] = al + acc_a[ix] * (1 - al)
+    if deck:
+        # dozens of distant rolls overlap near the skyline, so together they stay opaque and
+        # would stop in a hard line: fade them out together over the last band above it
+        fade = _smooth((yh - 0.06 * H - np.arange(H)) / (0.18 * H))[:, None]
+        acc_rgb, acc_a = acc_rgb * fade[..., None], acc_a * fade
+        # the deck itself: a closed fill behind the rolls, a little lighter towards the horizon
+        g = np.linspace(0, 1, H)[:, None, None]
+        fill = np.array(under, float) * (1 - 0.35 * g) + np.array(top, float) * 0.35 * g
+        acc_rgb = acc_rgb + fill * 0.88 * (1 - acc_a[..., None])
+        acc_a = acc_a + 0.88 * (1 - acc_a)
+    rgb = acc_rgb / np.maximum(acc_a[..., None], 1e-6)
+    return np.dstack([rgb, acc_a * 255 * density]).clip(0, 255).astype(np.uint8)

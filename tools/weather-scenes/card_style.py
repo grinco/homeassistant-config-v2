@@ -15,7 +15,7 @@ Everything stops under prefers-reduced-motion: the glass swaps to a still frame.
 """
 import sys
 
-V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '10'
+V = sys.argv[1] if __name__ == '__main__' and len(sys.argv) > 1 else '13'
 URL = "/local/zizkov/anim/%s.%s?v=" + V
 TILE = 200            # CSS px a 400 px tile is shown at
 STOPS = (0, 25, 50, 75, 100)
@@ -25,15 +25,15 @@ RAIN_L, RAIN_H = ('rain-light', (1, 4, 0)), ('rain-heavy', (1, 4, 0))
 SCENES = {
     #             clouds drift (s)  loop (s)  layers, front to back
     'sunny':        (0,   0, []),
-    'partlycloudy': (90,  0, []),
-    'cloudy':       (160, 0, []),
+    'partlycloudy': (150, 0, []),
+    'cloudy':       (270, 0, []),
     'fog':          (0,   0, []),
-    'windy':        (30,  3, [('wind-DN', (2, 0, 0))]),
-    'rainy':        (160, 1.4, [RAIN_L]),
-    'pouring':      (160, 2, [('rain-heavy', (2, 8, 0)), ('rain-light', (1, 4, 0))]),
-    'storm':        (160, 2, [('rain-heavy', (2, 8, 0)), ('rain-light', (1, 4, 0))]),
-    'sleet':        (160, 4, [('rain-light', (2, 8, 0)), ('snow-near', (0, 1, 10))]),
-    'snowy':        (160, 10, [('snow-near', (0, 2, 14)), ('snow-far', (0, 1, 6))]),
+    'windy':        (50,  3, [('wind-DN', (2, 0, 0))]),
+    'rainy':        (270, 1.4, [RAIN_L]),
+    'pouring':      (270, 2, [('rain-heavy', (2, 8, 0)), ('rain-light', (1, 4, 0))]),
+    'storm':        (270, 2, [('rain-heavy', (2, 8, 0)), ('rain-light', (1, 4, 0))]),
+    'sleet':        (270, 4, [('rain-light', (2, 8, 0)), ('snow-near', (0, 1, 10))]),
+    'snowy':        (270, 10, [('snow-near', (0, 2, 14)), ('snow-far', (0, 1, 6))]),
 }
 
 
