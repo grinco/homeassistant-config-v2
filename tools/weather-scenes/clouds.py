@@ -202,3 +202,44 @@ def strip(size, cover, top, under, ymax, seed, stretch=1.0, density=1.0, deck=Fa
         acc_a = acc_a + 0.88 * (1 - acc_a)
     rgb = acc_rgb / np.maximum(acc_a[..., None], 1e-6)
     return np.dstack([rgb, acc_a * 255 * density]).clip(0, 255).astype(np.uint8)
+
+
+# The overcast deck is a real photo (operator, 2026-11-21: of real sky photos laid on the card,
+# "12 is best for overcast"; for partly cloudy the generated clouds stayed, the photo cut-outs
+# had artifacts). Only its texture is used: brightness is mapped onto each scene's own deck
+# colour, so rain, snow and night keep their tone. Not committed: fetched by scenes.py.
+DECK_PHOTO = dict(
+    url="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Alma_Verde_sky_01HDR_%283181622319%29.jpg/1920px-Alma_Verde_sky_01HDR_%283181622319%29.jpg",
+    page="https://commons.wikimedia.org/wiki/File:Alma_Verde_sky_01HDR_(3181622319).jpg",
+    credit="michael clarke stuff, CC BY-SA 2.0",
+    keep=0.8,          # the share of the photo's height that is sky (the rest is ground)
+)
+DECK_CONTRAST = 0.26   # texture strength around the scene colour
+DECK_SEAM = 0.2        # share of the width crossfaded to make the photo wrap
+
+
+def photo_deck(photo, size, color, density, keep=DECK_PHOTO["keep"]):
+    """An RGBA strip (SS x size) of a closed deck: the photo's sky (an RGB uint8 array), its
+    brightness as texture around `color`, at alpha `density`, wrapping left to right."""
+    W, H = round(size[0] * SS), round(size[1] * SS)
+    sky = photo[: int(photo.shape[0] * keep)]
+    from PIL import Image
+    ov = int(W * DECK_SEAM)
+    im = Image.fromarray(sky).convert("L").resize((W + ov, H), Image.LANCZOS)
+    L = np.asarray(im).astype(float)
+    # wrap: crossfade the extra columns into the start (a deck's texture hides the blend)
+    t = np.linspace(0, 1, ov)[None, :]
+    L = np.concatenate([L[:, :ov] * t + L[:, W:] * (1 - t), L[:, ov:W]], axis=1)
+    # the crossfade averages two textures and softens them: put the contrast back per column
+    soft = np.concatenate([np.sqrt(t ** 2 + (1 - t) ** 2), np.ones((1, W - ov))], axis=1)
+    n = (L - L.mean()) / max(L.std(), 1e-6) / soft
+    # brighter than the scene colour only as far as white allows: compress, never clip (a light
+    # deck clipped into blown-out patches)
+    f = DECK_CONTRAST * n
+    head = max((255 - max(color)) / max(max(color), 1), 0.02)
+    f = np.where(f > 0, head * np.tanh(f / head), f)
+    rgb = np.array(color, float)[None, None] * (1 + f[..., None])
+    for _ in range(4):                                  # exactly the scene's tone, after clipping
+        rgb = (rgb - rgb.reshape(-1, 3).mean(0) + np.array(color, float)).clip(0, 255)
+    a = np.full((H, W), density * 255.0)
+    return np.dstack([rgb, a]).clip(0, 255).astype(np.uint8)

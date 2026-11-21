@@ -68,8 +68,32 @@ def clouds(img, *args, **kw):
     assert img.size == (round(W * cloudlib.SS), round(H * cloudlib.SS)), img.size
     img.alpha_composite(Image.fromarray(cloudlib.strip((W, H), *args, **kw), 'RGBA'))
 
+def _deck_photo():
+    """The overcast photo (clouds.DECK_PHOTO), cached next to this script, never committed.
+    None if it cannot be fetched: the generated deck is used instead, with a warning."""
+    cache = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache', 'deck.jpg')
+    if not os.path.exists(cache):
+        import urllib.request
+        try:
+            req = urllib.request.Request(cloudlib.DECK_PHOTO['url'], headers={'User-Agent': 'weather-card-scenes/1.0'})
+            data = urllib.request.urlopen(req, timeout=60).read()
+            if data[:2] != b'\xff\xd8':
+                raise ValueError('not a JPEG')
+            os.makedirs(os.path.dirname(cache), exist_ok=True)
+            open(cache, 'wb').write(data)
+        except Exception as e:
+            print('WARNING: overcast photo unavailable (%s); using the generated deck' % e, file=sys.stderr)
+            return None
+    return np.asarray(Image.open(cache).convert('RGB'))
+
+_DECK = _deck_photo()
+
 def overcast(img, color, alpha, seed, ymax=1.0):
-    """A closed deck: a fill with overlapping rolls in perspective (clouds.strip, deck=True)."""
+    """A closed deck: the overcast photo's texture in this scene's tone (clouds.photo_deck), or,
+    without the photo, overlapping rolls in perspective (clouds.strip, deck=True)."""
+    if _DECK is not None:
+        img.alpha_composite(Image.fromarray(cloudlib.photo_deck(_DECK, (W, H), color, alpha / 255), 'RGBA'))
+        return
     c = np.array(color, float)
     clouds(img, 1.0, tuple((c * 1.18).clip(0, 255)), tuple(c * 0.7), ymax, seed, stretch=2.0,
            density=alpha / 255, deck=True)
@@ -167,7 +191,7 @@ def render(scene, night):
         front.alpha_composite(lit_tower(0.38, 0.4, (30, 40, 90), 0.25) if night else lit_tower(1.0, 1.0), (TX, TY))
     elif scene == 'cloudy':
         sky = grad((28, 32, 44), (52, 56, 70)) if night else grad((138, 148, 162), (196, 202, 210))
-        overcast(cl, (60, 64, 78) if night else (222, 225, 230), 220, R)
+        overcast(cl, (60, 64, 78) if night else (190, 194, 200), 220, R)
         front.alpha_composite(lit_tower(0.33, 0.3, (30, 35, 60), 0.2) if night else lit_tower(0.86, 0.45), (TX, TY))
     elif scene in ('rainy', 'pouring', 'storm', 'sleet'):
         dark = scene in ('pouring', 'storm')
