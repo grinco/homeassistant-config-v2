@@ -149,6 +149,32 @@ here). When it names someone, the offer becomes a question ("Is <name> with you?
 button is the yes. No answer means no: the alarm is left as it is. Any future automatic arming
 must ask the same way.
 
+## `house-welcome-home.json`
+
+The way back from Away (operator, 2026-11-21: "make sure the alarm switches back automatically to
+home mode once we come back home"). When any tracked phone arrives in the home zone after at least
+five minutes away, and the alarm is Away or still in Away's exit delay, the alarm goes to Night
+inside the night schedule and to Home otherwise. Both adults get a note saying who arrived.
+
+Leaving Away also disarms the physical panel (the alarm sync), so this is an automatic disarm, and
+it is built narrowly on purpose. It acts on arrival in the home zone, not on approach. It ignores a
+person restored after a restart, a tracker reconnecting, someone already home, and a phone that
+blips out of the zone and back within five minutes (a phone left at home). It never touches an
+alarm that is Home, Night or Disarmed, counting down an entry delay, or going off.
+
+After switching it checks the alarm really reached Home or Night. If not (the exit-delay path has
+to disarm before it can arm), both adults get a critical alert saying what state it is in. A phone
+in the wrong hands is the risk left open: the note has a "Not us - arm Away" button for exactly
+that. The button arms only from Home, Night or Disarmed (otherwise it says why it did not), and
+confirms only if arming worked. "Worked" means the target mode, or an exit delay towards it:
+Away's own exit delay still running after a failed cancel counts as a failure, not a success.
+
+After a restart a person's away time may count from the restart, so the first arrival soon after
+one can need the keypad. That is the safe direction and is accepted.
+
+Not covered by a test: the alarm calls, the panel following, the failure alert and the button. The
+decision is tested in `tests/climate/cases.py` (welcome home) against the live expression.
+
 ## `house-night-mode.json`
 
 The alarm is the house's day/night switch (2026-10-11). `alarm_control_panel.home` in `armed_night`

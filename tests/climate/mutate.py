@@ -243,6 +243,20 @@ BUGS = [
   lambda t: t.replace("night{% elif s == 'off' and a == 'armed_night' %}home", "night{% elif s == 'off' and a == 'armed_night' %}disarm"), "1790200000001"),
  ("house: Adaptive Lighting sleep is inverted", "expr2", "sleep_on",
   lambda t: t.replace("a == 'armed_night'", "a == 'armed_home'"), "1790200000001"),
+ # 2026-11-21 welcome home: an automatic disarm. Each is a way to disarm when nobody arrived, or to
+ # touch an alarm the operator set (or that is going off).
+ ("welcome: a restart restoring someone as home disarms", "expr2", "want",
+  lambda t: t.replace("['home', 'unknown', 'unavailable']", "['home']"), "1792110000001"),
+ ("welcome: any state change counts as an arrival", "expr2", "want",
+  lambda t: t.replace("trigger.to_state.state != 'home' or ", ""), "1792110000001"),
+ ("welcome: acts on every armed state", "expr2", "want",
+  lambda t: t.replace("a == 'armed_away' or", "a not in ['disarmed'] or"), "1792110000001"),
+ ("welcome: any exit delay is undone", "expr2", "want",
+  lambda t: t.replace(" and state_attr('alarm_control_panel.home', 'arm_mode') == 'armed_away'", ""), "1792110000001"),
+ ("welcome: a blip out of the zone counts as an arrival", "expr2", "want",
+  lambda t: t.replace(" < 300 %}", " < 0 %}"), "1792110000001"),
+ ("welcome: night and day swapped", "expr2", "want",
+  lambda t: t.replace("'night' if is_state", "'home' if is_state").replace("else 'home' }}", "else 'night' }}"), "1792110000001"),
  ("house: Adaptive Lighting loses the unavailable-alarm fallback", "expr2", "sleep_on",
   lambda t: t.replace(" or (a in ['unavailable', 'unknown'] and is_state('schedule.climate_night','on'))", ""), "1790200000001"),
  # Issue #6: the morning briefing.
