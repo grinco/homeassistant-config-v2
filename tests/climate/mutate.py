@@ -253,6 +253,8 @@ BUGS = [
   lambda t: t.replace("a == 'armed_away' or", "a not in ['disarmed'] or"), "1792110000001"),
  ("welcome: any exit delay is undone", "expr2", "want",
   lambda t: t.replace(" and state_attr('alarm_control_panel.home', 'arm_mode') == 'armed_away'", ""), "1792110000001"),
+ ("welcome: a blip out of the zone counts as an arrival", "expr2", "want",
+  lambda t: t.replace(" < 300 %}", " < 0 %}"), "1792110000001"),
  ("welcome: night and day swapped", "expr2", "want",
   lambda t: t.replace("'night' if is_state", "'home' if is_state").replace("else 'home' }}", "else 'night' }}"), "1792110000001"),
  ("house: Adaptive Lighting loses the unavailable-alarm fallback", "expr2", "sleep_on",

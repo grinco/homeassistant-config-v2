@@ -1759,12 +1759,14 @@ WELCOME = "1792110000001"
 W_FROM, W_TO = "trigger.from_state.state", "trigger.to_state.state"
 W_NIGHT = "is_state('schedule.climate_night', 'on')"
 W_MODE = "state_attr('alarm_control_panel.home', 'arm_mode')"
+W_GONE = "(as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed))"
 
 
 def welcome(name, expect, frm="'not_home'", to="'home'", alarm="'armed_away'", night="false",
-            mode="'armed_away'", finding=""):
+            mode="'armed_away'", gone="3600", finding=""):
     return dict(name="welcome home: " + name, automation=WELCOME, expr="want", expect=expect, given={},
-                subs={W_FROM: frm, W_TO: to, ALARM_NOW: alarm, W_NIGHT: night, W_MODE: mode},
+                subs={W_FROM: frm, W_TO: to, ALARM_NOW: alarm, W_NIGHT: night, W_MODE: mode,
+                      W_GONE: gone},
                 finding=finding)
 
 
@@ -1794,6 +1796,12 @@ A(welcome("a person coming back from unavailable does nothing", "none", frm="'un
 A(welcome("someone already home re-reporting home does nothing", "none", frm="'home'",
           finding="attribute updates are not arrivals"))
 A(welcome("leaving does nothing", "none", frm="'home'", to="'not_home'", finding="only arrivals"))
+A(welcome("a phone away for a moment does not count as arriving", "none", gone="40",
+          finding="review 2026-11-21 F4: a phone left at home that blips out of the zone and back must not disarm"))
+A(welcome("away just under five minutes does not count", "none", gone="299",
+          finding="review 2026-11-21 F4: the threshold is five minutes away"))
+A(welcome("away just over five minutes counts", "home", gone="301",
+          finding="review 2026-11-21 F4: a real trip of five minutes or more is an arrival"))
 A(welcome("an unavailable night schedule means day", "home", night="false",
           finding="is_state is false for unavailable: Home, the safer daytime mode for climate"))
 
