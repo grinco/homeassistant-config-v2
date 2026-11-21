@@ -149,6 +149,22 @@ here). When it names someone, the offer becomes a question ("Is <name> with you?
 button is the yes. No answer means no: the alarm is left as it is. Any future automatic arming
 must ask the same way.
 
+## `house-welcome-home.json`
+
+The way back from Away (operator, 2026-11-21: "make sure the alarm switches back automatically to
+home mode once we come back home"). When any tracked phone arrives in the home zone and the alarm
+is Away, or still in Away's exit delay, the alarm goes to Night inside the night schedule and to
+Home otherwise. Both adults get a note saying who arrived.
+
+Leaving Away also disarms the physical panel (the alarm sync), so this is an automatic disarm, and
+it is built narrowly on purpose. It acts on arrival in the home zone, not on approach. It ignores a
+person restored after a restart, a tracker reconnecting, and someone already home. It never touches
+an alarm that is Home, Night or Disarmed, counting down an entry delay, or going off. A phone in the
+wrong hands is the risk left open: the note has a "Not us - arm Away" button for exactly that.
+
+Not covered by a test: the actual arm/disarm calls, the panel following, and the notification. The
+decision is tested in `tests/climate/cases.py` (welcome home) against the live expression.
+
 ## `house-night-mode.json`
 
 The alarm is the house's day/night switch (2026-10-11). `alarm_control_panel.home` in `armed_night`

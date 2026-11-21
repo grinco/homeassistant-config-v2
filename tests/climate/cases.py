@@ -1750,6 +1750,54 @@ A(house("every Adaptive Lighting sleep switch is found, and only those", "sleep_
         "2026-10-11: a new Adaptive Lighting zone joins without an edit"))
 
 
+# Welcome home (operator 2026-11-21): "make sure the alarm switches back automatically to home mode
+# once we come back home". Decided with the operator: on ARRIVAL in the home zone (not on approach),
+# by ANY tracked phone, to Night inside the night schedule and Home otherwise. Leaving Away also
+# disarms the physical panel (alarm sync), so this is an automatic disarm: it acts only on a real
+# arrival edge and only from Away.
+WELCOME = "1792110000001"
+W_FROM, W_TO = "trigger.from_state.state", "trigger.to_state.state"
+W_NIGHT = "is_state('schedule.climate_night', 'on')"
+W_MODE = "state_attr('alarm_control_panel.home', 'arm_mode')"
+
+
+def welcome(name, expect, frm="'not_home'", to="'home'", alarm="'armed_away'", night="false",
+            mode="'armed_away'", finding=""):
+    return dict(name="welcome home: " + name, automation=WELCOME, expr="want", expect=expect, given={},
+                subs={W_FROM: frm, W_TO: to, ALARM_NOW: alarm, W_NIGHT: night, W_MODE: mode},
+                finding=finding)
+
+
+A(welcome("arriving by day switches Away to Home", "home", finding="2026-11-21 operator: back home = Home"))
+A(welcome("arriving in the night window switches Away to Night", "night", night="true",
+          finding="2026-11-21 operator: Night when scheduled, so climate and lights follow"))
+A(welcome("arriving from another zone counts too", "home", frm="'work'",
+          finding="a person's state is the zone name when not home"))
+A(welcome("arriving during the exit delay of Away cancels it back to Home", "home", alarm="'arming'",
+          finding="someone left and came straight back"))
+A(welcome("an exit delay towards Home is left alone", "none", alarm="'arming'", mode="'armed_home'",
+          finding="only Away is undone"))
+A(welcome("Home is left alone", "none", alarm="'armed_home'", finding="nothing to undo"))
+A(welcome("Night is left alone", "none", alarm="'armed_night'", night="true", finding="nothing to undo"))
+A(welcome("Disarmed is left alone", "none", alarm="'disarmed'",
+          finding="never ARM on arrival: disarmed is a choice"))
+A(welcome("an alarm going off is never touched", "none", alarm="'triggered'",
+          finding="arriving must not silence a real alarm"))
+A(welcome("an entry delay is never touched", "none", alarm="'pending'",
+          finding="the panel is counting down because a door opened: the keypad decides"))
+A(welcome("an unavailable alarm is left alone", "none", alarm="'unavailable'",
+          finding="no command into a reload"))
+A(welcome("a restart restoring someone as home does nothing", "none", frm="'unknown'",
+          finding="a person restored after a restart has not arrived; a phone left at home must not disarm"))
+A(welcome("a person coming back from unavailable does nothing", "none", frm="'unavailable'",
+          finding="a tracker reconnecting is not an arrival"))
+A(welcome("someone already home re-reporting home does nothing", "none", frm="'home'",
+          finding="attribute updates are not arrivals"))
+A(welcome("leaving does nothing", "none", frm="'home'", to="'not_home'", finding="only arrivals"))
+A(welcome("an unavailable night schedule means day", "home", night="false",
+          finding="is_state is false for unavailable: Home, the safer daytime mode for climate"))
+
+
 # ---------------------------------------------------------------- v6: radiators first (2026-10-11)
 # Operator: "tado is now controlling the boiler ... for heating we should use it more ... at night I
 # would prefer using TRVs where they exist instead of blowing air - more silent, and the windows

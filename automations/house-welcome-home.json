@@ -1,0 +1,161 @@
+{
+ "actions": [
+  {
+   "if": [
+    {
+     "condition": "trigger",
+     "id": "not_us"
+    }
+   ],
+   "then": [
+    {
+     "action": "alarm_control_panel.alarm_arm_away",
+     "target": {
+      "entity_id": "alarm_control_panel.home"
+     }
+    },
+    {
+     "action": "notify.mobile_app_adult_phone_1",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "welcome-home"
+      },
+      "message": "Set from the welcome-home note.",
+      "title": "Alarm back on Away"
+     }
+    },
+    {
+     "action": "notify.mobile_app_adult_phone_2",
+     "continue_on_error": true,
+     "data": {
+      "data": {
+       "tag": "welcome-home"
+      },
+      "message": "Set from the welcome-home note.",
+      "title": "Alarm back on Away"
+     }
+    },
+    {
+     "stop": "re-armed Away from the note"
+    }
+   ]
+  },
+  {
+   "variables": {
+    "want": "{% set a = states('alarm_control_panel.home') %}{% if trigger.to_state.state != 'home' or trigger.from_state.state in ['home', 'unknown', 'unavailable'] %}none{% elif a == 'armed_away' or (a == 'arming' and state_attr('alarm_control_panel.home', 'arm_mode') == 'armed_away') %}{{ 'night' if is_state('schedule.climate_night', 'on') else 'home' }}{% else %}none{% endif %}",
+    "was_arming": "{{ is_state('alarm_control_panel.home', 'arming') }}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ want != 'none' }}"
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ was_arming }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "alarm_control_panel.alarm_disarm",
+     "note": "an exit delay cannot be switched to another mode; cancel it first",
+     "target": {
+      "entity_id": "alarm_control_panel.home"
+     }
+    }
+   ]
+  },
+  {
+   "else": [
+    {
+     "action": "alarm_control_panel.alarm_arm_home",
+     "target": {
+      "entity_id": "alarm_control_panel.home"
+     }
+    }
+   ],
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ want == 'night' }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "alarm_control_panel.alarm_arm_night",
+     "target": {
+      "entity_id": "alarm_control_panel.home"
+     }
+    }
+   ]
+  },
+  {
+   "variables": {
+    "msg": "{{ trigger.to_state.name }} arrived. The alarm is on {{ 'Night' if want == 'night' else 'Home' }} and the panel is disarmed."
+   }
+  },
+  {
+   "action": "notify.mobile_app_adult_phone_1",
+   "continue_on_error": true,
+   "data": {
+    "data": {
+     "actions": [
+      {
+       "action": "WELCOME_NOT_US",
+       "title": "Not us - arm Away"
+      }
+     ],
+     "tag": "welcome-home"
+    },
+    "message": "{{ msg }}",
+    "title": "Welcome home"
+   }
+  },
+  {
+   "action": "notify.mobile_app_adult_phone_2",
+   "continue_on_error": true,
+   "data": {
+    "data": {
+     "actions": [
+      {
+       "action": "WELCOME_NOT_US",
+       "title": "Not us - arm Away"
+      }
+     ],
+     "tag": "welcome-home"
+    },
+    "message": "{{ msg }}",
+    "title": "Welcome home"
+   }
+  }
+ ],
+ "alias": "House — welcome home",
+ "conditions": [],
+ "description": "Operator 2026-11-21: the alarm switches back automatically when we come home. When a tracked phone (any of the three people) ARRIVES in the home zone and the alarm is Away (or still in Away's exit delay), the alarm goes to Night inside the night schedule (schedule.climate_night) and Home otherwise. Leaving Away also disarms the physical Paradox panel through the alarm sync (1790400000001), so this is an automatic disarm on purpose: it acts only on a real arrival edge (never on a restart or a tracker reconnecting) and never touches an alarm that is Home, Night, Disarmed, in an entry delay or going off. Both adults get a note saying who arrived, with 'Not us - arm Away' for a phone in the wrong hands. Tests: tests/climate/cases.py (welcome home).",
+ "id": "1792110000001",
+ "max": 5,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": [
+    "person.adult_1",
+    "person.adult_2",
+    "person.kid1"
+   ],
+   "id": "arrive",
+   "to": "home",
+   "trigger": "state"
+  },
+  {
+   "event_data": {
+    "action": "WELCOME_NOT_US"
+   },
+   "event_type": "mobile_app_notification_action",
+   "id": "not_us",
+   "trigger": "event"
+  }
+ ]
+}
