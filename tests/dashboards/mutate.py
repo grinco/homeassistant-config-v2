@@ -699,7 +699,7 @@ def m_safety_gate_wrong_state(d):
 def m_room_temperature_hand_listed(d):
     """A room's temperature tile is hand-added again - the next new room is missing."""
     doc = _cfg(d, LOV)
-    _section(doc, "climate", "Temperature").append(
+    _section(doc, "climate", "Rooms").append(
         {"type": "custom:mini-graph-card", "entities": [{"entity": "sensor.climate_temp_office"}]})
     _save(d, LOV, doc)
     return "C13"
