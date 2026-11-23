@@ -558,6 +558,27 @@ BUGS = [
   lambda t: t.replace("_light_control') == 'on'", "_light_control') != 'x'"), "1792300000003"),
  ("lights: acts after the room is occupied again", "expr2", "stuck",
   lambda t: t.replace("_area_state') == 'off'", "_area_state') != 'x'"), "1792300000003"),
+ # 2026-11-23 leak meter: each row is a mistake the maths invites
+ ("leak: outdoor taken at the start only", "expr2", "k",
+  lambda t: t.replace("(snap.o + now_o) / 2", "snap.o"), "1792300000020"),
+ ("leak: a warmed room read as airtight, not kept warm", "expr2", "k",
+  lambda t: t.replace("{% if t2 >= t1 %}{% set ns.d = dict(ns.d, **{r: -1}) %}{% elif", "{% if"), "1792300000020"),
+ ("leak: no minimum gap", "expr2", "k",
+  lambda t: t.replace("(t1 - o) >= 3", "(t1 - o) > 0"), "1792300000020"),
+ ("leak: CO2 floor not clamped", "expr2", "ach",
+  lambda t: t.replace("([c2 - 400, 30] | max)", "([c2 - 400, 1] | max)"), "1792300000020"),
+ ("leak: rising CO2 measured as a decay", "expr2", "ach",
+  lambda t: t.replace(" and c2 < c1", ""), "1792300000020"),
+ ("leak: no minimum CO2 start", "expr2", "ach",
+  lambda t: t.replace("(c1 - 400) >= 100", "(c1 - 400) > 0"), "1792300000020"),
+ ("leak: a warm room drags the median down", "expr2", "signals",
+  lambda t: t.replace("{% if k[r] > 0 %}{% set ns.v", "{% if true %}{% set ns.v"), "1792300000020"),
+ ("leak: window flagged on the house comparison alone", "expr2", "signals",
+  lambda t: t.replace("{% if hs and me %}", "{% if hs %}"), "1792300000020"),
+ ("leak: a fresh helper (0) counts as a baseline", "expr2", "signals",
+  lambda t: t.replace("p > 0 and v >= 1.8 * p", "v >= 1.8 * p"), "1792300000020"),
+ ("leak: everything alerts", "expr2", "alert",
+  lambda t: t.replace("':window$'", "':'"), "1792300000020"),
 ]
 
 print("MUTATION CHECK -- each row re-introduces a bug that actually shipped\n")
