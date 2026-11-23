@@ -746,18 +746,25 @@
      ]
     },
     {
-     "content": "{{ states('input_text.leak_meter_verdict') }}",
+     "entity": "sensor.energy_leak_suspect",
      "grid_options": {
-      "columns": "full"
+      "columns": 12,
+      "rows": 1
      },
-     "text_only": true,
-     "type": "markdown",
+     "icon": "mdi:window-open-variant",
+     "name": "Most likely leak",
+     "tap_action": {
+      "action": "more-info",
+      "entity": "input_text.leak_meter_verdict"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
      "visibility": [
       {
        "condition": "state",
-       "entity": "input_text.leak_meter_verdict",
+       "entity": "sensor.energy_leak_suspect",
        "state_not": [
-        "",
+        "not measured yet",
         "unknown",
         "unavailable"
        ]
