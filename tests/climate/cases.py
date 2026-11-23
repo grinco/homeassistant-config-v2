@@ -3123,3 +3123,33 @@ A(dict(name="energy degree-days: a warm day's AC is not", automation=EDD, expr="
 A(dict(name="energy degree-days: a meter that went backwards adds nothing", automation=EDD, expr="ac_add",
        expect="0.0", given={"cold": True}, subs={EDD_AC: "'10'", EDD_AC0: "'120'"},
        finding="a replaced or reset meter"))
+
+
+# The most likely leak (operator 2026-11-23: "show the most likely cause/room"). From the stored
+# baselines: the room losing heat >= 2x the flat's median leaks most (structural). A window flagged in
+# the last run outranks it: that is something to go and check now.
+ES = "Energy leak suspect"
+ES_LIST, ES_VERDICT = "states.input_number", "states('input_text.leak_meter_verdict')"
+ES_AREA1, ES_AREA2 = "area_name('sensor.climate_temp_' ~ r)", "area_name('sensor.climate_temp_' ~ ns.best)"
+
+
+def es(name, expect, ks, verdict="'21.11 ... kid1:leakiest'", finding=""):
+    lst = [{"entity_id": "input_number.leak_k_" + r, "state": str(v)} for r, v in ks.items()]
+    lst.append({"entity_id": "input_number.leak_ach_living_room", "state": "0.3"})  # not a room's heat loss
+    return en(name, ES, expect, {ES_LIST: repr(lst), ES_VERDICT: verdict, ES_AREA1: "none", ES_AREA2: "none"},
+              finding)
+
+
+_K21 = {"kid1": 7.1, "bedroom": 3.8, "corridor": 3.7, "living_room": 2.8, "kid2": 2.2, "office": 1.2}
+A(es("the room at 2x the flat's median leaks most", "kid1: leaks most (2.2× the flat)", _K21,
+     finding="2026-11-21 measured: 7.1 against a median of 3.25"))
+A(es("just under 2x: no room stands out", "no room stands out", _K21 | {"kid1": 6.4},
+     finding="the threshold straddled from below (2 x 3.25 = 6.5)"))
+A(es("exactly 2x leaks most", "kid1: leaks most (2.0× the flat)", _K21 | {"kid1": 6.5},
+     finding="the threshold straddled from above"))
+A(es("a fresh helper (0) is not a measurement", "not measured yet",
+     {"kid1": 7.1, "bedroom": 3.8, "corridor": 0, "living_room": 0, "kid2": 0, "office": 0},
+     finding="two measured rooms cannot say which one is odd"))
+A(es("a window in the last run outranks the structural leak", "kid2: window left open?", _K21,
+     verdict="'23.11 3 h at 2 C. ... kid2:window'", finding="something to check now beats something known"))
+A(es("an unmeasured flat says so", "not measured yet", {}, verdict="'unknown'", finding="before the first Away"))

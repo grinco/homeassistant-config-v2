@@ -106,7 +106,7 @@ RESOLVED_TITLES = (
     "Lighting living room bright", "Lighting hallway bright", "Lighting bedroom sleep",
     "Lighting corridor presence", "Energy AC total", "Energy gas hot water per day",
     "Energy gas heating per degree-day", "Energy AC heating per degree-day",
-    "Energy heating per m2 year", "Energy class", "Energy gas estimate",
+    "Energy heating per m2 year", "Energy class", "Energy gas estimate", "Energy leak suspect",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
