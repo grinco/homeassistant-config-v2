@@ -1,0 +1,115 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "cut_at": "{{ now().isoformat() }}",
+    "want": "{% set i = states('sensor.guest_room_solix_c2000_gen_2_ac_input_power') %}{% set o = states('sensor.guest_room_solix_c2000_gen_2_ac_output_power') %}{% set s = states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') %}{% if not (is_number(i) and is_number(o)) %}none{% elif i | float >= 5 %}none{% elif trigger.id == 'cut' %}{{ 'cut' if o | float >= 5 else 'none' }}{% elif trigger.id == 'low' %}{{ 'low' if is_number(s) and s | float < 20 else 'none' }}{% else %}none{% endif %}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ want != 'none' }}"
+  },
+  {
+   "variables": {
+    "battery": "{{ states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') }} % ({{ states('sensor.guest_room_solix_c2000_gen_2_remaining_time') }} left at {{ states('sensor.guest_room_solix_c2000_gen_2_ac_output_power') | float(0) | round(0) | int }} W)"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ want == 'cut' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "power-cut"
+        },
+        "message": "The Solix lost the grid; the office runs on battery: {{ battery }}.",
+        "title": "Power cut"
+       }
+      },
+      {
+       "continue_on_timeout": false,
+       "timeout": "12:00:00",
+       "wait_for_trigger": [
+        {
+         "above": 5,
+         "entity_id": "sensor.guest_room_solix_c2000_gen_2_ac_input_power",
+         "for": "00:01:00",
+         "trigger": "numeric_state"
+        }
+       ]
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "power-cut"
+        },
+        "message": "The grid returned after {{ ((as_timestamp(now()) - as_timestamp(cut_at)) / 60) | round(0) | int }} min. Solix at {{ states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') }} %.",
+        "title": "Power is back"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ want == 'low' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "push": {
+          "interruption-level": "time-sensitive"
+         },
+         "tag": "power-low"
+        },
+        "message": "Still no grid. Battery {{ battery }}.",
+        "title": "Solix battery low"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Power — Solix grid watch",
+ "conditions": [],
+ "description": "The Solix C2000 is the office UPS. Grid input gone while it still feeds a load = power cut: tell Vadim, then again when the grid is back. Battery under 20 % while on battery: warn. Unreachable is never a cut.",
+ "id": "1792300000010",
+ "max": 3,
+ "mode": "parallel",
+ "triggers": [
+  {
+   "below": 5,
+   "entity_id": "sensor.guest_room_solix_c2000_gen_2_ac_input_power",
+   "for": "00:02:00",
+   "id": "cut",
+   "trigger": "numeric_state"
+  },
+  {
+   "below": 20,
+   "entity_id": "sensor.guest_room_solix_c2000_gen_2_state_of_charge",
+   "id": "low",
+   "trigger": "numeric_state"
+  }
+ ]
+}

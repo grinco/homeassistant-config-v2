@@ -1,0 +1,75 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "vac": "{{ 'vacuum.zorik' if states('vacuum.zorik') not in ['unavailable', 'unknown'] else ('vacuum.robotic_vacuum_cleaner' if states('vacuum.robotic_vacuum_cleaner') not in ['unavailable', 'unknown'] else 'none') }}"
+   }
+  },
+  {
+   "variables": {
+    "want": "{% set a = states('alarm_control_panel.home') %}{% set s = states(vac) %}{% set d = states('sensor.zorik_last_clean_begin') | as_datetime(none) %}{% set cleaned = d is not none and (d | as_local).strftime('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}{% set h = now().hour %}{% if vac == 'none' %}none{% elif trigger.id == 'away' %}{{ 'start' if a == 'armed_away' and s == 'docked' and not cleaned and 8 <= h < 20 else 'none' }}{% elif trigger.id == 'back' %}{{ 'dock' if a != 'armed_away' and s == 'cleaning' else 'none' }}{% else %}none{% endif %}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ want == 'start' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "vacuum.start",
+       "target": {
+        "entity_id": "{{ vac }}"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ want == 'dock' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "vacuum.return_to_base",
+       "target": {
+        "entity_id": "{{ vac }}"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "House — vacuum while away",
+ "conditions": [],
+ "description": "Ten minutes into Away, start the robot once a day (08:00-20:00) from the dock; dock it when the house leaves Away. vacuum.zorik (Roborock cloud) and vacuum.robotic_vacuum_cleaner (Matter) are the same robot: Roborock first, Matter as fallback.",
+ "id": "1792300000002",
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": "alarm_control_panel.home",
+   "for": "00:10:00",
+   "id": "away",
+   "to": "armed_away",
+   "trigger": "state"
+  },
+  {
+   "entity_id": "alarm_control_panel.home",
+   "from": "armed_away",
+   "id": "back",
+   "to": [
+    "disarmed",
+    "armed_home",
+    "armed_night"
+   ],
+   "trigger": "state"
+  }
+ ]
+}

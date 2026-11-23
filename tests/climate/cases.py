@@ -2692,3 +2692,144 @@ for _title, _climate, _power in _AC_UNITS:
     A(sensor_case("%s: a running AC's power is passed through" % _unit, "850.0",
                   {_c: "'cool'", _p: "'850.0'"}, sensor=_title,
                   finding="the running reading is never replaced"))
+
+
+# Power cut (operator 2026-11-23): the Solix C2000 is the office UPS. Grid input gone while it is
+# still feeding a load means the house lost power. Cloud integration: an unreachable Solix is NOT a
+# cut, and a Solix with nothing plugged in cannot tell a cut from an idle grid, so it stays quiet.
+POWER = "1792300000010"
+P_IN = "states('sensor.guest_room_solix_c2000_gen_2_ac_input_power')"
+P_OUT = "states('sensor.guest_room_solix_c2000_gen_2_ac_output_power')"
+P_SOC = "states('sensor.guest_room_solix_c2000_gen_2_state_of_charge')"
+
+
+def power(name, expect, trig="'cut'", i="'0'", o="'350'", soc="'100'", finding=""):
+    return dict(name="power: " + name, automation=POWER, expr="want", expect=expect, given={},
+                subs={"trigger.id": trig, P_IN: i, P_OUT: o, P_SOC: soc}, finding=finding)
+
+
+A(power("grid gone while the office runs on battery is a cut", "cut",
+        finding="2026-11-23 operator: alert on a power cut"))
+A(power("grid present is not a cut", "none", i="'350'", finding="passthrough: input follows the load"))
+A(power("an input of 4 W is still a cut", "cut", i="'4'", finding="threshold 5 W: a trickle is not the grid"))
+A(power("an input of 6 W is not a cut", "none", i="'6'", finding="the threshold straddled from above"))
+A(power("nothing plugged in cannot tell a cut from an idle grid", "none", o="'0'",
+        finding="input 0 W with no load is normal; stay quiet rather than guess"))
+A(power("an unreachable Solix is not a cut", "none", i="'unavailable'", o="'unavailable'",
+        finding="cloud integration: unreachable is not off"))
+A(power("an unknown input is not a cut", "none", i="'unknown'",
+        finding="a restart restores unknown first"))
+A(power("battery under 20 % during a cut warns", "low", trig="'low'", soc="'19'",
+        finding="2026-11-23 operator: warn before the office loses power"))
+A(power("battery at 21 % does not warn", "none", trig="'low'", soc="'21'",
+        finding="the threshold straddled from above"))
+A(power("a low battery with the grid back is recharging, not a warning", "none", trig="'low'",
+        soc="'15'", i="'900'", finding="after a cut the battery refills from a low level"))
+A(power("a low trigger with an unreadable charge stays quiet", "none", trig="'low'", soc="'unavailable'",
+        finding="unreachable is not low"))
+
+
+# Vacuum while away (operator 2026-11-23): vacuum.zorik (Roborock cloud) and
+# vacuum.robotic_vacuum_cleaner (Matter) are the SAME robot by two paths. Prefer Roborock, fall
+# back to Matter. At most one clean a day, daytime only, dock when someone is home again.
+VAC = "1792300000002"
+V_ZORIK = "states('vacuum.zorik')"
+V_MATTER = "states('vacuum.robotic_vacuum_cleaner')"
+
+
+def vac_pick(name, expect, z, m, finding):
+    return dict(name="vacuum: " + name, automation=VAC, expr="vac", expect=expect, given={},
+                subs={V_ZORIK: z, V_MATTER: m}, finding=finding)
+
+
+A(vac_pick("Roborock is preferred", "vacuum.zorik", "'docked'", "'docked'",
+           finding="2026-11-23 operator: one robot, two paths"))
+A(vac_pick("Matter is the fallback when Roborock is unreachable", "vacuum.robotic_vacuum_cleaner",
+           "'unavailable'", "'docked'", finding="the cloud path drops; the local one may not"))
+A(vac_pick("neither path: nothing", "none", "'unavailable'", "'unknown'",
+           finding="never command an unreachable robot"))
+
+V_STATE = "states(vac)"
+V_ALARM = "states('alarm_control_panel.home')"
+V_LAST = "states('sensor.zorik_last_clean_begin')"
+V_HOUR = "now().hour"
+V_TODAY = "now().strftime('%Y-%m-%d')"
+
+
+def vac(name, expect, trig="'away'", st="'docked'", alarm="'armed_away'",
+        last="'2026-11-22T07:15:01+00:00'", hour="10", v="vacuum.zorik", finding=""):
+    return dict(name="vacuum: " + name, automation=VAC, expr="want", expect=expect, given={"vac": v},
+                subs={"trigger.id": trig, V_STATE: st, V_ALARM: alarm, V_LAST: last, V_HOUR: hour,
+                      V_TODAY: "'2026-11-23'"}, finding=finding)
+
+
+A(vac("away, docked, not cleaned today: start", "start", finding="2026-11-23 operator: vacuum on Away"))
+A(vac("already cleaned today: no second run", "none", last="'2026-11-23T07:15:01+00:00'",
+      finding="at most once a day"))
+A(vac("cleaned just before local midnight counts as yesterday", "start",
+      last="'2026-11-22T22:30:00+00:00'", finding="the day is local: 23:30 CET on the 22nd"))
+A(vac("cleaned just after local midnight counts as today", "none",
+      last="'2026-11-22T23:30:00+00:00'", finding="00:30 CET on the 23rd is today, though UTC says the 22nd"))
+A(vac("no record of a last clean: start", "start", last="'unknown'",
+      finding="the Matter path has no history; unknown is not 'cleaned today'"))
+A(vac("before 08:00: wait", "none", hour="7", finding="Do Not Disturb runs 22:00-08:00"))
+A(vac("08:00 is allowed", "start", hour="8", finding="the window straddled from below"))
+A(vac("19:00 is allowed", "start", hour="19", finding="the window straddled from above"))
+A(vac("20:00 is too late", "none", hour="20", finding="no clean starting into the evening"))
+A(vac("the robot is already out: leave it", "none", st="'cleaning'", finding="never restart a run"))
+A(vac("the robot is in error: leave it", "none", st="'error'", finding="only start from the dock"))
+A(vac("Away was cancelled before the delay ran out: no start", "none", alarm="'disarmed'",
+      finding="the alarm is re-read when the delay ends"))
+A(vac("no reachable robot: nothing", "none", v="none", st="'unknown'", finding="vac picks none"))
+A(vac("someone back while it cleans: dock", "dock", trig="'back'", st="'cleaning'", alarm="'armed_home'",
+      finding="2026-11-23 operator: dock when the house is no longer Away"))
+A(vac("someone back while it is docked: nothing", "none", trig="'back'", st="'docked'", alarm="'disarmed'",
+      finding="no command for a robot that is home"))
+A(vac("someone back while it is already returning: nothing", "none", trig="'back'", st="'returning'",
+      alarm="'disarmed'", finding="no duplicate command"))
+A(vac("Away again by the time the back step runs: keep cleaning", "none", trig="'back'", st="'cleaning'",
+      finding="the alarm is re-read, not taken from the trigger"))
+
+
+# Lights stuck on after a room clears (2026-11-23; incident 2026-10-25: a failed Zigbee OFF left
+# HA showing the Corridor light ON, so Magic Areas skipped the next turn-on). Magic Areas turns
+# every light off when a room clears. A light still on 90 s later that has NOT changed since the
+# room cleared is a failed OFF (or a wrong state in HA); one that changed after is somebody's choice.
+LIGHTS = "1792300000003"
+L_CTRL = "states('switch.magic_areas_light_groups_' ~ area ~ '_light_control')"
+L_AREA = "states('binary_sensor.magic_areas_presence_tracking_' ~ area ~ '_area_state')"
+L_MEMBERS = "expand('light.magic_areas_light_groups_' ~ area ~ '_all_lights')"
+L_CLEARED = "as_timestamp(trigger.to_state.last_changed)"
+L_T0 = 1795000000  # the moment the room cleared
+
+
+def lt(entity, state, changed):
+    return {"entity_id": entity, "state": state, "last_changed": changed}
+
+
+def stuck(name, expect, members, ctrl="'on'", now_="'off'", finding=""):
+    return dict(name="lights stuck: " + name, automation=LIGHTS, expr="stuck", expect=expect,
+                given={"area": "corridor"},
+                subs={L_CTRL: ctrl, L_AREA: now_, L_MEMBERS: repr(members), L_CLEARED: L_T0},
+                finding=finding)
+
+
+_BEFORE, _AFTER = "2026-11-18T11:05:00+00:00", "2026-11-18T11:08:00+00:00"  # around L_T0 (11:06:40 UTC)
+A(stuck("a light still on since before the room cleared is stuck", "['light.corridor_light']",
+        [lt("light.corridor_light", "on", _BEFORE), lt("light.entrance_light", "off", _BEFORE)],
+        finding="2026-10-25: a failed Z2M OFF"))
+A(stuck("a light switched on after the room cleared is left alone", "[]",
+        [lt("light.corridor_light", "on", _AFTER)], finding="somebody's choice, not a failure"))
+A(stuck("lights that went off are fine", "[]",
+        [lt("light.corridor_light", "off", _AFTER), lt("light.entrance_light", "off", _AFTER)],
+        finding="the normal case"))
+A(stuck("an unreachable bulb is not stuck", "[]", [lt("light.corridor_light", "unavailable", _BEFORE)],
+        finding="operator rule: wall-switched bulbs are deliberate"))
+A(stuck("light control off: Magic Areas never switched them off, so nothing is stuck", "[]",
+        [lt("light.corridor_light", "on", _BEFORE)], ctrl="'off'",
+        finding="Away pauses light control; a paused room is not a failure"))
+A(stuck("the room is occupied again: nothing to do", "[]",
+        [lt("light.corridor_light", "on", _BEFORE)], now_="'on'", finding="re-read when the delay ends"))
+A(stuck("two stuck lights are both retried", "['light.corridor_light', 'light.entrance_light']",
+        [lt("light.corridor_light", "on", _BEFORE), lt("light.entrance_light", "on", _BEFORE)],
+        finding="every member, not the first"))
