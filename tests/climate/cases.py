@@ -2981,3 +2981,145 @@ A(leak("a short Away is reported", "skip", "too short", "review #49 F8: under 1.
        subs={L_OUT: "'3'"}, snap={"t": 0}, hours=1.49))
 A(leak("a measurable Away is not skipped", "skip", "", "1.5 h straddled from above",
        subs={L_OUT: "'3'"}, snap={"t": 0}, hours=1.5))
+# Heating energy and an indicative A-G class (operator 2026-11-23; docs/heating-energy-rating.md,
+# reviewed twice). Gas = a * degree-days + b * days; b measured from summer intervals only, a from
+# winter intervals net of b; one trust condition (winter degree-days >= 300); a suspect week is held
+# out; the class is on the former fixed apartment-building scale and labelled indicative.
+def en(name, sensor, expect, subs, finding):
+    return sensor_case("energy: " + name, expect, subs, finding=finding, sensor=sensor)
+
+
+EB = "Energy gas hot water per day"
+EB_G, EB_D = "states('input_number.energy_gas_s_g')", "states('input_number.energy_gas_s_d')"
+A(en("hot water is summer gas per summer day", EB, "10.0", {EB_G: "'140'", EB_D: "'14'"},
+     "an interval with no degree-days is all hot water"))
+A(en("a week of summer data is enough", EB, "10.0", {EB_G: "'70'", EB_D: "'7'"}, "threshold from above"))
+A(en("under a week of summer data: no hot-water term yet", EB, "0", {EB_G: "'60'", EB_D: "'6'"},
+     "b = 0 until measured; the class errs pessimistic"))
+
+EA = "Energy gas heating per degree-day"
+EA_B = "states('sensor.energy_gas_hot_water_per_day')"
+EA_G, EA_D, EA_H = ("states('input_number.energy_gas_w_g')", "states('input_number.energy_gas_w_d')",
+                    "states('input_number.energy_gas_w_h')")
+A(en("heating is winter gas per degree-day when hot water is unknown", EA, "10.0",
+     {EA_B: "'0'", EA_G: "'3000'", EA_D: "'21'", EA_H: "'300'"}, "b = 0: all winter gas is heating"))
+A(en("a measured hot-water term is taken out of winter gas", EA, "9.3",
+     {EA_B: "'10'", EA_G: "'3000'", EA_D: "'21'", EA_H: "'300'"}, "(3000 - 10*21) / 300"))
+A(en("never negative", EA, "0.0", {EA_B: "'200'", EA_G: "'3000'", EA_D: "'21'", EA_H: "'300'"},
+     "a hot-water estimate larger than the gas cannot make heating negative"))
+A(en("no winter degree-days: no heating figure", EA, "None",
+     {EA_B: "'0'", EA_G: "'0'", EA_D: "'0'", EA_H: "'0'"}, "division by zero"))
+
+EC = "Energy AC heating per degree-day"
+EC_A = "states('input_number.energy_gas_w_a')"
+A(en("AC heating electricity per degree-day", EC, "0.3", {EC_A: "'90'", EA_H: "'300'"}, "c = A / H"))
+A(en("no winter degree-days: no AC figure", EC, "None", {EC_A: "'0'", EA_H: "'0'"}, "division by zero"))
+
+EY = "Energy heating per m2 year"
+EY_A, EY_C = "states('sensor.energy_gas_heating_per_degree_day')", "states('sensor.energy_ac_heating_per_degree_day')"
+EY_AREA = "states('input_number.energy_heated_area')"
+
+
+def ey(name, expect, h="'300'", a="'6.7'", c="'0.3'", b="'0'", finding=""):
+    return en(name, EY, expect, {EA_H: h, EY_A: a, EY_C: c, EA_B: b, EY_AREA: "'164.41'"}, finding)
+
+
+A(ey("annualised to the 3235 K-day Prague normal per m2", "138", finding="(6.7 + 0.3) * 3235 / 164.41"))
+A(ey("hot water adds b for every day of the year", "160", b="'10'", finding="+ 10 * 365 / 164.41"))
+A(ey("299 winter degree-days: not trusted yet", "None", h="'299'", finding="the one trust condition, from below"))
+A(ey("no heating figure: no annual figure", "None", a="'unknown'", finding="unknown is not zero"))
+
+EK = "Energy class"
+EK_E = "states('sensor.energy_heating_per_m2_year')"
+for _e, _k in (("'42.9'", "A"), ("'43'", "B"), ("'82'", "B"), ("'82.1'", "C"), ("'120'", "C"), ("'120.1'", "D"),
+               ("'162'", "D"), ("'162.1'", "E"), ("'205'", "E"), ("'205.1'", "F"), ("'245'", "F"),
+               ("'245.1'", "G")):
+    A(en("%s kWh/m2 is class %s" % (_e.strip("'"), _k), EK, _k, {EK_E: _e},
+         "former vyhlaska 148/2007 apartment-building bands, straddled"))
+A(en("no annual figure: not enough data", EK, "not enough data", {EK_E: "'unknown'"},
+     "never a letter from two readings"))
+
+EE = "Energy gas estimate"
+EE_S, EE_M = "states('input_text.energy_gas_snapshot')", "states('sensor.gas_total')"
+EE_CAL, EE_HDD, EE_NOW = ("states('input_number.gas_kwh_per_m3')", "states('input_number.energy_hdd_total')",
+                          "as_timestamp(now())")
+_SN = '\'{"t": 1000, "m": 6578.678, "h": 100, "n": 5, "a": 0}\''
+
+
+def ee(name, expect, s=_SN, a="'6.7'", b="'0'", hdd="'112'", now_=1000, finding=""):
+    return en(name, EE, expect, {EE_S: s, EE_M: "'6578.678'", EY_A: a, EA_B: b, EE_CAL: "'10.6'",
+                                 EE_HDD: hdd, EE_NOW: now_}, finding)
+
+
+A(ee("degree-days since the reading add heating gas", "6586.263", finding="6.7 * 12 / 10.6 m3"))
+A(ee("and days since the reading add hot water", "6588.15", b="'10'", now_=1000 + 2 * 86400,
+     finding="+ 10 * 2 / 10.6 m3"))
+A(ee("no snapshot: the last reading", "6578.678", s="''", finding="before the first interval"))
+A(ee("no heating figure: the last reading", "6578.678", a="'unknown'", finding="no model, no estimate"))
+
+# The weekly interval (automation 1792300000030)
+EGAS = "1792300000030"
+
+
+def iv(name, expect, has_snap=True, counted=7, cal_days=7, trusted=True, pred=200.0, g=200.0, finding=""):
+    return dict(name="energy interval: " + name, automation=EGAS, expr="verdict", expect=expect,
+                given=dict(has_snap=has_snap, counted=counted, cal_days=cal_days, trusted=trusted,
+                           pred=pred, g=g), subs={}, finding=finding)
+
+
+A(iv("the first reading only takes a snapshot", "first", has_snap=False, finding="nothing to compare"))
+A(iv("a missed 23:59 run inside the interval is a gap", "gap", counted=6,
+     finding="review F8: days and degree-days would be short"))
+A(iv("an untrusted model counts every interval", "count", trusted=False, g=900.0,
+     finding="it cannot judge before it has learned"))
+A(iv("within 30 % counts", "count", g=259.0, finding="59 < 60: the relative limit from below"))
+A(iv("beyond 30 % and 40 kWh is held out", "flag", g=263.0, finding="review F4: never enters the sums unasked"))
+A(iv("beyond 30 % but within 40 kWh counts", "count", pred=100.0, g=135.0,
+     finding="review F3: the absolute limit, from below"))
+A(iv("beyond both on a small week is held out", "flag", pred=100.0, g=141.0, finding="the absolute limit from above"))
+A(iv("a prediction under 50 kWh is never judged", "count", pred=49.0, g=0.0,
+     finding="review F3: summer weeks predict little"))
+A(iv("a prediction of 50 kWh is judged", "flag", pred=50.0, g=0.0, finding="the floor from above"))
+
+ECAL = "((t_now + 60) | as_datetime | as_local).date() - ((snap.t + 60) | as_datetime | as_local).date()"
+A(dict(name="energy interval: a reading at 10:00 to the next week's 10:00 spans 7 runs", automation=EGAS,
+       expr="cal_days", expect="7", given={"t_now": 1795597200, "snap": {"t": 1794992400}}, subs={},
+       finding="runs at 23:59 between the two readings"))
+A(dict(name="energy interval: a reading just after 23:59 starts after that day's run", automation=EGAS,
+       expr="cal_days", expect="6", given={"t_now": 1795597200, "snap": {"t": 1795042770}}, subs={},
+       finding="the 23:59 of the first day was before the reading"))
+A(dict(name="energy interval: a reading just after 23:59 ends after that day's run", automation=EGAS,
+       expr="cal_days", expect="8", given={"t_now": 1795647570, "snap": {"t": 1794992400}}, subs={},
+       finding="the 23:59 of the last day was before the reading"))
+A(dict(name="energy interval: degree-days decide summer or winter", automation=EGAS, expr="target",
+       expect="summer", given={"h": 0.0}, subs={}, finding="an interval with no degree-days is hot water"))
+A(dict(name="energy interval: any degree-day makes it winter", automation=EGAS, expr="target",
+       expect="winter", given={"h": 0.5}, subs={}, finding="a mixed week is heating plus hot water"))
+_ACT = "trigger.event.data.action"
+A(dict(name="energy interval: Count it counts the week it was sent for", automation=EGAS, expr="count_ok",
+       expect="True", given={"pend": '{"id": 1795597200, "g": 1, "d": 7, "h": 80, "a": 2}'},
+       subs={_ACT: "'ENERGY_GAS_COUNT_1795597200'"}, finding="review FA1"))
+A(dict(name="energy interval: a stale Count it counts nothing", automation=EGAS, expr="count_ok",
+       expect="False", given={"pend": '{"id": 1795597200, "g": 1, "d": 7, "h": 80, "a": 2}'},
+       subs={_ACT: "'ENERGY_GAS_COUNT_1794992400'"}, finding="review FA1: never a different week"))
+A(dict(name="energy interval: Count it with nothing pending counts nothing", automation=EGAS,
+       expr="count_ok", expect="False", given={"pend": ""}, subs={_ACT: "'ENERGY_GAS_COUNT_1795597200'"},
+       finding="already counted, or replaced"))
+
+# The daily degree-day run (automation 1792300000031)
+EDD = "1792300000031"
+EDD_M = "states('sensor.energy_outdoor_daily_mean')"
+for _m, _x, _f in (("'5'", "14.0", "19 - 5"), ("'12.9'", "6.1", "the 13 C limit from below"),
+                   ("'13'", "0", "the 13 C limit: not a heating day"),
+                   ("'unavailable'", "0", "an unknown day adds nothing (and is not counted)")):
+    A(dict(name="energy degree-days: a day at %s adds %s" % (_m.strip("'"), _x), automation=EDD, expr="add_h",
+           expect=_x, given={}, subs={EDD_M: _m}, finding=_f))
+EDD_AC, EDD_AC0 = "states('sensor.energy_ac_total')", "states('input_number.energy_ac_at_midnight')"
+A(dict(name="energy degree-days: a cold day's AC is heating", automation=EDD, expr="ac_add", expect="3.5",
+       given={"cold": True}, subs={EDD_AC: "'123.5'", EDD_AC0: "'120'"}, finding="review FA2"))
+A(dict(name="energy degree-days: a warm day's AC is not", automation=EDD, expr="ac_add", expect="0",
+       given={"cold": False}, subs={EDD_AC: "'123.5'", EDD_AC0: "'120'"},
+       finding="review FA2: cooling in a mixed week stays out"))
+A(dict(name="energy degree-days: a meter that went backwards adds nothing", automation=EDD, expr="ac_add",
+       expect="0.0", given={"cold": True}, subs={EDD_AC: "'10'", EDD_AC0: "'120'"},
+       finding="a replaced or reset meter"))

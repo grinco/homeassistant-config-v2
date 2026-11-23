@@ -1,0 +1,348 @@
+{
+ "actions": [
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "reading"
+      },
+      {
+       "condition": "template",
+       "value_template": "{{ is_number(trigger.from_state.state) and is_number(trigger.to_state.state) and trigger.to_state.state | float > trigger.from_state.state | float }}"
+      }
+     ],
+     "sequence": [
+      {
+       "variables": {
+        "a_coef": "{{ states('sensor.energy_gas_heating_per_degree_day') | float(0) }}",
+        "a_now": "{{ states('input_number.energy_ac_heating_total') | float(0) }}",
+        "b_coef": "{{ states('sensor.energy_gas_hot_water_per_day') | float(0) }}",
+        "cal": "{{ states('input_number.gas_kwh_per_m3') | float(10.6) }}",
+        "h_now": "{{ states('input_number.energy_hdd_total') | float(0) }}",
+        "m_new": "{{ trigger.to_state.state | float }}",
+        "n_now": "{{ states('input_number.energy_hdd_days') | float(0) }}",
+        "snap": "{{ states('input_text.energy_gas_snapshot') | from_json if states('input_text.energy_gas_snapshot')[:1] == '{' else {} }}",
+        "t_now": "{{ as_timestamp(now()) | int }}",
+        "trusted": "{{ states('input_number.energy_gas_w_h') | float(0) >= 300 }}"
+       }
+      },
+      {
+       "variables": {
+        "a": "{{ (a_now - snap.get('a', a_now)) | round(3) }}",
+        "cal_days": "{% set t0 = snap.get('t', t_now) %}{{ (((t_now + 60) | as_datetime | as_local).date() - ((t0 + 60) | as_datetime | as_local).date()).days }}",
+        "counted": "{{ (n_now - snap.get('n', n_now)) | int }}",
+        "d": "{{ ((t_now - snap.get('t', t_now)) / 86400) | round(3) }}",
+        "g": "{{ ((m_new - snap.get('m', m_new)) * cal) | round(2) }}",
+        "h": "{{ (h_now - snap.get('h', h_now)) | round(2) }}",
+        "has_snap": "{{ snap.t is defined }}"
+       }
+      },
+      {
+       "variables": {
+        "pred": "{{ (a_coef * h + b_coef * d) | round(2) }}",
+        "target": "{{ 'summer' if h <= 0 else 'winter' }}"
+       }
+      },
+      {
+       "variables": {
+        "pend_old": "{{ states('input_text.energy_gas_pending') }}",
+        "verdict": "{% if not has_snap %}first{% elif counted != cal_days %}gap{% elif trusted and pred >= 50 and (g - pred) | abs > 0.3 * pred and (g - pred) | abs > 40 %}flag{% else %}count{% endif %}"
+       }
+      },
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": "{{ {'t': t_now, 'm': m_new, 'h': h_now, 'n': n_now, 'a': a_now} | to_json }}"
+       },
+       "target": {
+        "entity_id": "input_text.energy_gas_snapshot"
+       }
+      },
+      {
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ verdict in ['count', 'flag'] and pred >= 50 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ ([[-1000, (100 * (g - pred) / pred)] | max, 1000] | min) | round(1) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_model_error_pct"
+         }
+        }
+       ]
+      },
+      {
+       "choose": [
+        {
+         "conditions": [
+          {
+           "condition": "template",
+           "value_template": "{{ verdict == 'count' and target == 'winter' }}"
+          }
+         ],
+         "sequence": [
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_w_g') | float(0) + g) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_w_g"
+           }
+          },
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_w_d') | float(0) + d) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_w_d"
+           }
+          },
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_w_h') | float(0) + h) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_w_h"
+           }
+          },
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_w_a') | float(0) + a) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_w_a"
+           }
+          }
+         ]
+        },
+        {
+         "conditions": [
+          {
+           "condition": "template",
+           "value_template": "{{ verdict == 'count' and target == 'summer' }}"
+          }
+         ],
+         "sequence": [
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_s_g') | float(0) + g) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_s_g"
+           }
+          },
+          {
+           "action": "input_number.set_value",
+           "data": {
+            "value": "{{ (states('input_number.energy_gas_s_d') | float(0) + d) | round(3) }}"
+           },
+           "target": {
+            "entity_id": "input_number.energy_gas_s_d"
+           }
+          }
+         ]
+        },
+        {
+         "conditions": [
+          {
+           "condition": "template",
+           "value_template": "{{ verdict == 'gap' }}"
+          }
+         ],
+         "sequence": [
+          {
+           "action": "notify.mobile_app_adult_phone_1",
+           "continue_on_error": true,
+           "data": {
+            "data": {
+             "tag": "energy-gas"
+            },
+            "message": "{{ cal_days }} days passed since the last reading but only {{ counted }} were measured for weather (Home Assistant was down at 23:59). The reading is kept; the model starts again from it.",
+            "title": "Gas reading not used for the model"
+           }
+          }
+         ]
+        },
+        {
+         "conditions": [
+          {
+           "condition": "template",
+           "value_template": "{{ verdict == 'flag' }}"
+          }
+         ],
+         "sequence": [
+          {
+           "action": "input_text.set_value",
+           "data": {
+            "value": "{{ {'id': t_now, 'g': g, 'd': d, 'h': h, 'a': a} | to_json }}"
+           },
+           "target": {
+            "entity_id": "input_text.energy_gas_pending"
+           }
+          },
+          {
+           "action": "notify.mobile_app_adult_phone_1",
+           "continue_on_error": true,
+           "data": {
+            "data": {
+             "actions": [
+              {
+               "action": "ENERGY_GAS_COUNT_{{ t_now }}",
+               "title": "Count it"
+              }
+             ],
+             "tag": "energy-gas"
+            },
+            "message": "Since the last reading: {{ g | round(0) | int }} kWh, the model expected {{ pred | round(0) | int }} kWh. A typo, a week away or a real change? The reading is kept; it is left out of the model unless you count it.{{ ' The previously held week was dropped.' if pend_old[:1] == '{' else '' }}",
+            "title": "Gas use unlike the model"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "count"
+      },
+      {
+       "condition": "template",
+       "value_template": "{{ (trigger.event.data.action | default('')).startswith('ENERGY_GAS_COUNT_') }}"
+      }
+     ],
+     "sequence": [
+      {
+       "variables": {
+        "pend": "{{ states('input_text.energy_gas_pending') }}"
+       }
+      },
+      {
+       "variables": {
+        "count_ok": "{{ pend[:1] == '{' and ((pend | from_json).id | string) == (trigger.event.data.action | replace('ENERGY_GAS_COUNT_', '')) }}"
+       }
+      },
+      {
+       "condition": "template",
+       "value_template": "{{ count_ok }}"
+      },
+      {
+       "variables": {
+        "p": "{{ pend | from_json }}"
+       }
+      },
+      {
+       "else": [
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_s_g') | float(0) + p.g) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_s_g"
+         }
+        },
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_s_d') | float(0) + p.d) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_s_d"
+         }
+        }
+       ],
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ p.h > 0 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_w_g') | float(0) + p.g) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_w_g"
+         }
+        },
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_w_d') | float(0) + p.d) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_w_d"
+         }
+        },
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_w_h') | float(0) + p.h) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_w_h"
+         }
+        },
+        {
+         "action": "input_number.set_value",
+         "data": {
+          "value": "{{ (states('input_number.energy_gas_w_a') | float(0) + p.a) | round(3) }}"
+         },
+         "target": {
+          "entity_id": "input_number.energy_gas_w_a"
+         }
+        }
+       ]
+      },
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": ""
+       },
+       "target": {
+        "entity_id": "input_text.energy_gas_pending"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Energy — gas interval",
+ "conditions": [],
+ "description": "On each accepted gas reading (sensor.gas_total rises) the interval since the last one is judged: first (snapshot only), gap (a 23:59 run missed inside it), count (into the summer or winter sums), or flag (trusted model, prediction >= 50 kWh, off by > 30 % and > 40 kWh: held out in input_text.energy_gas_pending, push with a Count it button that names the week). Design: docs/heating-energy-rating.md.",
+ "id": "1792300000030",
+ "max": 3,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": "sensor.gas_total",
+   "id": "reading",
+   "trigger": "state"
+  },
+  {
+   "event_type": "mobile_app_notification_action",
+   "id": "count",
+   "trigger": "event"
+  }
+ ]
+}
