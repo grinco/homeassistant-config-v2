@@ -556,9 +556,10 @@ def socket_universe():
 # C33: a device with one of these is an appliance; its own temperature probe
 # measures the appliance, not the room. Not `switch`: a presence sensor or a plug
 # carries one too (review 2026-10-22). Home Connect devices (the oven) are
-# appliances by integration, since they expose no such domain.
+# appliances by integration, since they expose no such domain. So is the Solix
+# C2000 power station (anker_solix): its temperature is the battery's (2026-11-23).
 APPLIANCE_DOMAINS = ("climate", "fan", "water_heater", "vacuum", "humidifier")
-APPLIANCE_INTEGRATIONS = ("home_connect",)
+APPLIANCE_INTEGRATIONS = ("home_connect", "anker_solix")
 CHIP_TEMP_RE = re.compile(r"_device_temperature$")
 TEMPLATE_REF_RE = re.compile(r"""['"](sensor\.[a-z0-9_]+)['"]""")
 
