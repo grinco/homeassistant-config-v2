@@ -597,6 +597,180 @@
   {
    "cards": [
     {
+     "heading": "Heating",
+     "icon": "mdi:home-thermometer",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.energy_class",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:certificate-outline",
+     "name": "Class (estimate)",
+     "state_display": "[[[ return entity.state === 'not enough data' ? 'too early' : entity.state; ]]]",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.energy_heating_per_m2_year",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:floor-plan",
+     "name": "Per m² a year",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "sensor.energy_heating_per_m2_year"
+      }
+     ]
+    },
+    {
+     "entity": "sensor.energy_gas_estimate",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:meter-gas-outline",
+     "name": "Gas meter now",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.gas_total",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:meter-gas",
+     "name": "Last reading",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
+    },
+    {
+     "entity": "sensor.energy_gas_heating_per_degree_day",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:fire",
+     "name": "Gas per degree-day",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "sensor.energy_gas_heating_per_degree_day"
+      }
+     ]
+    },
+    {
+     "entity": "sensor.energy_ac_heating_per_degree_day",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:heat-pump",
+     "name": "AC per degree-day",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "sensor.energy_ac_heating_per_degree_day"
+      }
+     ]
+    },
+    {
+     "heading": "Airtightness",
+     "heading_style": "subtitle",
+     "icon": "mdi:weather-windy",
+     "type": "heading",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "input_text.leak_meter_verdict",
+       "state_not": [
+        "",
+        "unknown",
+        "unavailable"
+       ]
+      }
+     ]
+    },
+    {
+     "entity": "input_number.leak_ach_living_room",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:weather-windy",
+     "name": "Air changes per hour",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "input_number.leak_ach_living_room"
+      }
+     ]
+    },
+    {
+     "content": "{{ states('input_text.leak_meter_verdict') }}",
+     "grid_options": {
+      "columns": "full"
+     },
+     "text_only": true,
+     "type": "markdown",
+     "visibility": [
+      {
+       "condition": "state",
+       "entity": "input_text.leak_meter_verdict",
+       "state_not": [
+        "",
+        "unknown",
+        "unavailable"
+       ]
+      }
+     ]
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
      "heading": "Car",
      "icon": "mdi:car-electric",
      "tap_action": {
