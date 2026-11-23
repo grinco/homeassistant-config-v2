@@ -602,6 +602,14 @@
      "type": "heading"
     },
     {
+     "content": "<details><summary><ha-icon icon=\"mdi:information-outline\"></ha-icon></summary>\n\n**Last 24 h / last 7 days**: estimated energy for heating and hot water (gas and the air conditioners), per square metre of the flat.\n\n**Degree-day**: one degree of outdoor cold for one day, counted from 19 °C. A day averaging 5 °C outside is 14 degree-days.\n\n**Gas / AC per degree-day**: how much energy the whole flat needs for each degree-day: its heat loss through walls, windows, roof and gaps. Lower is better.\n\n**Class (estimate)**: a year scaled to a normal Prague winter, on the former A–G scale for apartment buildings. Not an official energy certificate; it shows once about four winter weeks are measured.\n\n</details>",
+     "grid_options": {
+      "columns": "full"
+     },
+     "text_only": true,
+     "type": "markdown"
+    },
+    {
      "entity": "sensor.energy_class",
      "grid_options": {
       "columns": 6,
@@ -638,32 +646,46 @@
      ]
     },
     {
-     "entity": "sensor.energy_gas_estimate",
+     "entity": "sensor.energy_heating_per_m2_last_24h",
      "grid_options": {
       "columns": 6,
       "rows": 1
      },
-     "icon": "mdi:meter-gas-outline",
-     "name": "Gas meter now",
+     "icon": "mdi:clock-outline",
+     "name": "Last 24 h",
      "tap_action": {
       "action": "more-info"
      },
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "sensor.energy_heating_per_m2_last_24h"
+      }
+     ]
     },
     {
-     "entity": "sensor.gas_total",
+     "entity": "sensor.energy_heating_per_m2_last_7_days",
      "grid_options": {
       "columns": 6,
       "rows": 1
      },
-     "icon": "mdi:meter-gas",
-     "name": "Last reading",
+     "icon": "mdi:calendar-week",
+     "name": "Last 7 days",
      "tap_action": {
       "action": "more-info"
      },
      "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "custom:button-card",
+     "visibility": [
+      {
+       "above": 0,
+       "condition": "numeric_state",
+       "entity": "sensor.energy_heating_per_m2_last_7_days"
+      }
+     ]
     },
     {
      "entity": "sensor.energy_gas_heating_per_degree_day",
@@ -694,6 +716,7 @@
      },
      "icon": "mdi:heat-pump",
      "name": "AC per degree-day",
+     "state_display": "[[[ var n = parseFloat(entity.state); return isNaN(n) ? entity.state : n.toFixed(2) + ' kWh/K·d'; ]]]",
      "tap_action": {
       "action": "more-info"
      },
@@ -711,18 +734,15 @@
      "heading": "Airtightness",
      "heading_style": "subtitle",
      "icon": "mdi:weather-windy",
-     "type": "heading",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "input_text.leak_meter_verdict",
-       "state_not": [
-        "",
-        "unknown",
-        "unavailable"
-       ]
-      }
-     ]
+     "type": "heading"
+    },
+    {
+     "content": "<details><summary><ha-icon icon=\"mdi:information-outline\"></ha-icon></summary>\n\nMeasured each time the flat is empty (alarm on Away) and the heating turned down.\n\n**Air changes per hour**: how often the air is replaced by outdoor air through gaps, with the windows shut. Low below 0.2, moderate 0.2–0.5, high 0.5–1, very high above 1.\n\n**Leaks most**: the room that cools fastest when nobody is home: walls, roof, window seals.\n\n**Aired most this week**: hours a window was detected open (fresh air, humidity dropping towards outdoors) over the last 7 days.\n\n</details>",
+     "grid_options": {
+      "columns": "full"
+     },
+     "text_only": true,
+     "type": "markdown"
     },
     {
      "entity": "input_number.leak_ach_living_room",
@@ -732,6 +752,7 @@
      },
      "icon": "mdi:weather-windy",
      "name": "Air changes per hour",
+     "state_display": "[[[ var w = states['sensor.energy_air_change_rating']; return entity.state + ' /h · ' + (w ? w.state : ''); ]]]",
      "tap_action": {
       "action": "more-info"
      },
@@ -751,8 +772,9 @@
       "columns": 12,
       "rows": 1
      },
-     "icon": "mdi:window-open-variant",
-     "name": "Most likely leak",
+     "icon": "mdi:home-alert-outline",
+     "name": "Leaks most",
+     "state_display": "[[[ return entity.state.replace(': leaks most ', ' '); ]]]",
      "tap_action": {
       "action": "more-info",
       "entity": "input_text.leak_meter_verdict"
@@ -770,6 +792,20 @@
        ]
       }
      ]
+    },
+    {
+     "entity": "sensor.energy_aired_most",
+     "grid_options": {
+      "columns": 12,
+      "rows": 1
+     },
+     "icon": "mdi:window-open-variant",
+     "name": "Aired most this week",
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_stat",
+     "type": "custom:button-card"
     }
    ],
    "column_span": 1,
