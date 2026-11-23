@@ -231,6 +231,24 @@ Added 2026-11-23, each decision in one named `want`/`stuck` variable with cases 
   Magic Areas skips the next turn-on (2026-10-25). It gets one more OFF and a logbook line, no push.
 
 Not covered by the cases: the waits, the actual commands, and notification delivery.
+## `house-leak-meter.json`
+
+Added 2026-11-23. Away sets every room to 16 °C, so from an hour into Away the flat cools unheated:
+a free airtightness test each time the house is empty. A snapshot is stored in an `input_text`
+(it survives a restart); when Away ends the meter records, per room, the share of its
+indoor-outdoor gap lost per hour, and for each CO2 room the air changes per hour (CO2 decay toward
+the meters' 400 ppm floor).
+
+- A room losing heat at twice the flat's median is the **leakiest**: structure, not an event.
+- If it is also 1.8x its own last run, it is probably a **window** left open: one push, and that run
+  is not kept as the room's baseline.
+- A room that warmed with the heating off (the office, from its IT gear) is reported as kept warm
+  and left out of the comparison.
+
+Both floors share air over the open stairs, so the CO2 rate is the flat's, not one room's. The
+first measurements (11-16, 11-21): about 0.5-0.8 air changes per hour; one child's room cooled 2-4x
+faster than the rest. Cases in `tests/climate/` cover the maths; the snapshot and the writes are
+checked against live state, not by a case.
 
 ## `hot-water-schedule.json` (not exported yet)
 

@@ -84,6 +84,7 @@ AUTOS = {
     "1792300000002": "house-vacuum-away.json",
     "1792300000003": "lights-retry-off.json",
     "1792300000010": "power-solix-grid-watch.json",
+    "1792300000020": "house-leak-meter.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
