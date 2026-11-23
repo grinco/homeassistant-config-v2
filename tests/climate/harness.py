@@ -139,7 +139,7 @@ def night_definitions():
 
 # Template sensors the suite is allowed to reach. The prefix filter is what keeps
 # an unrelated template helper elsewhere in the instance from being swept in.
-SENSOR_PREFIXES = ("Climate ", "Radiation ", "Lighting ", "Any ")
+SENSOR_PREFIXES = ("Climate ", "Radiation ", "Lighting ", "Any ", "Energy ")
 
 
 def load_sensor_templates():

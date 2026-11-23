@@ -452,6 +452,86 @@
     "template_type": "binary_sensor"
    },
    "title": "Lighting corridor presence"
+  },
+  {
+   "domain": "min_max",
+   "options": {
+    "entity_ids": [
+     "sensor.living_room_ac_energy",
+     "sensor.office_ac_energy",
+     "sensor.bedroom_ac_energy",
+     "sensor.kid1_room_ac_energy",
+     "sensor.kid2_room_ac_energy"
+    ],
+    "name": "Energy AC total",
+    "round_digits": 3.0,
+    "type": "sum"
+   },
+   "title": "Energy AC total"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy gas hot water per day",
+    "state": "{% set d = states('input_number.energy_gas_s_d') | float(0) %}{% set g = states('input_number.energy_gas_s_g') | float(0) %}{{ (g / d) | round(2) if d >= 7 else 0 }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "kWh/d"
+   },
+   "title": "Energy gas hot water per day"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy gas heating per degree-day",
+    "state": "{% set b = states('sensor.energy_gas_hot_water_per_day') | float(0) %}{% set g = states('input_number.energy_gas_w_g') | float(0) %}{% set d = states('input_number.energy_gas_w_d') | float(0) %}{% set h = states('input_number.energy_gas_w_h') | float(0) %}{{ ([0, (g - b * d) / h] | max) | round(2) if h > 0 else none }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "kWh/K·d"
+   },
+   "title": "Energy gas heating per degree-day"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy AC heating per degree-day",
+    "state": "{% set h = states('input_number.energy_gas_w_h') | float(0) %}{{ (states('input_number.energy_gas_w_a') | float(0) / h) | round(3) if h > 0 else none }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "kWh/K·d"
+   },
+   "title": "Energy AC heating per degree-day"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy heating per m2 year",
+    "state": "{% set h = states('input_number.energy_gas_w_h') | float(0) %}{% set a = states('sensor.energy_gas_heating_per_degree_day') %}{% set c = states('sensor.energy_ac_heating_per_degree_day') | float(0) %}{% set b = states('sensor.energy_gas_hot_water_per_day') | float(0) %}{% set area = states('input_number.energy_heated_area') | float(0) %}{{ (((a | float + c) * 3235 + b * 365) / area) | round(0) if h >= 300 and is_number(a) and area > 0 else none }}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "kWh/m²·y"
+   },
+   "title": "Energy heating per m2 year"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy class",
+    "state": "{% set e = states('sensor.energy_heating_per_m2_year') %}{% if not is_number(e) %}not enough data{% else %}{% set e = e | float %}{{ 'A' if e < 43 else 'B' if e <= 82 else 'C' if e <= 120 else 'D' if e <= 162 else 'E' if e <= 205 else 'F' if e <= 245 else 'G' }}{% endif %}",
+    "template_type": "sensor"
+   },
+   "title": "Energy class"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy gas estimate",
+    "state": "{% set s = states('input_text.energy_gas_snapshot') %}{% set m = states('sensor.gas_total') | float(0) %}{% set a = states('sensor.energy_gas_heating_per_degree_day') %}{% set b = states('sensor.energy_gas_hot_water_per_day') | float(0) %}{% set cal = states('input_number.gas_kwh_per_m3') | float(0) %}{% if s[:1] != '{' or not is_number(a) or cal <= 0 %}{{ m }}{% else %}{% set j = s | from_json %}{% set dh = [0, states('input_number.energy_hdd_total') | float(0) - j.h] | max %}{% set dd = [0, (as_timestamp(now()) - j.t) / 86400] | max %}{{ (m + (a | float * dh + b * dd) / cal) | round(3) }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor",
+    "unit_of_measurement": "m³"
+   },
+   "title": "Energy gas estimate"
   }
  ],
  "note": "Resolved per-room sensors, the floor/household and power aggregates derived from them, the climate health-risk binary sensor, and the roll-ups Home's Needs attention reads. Reference only; entity ids are anonymised. Exported by tests/dashboards/export.py. 2026-10-07: 'Lighting daylight' (on = bright enough, no lights) is the dark entity Magic Areas reads before switching a room's lights on; the bathroom's and shower's readings are Magic Areas aggregates (one sensor each, lint C20), not template sensors. 2026-10-09: 'Any safety alarm' rolls up every leak/smoke/gas/CO/safety binary sensor in the house for Home's Needs attention; it excludes itself so it cannot latch. 2026-10-12: 'Any low battery' lists every battery under 20 % that a person replaces (phones, the car and vacuums are skipped; by entity id since 2026-10-20, so Home can make each one a tile), 'Lighting left on' the lights still on; both say 'none' when there is nothing to say. 2026-10-14: 'Any safety sensor silent' names a safety sensor unavailable for 30 minutes. 2026-10-20: 'Lighting living room bright', 'Lighting kitchen dark' and 'Lighting hallway bright' are the dark entities Magic Areas reads for the open space and the hallway: the room's own lux in real time, with outdoor daylight only as the fallback (docs/presence-lighting.md). 2026-10-20: 'Any low battery' is the ONE battery list; the binary 'Any battery low' and the Home card's own copy (15 %, a volvo substring skip) are gone (lint C29). 'Lighting night' is the helper dashboards read for night; the automations keep their own copy of the same expression (tests/climate/harness.py NIGHT_CONSUMERS). 2026-10-21: the kitchen reads 'Lighting living room bright' natively as its dark entity (one open space), so 'Lighting kitchen dark' is no longer exported or read. 'Lighting bedroom sleep' (night, or before noon) is the bedroom's sleep entity: no lamps when someone turns over in bed after the alarm leaves Night at 06:00. 2026-10-25: 'Lighting corridor presence' (some corridor sensor other than the stairs one sees someone) is the corridor's accent entity: the stairs sensor lights the corridor light, and only the corridor proper lights the entrance light."

@@ -1,0 +1,93 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "add_h": "{% set m = states('sensor.energy_outdoor_daily_mean') %}{{ ([0, 19 - m | float] | max) | round(2) if is_number(m) and m | float < 13 else 0 }}",
+    "cold": "{{ is_number(states('sensor.energy_outdoor_daily_mean')) and states('sensor.energy_outdoor_daily_mean') | float < 13 }}",
+    "known": "{{ is_number(states('sensor.energy_outdoor_daily_mean')) }}"
+   }
+  },
+  {
+   "variables": {
+    "ac_add": "{% set now_ac = states('sensor.energy_ac_total') %}{{ ([0, now_ac | float - states('input_number.energy_ac_at_midnight') | float(0)] | max) | round(3) if cold and is_number(now_ac) else 0 }}"
+   }
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ known }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "input_number.set_value",
+     "data": {
+      "value": "{{ (states('input_number.energy_hdd_total') | float(0) + add_h) | round(2) }}"
+     },
+     "target": {
+      "entity_id": "input_number.energy_hdd_total"
+     }
+    },
+    {
+     "action": "input_number.set_value",
+     "data": {
+      "value": "{{ states('input_number.energy_hdd_days') | float(0) + 1 }}"
+     },
+     "target": {
+      "entity_id": "input_number.energy_hdd_days"
+     }
+    }
+   ]
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ ac_add | float(0) > 0 }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "input_number.set_value",
+     "data": {
+      "value": "{{ (states('input_number.energy_ac_heating_total') | float(0) + ac_add) | round(3) }}"
+     },
+     "target": {
+      "entity_id": "input_number.energy_ac_heating_total"
+     }
+    }
+   ]
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ is_number(states('sensor.energy_ac_total')) }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "input_number.set_value",
+     "data": {
+      "value": "{{ states('sensor.energy_ac_total') | float }}"
+     },
+     "target": {
+      "entity_id": "input_number.energy_ac_at_midnight"
+     }
+    }
+   ]
+  }
+ ],
+ "alias": "Energy — degree-days",
+ "conditions": [],
+ "description": "At 23:59 the day's time-weighted outdoor mean (sensor.energy_outdoor_daily_mean, 24 h window = the calendar day) adds 19 - mean K·day when the mean is below 13 C (ČSN 38 3350), counts the day, and books that day's AC increase as heating only on a heating day. A day with no mean is not counted, so the weekly interval sees it as a gap. Design: docs/heating-energy-rating.md.",
+ "id": "1792300000031",
+ "mode": "single",
+ "triggers": [
+  {
+   "at": "23:59:00",
+   "trigger": "time"
+  }
+ ]
+}

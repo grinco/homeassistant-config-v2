@@ -250,6 +250,14 @@ first measurements (11-16, 11-21): about 0.5-0.8 air changes per hour; one child
 faster than the rest. Cases in `tests/climate/` cover the maths; the snapshot and the writes are
 checked against live state, not by a case.
 
+## `energy-degree-days.json`, `energy-gas-interval.json`
+
+Added 2026-11-23: heating energy and an indicative A–G class (`docs/heating-energy-rating.md`,
+reviewed twice). Degree-days accumulate nightly; each weekly gas reading is judged against the
+model and either counted, held out for the operator (**Count it**), or marked a gap. The
+`Energy *` template sensors in `resolved-sensors.json` carry the coefficients, the between-reading
+estimate, the kWh/m²·year figure and the class.
+
 ## `hot-water-schedule.json` (not exported yet)
 
 The Tado hot-water zone's active timetable, as set in the Tado app. Until the first run, the

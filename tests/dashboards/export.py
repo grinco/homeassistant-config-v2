@@ -85,6 +85,8 @@ AUTOS = {
     "1792300000003": "lights-retry-off.json",
     "1792300000010": "power-solix-grid-watch.json",
     "1792300000020": "house-leak-meter.json",
+    "1792300000030": "energy-gas-interval.json",
+    "1792300000031": "energy-degree-days.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
@@ -102,7 +104,9 @@ RESOLVED_TITLES = (
     "Climate co2 living room", "Climate co2 office", "Radiation dose rate", "Lighting daylight",
     "Any safety alarm", "Any safety sensor silent", "Lighting night", "Lighting left on",
     "Lighting living room bright", "Lighting hallway bright", "Lighting bedroom sleep",
-    "Lighting corridor presence",
+    "Lighting corridor presence", "Energy AC total", "Energy gas hot water per day",
+    "Energy gas heating per degree-day", "Energy AC heating per degree-day",
+    "Energy heating per m2 year", "Energy class", "Energy gas estimate",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
