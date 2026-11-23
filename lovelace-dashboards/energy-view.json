@@ -316,7 +316,7 @@
      },
      "card_param": "cards",
      "filter": {
-      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[], idle=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- if not is_number(states(s.power)) or states(s.power) | float(0) >= 2 -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- else -%}{%- set out.idle = out.idle + [o.get('name') or s.name] -%}{%- endif -%}\n{%- endfor -%}\n{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': out.l}] if out.l else []) + ([{'type': 'markdown', 'text_only': true, 'content': '**' ~ (out.idle | count) ~ ' idle** · ' ~ (out.idle | join(' · '))}] if out.idle else []) }}"
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | reject('in', integration_entities('anker_solix')) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set out = namespace(l=[], idle=[]) -%}\n{%- for s in ns.s -%}{%- set o = ov.get(s.power, {}) -%}\n{%- if not is_number(states(s.power)) or states(s.power) | float(0) >= 2 -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_socket', 'entity': s.power, 'name': o.get('name') or s.name, 'icon': o.get('icon') or 'mdi:power-socket-de', 'variables': {'sw': s.switch, 'base': o.get('color') or 'var(--primary-color)', 'max': o.get('max') or 200, 'tint': 'var(--primary-color)'}}] -%}\n{%- else -%}{%- set out.idle = out.idle + [o.get('name') or s.name] -%}{%- endif -%}\n{%- endfor -%}\n{{ ([{'type': 'grid', 'columns': 2, 'square': false, 'cards': out.l}] if out.l else []) + ([{'type': 'markdown', 'text_only': true, 'content': '**' ~ (out.idle | count) ~ ' idle** · ' ~ (out.idle | join(' · '))}] if out.idle else []) }}"
      },
      "grid_options": {
       "columns": "full"
@@ -382,7 +382,7 @@
      },
      "card_param": "cards",
      "filter": {
-      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set mains = ns.s | map(attribute='switch') | list -%}\n{%- set oo = config.get('outlets', {}) -%}\n{%- set out = namespace(l=[]) -%}\n{%- for s in states.switch | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','outlet') | map(attribute='entity_id') | reject('in', mains) | sort -%}\n{%- set o = oo.get(s, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_outlet', 'entity': s, 'name': o.get('name') or state_attr(s, 'friendly_name'), 'icon': o.get('icon') or 'mdi:power-plug-outline'}] -%}\n{%- endfor -%}\n{{ out.l }}"
+      "template": "\n{%- set pc = integration_entities('powercalc') -%}\n{%- set ns = namespace(s=[]) -%}\n{%- for p in states.sensor | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','power') | map(attribute='entity_id') | reject('in', pc) | reject('in', integration_entities('anker_solix')) | sort -%}\n{%- set d = device_id(p) -%}\n{%- if d -%}\n{%- set ents = device_entities(d) -%}\n{%- set sw = ents | select('match','switch\\.') | list -%}\n{%- if sw and not (ents | select('match','climate\\.') | list) -%}\n{%- set ml = sw | map('length') | min -%}\n{%- set main = sw | select('search', '^.{' ~ ml ~ '}$') | first -%}\n{%- set en = ents | select('match','sensor\\.') | reject('in', pc) | select('is_state_attr','device_class','energy') | list -%}\n{%- set ns.s = ns.s + [{'power': p, 'energy': en | first | default(''), 'switch': main, 'name': device_attr(d,'name_by_user') or device_attr(d,'name')}] -%}\n{%- endif -%}\n{%- endif -%}\n{%- endfor -%}\n{%- set ov = config.get('sockets', {}) -%}\n{%- set ord = namespace(l=[]) -%}{%- for k in ov.keys() -%}{%- set ord.l = ord.l + (ns.s | selectattr('power','eq',k) | list) -%}{%- endfor -%}\n{%- set ns.s = ord.l + (ns.s | rejectattr('power','in', ov.keys() | list) | list) -%}\n\n{%- set mains = ns.s | map(attribute='switch') | list -%}\n{%- set oo = config.get('outlets', {}) -%}\n{%- set out = namespace(l=[]) -%}\n{%- for s in states.switch | selectattr('attributes.device_class','defined') | selectattr('attributes.device_class','eq','outlet') | map(attribute='entity_id') | reject('in', mains) | sort -%}\n{%- set o = oo.get(s, {}) -%}\n{%- set out.l = out.l + [{'type': 'custom:button-card', 'template': 'vg_outlet', 'entity': s, 'name': o.get('name') or state_attr(s, 'friendly_name'), 'icon': o.get('icon') or 'mdi:power-plug-outline'}] -%}\n{%- endfor -%}\n{{ out.l }}"
      },
      "grid_options": {
       "columns": "full"
@@ -665,6 +665,64 @@
       "max": 3700,
       "tint": "amber"
      }
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
+     "heading": "Solix C2000 (office UPS)",
+     "icon": "mdi:battery-charging",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.guest_room_solix_c2000_gen_2_state_of_charge",
+     "max": 100,
+     "min": 0,
+     "name": "Battery",
+     "needle": true,
+     "severity": {
+      "green": 50,
+      "red": 0,
+      "yellow": 20
+     },
+     "type": "gauge"
+    },
+    {
+     "entities": [
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_ac_input_power",
+       "name": "Grid in (AC)"
+      },
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_ac_output_power",
+       "name": "Load out (AC)"
+      },
+      {
+       "entity": "sensor.solix_dc_load_out",
+       "icon": "mdi:usb-c-port",
+       "name": "Load out (DC)"
+      },
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_dc_input_power",
+       "name": "Solar in (DC)"
+      },
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_battery_energy",
+       "name": "Battery stored"
+      },
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_remaining_time",
+       "name": "Remaining"
+      },
+      {
+       "entity": "sensor.guest_room_solix_c2000_gen_2_temperature",
+       "name": "Temperature"
+      }
+     ],
+     "type": "entities"
     }
    ],
    "column_span": 1,
