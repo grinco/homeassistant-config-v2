@@ -1,0 +1,62 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "area": "{{ trigger.entity_id | replace('binary_sensor.magic_areas_presence_tracking_', '') | replace('_area_state', '') }}"
+   }
+  },
+  {
+   "variables": {
+    "stuck": "{% set ns = namespace(l=[]) %}{% if states('switch.magic_areas_light_groups_' ~ area ~ '_light_control') == 'on' and states('binary_sensor.magic_areas_presence_tracking_' ~ area ~ '_area_state') == 'off' %}{% for s in expand('light.magic_areas_light_groups_' ~ area ~ '_all_lights') %}{% if s.state == 'on' and as_timestamp(s.last_changed) < as_timestamp(trigger.to_state.last_changed) %}{% set ns.l = ns.l + [s.entity_id] %}{% endif %}{% endfor %}{% endif %}{{ ns.l }}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ stuck | count > 0 }}"
+  },
+  {
+   "action": "light.turn_off",
+   "continue_on_error": true,
+   "target": {
+    "entity_id": "{{ stuck }}"
+   }
+  },
+  {
+   "action": "logbook.log",
+   "data": {
+    "message": "sent OFF again to {{ stuck | join(', ') }}: still on 90 s after {{ area }} cleared",
+    "name": "Lights retry"
+   }
+  }
+ ],
+ "alias": "Lights — retry an OFF that did not take",
+ "conditions": [],
+ "description": "Magic Areas turns every light off when a room clears. A light still on 90 s later that has not changed since the room cleared is a failed Zigbee OFF or a wrong state in HA (2026-10-25: MA then skipped the next turn-on). Send OFF once more. Unreachable bulbs and paused rooms are left alone; no notification.",
+ "id": "1792300000003",
+ "max": 15,
+ "mode": "parallel",
+ "triggers": [
+  {
+   "entity_id": [
+    "binary_sensor.magic_areas_presence_tracking_living_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_corridor_area_state",
+    "binary_sensor.magic_areas_presence_tracking_guest_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_kitchen_area_state",
+    "binary_sensor.magic_areas_presence_tracking_laundry_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_bedroom_area_state",
+    "binary_sensor.magic_areas_presence_tracking_closet_area_state",
+    "binary_sensor.magic_areas_presence_tracking_bathroom_area_state",
+    "binary_sensor.magic_areas_presence_tracking_kid2_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_kid1_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_hallway_area_state",
+    "binary_sensor.magic_areas_presence_tracking_shower_area_state",
+    "binary_sensor.magic_areas_presence_tracking_tea_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_stairs_area_state"
+   ],
+   "for": "00:01:30",
+   "from": "on",
+   "to": "off",
+   "trigger": "state"
+  }
+ ]
+}

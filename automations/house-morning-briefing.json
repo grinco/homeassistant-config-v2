@@ -12,30 +12,15 @@
    }
   },
   {
-   "parallel": [
-    {
-     "action": "notify.mobile_app_adult_phone_1",
-     "continue_on_error": true,
-     "data": {
-      "data": {
-       "tag": "house-briefing"
-      },
-      "message": "{{ message }}",
-      "title": "The house this morning"
-     }
+   "action": "notify.mobile_app_adult_phone_1",
+   "continue_on_error": true,
+   "data": {
+    "data": {
+     "tag": "house-briefing"
     },
-    {
-     "action": "notify.mobile_app_adult_phone_2",
-     "continue_on_error": true,
-     "data": {
-      "data": {
-       "tag": "house-briefing"
-      },
-      "message": "{{ message }}",
-      "title": "The house this morning"
-     }
-    }
-   ]
+    "message": "{{ message }}",
+    "title": "The house this morning"
+   }
   }
  ],
  "alias": "House — morning briefing",
@@ -46,7 +31,7 @@
    "state": "on"
   }
  ],
- "description": "Issue #6 (2026-10-20). One push at input_datetime.house_briefing_time, only while input_boolean.house_briefing_push is on (off by default). It assembles the roll-ups and derives nothing: sensor.any_low_battery, sensor.any_safety_sensor_silent, sensor.lighting_left_on, binary_sensor.climate_health_risk and yesterday's energy digest (input_number.energy_yesterday*). Home's Needs attention shows the same facts on screen.",
+ "description": "Issue #6 (2026-10-20). One push at input_datetime.house_briefing_time, only while input_boolean.house_briefing_push is on (off by default; on since 2026-11-23). Vadim's phone only (operator 2026-11-23). It assembles the roll-ups and derives nothing: sensor.any_low_battery, sensor.any_safety_sensor_silent, sensor.lighting_left_on, binary_sensor.climate_health_risk and yesterday's energy digest (input_number.energy_yesterday*). Home's Needs attention shows the same facts on screen.",
  "id": "1792200000001",
  "mode": "single",
  "triggers": [

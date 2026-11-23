@@ -215,6 +215,23 @@ which lights each area switches, in which states, and when night starts (21:00â€
 2026-10-21). The schedule only moves the alarm at its edges (`house-night-mode.json`); the alarm
 is what decides night. Reasoning: `docs/presence-lighting.md`.
 
+## `power-solix-grid-watch.json`, `house-vacuum-away.json`, `lights-retry-off.json`
+
+Added 2026-11-23, each decision in one named `want`/`stuck` variable with cases in `tests/climate/`.
+
+- **Power cut.** The Solix C2000 is the office UPS. Grid input under 5 W for two minutes while it
+  still feeds a load is a cut: one push, then another when the grid holds for a minute. A battery
+  under 20 % with no grid warns. An unreachable Solix (cloud integration) is never a cut, and one
+  with nothing plugged in cannot tell a cut from an idle grid, so it stays quiet.
+- **Vacuum while away.** Ten minutes into Away, the robot starts from the dock once a (local) day,
+  08:00-20:00; it is sent home when the house leaves Away. The Roborock and Matter vacuum entities
+  are the same robot: Roborock first, Matter when the cloud path is down.
+- **Retry an OFF.** Magic Areas switches a room's lights off when it clears. A light still on 90 s
+  later that has not changed since is a failed Zigbee OFF, or HA holding a wrong state; left alone,
+  Magic Areas skips the next turn-on (2026-10-25). It gets one more OFF and a logbook line, no push.
+
+Not covered by the cases: the waits, the actual commands, and notification delivery.
+
 ## `hot-water-schedule.json` (not exported yet)
 
 The Tado hot-water zone's active timetable, as set in the Tado app. Until the first run, the
