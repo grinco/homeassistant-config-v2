@@ -2703,9 +2703,12 @@ P_OUT = "states('sensor.guest_room_solix_c2000_gen_2_ac_output_power')"
 P_SOC = "states('sensor.guest_room_solix_c2000_gen_2_state_of_charge')"
 
 
-def power(name, expect, trig="'cut'", i="'0'", o="'350'", soc="'100'", finding=""):
+P_ANN = "is_state('input_boolean.power_cut_announced', 'on')"
+
+
+def power(name, expect, trig="'cut'", i="'0'", o="'350'", soc="'100'", ann="false", finding=""):
     return dict(name="power: " + name, automation=POWER, expr="want", expect=expect, given={},
-                subs={"trigger.id": trig, P_IN: i, P_OUT: o, P_SOC: soc}, finding=finding)
+                subs={"trigger.id": trig, P_IN: i, P_OUT: o, P_SOC: soc, P_ANN: ann}, finding=finding)
 
 
 A(power("grid gone while the office runs on battery is a cut", "cut",
@@ -2727,6 +2730,18 @@ A(power("a low battery with the grid back is recharging, not a warning", "none",
         soc="'15'", i="'900'", finding="after a cut the battery refills from a low level"))
 A(power("a low trigger with an unreadable charge stays quiet", "none", trig="'low'", soc="'unavailable'",
         finding="unreachable is not low"))
+# review 2026-11-23 (#48): the power-back wait died with a restart; it is now a trigger + a marker.
+A(power("load of exactly 5 W with no grid is a cut", "cut", o="'5'", finding="review #48: output edge, from above"))
+A(power("load of 4 W with no grid cannot be told from an idle grid", "none", o="'4'",
+        finding="review #48: output edge, from below"))
+A(power("a cut already announced is not announced again", "none", ann="true",
+        finding="review #48: a restart re-arms the numeric trigger; one push per cut"))
+A(power("the grid back after an announced cut", "back", trig="'back'", i="'350'", ann="true",
+        finding="review #48: power-back survives a restart because it is a trigger, not a wait"))
+A(power("the grid back with no cut announced says nothing", "none", trig="'back'", i="'350'",
+        finding="an ordinary rise in input is not news"))
+A(power("an unreachable Solix is not the grid coming back", "none", trig="'back'", i="'unavailable'",
+        o="'unavailable'", ann="true", finding="unreachable is neither cut nor back"))
 
 
 # Vacuum while away (operator 2026-11-23): vacuum.zorik (Roborock cloud) and
@@ -2756,11 +2771,15 @@ V_HOUR = "now().hour"
 V_TODAY = "now().strftime('%Y-%m-%d')"
 
 
+V_OURS = "states('input_datetime.vacuum_away_started')"
+
+
 def vac(name, expect, trig="'away'", st="'docked'", alarm="'armed_away'",
-        last="'2026-11-22T07:15:01+00:00'", hour="10", v="vacuum.zorik", finding=""):
+        last="'2026-11-22T07:15:01+00:00'", hour="10", v="vacuum.zorik", ours="'2026-11-22 10:20:00'",
+        finding=""):
     return dict(name="vacuum: " + name, automation=VAC, expr="want", expect=expect, given={"vac": v},
                 subs={"trigger.id": trig, V_STATE: st, V_ALARM: alarm, V_LAST: last, V_HOUR: hour,
-                      V_TODAY: "'2026-11-23'"}, finding=finding)
+                      V_TODAY: "'2026-11-23'", V_OURS: ours}, finding=finding)
 
 
 A(vac("away, docked, not cleaned today: start", "start", finding="2026-11-23 operator: vacuum on Away"))
@@ -2789,6 +2808,11 @@ A(vac("someone back while it is already returning: nothing", "none", trig="'back
       alarm="'disarmed'", finding="no duplicate command"))
 A(vac("Away again by the time the back step runs: keep cleaning", "none", trig="'back'", st="'cleaning'",
       finding="the alarm is re-read, not taken from the trigger"))
+A(vac("started by this automation earlier today: no second run", "none", last="'unknown'",
+      ours="'2026-11-23 10:20:00'",
+      finding="review #48: on the Matter path the Roborock history is unknown; our own stamp still counts"))
+A(vac("started by this automation yesterday: today is allowed", "start", last="'unknown'",
+      ours="'2026-11-22 18:00:00'", finding="the stamp is a day, not a lock"))
 
 
 # Lights stuck on after a room clears (2026-11-23; incident 2026-10-25: a failed Zigbee OFF left
@@ -2833,3 +2857,9 @@ A(stuck("the room is occupied again: nothing to do", "[]",
 A(stuck("two stuck lights are both retried", "['light.corridor_light', 'light.entrance_light']",
         [lt("light.corridor_light", "on", _BEFORE), lt("light.entrance_light", "on", _BEFORE)],
         finding="every member, not the first"))
+
+A(stuck("a light that changed in the same second as the clear is not stuck", "[]",
+        [lt("light.corridor_light", "on", "2026-11-18T11:06:40+00:00")],
+        finding="review #48: the boundary is strict; MA's own batch can land on the clear stamp"))
+A(stuck("a room with no light group has nothing stuck", "[]", [],
+        finding="review #48: closet/shower/stairs-style areas, or a renamed group"))

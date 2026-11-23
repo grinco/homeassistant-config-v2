@@ -2,8 +2,7 @@
  "actions": [
   {
    "variables": {
-    "cut_at": "{{ now().isoformat() }}",
-    "want": "{% set i = states('sensor.guest_room_solix_c2000_gen_2_ac_input_power') %}{% set o = states('sensor.guest_room_solix_c2000_gen_2_ac_output_power') %}{% set s = states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') %}{% if not (is_number(i) and is_number(o)) %}none{% elif i | float >= 5 %}none{% elif trigger.id == 'cut' %}{{ 'cut' if o | float >= 5 else 'none' }}{% elif trigger.id == 'low' %}{{ 'low' if is_number(s) and s | float < 20 else 'none' }}{% else %}none{% endif %}"
+    "want": "{% set i = states('sensor.guest_room_solix_c2000_gen_2_ac_input_power') %}{% set o = states('sensor.guest_room_solix_c2000_gen_2_ac_output_power') %}{% set s = states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') %}{% set ann = is_state('input_boolean.power_cut_announced', 'on') %}{% if not (is_number(i) and is_number(o)) %}none{% elif trigger.id == 'back' %}{{ 'back' if ann and i | float >= 5 else 'none' }}{% elif i | float >= 5 %}none{% elif trigger.id == 'cut' %}{{ 'cut' if o | float >= 5 and not ann else 'none' }}{% elif trigger.id == 'low' %}{{ 'low' if is_number(s) and s | float < 20 else 'none' }}{% else %}none{% endif %}"
    }
   },
   {
@@ -26,6 +25,21 @@
      ],
      "sequence": [
       {
+       "action": "input_boolean.turn_on",
+       "target": {
+        "entity_id": "input_boolean.power_cut_announced"
+       }
+      },
+      {
+       "action": "input_datetime.set_datetime",
+       "data": {
+        "timestamp": "{{ as_timestamp(now()) - 120 }}"
+       },
+       "target": {
+        "entity_id": "input_datetime.power_cut_since"
+       }
+      },
+      {
        "action": "notify.mobile_app_adult_phone_1",
        "continue_on_error": true,
        "data": {
@@ -38,19 +52,17 @@
         "message": "The Solix lost the grid; the office runs on battery: {{ battery }}.",
         "title": "Power cut"
        }
-      },
+      }
+     ]
+    },
+    {
+     "conditions": [
       {
-       "continue_on_timeout": false,
-       "timeout": "12:00:00",
-       "wait_for_trigger": [
-        {
-         "above": 5,
-         "entity_id": "sensor.guest_room_solix_c2000_gen_2_ac_input_power",
-         "for": "00:01:00",
-         "trigger": "numeric_state"
-        }
-       ]
-      },
+       "condition": "template",
+       "value_template": "{{ want == 'back' }}"
+      }
+     ],
+     "sequence": [
       {
        "action": "notify.mobile_app_adult_phone_1",
        "continue_on_error": true,
@@ -58,8 +70,14 @@
         "data": {
          "tag": "power-cut"
         },
-        "message": "The grid returned after {{ ((as_timestamp(now()) - as_timestamp(cut_at)) / 60) | round(0) | int }} min. Solix at {{ states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') }} %.",
+        "message": "The grid returned after {{ ((as_timestamp(now()) - (state_attr('input_datetime.power_cut_since', 'timestamp') | float(as_timestamp(now())))) / 60) | round(0) | int }} min. Solix at {{ states('sensor.guest_room_solix_c2000_gen_2_state_of_charge') }} %.",
         "title": "Power is back"
+       }
+      },
+      {
+       "action": "input_boolean.turn_off",
+       "target": {
+        "entity_id": "input_boolean.power_cut_announced"
        }
       }
      ]
@@ -93,10 +111,10 @@
  ],
  "alias": "Power — Solix grid watch",
  "conditions": [],
- "description": "The Solix C2000 is the office UPS. Grid input gone while it still feeds a load = power cut: tell Vadim, then again when the grid is back. Battery under 20 % while on battery: warn. Unreachable is never a cut.",
+ "description": "The Solix C2000 is the office UPS. Grid input gone while it still feeds a load = power cut: one push, marked in input_boolean.power_cut_announced (+ power_cut_since), then one 'power is back' when the input returns. Marker + trigger, not a wait, so a restart mid-cut loses nothing (review #48). Battery under 20 % for 5 min with no grid: warn. Unreachable is never a cut and never 'back'. If the push fails, nobody else is told.",
  "id": "1792300000010",
- "max": 3,
- "mode": "parallel",
+ "max": 5,
+ "mode": "queued",
  "triggers": [
   {
    "below": 5,
@@ -106,8 +124,16 @@
    "trigger": "numeric_state"
   },
   {
+   "above": 5,
+   "entity_id": "sensor.guest_room_solix_c2000_gen_2_ac_input_power",
+   "for": "00:01:00",
+   "id": "back",
+   "trigger": "numeric_state"
+  },
+  {
    "below": 20,
    "entity_id": "sensor.guest_room_solix_c2000_gen_2_state_of_charge",
+   "for": "00:05:00",
    "id": "low",
    "trigger": "numeric_state"
   }
