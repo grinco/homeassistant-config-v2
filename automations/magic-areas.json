@@ -72,7 +72,7 @@
      "extended_time": 5,
      "extended_timeout": 10,
      "sleep_entity": "binary_sensor.lighting_night",
-     "sleep_timeout": 1
+     "sleep_timeout": 5
     },
     "type": "interior"
    },
@@ -419,7 +419,7 @@
   },
   {
    "options": {
-    "clear_timeout": 1,
+    "clear_timeout": 10,
     "exclude_entities": [],
     "features": {
      "light_groups": {
@@ -472,7 +472,7 @@
      "extended_time": 5,
      "extended_timeout": 10,
      "sleep_entity": "",
-     "sleep_timeout": 1
+     "sleep_timeout": 5
     },
     "type": "interior"
    },
