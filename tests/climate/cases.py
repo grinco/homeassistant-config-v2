@@ -2873,9 +2873,14 @@ A(stuck("a room with no light group has nothing stuck", "[]", [],
 LEAK = "1792300000020"
 
 
-def leak(name, expr, expect, finding, **given):
+L_AWAY = "states('input_number.climate_away_min')"
+
+
+def leak(name, expr, expect, finding, subs=None, **given):
+    if expr == "k" and subs is None:
+        subs = {L_AWAY: "'0'"}   # the setpoint exclusion has its own cases; elsewhere it is out of the way
     return dict(name="leak meter: " + name, automation=LEAK, expr=expr, expect=expect, given=given,
-                subs={}, finding=finding)
+                subs=subs or {}, finding=finding)
 
 
 _SNAP = {"t": 0, "o": 5.0, "T": {"kid1": 21.0, "kid2": 21.0}, "C": {}}
@@ -2893,6 +2898,14 @@ A(leak("a gap of exactly 3 C is measured", "k", "{'kid1': 7.2}", "the threshold 
        snap={"t": 0, "o": 5.0, "T": {"kid1": 8.0}, "C": {}}, now_T={"kid1": 7.6}, now_o=5.0, hours=2))
 A(leak("a room with no reading now is skipped", "k", "{'kid2': 1.6}", "unavailable is not cold",
        snap=_SNAP, now_T={"kid1": None, "kid2": 20.5}, now_o=5.0, hours=2))
+# review 2026-11-23 (#49) F5: Away holds every room at climate_away_min. A room that cooled to it
+# was heated from then on and would read airtight; it is kept warm, not measured.
+A(leak("a room that reached the Away setpoint was heated: kept warm", "k", "{'kid1': -1}",
+       "review #49 F5: the asymptote is the setpoint, not outdoors", subs={L_AWAY: "'16'"},
+       snap={"t": 0, "o": 5.0, "T": {"kid1": 21.0}, "C": {}}, now_T={"kid1": 16.4}, now_o=5.0, hours=2))
+A(leak("just above the Away setpoint is measured", "k", "{'kid1': 16.1}",
+       "the 0.5 C margin straddled from above", subs={L_AWAY: "'16'"},
+       snap={"t": 0, "o": 5.0, "T": {"kid1": 21.0}, "C": {}}, now_T={"kid1": 16.6}, now_o=5.0, hours=2))
 
 _CSNAP = {"t": 0, "o": 5.0, "T": {}, "C": {"living_room": 700.0}}
 A(leak("air changes from the CO2 decay", "ach", "{'living_room': 0.55}", "ach = ln((C1-400)/(C2-400)) / h",
@@ -2943,3 +2956,28 @@ A(leak("only a window alerts", "alert", "True", "a push is for something to do n
        signals=["kid1:window", "air:living_room"]))
 A(leak("leakiest, changed and air are not alerts", "alert", "False",
        "they go in the record, not a push", signals=["kid1:leakiest", "corridor:changed", "air:office"]))
+
+
+# review #49 F8: the baseline writes are the meter's only memory
+_HV = {"has_value('input_number.leak_k_' ~ r)": "true", "has_value('input_number.leak_ach_' ~ r)": "true"}
+A(leak("a window room's run is not stored as its baseline", "writes",
+       "[{'e': 'input_number.leak_k_kid2', 'v': 2.1}]", "a window must not become normal",
+       subs=_HV, k={"kid1": 6.8, "kid2": 2.1}, ach={}, signals=["kid1:window"]))
+A(leak("a room kept warm stores nothing", "writes", "[]", "-1 is not a rate",
+       subs=_HV, k={"office": -1}, ach={}, signals=[]))
+A(leak("heat loss is clamped to the helper's range", "writes", "[{'e': 'input_number.leak_k_kid1', 'v': 50}]",
+       "input_number max 50", subs=_HV, k={"kid1": 72.0}, ach={}, signals=[]))
+A(leak("air changes are clamped to the helper's range", "writes",
+       "[{'e': 'input_number.leak_ach_living_room', 'v': 5}]", "input_number max 5",
+       subs=_HV, k={}, ach={"living_room": 7.2}, signals=[]))
+
+# review #49 F1/F4: a run that cannot measure says why, in the verdict
+L_OUT = "states('sensor.climate_temp_outdoor')"
+A(leak("an unreadable snapshot is reported, not retried", "skip", "unreadable snapshot", "review #49 F1",
+       subs={L_OUT: "'3'"}, snap=None, hours=0))
+A(leak("no outdoor temperature is reported", "skip", "no outdoor temperature", "review #49 F4",
+       subs={L_OUT: "'unavailable'"}, snap={"t": 0}, hours=3))
+A(leak("a short Away is reported", "skip", "too short", "review #49 F8: under 1.5 h",
+       subs={L_OUT: "'3'"}, snap={"t": 0}, hours=1.49))
+A(leak("a measurable Away is not skipped", "skip", "", "1.5 h straddled from above",
+       subs={L_OUT: "'3'"}, snap={"t": 0}, hours=1.5))

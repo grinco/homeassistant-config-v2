@@ -25,13 +25,34 @@
        }
       },
       {
-       "action": "input_text.set_value",
-       "data": {
-        "value": "{{ snap_json[:255] }}"
-       },
-       "target": {
-        "entity_id": "input_text.leak_meter_snapshot"
-       }
+       "else": [
+        {
+         "action": "input_text.set_value",
+         "data": {
+          "value": "{{ now().strftime('%d.%m') }} skipped: snapshot too large ({{ snap_json | length }} chars)"
+         },
+         "target": {
+          "entity_id": "input_text.leak_meter_verdict"
+         }
+        }
+       ],
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ snap_json | length <= 255 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_text.set_value",
+         "data": {
+          "value": "{{ snap_json }}"
+         },
+         "target": {
+          "entity_id": "input_text.leak_meter_snapshot"
+         }
+        }
+       ]
       }
      ]
     },
@@ -43,23 +64,23 @@
       },
       {
        "condition": "template",
-       "value_template": "{{ states('input_text.leak_meter_snapshot')[:1] == '{' and is_number(states('sensor.climate_temp_outdoor')) }}"
+       "value_template": "{{ states('input_text.leak_meter_snapshot') != '' }}"
       }
      ],
      "sequence": [
       {
        "variables": {
-        "now_o": "{{ states('sensor.climate_temp_outdoor') | float }}",
-        "snap": "{{ states('input_text.leak_meter_snapshot') | from_json }}"
+        "snap": "{{ states('input_text.leak_meter_snapshot') | from_json(none) }}"
        }
       },
       {
        "variables": {
-        "hours": "{{ ((as_timestamp(now()) - snap.t) / 3600) | round(2) }}",
-        "now_C": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set v = states('sensor.climate_co2_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
-        "now_T": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set v = states('sensor.climate_temp_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
-        "prev_ach": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_ach_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}",
-        "prev_k": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_k_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}"
+        "hours": "{{ ((as_timestamp(now()) - snap.t) / 3600) | round(2) if snap is mapping and snap.t is defined else 0 }}"
+       }
+      },
+      {
+       "variables": {
+        "skip": "{% if snap.t is not defined %}unreadable snapshot{% elif not is_number(states('sensor.climate_temp_outdoor')) %}no outdoor temperature{% elif hours < 1.5 %}too short{% endif %}"
        }
       },
       {
@@ -72,13 +93,44 @@
        }
       },
       {
-       "condition": "template",
-       "value_template": "{{ hours >= 1.5 }}"
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ skip != '' }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_text.set_value",
+         "data": {
+          "value": "{{ now().strftime('%d.%m') }} skipped: {{ skip }}"
+         },
+         "target": {
+          "entity_id": "input_text.leak_meter_verdict"
+         }
+        },
+        {
+         "stop": "nothing to measure"
+        }
+       ]
+      },
+      {
+       "variables": {
+        "now_o": "{{ states('sensor.climate_temp_outdoor') | float }}"
+       }
+      },
+      {
+       "variables": {
+        "now_C": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set v = states('sensor.climate_co2_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
+        "now_T": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set v = states('sensor.climate_temp_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
+        "prev_ach": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_ach_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}",
+        "prev_k": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_k_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}"
+       }
       },
       {
        "variables": {
         "ach": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set c1 = snap.C[r] %}{% set c2 = now_C.get(r) %}{% if c2 is number and (c1 - 400) >= 100 and c2 < c1 %}{% set ns.d = dict(ns.d, **{r: (log((c1 - 400) / ([c2 - 400, 30] | max)) / hours) | round(2)}) %}{% endif %}{% endfor %}{{ ns.d }}",
-        "k": "{% set ns = namespace(d={}) %}{% set o = (snap.o + now_o) / 2 %}{% for r in snap.T %}{% set t1 = snap.T[r] %}{% set t2 = now_T.get(r) %}{% if t2 is number and (t1 - o) >= 3 %}{% if t2 >= t1 %}{% set ns.d = dict(ns.d, **{r: -1}) %}{% elif (t2 - o) > 0.5 %}{% set ns.d = dict(ns.d, **{r: (100 * log((t1 - o) / (t2 - o)) / hours) | round(1)}) %}{% endif %}{% endif %}{% endfor %}{{ ns.d }}"
+        "k": "{% set ns = namespace(d={}) %}{% set hold = (states('input_number.climate_away_min') | float(0)) + 0.5 %}{% set o = (snap.o + now_o) / 2 %}{% for r in snap.T %}{% set t1 = snap.T[r] %}{% set t2 = now_T.get(r) %}{% if t2 is number and (t1 - o) >= 3 %}{% if t2 >= t1 or t2 <= hold %}{% set ns.d = dict(ns.d, **{r: -1}) %}{% elif (t2 - o) > 0.5 %}{% set ns.d = dict(ns.d, **{r: (100 * log((t1 - o) / (t2 - o)) / hours) | round(1)}) %}{% endif %}{% endif %}{% endfor %}{{ ns.d }}"
        }
       },
       {
@@ -147,7 +199,7 @@
  ],
  "alias": "House — leak meter",
  "conditions": [],
- "description": "Away sets every room to 16 C, so from one hour into Away the flat cools unheated. A snapshot (input_text.leak_meter_snapshot, survives a restart) is taken then; when Away ends: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper.",
+ "description": "Away sets every room to 16 C, so from one hour into Away the flat cools unheated. A snapshot (input_text.leak_meter_snapshot, survives a restart) is taken then; when Away ends: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), and baselines do not age (F7).",
  "id": "1792300000020",
  "mode": "queued",
  "triggers": [
