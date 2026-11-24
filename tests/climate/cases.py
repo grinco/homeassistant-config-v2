@@ -3191,6 +3191,36 @@ for _title in ("Climate window bedroom", "Climate window " + K1["title"]):
           finding="excess 0.82 g/m3: the limit from above"))
     A(win(_title, "an unreachable air-quality sensor is not a window", "False", hi="'33'", voc="'unavailable'",
           finding="unknown is not open"))
+    # Review #53 F3: every input, not only the VOC, must fail closed. Each case is an airing that
+    # reads True with all seven inputs present (the 23.11 case above).
+    for _k, _sub in (("ti", "room temperature"), ("hi", "room humidity"), ("ft", "flat temperature"),
+                     ("fh", "flat humidity"), ("ot", "outdoor temperature"), ("oh", "outdoor humidity")):
+        _kw = dict(hi="'33'", voc="'6'")
+        _kw[_k] = "None" if _k == "oh" else "'unavailable'"
+        A(win(_title, "a missing %s is not a window" % _sub, "False", finding="review #53 F3", **_kw))
+    # Review #53 F4: a room drier than the outdoor air made the ratio negative, which passed `< 0.75`
+    # unconditionally; with a VOC baseline reset below 40 that was an open window in a closed room.
+    # Airing brings the room TO the outdoor moisture, not below it: 0.5 g/m3 under is sensor accuracy.
+    A(win(_title, "a radiator-dried room under damp outdoor air is not a window", "False", hi="'25'",
+          fh="'45'", voc="'10'", oh="96", finding="review #53 F4: a = 4.3, outdoor 6.1 g/m3"))
+    A(win(_title, "0.44 g/m3 under the outdoor air is sensor accuracy", "True", hi="'23.2'", voc="'6'",
+          finding="review #53 F4: the tolerance from inside"))
+    A(win(_title, "0.56 g/m3 under is not an airing", "False", hi="'22.5'", voc="'6'",
+          finding="review #53 F4: the tolerance from outside"))
+
+
+# Review #53 F1: the detector fails closed when an input is missing, which is right for the decision
+# and silent for the household: Aired most would say "none this week" with the detector blind. This
+# names that state; Aired most reads it.
+WB = "Climate window detector blind"
+for _k, _sub in ((None, "every input present"), (W_T, "room temperature"), (W_H, "room humidity"),
+                 (W_V, "VOC index"), (W_FT, "flat temperature"), (W_FH, "flat humidity"),
+                 (W_OT, "outdoor temperature"), (W_OH, "outdoor humidity")):
+    _subs = {W_T: "'20'", W_H: "'45'", W_V: "'100'", W_FT: "'20'", W_FH: "'40'", W_OT: "'4'", W_OH: "70"}
+    if _k:
+        _subs[_k] = "None" if _k == W_OH else "'unavailable'"
+    A(sensor_case("window detector: %s" % ("blind without the " + _sub if _k else _sub),
+                  "True" if _k else "False", _subs, finding="review #53 F1", sensor=WB))
 
 
 # Dashboard readouts (operator 2026-11-24): the air-change rate with a word a child can read, the room
@@ -3207,12 +3237,19 @@ for _v, _w, _f in (("'0'", "not measured", "a fresh helper"), ("'0.19'", "low", 
 
 EM = "Energy aired most"
 EM_LIST, EM_AREA = "states.sensor", "area_name('sensor.climate_temp_' ~ ns.best)"
+EM_BLIND = "is_state('binary_sensor.climate_window_detector_blind', 'on')"
 
 
-def em(name, expect, hours, finding):
+def em(name, expect, hours, finding, blind="false"):
     lst = [{"entity_id": "sensor.airing_%s_last_7_days" % r, "state": str(h)} for r, h in hours.items()]
     lst.append({"entity_id": "sensor.energy_ac_last_7_days", "state": "40"})   # not an airing counter
-    return en(name, EM, expect, {EM_LIST: repr(lst), EM_AREA: "none"}, finding)
+    return en(name, EM, expect, {EM_LIST: repr(lst), EM_AREA: "none", EM_BLIND: blind}, finding)
+
+
+A(em("a blind detector says so instead of 'none'", "detector blind", {"kid1": 0.0}, "review #53 F1",
+     blind="true"))
+A(em("a blind detector still names hours it counted before", "detector blind", {"kid1": 3.2},
+     "review #53 F1: hours from a half-blind week are not the week", blind="true"))
 
 
 A(em("the room with the most window hours", "kid1: 3.2 h this week", {"kid1": 3.2, "bedroom": 0.4},
@@ -3248,3 +3285,9 @@ def e7(name, expect, a="'4.95'", m="'6'", b="'0'", ac="'20'", finding=""):
 A(e7("a cold week: seven days of degree-days plus the AC", "2.86", finding="(4.95*7*13 + 20) / 164.41"))
 A(e7("a week averaging 13 C: hot water and AC only", "0.55", m="'13'", b="'10'", finding="(70 + 20) / 164.41"))
 A(e7("no gas model yet: no figure", "None", a="'unknown'", finding="never a number from nothing"))
+# Review #53 F6: the week's degree-days come from the week's mean, not from seven daily cut-offs. A
+# mixed week (4 days at 6 C, 3 at 16 C: mean 10.29) is counted as 61 K.d where the daily rule gives
+# 52: 1.96 kWh/m2 against 1.69, a 16 % over-read. Pinned here so the bound is a tested number; the
+# readout is labelled an estimate and the class never reads it (docs/heating-energy-rating.md).
+A(e7("a mixed week over-reads by the days above 13 C", "1.96", m="'10.29'",
+     finding="review #53 F6: (4.95*7*8.71 + 20) / 164.41; the daily rule would give 1.69"))

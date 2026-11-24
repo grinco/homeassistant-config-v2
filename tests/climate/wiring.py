@@ -210,6 +210,34 @@ def grid_meters(prefs_path=ENERGY):
     return sorted(set(want) - set(ids)), sorted(set(ids) - set(want)), problem
 
 
+WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set voc_e = '[a-z0-9_.]+' %\}")
+
+
+def window_copies():
+    """Review #53 F2: the window detectors are one formula copied per room; only the header differs.
+
+    A shared Jinja macro would be the usual cure, but run.py substitutes the reads in the sensor's
+    own text, and a read inside an imported macro is out of its reach. So the copies stay, every
+    case runs against each of them, and this proves they are the same text after the header: a
+    constant edited in one copy and not the other fails here even where no case straddles it.
+    Returns (titles, problem) where problem is None when the copies agree.
+    """
+    tpls = {t: v for t, v in harness.load_sensor_templates().items()
+            if t.startswith("Climate window ") and t != "Climate window detector blind"}
+    if len(tpls) < 2:
+        return sorted(tpls), "expected at least two window detectors, found %d" % len(tpls)
+    bodies = {}
+    for title, tpl in tpls.items():
+        m = WINDOW_HEADER.match(tpl)
+        if not m:
+            return sorted(tpls), "%s does not start with the room/voc_e header" % title
+        bodies.setdefault(tpl[m.end():], []).append(title)
+    if len(bodies) > 1:
+        return sorted(tpls), "the copies differ after the header: %s" % " | ".join(
+            ", ".join(sorted(v)) for v in bodies.values())
+    return sorted(tpls), None
+
+
 def main():
     missing, extra = digest_meters()
     for m in missing:
@@ -255,6 +283,12 @@ def main():
         print("\nEvery copy of the night definition must run the same truth table.")
         return 1
     print("  all %d definitions of night are under the truth table" % len(harness.NIGHT_CONSUMERS))
+
+    titles, problem = window_copies()
+    if problem:
+        print("  WINDOW COPIES   %s" % problem)
+        return 1
+    print("  the %d window detectors are one formula: %s" % (len(titles), ", ".join(titles)))
 
     refs, skipped = referenced()
     if not refs:

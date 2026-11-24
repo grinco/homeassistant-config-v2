@@ -125,14 +125,17 @@ readings.
 **Seeded from the recorder.** The winter sums were filled from the two intervals already on record,
 14.11→18.11 and 18.11→23.11, with degree-days computed per calendar day from the recorded outdoor
 temperature by the same rule as the nightly run. The two weeks disagree by 2× (7.1 vs 3.2 kWh per
-K·day); the operator suspects a typo in the 18.11 reading. The sums only add intervals, so the pooled
+K·day): the 18.11 reading is likely mistyped, so the per-week figures are not used. The sums only add intervals, so the pooled
 figure (4.95 kWh/K·day over 111 K·day) equals one interval 14.11→23.11 and does not depend on the
 middle reading at all. Do not read anything into the per-week split.
 
 **Last 24 h / last 7 days, kWh/m².** `a · HDD + b · days + AC`, divided by the area. HDD comes from
 the 24 h and 7-day time-weighted outdoor means (`19 − mean`, times 7 for the week), not from the
 nightly counter, so the readout works before a week of counting exists. For the week this ignores
-the per-day 13 °C cut-off, which only matters in a week that mixes heating and non-heating days.
+the per-day 13 °C cut-off, which only matters in a week that mixes heating and non-heating days. The
+error is bounded and pinned by a case (review #53 F6): four days at 6 °C and three at 16 °C average
+10.3 °C and count 61 K·day where the daily rule gives 52, so the week reads 1.96 kWh/m² instead of
+1.69, 16 % high. Only spring and autumn produce such weeks; the class never reads this readout.
 
 ## Window detector (2026-11-24)
 
@@ -143,12 +146,34 @@ flat's moisture excess over outdoors above 0.8 g/m³, VOC below 40, and the room
 the flat's. 5 min on-delay, 15 min off-delay. Backtested on 13.11–23.11: it caught the 23.11 airing
 and a 20-minute one on 16.11 and nothing else; a temperature-drop rule had fired 57 times, almost all
 on the kid 1 room's radiator on/off cycle (its sensor sits by the radiator; the valve started 172
-times in ten days against 66 in the kid 2 room). Twenty minutes open is a push to Vadim
+times in ten days against 66 in the kid 2 room, so the temperature rule chased the radiator, not
+windows). Twenty minutes open is a push to Vadim
 (`automations/climate-window-open.json`); hours open per week feed **Aired most**, shown apart from
 **Leaks most** so ventilation and structure are never confused.
 
+### Review #53 follow-ups (2026-11-24)
+
+- **A room drier than outdoors (F4).** The ratio goes negative when the room's moisture is below the
+  outdoor air's, and a negative ratio passed `< 0.75` on its own: a radiator-dried room on a damp day
+  needed only a VOC dip (a baseline reset after a power cut) to read as an open window. Airing brings
+  a room *to* the outdoor moisture, never below it, so the room must also be within 0.5 g/m³ of it
+  (`a − ao > −0.5`, about the RH sensors' accuracy at 20 °C). Cases straddle −0.44 / −0.56.
+- **A blind detector (F1, F3).** A missing input makes the detector read closed: right for the push,
+  silent for the household. `binary_sensor.climate_window_detector_blind` (problem class) is on when
+  any of the eleven inputs (three per room, four shared) is not a number for 30 minutes; **Aired
+  most** then reads `detector blind` instead of `none this week`. Each input has a case for both.
+- **Two copies of one formula (F2).** A shared Jinja macro is the usual cure, but `run.py` substitutes
+  the reads in the sensor's own text and cannot reach into an imported macro. So the copies stay, every
+  case runs against both, and `tests/climate/wiring.py` fails when they differ after the header.
+- **The flat reference includes the room (F5).** `sensor.indoor_temperature` / `indoor_humidity` are
+  `min_max` means of the six rooms, the tested room among them. With a true ratio *q* against the other
+  five, the detector sees 6q/(5+q): the 0.75 limit is *q* ≈ 0.71 against the rest of the flat. Slightly
+  less sensitive, never a false alarm, and the 0.75 was backtested on the mean as it is. Using a mean
+  of the other rooms would mean a third copy of the room list; not worth it.
+
 ## Not covered by cases
 
-The 23:59 write itself, the statistics helper's window, and notification delivery. The interval
+The 23:59 write itself, the statistics helper's window, notification delivery, and the blind
+sensor's 30-minute delay. The interval
 verdict, the coefficients, the estimate and the class are templates with cases; the sum update is
 the verdict's `count` branch.
