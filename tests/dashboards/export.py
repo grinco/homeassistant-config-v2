@@ -88,12 +88,9 @@ AUTOS = {
     "1792300000030": "energy-gas-interval.json",
     "1792300000031": "energy-degree-days.json",
     "1792300000040": "climate-window-open.json",
-<<<<<<< HEAD
-    "1792300000060": "house-push-mirror.json",
-=======
     "1792300000050": "climate-coldest-hour-ahead.json",
     "1792300000051": "climate-mould-risk.json",
->>>>>>> 7fdb15c (Mould figures per room and a frost night target)
+    "1792300000060": "house-push-mirror.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
