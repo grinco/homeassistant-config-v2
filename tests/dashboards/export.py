@@ -88,6 +88,7 @@ AUTOS = {
     "1792300000030": "energy-gas-interval.json",
     "1792300000031": "energy-degree-days.json",
     "1792300000040": "climate-window-open.json",
+    "1792300000060": "house-push-mirror.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the

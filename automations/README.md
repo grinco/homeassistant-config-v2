@@ -265,3 +265,12 @@ schedule is recorded in `docs/hot-water.md`. Home Assistant cannot read
 Tado schedules, so `tests/tado/export.py` reads it from the Tado API. The script signs in with its
 own device login, because Tado's refresh tokens rotate and borrowing Home Assistant's would log
 the integration out. Run it after changing the schedule in the app. Reasoning: `docs/hot-water.md`.
+
+## Pushes kept in HA, and the arm offer answered both ways (2026-11-24)
+
+- `house-push-mirror.json`: every `notify.mobile_app_*` call is copied to a persistent notification
+  (the bell), one entry per tag (else per title), kept until dismissed. A tapped iOS push opens HA
+  without its text; this is where it is read again. `clear_notification` dismisses the copy.
+- `house-everyone-left.json`: the arm offer gains a second answer, "<name> is at home" /
+  "Someone is home", which clears the note and leaves the alarm and lights alone; tapping the note
+  opens the Security view. iOS shows the buttons on a long press or pull-down of the banner.
