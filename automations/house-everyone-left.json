@@ -42,7 +42,7 @@
   },
   {
    "variables": {
-    "buttons": "{{ (['ARM_AWAY_HOUSE'] if offer_arm else []) + (['LEFT_ON_OFF'] if has_left else []) }}"
+    "buttons": "{{ (['ARM_AWAY_HOUSE', 'HOME_OCCUPIED'] if offer_arm else []) + (['LEFT_ON_OFF'] if has_left else []) }}"
    }
   },
   {
@@ -53,12 +53,13 @@
    "variables": {
     "arm_line": "{% if ask_about %}Is {{ ask_about | join(' and ') }} with you? Arm Away only if so - no answer leaves the alarm as it is.{% else %}The alarm is {{ {'disarmed': 'off', 'armed_home': 'on Home', 'armed_night': 'on Night'}.get(states('alarm_control_panel.home'), states('alarm_control_panel.home')) }}. Arm Away?{% endif %}",
     "arm_title": "{{ 'Arm Away' if not ask_about else ask_about | join(' and ') ~ (' is' if ask_about | count == 1 else ' are') ~ ' with us - arm Away' }}",
+    "home_title": "{{ 'Someone is home' if not ask_about else ask_about | join(' and ') ~ (' is' if ask_about | count == 1 else ' are') ~ ' at home' }}",
     "note_title": "{{ 'Everyone left' if not ask_about else 'Every phone has left' }}"
    }
   },
   {
    "variables": {
-    "acts": "{% set t = {'ARM_AWAY_HOUSE': arm_title, 'LEFT_ON_OFF': 'Turn the lights off'} %}{% set ns = namespace(l=[]) %}{% for b in buttons %}{% set ns.l = ns.l + [{'action': b, 'title': t[b]}] %}{% endfor %}{{ ns.l }}",
+    "acts": "{% set t = {'ARM_AWAY_HOUSE': arm_title, 'HOME_OCCUPIED': home_title, 'LEFT_ON_OFF': 'Turn the lights off'} %}{% set ns = namespace(l=[]) %}{% for b in buttons %}{% set ns.l = ns.l + [{'action': b, 'title': t[b]}] %}{% endfor %}{{ ns.l }}",
     "msg": "{% set n = [] %}{% if has_left %}{% set n = n + ['Still on: ' ~ states('sensor.lighting_left_on').split(', ') | map('state_attr', 'friendly_name') | join(', ') ~ '.'] %}{% endif %}{% if offer_arm %}{% set n = n + [arm_line] %}{% endif %}{{ n | join(' ') }}"
    }
   },
@@ -68,7 +69,8 @@
    "data": {
     "data": {
      "actions": "{{ acts }}",
-     "tag": "lights-left-on"
+     "tag": "lights-left-on",
+     "url": "/lovelace/security"
     },
     "message": "{{ msg }}",
     "title": "{{ note_title }}"
@@ -80,7 +82,8 @@
    "data": {
     "data": {
      "actions": "{{ acts }}",
-     "tag": "lights-left-on"
+     "tag": "lights-left-on",
+     "url": "/lovelace/security"
     },
     "message": "{{ msg }}",
     "title": "{{ note_title }}"
@@ -104,6 +107,13 @@
        {
         "event_data": {
          "action": "LEFT_ON_OFF"
+        },
+        "event_type": "mobile_app_notification_action",
+        "trigger": "event"
+       },
+       {
+        "event_data": {
+         "action": "HOME_OCCUPIED"
         },
         "event_type": "mobile_app_notification_action",
         "trigger": "event"
@@ -194,6 +204,39 @@
         "conditions": [
          {
           "condition": "template",
+          "value_template": "{{ wait.trigger.event.data.action == 'HOME_OCCUPIED' }}"
+         }
+        ],
+        "sequence": [
+         {
+          "action": "notify.mobile_app_adult_phone_1",
+          "continue_on_error": true,
+          "data": {
+           "data": {
+            "tag": "lights-left-on"
+           },
+           "message": "clear_notification"
+          }
+         },
+         {
+          "action": "notify.mobile_app_adult_phone_2",
+          "continue_on_error": true,
+          "data": {
+           "data": {
+            "tag": "lights-left-on"
+           },
+           "message": "clear_notification"
+          }
+         },
+         {
+          "stop": "someone is home: the alarm stays as it is"
+         }
+        ]
+       },
+       {
+        "conditions": [
+         {
+          "condition": "template",
           "value_template": "{{ wait.trigger.event.data.action == 'LEFT_ON_OFF' }}"
          }
         ],
@@ -277,7 +320,7 @@
  ],
  "alias": "House — everyone left",
  "conditions": [],
- "description": "Ten minutes after the last person leaves (zone.home counts all three phones, so a child home alone is not 'empty'), ONE note to both adults: which lights are still on (sensor.lighting_left_on), and - unless the alarm is already Away, arming or going off - an offer to arm Away (operator 2026-10-14). Nothing happens without a button. Arm Away is honoured only if the house is still empty when it is pressed. Each button press is awaited for up to two hours; after the lights button the arm offer stays open for another two. Someone coming home clears the note. Tests: tests/climate/cases.py (everyone left). Review 2026-10-14: L1 - the second wait re-reads the alarm live; L2 - once handled, the note is cleared on both phones. Operator 2026-10-14: a child can be home with a sitter and neither has a tracked phone. Names in input_text.house_untracked_people (comma-separated) turn the offer into a question - 'Is <name> with you?' - and the arm button into the yes. No answer is a no: the alarm is left as it is. Any future automatic (geofenced) arming must ask the same way.",
+ "description": "Ten minutes after the last person leaves (zone.home counts all three phones, so a child home alone is not 'empty'), ONE note to both adults: which lights are still on (sensor.lighting_left_on), and - unless the alarm is already Away, arming or going off - an offer to arm Away (operator 2026-10-14). Nothing happens without a button. Arm Away is honoured only if the house is still empty when it is pressed. Each button press is awaited for up to two hours; after the lights button the arm offer stays open for another two. Someone coming home clears the note. Tests: tests/climate/cases.py (everyone left). Review 2026-10-14: L1 - the second wait re-reads the alarm live; L2 - once handled, the note is cleared on both phones. Operator 2026-10-14: a child can be home with a sitter and neither has a tracked phone. Names in input_text.house_untracked_people (comma-separated) turn the offer into a question - 'Is <name> with you?' - and the arm button into the yes. No answer is a no: the alarm is left as it is. Any future automatic (geofenced) arming must ask the same way. 2026-11-24 operator: the offer can be answered from the push either way - 'Arm Away' or '<name> is at home' / 'Someone is home', which clears the note on both phones and leaves the alarm and lights as they are; tapping the note opens the Security view.",
  "id": "1791800830017",
  "mode": "restart",
  "triggers": [

@@ -2382,10 +2382,10 @@ for _a, _want in (("disarmed", "True"), ("armed_home", "True"), ("armed_night", 
 A(left("lights on are worth saying", "has_left", "True", subs={LEFT_NOW: "'light.lamp'"}))
 for _s in ("none", "unavailable", "unknown"):
     A(left("'%s' is not a light" % _s, "has_left", "False", subs={LEFT_NOW: "'%s'" % _s}))
-A(left("both buttons when both apply", "buttons", "['ARM_AWAY_HOUSE', 'LEFT_ON_OFF']",
-       given=dict(offer_arm=True, has_left=True)))
-A(left("no lights, only the arm button", "buttons", "['ARM_AWAY_HOUSE']",
-       given=dict(offer_arm=True, has_left=False)))
+A(left("all buttons when all apply", "buttons", "['ARM_AWAY_HOUSE', 'HOME_OCCUPIED', 'LEFT_ON_OFF']",
+       given=dict(offer_arm=True, has_left=True), finding="2026-11-24: the arm offer can also be answered 'no'"))
+A(left("no lights: arm, or someone is home", "buttons", "['ARM_AWAY_HOUSE', 'HOME_OCCUPIED']",
+       given=dict(offer_arm=True, has_left=False), finding="2026-11-24: the arm offer can also be answered 'no'"))
 A(left("already Away, only the lights button", "buttons", "['LEFT_ON_OFF']",
        given=dict(offer_arm=False, has_left=True), finding="the old notice is unchanged"))
 A(left("the button arms an empty house", "arm_now", "True",
@@ -2468,6 +2468,10 @@ A(left("the arm button says who must be with you", "arm_title", "Alex is with us
 A(left("two names read as a group", "arm_title", "Alex and Sam are with us - arm Away",
        given=dict(ask_about=["Alex", "Sam"]), finding=KID))
 A(left("nobody untracked, the plain button", "arm_title", "Arm Away", given=dict(ask_about=[])))
+A(left("the 'no' names who stayed", "home_title", "Alex is at home", given=dict(ask_about=["Alex"]),
+       finding="2026-11-24 operator: say from the push that the house is occupied"))
+A(left("two names stay as a group", "home_title", "Alex and Sam are at home", given=dict(ask_about=["Alex", "Sam"])))
+A(left("nobody untracked: someone else is home", "home_title", "Someone is home", given=dict(ask_about=[])))
 A(left("the arm offer asks the question", "arm_line",
        "Is Alex with you? Arm Away only if so - no answer leaves the alarm as it is.",
        given=dict(ask_about=["Alex"]), subs={ALARM: "'disarmed'"}, finding=KID))
@@ -3291,3 +3295,35 @@ A(e7("no gas model yet: no figure", "None", a="'unknown'", finding="never a numb
 # readout is labelled an estimate and the class never reads it (docs/heating-energy-rating.md).
 A(e7("a mixed week over-reads by the days above 13 C", "1.96", m="'10.29'",
      finding="review #53 F6: (4.95*7*8.71 + 20) / 164.41; the daily rule would give 1.69"))
+
+# Every push to a phone is kept in Home Assistant's notification panel (operator 2026-11-24): tapping
+# an iOS push opens the app without the text, and the operator wants it back, dismissed by hand.
+# Mirrored from the call_service event, so no automation that sends a push has to change.
+MIRROR = "1792300000060"
+
+
+def mir(name, expr, expect, d, finding=""):
+    return dict(name="push mirror: " + name, automation=MIRROR, expr=expr, expect=expect, given={"d": d},
+                subs={}, finding=finding)
+
+
+_P = {"title": "Every phone has left", "message": "Still on: Corridor Light.", "data": {"tag": "lights-left-on"}}
+A(mir("an ordinary push is shown", "kind", "show", _P))
+A(mir("its id follows the tag, so a re-send replaces it", "nid", "push_lights_left_on", _P,
+      finding="the same tag on both phones is one entry, not two"))
+A(mir("without a tag the title names it", "nid", "push_mould_risk_bedroom",
+      {"title": "Mould risk: Bedroom", "message": "x"}))
+A(mir("no tag and no title still has an id", "nid", "push_note", {"message": "x"}))
+A(mir("clearing a push dismisses its copy", "kind", "clear",
+      {"message": "clear_notification", "data": {"tag": "lights-left-on"}},
+      finding="a push the automation withdrew is not left behind in HA"))
+A(mir("a clear without a tag removes nothing", "kind", "skip", {"message": "clear_notification"},
+      finding="nothing to match it to"))
+A(mir("a location request is not a message", "kind", "skip", {"message": "request_location_update"}))
+A(mir("an empty message is not shown", "kind", "skip", {"title": "x", "message": ""}))
+A(mir("the buttons are listed under the text", "body",
+      "Still on: Corridor Light.\n\n*On the phone:* Arm Away · Turn the lights off",
+      {"title": "t", "message": "Still on: Corridor Light.",
+       "data": {"actions": [{"action": "A", "title": "Arm Away"}, {"action": "B", "title": "Turn the lights off"}]}},
+      finding="the copy says what the phone offered"))
+A(mir("a push without buttons is just its text", "body", "Still on: Corridor Light.", _P))

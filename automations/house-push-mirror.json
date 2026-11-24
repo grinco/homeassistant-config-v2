@@ -1,0 +1,75 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "d": "{{ trigger.event.data.service_data or {} }}"
+   }
+  },
+  {
+   "variables": {
+    "body": "{% set acts = (d.data.actions | default([])) if d.data is mapping else [] %}{% set m = d.message | default('') | string %}{% if acts %}{{ m }}\n\n*On the phone:* {{ acts | map(attribute='title') | join(' · ') }}{% else %}{{ m }}{% endif %}",
+    "kind": "{% set m = (d.message | default('') | string) | trim %}{% set tag = (d.data | default({})).tag | default('') if d.data is mapping else '' %}{% if m == 'clear_notification' %}{{ 'clear' if tag else 'skip' }}{% elif m == '' or m in ['request_location_update', 'remove_channel', 'update_complications', 'update_widgets'] or m.startswith('command_') %}skip{% else %}show{% endif %}",
+    "nid": "{% set tag = (d.data | default({})).tag | default('') if d.data is mapping else '' %}{% set t = d.title | default('') %}{{ 'push_' ~ ((tag or t) | slugify if (tag or t) else 'note') }}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ kind == 'show' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "persistent_notification.create",
+       "data": {
+        "message": "{{ body }}",
+        "notification_id": "{{ nid }}",
+        "title": "{{ d.title | default('Home Assistant') }}"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ kind == 'clear' }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "persistent_notification.dismiss",
+       "continue_on_error": true,
+       "data": {
+        "notification_id": "{{ nid }}"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "House — keep every push in HA",
+ "conditions": [
+  {
+   "condition": "template",
+   "value_template": "{{ trigger.event.data.service is string and trigger.event.data.service.startswith('mobile_app_') }}"
+  }
+ ],
+ "description": "Operator 2026-11-24: tapping an iOS push opens Home Assistant without the text. Every notify.mobile_app_* call is copied to a persistent notification (the bell), kept until dismissed. One entry per tag (else per title), so the same push to both phones is one entry and a re-send replaces it; clear_notification with a tag dismisses the copy; other commands are ignored.",
+ "id": "1792300000060",
+ "max": 20,
+ "mode": "queued",
+ "triggers": [
+  {
+   "event_data": {
+    "domain": "notify"
+   },
+   "event_type": "call_service",
+   "trigger": "event"
+  }
+ ]
+}
