@@ -459,7 +459,9 @@ with two choices of the operator's:
   otherwise switch on the ceiling light. Sleep entity = `binary_sensor.lighting_night` (the alarm in
   Night mode); Office Main is overhead on `occupied`+`extended`, Hugo is accent on
   `occupied`+`extended`+`sleep`. Because `sleep` is a priority state, Office Main is skipped at
-  night and switched off when night starts, even with someone working; Hugo stays. A sleeper the
+  night and switched off when night starts, even with someone working; Hugo stays. The operator
+  chose that trade (2026-11-24). Options read back from the live entry; the night switch-over itself
+  is Magic Areas behaviour, as in the corridor and bedroom, and was not observed in this room yet. A sleeper the
   FP2 loses and re-finds still gets **Hugo** switched on, by choice: a dim wall sconce, not the
   ceiling light, and the same lamp lets someone work late.
 
