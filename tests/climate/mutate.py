@@ -41,6 +41,8 @@ BUGS = [
  # 2026-11-24: the office reads its own FP2 against the household indoor slider.
  ("office: outdoors overrides a dark room", "sensor", "Lighting office bright",
   lambda t: t.replace("{% if not is_number(raw) %}", "{% if not is_number(raw) or is_state('binary_sensor.lighting_daylight','on') %}")),
+ ("office: 0 lx read as a dead sensor", "sensor", "Lighting office bright",
+  lambda t: t.replace("{% if not is_number(raw) %}", "{% if not is_number(raw) or (raw | float) == 0 %}")),
  ("office: no hysteresis", "sensor", "Lighting office bright",
   lambda t: t.replace("this.state == 'on'", "this.state == 'never'").replace("> 2 * low", "> low")),
  ("office: a slider at 0 is a threshold of 0", "sensor", "Lighting office bright",

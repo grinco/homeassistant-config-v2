@@ -441,24 +441,39 @@ with two choices of the operator's:
   living room, not a slider of its own. `binary_sensor.lighting_office_bright` is the living-room
   template on a different sensor: dark below the slider, bright above twice it, held in between,
   `delay_off` 1 min / `delay_on` 5 min, a dead FP2 defers to `lighting_daylight`. The room read
-  about 50 lx at a November noon with the lamps off, which the operator wanted lit.
+  about 50 lx at a November noon with the lamps off, which the operator wanted lit. **Moving that
+  slider now moves the living room AND the office**; that is the point, not a side effect.
+
+  The helper is a UI template (live config, not in this repo; the suite reads it from the instance):
+
+  ```jinja
+  {% set t = states('input_number.lighting_indoor_dark_below_lux') %}
+  {% set raw = states('sensor.guest_room_office_fp2_light_sensor_light_level') %}
+  {% set low = (t | float) if is_number(t) and (t | float) > 0 else 150.0 %}
+  {% if not is_number(raw) %}{{ is_state('binary_sensor.lighting_daylight','on') }}
+  {% elif (raw | float) > 2 * low %}{{ True }}
+  {% elif (raw | float) < low %}{{ False }}
+  {% else %}{{ this.state == 'on' }}{% endif %}
+  ```
 - **Hugo only at night.** A guest sleeps here, and an FP2 that loses and re-finds a sleeper would
   otherwise switch on the ceiling light. Sleep entity = `binary_sensor.lighting_night` (the alarm in
   Night mode); Office Main is overhead on `occupied`+`extended`, Hugo is accent on
   `occupied`+`extended`+`sleep`. Because `sleep` is a priority state, Office Main is skipped at
-  night and switched off when night starts, even with someone working; Hugo stays.
+  night and switched off when night starts, even with someone working; Hugo stays. A sleeper the
+  FP2 loses and re-finds still gets **Hugo** switched on, by choice: a dim wall sconce, not the
+  ceiling light, and the same lamp lets someone work late.
 
-**The lamp cannot read its own room bright.** Measured at fit-up: Hugo at full adds about 10 lx at
-the sensor (41 -> 50 lx), far inside the 2x band at the 150 lx default. Office Main was not
-measured (it was off at the wall); if the ceiling light ever turns an occupied room bright after
-five minutes, that is the first suspect.
+**The lamps cannot read their own room bright.** Measured at fit-up: Hugo at full adds about 10 lx
+at the sensor (41 -> 50 lx); Office Main, switched on at 13:19, left the FP2 at 41-50 lx for the
+next 25 minutes. Both are far inside the 2x band at the 150 lx default, so there is no
+lamp -> bright -> off -> dark -> on loop.
 
 **Presence is the FP2 only.** The area also held the Echo Plus, and Magic Areas counted media
 players: an announcement in an empty room would have lit it. `presence_device_platforms` is
 `binary_sensor` only for this area.
 
 Tests: *office:* cases in `tests/climate/cases.py` (the noon reading, both edges, the held band in
-both directions, the household slider moving the edge, a missing or zero slider, a dead FP2 by day
-and by night) and five `mutate.py` rows (outdoors overriding, no hysteresis, a zero threshold, a
-dead sensor reading dark, the slider ignored). The groups and the night switch-over are actuation
+both directions, the household slider moving the edge, a missing or zero slider, 0 lx as a reading,
+a dead FP2 by day and by night) and six `mutate.py` rows (outdoors overriding, 0 lx read as dead, no
+hysteresis, a zero threshold, a dead sensor reading dark, the slider ignored). The groups and the night switch-over are actuation
 and are not reachable by the suite; the options were read back from the live entry.

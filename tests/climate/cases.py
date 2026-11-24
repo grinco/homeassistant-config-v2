@@ -1551,6 +1551,8 @@ _of("True", "250", "100", "off", finding="the household slider moves the office 
 _of("True", "301", "unavailable", "off", finding="a missing slider falls back to 150")
 _of("False", "100", "0", "off",
     finding="a slider at 0 falls back to 150, not a threshold of 0 (100 lx would read bright)")
+_of("False", "0", "150", "on", out="true",
+    finding="0 lx is a reading, not a dead sensor: a pitch-dark office does not defer to outdoors")
 _of("True", "unavailable", "150", "off", out="true",
     finding="a dead FP2 by day defers to outdoors: no lamp at noon")
 _of("False", "unknown", "150", "on", out="false",
