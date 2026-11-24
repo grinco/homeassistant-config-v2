@@ -18,7 +18,7 @@ control* switch is on. Only rooms with a real presence sensor take part — a ro
 | Kitchen | FP2 zones + kitchen motion | see the 2026-10-11 and 2026-10-14 sections | accent gate `kitchen_dark` = NOT `living_room_bright` | **on** |
 | Hallway | Hallway Presence (FP300) | Hallway | `lighting_hallway_bright` — the FP300 lux (2026-10-20) | **on** |
 | Stairs | Stairs Motion (IKEA, at the foot of the stairs) + Hallway Presence (the top) | Stairs Light | `lighting_hallway_bright`, like the hallway | **on** (2026-10-25) |
-| Guest room | Bebecam motion/person | — | — | not wired: a baby monitor must never switch a light on |
+| Office / guest room | Office FP2 (mmWave), since 2026-11-24 — the Bebecam is no longer in the area, and media players no longer count as presence here | Office Main (overhead, day); Hugo (accent, day and night) | `lighting_office_bright` — the office FP2 against the household indoor slider | **on** (2026-11-24) |
 
 **The symptom of a room that is not set up:** Magic Areas switches its lights OFF when the room
 clears but never ON. "On" needs the room's lights in *overhead_lights* with state *occupied*; an
@@ -431,3 +431,34 @@ corridor; someone in the corridor while the stairs sensor is on still is; Magic 
 and two `mutate.py` rows (the stairs sensor counted; the logic inverted). The groups themselves are
 actuation and cannot be reached by a test.
 
+## Office / guest room (2026-11-24)
+
+An Aqara FP2 went into the office, which is also the guest room. It is wired like the living room,
+with two choices of the operator's:
+
+- **One threshold for the household.** "Use them for the whole household": the office reads its own
+  FP2 lux against `input_number.lighting_indoor_dark_below_lux`, the same admin-panel slider as the
+  living room, not a slider of its own. `binary_sensor.lighting_office_bright` is the living-room
+  template on a different sensor: dark below the slider, bright above twice it, held in between,
+  `delay_off` 1 min / `delay_on` 5 min, a dead FP2 defers to `lighting_daylight`. The room read
+  about 50 lx at a November noon with the lamps off, which the operator wanted lit.
+- **Hugo only at night.** A guest sleeps here, and an FP2 that loses and re-finds a sleeper would
+  otherwise switch on the ceiling light. Sleep entity = `binary_sensor.lighting_night` (the alarm in
+  Night mode); Office Main is overhead on `occupied`+`extended`, Hugo is accent on
+  `occupied`+`extended`+`sleep`. Because `sleep` is a priority state, Office Main is skipped at
+  night and switched off when night starts, even with someone working; Hugo stays.
+
+**The lamp cannot read its own room bright.** Measured at fit-up: Hugo at full adds about 10 lx at
+the sensor (41 -> 50 lx), far inside the 2x band at the 150 lx default. Office Main was not
+measured (it was off at the wall); if the ceiling light ever turns an occupied room bright after
+five minutes, that is the first suspect.
+
+**Presence is the FP2 only.** The area also held the Echo Plus, and Magic Areas counted media
+players: an announcement in an empty room would have lit it. `presence_device_platforms` is
+`binary_sensor` only for this area.
+
+Tests: *office:* cases in `tests/climate/cases.py` (the noon reading, both edges, the held band in
+both directions, the household slider moving the edge, a missing or zero slider, a dead FP2 by day
+and by night) and five `mutate.py` rows (outdoors overriding, no hysteresis, a zero threshold, a
+dead sensor reading dark, the slider ignored). The groups and the night switch-over are actuation
+and are not reachable by the suite; the options were read back from the live entry.
