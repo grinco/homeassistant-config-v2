@@ -171,6 +171,26 @@ windows). Twenty minutes open is a push to Vadim
   less sensitive, never a false alarm, and the 0.75 was backtested on the mean as it is. Using a mean
   of the other rooms would mean a third copy of the room list; not worth it.
 
+### The valve's own window flag (2026-11-24)
+
+The first live airing (bedroom, 24.11 ~09:44-10:01) showed both limits of the air signal: the detector
+came on at 09:52 (VOC and moisture take minutes to fall, plus the 5-min on-delay) and stayed on after
+the window shut, because the VOC index recovers over tens of minutes; the 20-min push went out at
+10:12, eleven minutes after the close. Each detector room has a Tado valve that flags an open window
+itself (by its temperature drop): on at 09:46, off at 10:01:33. So the valve's flag now decides first:
+**on** is an opening; **off within the last 30 min** is a close the air may not contradict; otherwise
+(no flag, the valve unreachable, or a later second opening) the air decides as before. The off-delay is
+2 min, not 15: the valve now covers the flicker the long delay was for. A Home Assistant restart
+re-stamps the valve's state, so for 30 min after one the air cannot open the detector (accepted).
+
+### Leaderboards (2026-11-24)
+
+`sensor.energy_leak_ranking`: every room with a measured Away cooling rate, leakiest first, as a
+multiple of the median room, a room the last run flagged as a window marked `(window?)`.
+`sensor.energy_airing_ranking`: hours aired this week per detector room, most first; `detector blind`
+when the detector cannot see. Both replace the single-name tiles on the Energy view's Airtightness
+section with numbered lists; *Leaks most* / *Aired most* remain as sensors for the briefing.
+
 ## Not covered by cases
 
 The 23:59 write itself, the statistics helper's window, notification delivery, and the blind

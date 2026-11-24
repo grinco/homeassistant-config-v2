@@ -3177,10 +3177,17 @@ W_V, W_FT, W_FH = "states(voc_e)", "states('sensor.indoor_temperature')", "state
 W_OT, W_OH = "states('sensor.climate_temp_outdoor')", "state_attr('weather.home', 'humidity')"
 
 
+# 2026-11-24 operator airing: the detector came on 8 min after the window opened and stayed on after it
+# closed (the VOC index recovers slowly), so the 20-min push would have arrived after the window shut.
+# The room's Tado valve flags an open window itself (2 min in) and reports the close at once.
+W_TW = "states(trv_w)"
+W_TAGE = "now().timestamp() - (states[trv_w].last_changed.timestamp() if states[trv_w] is not none else 0)"
+
+
 def win(title, name, expect, ti="'20'", hi="'45'", voc="'100'", ft="'20'", fh="'40'", ot="'4'", oh="70",
-        finding=""):
+        tw="'off'", tage="99999", finding=""):
     return sensor_case("window %s: %s" % (title.split()[-1] if "bedroom" in title else "kid1", name), expect,
-                       {W_T: ti, W_H: hi, W_V: voc, W_FT: ft, W_FH: fh, W_OT: ot, W_OH: oh},
+                       {W_T: ti, W_H: hi, W_V: voc, W_FT: ft, W_FH: fh, W_OT: ot, W_OH: oh, W_TW: tw, W_TAGE: tage},
                        finding=finding, sensor=title)
 
 
@@ -3203,6 +3210,16 @@ for _title in ("Climate window bedroom", "Climate window " + K1["title"]):
           finding="excess 0.82 g/m3: the limit from above"))
     A(win(_title, "an unreachable air-quality sensor is not a window", "False", hi="'33'", voc="'unavailable'",
           finding="unknown is not open"))
+    A(win(_title, "the valve's own open-window flag is an opening", "True", tw="'on'",
+          finding="2026-11-24: the valve saw it at 2 min, the air at 8"))
+    A(win(_title, "the valve's close ends it although the air still looks aired", "False", hi="'33'", voc="'6'",
+          tw="'off'", tage="600", finding="2026-11-24: the VOC index stays low long after the window shuts"))
+    A(win(_title, "29 min after the valve's close the air still decides nothing", "False", hi="'33'", voc="'6'",
+          tw="'off'", tage="1740", finding="the hold from below"))
+    A(win(_title, "31 min after the valve's close the air decides again", "True", hi="'33'", voc="'6'",
+          tw="'off'", tage="1860", finding="the hold from above: a second opening the valve misses"))
+    A(win(_title, "an unreachable valve leaves the air to decide", "True", hi="'33'", voc="'6'",
+          tw="'unavailable'", tage="60", finding="unknown is neither open nor closed"))
     # Review #53 F3: every input, not only the VOC, must fail closed. Each case is an airing that
     # reads True with all seven inputs present (the 23.11 case above).
     for _k, _sub in (("ti", "room temperature"), ("hi", "room humidity"), ("ft", "flat temperature"),
@@ -3433,3 +3450,41 @@ A(mb("saturation is 100, not more", "100", ti="'20'", hi="'90'", ot="'-10'",
      finding="above 100 means condensation; the figure stops at 100"))
 A(mb("no outdoor reading: no figure", "None", ot="'unavailable'", finding="never a number from nothing"))
 A(mb("no room humidity: no figure", "None", hi="'unknown'", finding="never a number from nothing"))
+
+# Leaderboards (operator 2026-11-24): every room ranked, not only the leader. Leaks: each room's Away
+# cooling rate against the flat's median room; a room the last run flagged as a window says so.
+# Airing: hours each detector room was aired this week.
+LR = "Energy leak ranking"
+LR_LIST, LR_VERDICT = "states.input_number", "states('input_text.leak_meter_verdict')"
+LR_AREA = "area_name('sensor.climate_temp_' ~ r)"
+
+
+def lr(name, expect, ks, verdict="'ok'", finding=""):
+    lst = [{"entity_id": "input_number.leak_k_%s" % r, "state": str(k)} for r, k in ks.items()]
+    lst.append({"entity_id": "input_number.climate_away_min", "state": "16"})   # not a leak rate
+    return en(name, LR, expect, {LR_LIST: repr(lst), LR_VERDICT: verdict, LR_AREA: "none"}, finding)
+
+
+_K = {"kid1": 7.1, "bedroom": 3.8, "corridor": 3.7, "living_room": 2.8, "kid2": 2.2, "office": 1.2}
+A(lr("every measured room, leakiest first, against the median", 
+     "kid1 2.2× · bedroom 1.2× · corridor 1.1× · living_room 0.9× · kid2 0.7× · office 0.4×", _K,
+     finding="the 21.11 Away run; median 3.25"))
+A(lr("a room never measured is left out", "a 1.5× · b 1.0× · c 0.5×", {"a": 3, "b": 2, "c": 1, "d": 0},
+     finding="a fresh helper is 0, not a tight room"))
+A(lr("two rooms are not a ranking", "not measured yet", {"a": 3, "b": 2}, finding="as Leaks most"))
+A(lr("a window in the last run is named in place", "a 1.5× (window?) · b 1.0× · c 0.5×", {"a": 3, "b": 2, "c": 1},
+     verdict="'a:window'", finding="ventilation is not structure"))
+
+AR = "Energy airing ranking"
+
+
+def ar(name, expect, hours, blind="false", finding=""):
+    lst = [{"entity_id": "sensor.airing_%s_last_7_days" % r, "state": str(h)} for r, h in hours.items()]
+    lst.append({"entity_id": "sensor.energy_ac_last_7_days", "state": "40"})   # not an airing counter
+    return en(name, AR, expect, {EM_LIST: repr(lst), LR_AREA: "none", EM_BLIND: blind}, finding)
+
+
+A(ar("every detector room, most aired first", "bedroom 0.3 h · kid1 0.0 h", {"kid1": 0.0, "bedroom": 0.27},
+     finding="24.11: the bedroom's morning airing"))
+A(ar("no counters yet", "none this week", {}, finding="before the first airing"))
+A(ar("a blind detector says so", "detector blind", {"bedroom": 3.0}, blind="true", finding="review #53 F1"))

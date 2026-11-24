@@ -767,45 +767,24 @@
      ]
     },
     {
-     "entity": "sensor.energy_leak_suspect",
+     "content": "**Leaks most** · heat lost while Away, against the flat's middle room\n\n{% set l = states('sensor.energy_leak_ranking') %}{% if ' h' in l or '×' in l %}{% for x in l.split(' · ') %}{{ loop.index }}. {{ x }}\n{% endfor %}{% else %}{{ l }}{% endif %}",
+     "entity_id": [
+      "sensor.energy_leak_ranking"
+     ],
      "grid_options": {
-      "columns": 12,
-      "rows": 1
+      "columns": "full"
      },
-     "icon": "mdi:home-alert-outline",
-     "name": "Leaks most",
-     "state_display": "[[[ return entity.state.replace(': leaks most ', ' '); ]]]",
-     "tap_action": {
-      "action": "more-info",
-      "entity": "input_text.leak_meter_verdict"
-     },
-     "template": "vg_stat",
-     "type": "custom:button-card",
-     "visibility": [
-      {
-       "condition": "state",
-       "entity": "sensor.energy_leak_suspect",
-       "state_not": [
-        "not measured yet",
-        "unknown",
-        "unavailable"
-       ]
-      }
-     ]
+     "type": "markdown"
     },
     {
-     "entity": "sensor.energy_aired_most",
+     "content": "**Aired most** · hours a window was open this week\n\n{% set l = states('sensor.energy_airing_ranking') %}{% if ' h' in l or '×' in l %}{% for x in l.split(' · ') %}{{ loop.index }}. {{ x }}\n{% endfor %}{% else %}{{ l }}{% endif %}",
+     "entity_id": [
+      "sensor.energy_airing_ranking"
+     ],
      "grid_options": {
-      "columns": 12,
-      "rows": 1
+      "columns": "full"
      },
-     "icon": "mdi:window-open-variant",
-     "name": "Aired most this week",
-     "tap_action": {
-      "action": "more-info"
-     },
-     "template": "vg_stat",
-     "type": "custom:button-card"
+     "type": "markdown"
     }
    ],
    "column_span": 1,

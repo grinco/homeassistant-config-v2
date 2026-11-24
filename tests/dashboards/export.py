@@ -112,7 +112,7 @@ RESOLVED_TITLES = (
     "Energy gas heating per degree-day", "Energy AC heating per degree-day",
     "Energy heating per m2 year", "Energy class", "Energy gas estimate", "Energy leak suspect",
     "Energy air change rating", "Energy aired most", "Energy heating per m2 last 24h",
-    "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1", "Climate window detector blind",
+    "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1", "Climate window detector blind", "Energy leak ranking", "Energy airing ranking",
     "Climate night target living room", "Climate night target office", "Climate night target bedroom",
     "Climate night target kid1", "Climate night target kid2",
     "Climate mould living room", "Climate mould office", "Climate mould corridor", "Climate mould bedroom",
