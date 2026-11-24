@@ -1,0 +1,50 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "room": "{{ trigger.entity_id[21:] }}",
+    "where": "{{ area_name('sensor.climate_temp_' ~ room) or area_name(trigger.entity_id) or room }}"
+   }
+  },
+  {
+   "action": "notify.mobile_app_adult_phone_1",
+   "data": {
+    "data": {
+     "group": "mould",
+     "tag": "mould-{{ room }}"
+    },
+    "message": "The coldest wall surface has been near {{ trigger.to_state.state }} % humidity for 6 hours; mould grows above 80 %. Air it wide open for 5 minutes, keep it warm tonight, and keep furniture off the outside walls.",
+    "title": "Mould risk: {{ where }}"
+   }
+  }
+ ],
+ "alias": "Climate — mould risk",
+ "conditions": [
+  {
+   "condition": "template",
+   "value_template": "{{ trigger.from_state is not none and trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+  }
+ ],
+ "description": "A room's Mould Indicator (estimated humidity at its coldest wall surface) above 80 % for 6 hours: the level and duration at which mould grows. A push to Vadim. A return from unavailable does not count as a crossing.",
+ "id": "1792300000051",
+ "max": 10,
+ "mode": "queued",
+ "triggers": [
+  {
+   "above": 80,
+   "entity_id": [
+    "sensor.climate_mould_living_room",
+    "sensor.climate_mould_office",
+    "sensor.climate_mould_corridor",
+    "sensor.climate_mould_bedroom",
+    "sensor.climate_mould_kid1",
+    "sensor.climate_mould_kid2",
+    "sensor.climate_mould_bathroom"
+   ],
+   "for": {
+    "hours": 6
+   },
+   "trigger": "numeric_state"
+  }
+ ]
+}

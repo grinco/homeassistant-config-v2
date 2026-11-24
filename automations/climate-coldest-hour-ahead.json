@@ -1,0 +1,48 @@
+{
+ "actions": [
+  {
+   "action": "weather.get_forecasts",
+   "continue_on_error": true,
+   "data": {
+    "type": "hourly"
+   },
+   "response_variable": "fc",
+   "target": {
+    "entity_id": "weather.home"
+   }
+  },
+  {
+   "variables": {
+    "lo": "{% set f = (fc.get('weather.home', {}).get('forecast', [])) if fc is defined and fc is mapping else [] %}{% set t = f[:12] | map(attribute='temperature') | select('is_number') | list %}{{ t | min if t | count >= 6 else states('sensor.climate_temp_outdoor') }}"
+   }
+  },
+  {
+   "condition": "template",
+   "value_template": "{{ is_number(lo) }}"
+  },
+  {
+   "action": "input_number.set_value",
+   "data": {
+    "value": "{{ [[lo | float, -40] | max, 45] | min }}"
+   },
+   "target": {
+    "entity_id": "input_number.climate_outdoor_min_12h"
+   }
+  }
+ ],
+ "alias": "Climate — coldest hour ahead",
+ "conditions": [],
+ "description": "Hourly: the minimum of the next 12 forecast hours into input_number.climate_outdoor_min_12h, which the frost night targets read (docs/heating-energy-rating.md, frost setback). Fewer than 6 forecast hours, or a failed call, writes the measured outdoor temperature instead.",
+ "id": "1792300000050",
+ "mode": "single",
+ "triggers": [
+  {
+   "minutes": 5,
+   "trigger": "time_pattern"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

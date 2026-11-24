@@ -15,7 +15,7 @@
       "enable": "input_boolean.climate_room_living_room",
       "hold": "input_datetime.climate_rad_hold_living_room",
       "name": "Living room",
-      "night_t": "input_number.climate_target_night_living_room",
+      "night_t": "sensor.climate_night_target_living_room",
       "window": "binary_sensor.livingroom_thermostat_livingroom_thermostat_window",
       "zone": "climate.livingroom_thermostat_livingroom_thermostat"
      },
@@ -25,7 +25,7 @@
       "enable": "input_boolean.climate_room_bedroom",
       "hold": "input_datetime.climate_rad_hold_bedroom",
       "name": "Bedroom",
-      "night_t": "input_number.climate_target_night_bedroom",
+      "night_t": "sensor.climate_night_target_bedroom",
       "window": "binary_sensor.bedroom_trv_bedroom_trv_window",
       "zone": "climate.bedroom_trv_bedroom_trv"
      },
@@ -35,7 +35,7 @@
       "enable": "input_boolean.climate_room_kid1",
       "hold": "input_datetime.climate_rad_hold_kid1",
       "name": "Kids room 1",
-      "night_t": "input_number.climate_target_night_kid1",
+      "night_t": "sensor.climate_night_target_kid1",
       "window": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
       "zone": "climate.kid1_room_trv_kid1_room_trv"
      },
@@ -45,7 +45,7 @@
       "enable": "input_boolean.climate_room_kid2",
       "hold": "input_datetime.climate_rad_hold_kid2",
       "name": "Kids room 2",
-      "night_t": "input_number.climate_target_night_kid2",
+      "night_t": "sensor.climate_night_target_kid2",
       "window": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
       "zone": "climate.kid2_room_trv_kid2_room_trv"
      }
@@ -247,7 +247,7 @@
  ],
  "alias": "Climate — radiators",
  "conditions": [],
- "description": "v6 (2026-10-11, operator). Home Assistant sets each Tado heating zone from the room's day/night targets (night = the alarm, see House - night mode). Heating season: the target; away: the pet floor (climate_away_min); shoulder/cool season: off; a disabled room or the comfort master off: back to Tado's own schedule ('auto'); an unknown season: nothing. Tado's free cloud tier allows ~100 calls a day, so a zone is commanded ONLY when it differs from what it should be. A zone changed by hand (dial or app) is noticed against input_number.climate_rad_cmd_<room> (last commanded: temperature, -1 off, -2 schedule, 0 never) and held for climate_manual_hold_hours; after HA's own command a 30-minute settle hold stops Tado's slow polling looking like a person. Radiators outnumber ACs: this list is ZONES, not AC rooms - a zone not listed here stays on Tado's schedule and is reported. Tests: tests/climate/cases.py (radiator:). While a zone's own window sensor is on, Tado's open-window protection owns it: HA neither judges nor commands it (review 2026-10-11), and re-checks when the window closes.",
+ "description": "v6 (2026-10-11, operator). Home Assistant sets each Tado heating zone from the room's day/night targets (night = the alarm, see House - night mode). Heating season: the target; away: the pet floor (climate_away_min); shoulder/cool season: off; a disabled room or the comfort master off: back to Tado's own schedule ('auto'); an unknown season: nothing. Tado's free cloud tier allows ~100 calls a day, so a zone is commanded ONLY when it differs from what it should be. A zone changed by hand (dial or app) is noticed against input_number.climate_rad_cmd_<room> (last commanded: temperature, -1 off, -2 schedule, 0 never) and held for climate_manual_hold_hours; after HA's own command a 30-minute settle hold stops Tado's slow polling looking like a person. Radiators outnumber ACs: this list is ZONES, not AC rooms - a zone not listed here stays on Tado's schedule and is reported. Tests: tests/climate/cases.py (radiator:). While a zone's own window sensor is on, Tado's open-window protection owns it: HA neither judges nor commands it (review 2026-10-11), and re-checks when the window closes. 2026-11-24: the night target is sensor.climate_night_target_<room>: the operator night, raised in frost until the coldest wall stays below 80 % RH (docs/heating-energy-rating.md, frost setback).",
  "id": "1790300000001",
  "max": 5,
  "mode": "queued",
@@ -262,13 +262,13 @@
     "input_boolean.climate_room_kid1",
     "input_boolean.climate_room_kid2",
     "input_number.climate_target_day_living_room",
-    "input_number.climate_target_night_living_room",
+    "sensor.climate_night_target_living_room",
     "input_number.climate_target_day_bedroom",
-    "input_number.climate_target_night_bedroom",
+    "sensor.climate_night_target_bedroom",
     "input_number.climate_target_day_kid1",
-    "input_number.climate_target_night_kid1",
+    "sensor.climate_night_target_kid1",
     "input_number.climate_target_day_kid2",
-    "input_number.climate_target_night_kid2",
+    "sensor.climate_night_target_kid2",
     "input_number.climate_away_min"
    ],
    "trigger": "state"

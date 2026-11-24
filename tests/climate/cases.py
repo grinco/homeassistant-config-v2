@@ -1967,6 +1967,14 @@ A(case("warm-up: outside the window the night target stands", "target", "20.0",
        {"night": True, "preheat": False},
        subs={"states(r.night_t)": "'20'", "states(r.day_t)": "'22'"}, finding="v4 night target unchanged"))
 
+# Review #55 F2: the night target is now a template sensor. It renders None only when the operator's
+# own input_number is missing, so the consumers' fallbacks are the same as before: pinned here.
+A(case("an unknown night target falls back to 21 C in the AC loop", "target", "21",
+       {"night": True, "preheat": False},
+       subs={"states(r.night_t)": "'unknown'", "states(r.day_t)": "'22'"}, finding="review #55 F2"))
+A(rcase("an unknown night target falls back to 19 C for a radiator", "night_t", "19", {},
+        "review #55 F2", subs={"states(r.night_t)": "'unknown'"}))
+
 PH_ON = "is_state(r.preheat, 'on')"
 SCHED_IS_ON = "is_state('schedule.climate_night','on')"
 NEXT = "state_attr('schedule.climate_night','next_event')"
@@ -3327,3 +3335,101 @@ A(mir("the buttons are listed under the text", "body",
        "data": {"actions": [{"action": "A", "title": "Arm Away"}, {"action": "B", "title": "Turn the lights off"}]}},
       finding="the copy says what the phone offered"))
 A(mir("a push without buttons is just its text", "body", "Still on: Corridor Light.", _P))
+
+# Frost setback (operator 2026-11-24): a night setback cools the walls, and a cold corner whose
+# surface passes 80 % RH grows mould. Each room's night target is raised, never lowered, until the
+# coldest outdoor hour of the next 12 h keeps its wall surface below 80 % RH, and never above the day
+# target. The surface temperature is te + (ti - te) / f; f = 1 / fRsi is the room's mould factor
+# (1.43 = fRsi 0.7, the kid 1 corner 1.67 = fRsi 0.6), the same as its Mould Indicator helper.
+NT_N, NT_D = "states('input_number.climate_target_night_' ~ room)", "states('input_number.climate_target_day_' ~ room)"
+NT_OM = "states('input_number.climate_outdoor_min_12h')"
+NT_PREV = "this.state"
+# (title, label, hi just safe, hi just unsafe, hi holding a raised 19.5, hi releasing it)
+NT_ROOMS = (("Climate night target living room", "living", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target office", "office", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target bedroom", "bedroom", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target " + K1["title"], "kid1", 37.5, 38.0, 37.6, 37.4),
+            ("Climate night target " + K2["title"], "kid2", 44.0, 44.5, 44.0, 43.8))
+
+
+def nt(title, label, name, expect, n="'19'", d="'23'", ti="'21'", hi="'40'", ot="'0'", om="'-5'", prev="'unknown'",
+       finding=""):
+    return sensor_case("night target %s: %s" % (label, name), expect,
+                       {NT_N: n, NT_D: d, W_T: ti, W_H: hi, W_OT: ot, NT_OM: om, NT_PREV: prev},
+                       finding=finding, sensor=title)
+
+
+for _title, _l, _lo, _hi, _hold, _rel in NT_ROOMS:
+    # Review #55 F1: one per cent of humidity moves the requirement by about half a degree, so a
+    # jittery humidity sensor would flip the target, and each flip can cost a Tado call. A raised
+    # target is held until the requirement falls 0.75 below it (three quarters of a step).
+    A(nt(_title, _l, "a raised target holds while the need is within 0.75", "19.5", hi="'%s'" % _hold,
+         prev="'19.5'", finding="review #55 F1: requirement 18.77-18.83 against a held 19.5"))
+    A(nt(_title, _l, "and is released when the need falls 0.75 below it", "19.0", hi="'%s'" % _rel,
+         prev="'19.5'", finding="review #55 F1: requirement 18.67-18.70: the step is released"))
+    A(nt(_title, _l, "a rising need is never held back", "23.0", hi="'55'", om="'-10'", prev="'19.5'",
+         finding="the hold only delays a fall"))
+    A(nt(_title, _l, "a held value never exceeds a lowered day target", "21.0", d="'21'", hi="'55'", om="'-10'",
+         prev="'23'", finding="the operator's day target still caps a held value"))
+    A(nt(_title, _l, "a held value never undercuts a raised operator night", "20.0", n="'20'", hi="'%s'" % _hold,
+         prev="'19.5'", finding="the operator's night still floors"))
+    A(nt(_title, _l, "mild and dry: the operator's night", "19.0", hi="'30'", ot="'5'", om="'2'",
+         finding="no raise where the wall is safe: the setback's saving is kept"))
+    A(nt(_title, _l, "just safe at the coldest hour: unchanged", "19.0", hi="'%s'" % _lo,
+         finding="the 80 % surface limit from below"))
+    A(nt(_title, _l, "just unsafe: raised to the next half degree", "19.5", hi="'%s'" % _hi,
+         finding="the 80 % surface limit from above; half degrees, so the valves are not chased"))
+    A(nt(_title, _l, "the measured outdoor colder than the forecast counts", "19.5", hi="'%s'" % _hi,
+         ot="'-5'", om="'0'", finding="a stale or optimistic forecast cannot hide a cold night"))
+    A(nt(_title, _l, "frost and humid: no colder than the day target", "23.0", hi="'55'", om="'-10'",
+         finding="the cap: never warmer at night than by day"))
+    A(nt(_title, _l, "a night set above the day target is never lowered", "22.0", n="'22'", d="'21'",
+         hi="'55'", om="'-10'", finding="raise only: the operator's value is a floor"))
+    A(nt(_title, _l, "no forecast yet: the measured outdoor alone", "19.0", hi="'%s'" % _hi, om="'unknown'",
+         ot="'5'", finding="a missing forecast is not frost; the measured 5 C is mild"))
+    A(nt(_title, _l, "no outdoor reading at all: the operator's night", "19.0", hi="'55'", ot="'unavailable'",
+         om="'unknown'", finding="nothing to judge: no raise"))
+    A(nt(_title, _l, "room humidity unknown: the operator's night", "19.0", hi="'unavailable'", om="'-10'",
+         finding="no raise from nothing"))
+    A(nt(_title, _l, "the night target itself unknown: no figure", "None", n="'unavailable'",
+         finding="the consumers keep their own fallback"))
+
+# The coldest hour ahead: hourly, the next 12 forecast hours' minimum is kept for the night targets.
+FROST_FC = "1792300000050"
+FC_OUT = "states('sensor.climate_temp_outdoor')"
+
+
+def fc(name, expect, temps, out="'1.2'", finding=""):
+    given = {"fc": {"weather.home": {"forecast": [{"temperature": t} for t in temps]}}} if temps is not None \
+        else {"fc": "failed"}
+    return dict(name="frost forecast: " + name, automation=FROST_FC, expr="lo", expect=expect, given=given,
+                subs={FC_OUT: out}, finding=finding)
+
+
+A(fc("the coldest of the next 12 hours", "-5.4", [-2.5, -2.3, -1.1, 0.4, 1.6, -3.1, -3.9, -4.3, -4.6, -5.4, -4.7, -4.9],
+     finding="tonight's forecast, 24.11"))
+A(fc("the 13th hour does not count", "-2.0", [-1.0] * 11 + [-2.0, -9.0], finding="the window is 12 h"))
+A(fc("a short forecast is not trusted: the measured outdoor", "1.2", [-8.0] * 5,
+     finding="fewer than 6 hours: a truncated answer"))
+A(fc("six hours is enough", "-8.0", [-8.0] * 6, finding="the limit from above"))
+A(fc("a failed call: the measured outdoor", "1.2", None, finding="continue_on_error leaves no forecast"))
+
+# The bathroom's mould figure is a template, not a Mould Indicator helper: a helper inherits the
+# device of the sensor it reads, the bathroom's sensor sits in a Magic Areas room, and Magic Areas
+# would average a wall humidity into the room's air humidity (lint C20 caught it). Same physics as
+# the helper: surface at to + (ti - to) / f, humidity there from the room's vapour pressure.
+MB = "Climate mould bathroom"
+MB_T, MB_H = "states('sensor.bathroom_climate_temperature')", "states('sensor.bathroom_climate_humidity')"
+
+
+def mb(name, expect, ti="'22.3'", hi="'38.3'", ot="'0.3'", finding=""):
+    return sensor_case("bathroom mould: " + name, expect, {MB_T: ti, MB_H: hi, W_OT: ot}, finding=finding,
+                       sensor=MB)
+
+
+A(mb("today: the helper's own figure", "58", finding="the Mould Indicator read 58 % on 24.11"))
+A(mb("a humid bathroom in frost", "90", ti="'22'", hi="'54'", ot="'-5'", finding="surface 13.9 C"))
+A(mb("saturation is 100, not more", "100", ti="'20'", hi="'90'", ot="'-10'",
+     finding="above 100 means condensation; the figure stops at 100"))
+A(mb("no outdoor reading: no figure", "None", ot="'unavailable'", finding="never a number from nothing"))
+A(mb("no room humidity: no figure", "None", hi="'unknown'", finding="never a number from nothing"))

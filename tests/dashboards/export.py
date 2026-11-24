@@ -88,6 +88,8 @@ AUTOS = {
     "1792300000030": "energy-gas-interval.json",
     "1792300000031": "energy-degree-days.json",
     "1792300000040": "climate-window-open.json",
+    "1792300000050": "climate-coldest-hour-ahead.json",
+    "1792300000051": "climate-mould-risk.json",
     "1792300000060": "house-push-mirror.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
@@ -111,6 +113,10 @@ RESOLVED_TITLES = (
     "Energy heating per m2 year", "Energy class", "Energy gas estimate", "Energy leak suspect",
     "Energy air change rating", "Energy aired most", "Energy heating per m2 last 24h",
     "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1", "Climate window detector blind",
+    "Climate night target living room", "Climate night target office", "Climate night target bedroom",
+    "Climate night target kid1", "Climate night target kid2",
+    "Climate mould living room", "Climate mould office", "Climate mould corridor", "Climate mould bedroom",
+    "Climate mould kid1", "Climate mould kid2", "Climate mould bathroom",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "
@@ -326,7 +332,7 @@ def main():
     by_title = {}
     for e in entries:
         pub = scrub(e.get("title") or "", specific, general)
-        if pub in RESOLVED_TITLES and e.get("domain") in ("template", "min_max"):
+        if pub in RESOLVED_TITLES and e.get("domain") in ("template", "min_max", "mold_indicator"):
             by_title[pub] = {"domain": e["domain"], "title": e.get("title"),
                              "options": e.get("options") or {}}
     gone = [t for t in RESOLVED_TITLES if t not in by_title]

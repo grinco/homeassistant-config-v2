@@ -274,3 +274,11 @@ the integration out. Run it after changing the schedule in the app. Reasoning: `
 - `house-everyone-left.json`: the arm offer gains a second answer, "<name> is at home" /
   "Someone is home", which clears the note and leaves the alarm and lights alone; tapping the note
   opens the Security view. iOS shows the buttons on a long press or pull-down of the banner.
+## Mould risk and frost night target (2026-11-24)
+
+- `climate-mould-risk.json`: a room's mould figure (humidity at its coldest wall) above 80 % for
+  6 hours pushes once.
+- `climate-coldest-hour-ahead.json`: hourly, the coldest of the next 12 forecast hours, read by
+  `sensor.climate_night_target_<room>`, which both climate automations now use as the night target.
+
+Design: `docs/mould-and-frost-setback.md`.

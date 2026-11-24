@@ -714,6 +714,214 @@
   {
    "cards": [
     {
+     "heading": "Mould risk",
+     "heading_style": "title",
+     "icon": "mdi:water-percent-alert",
+     "type": "heading"
+    },
+    {
+     "entity": "sensor.climate_mould_living_room",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Living room",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_office",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Guest room",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_corridor",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Corridor",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_bedroom",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Bedroom",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_kid1",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Kids room 1’ room",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_kid2",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Kids room 2’s room",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "entity": "sensor.climate_mould_bathroom",
+     "grid_options": {
+      "columns": 6,
+      "rows": 1
+     },
+     "icon": "mdi:wall",
+     "name": "Bathroom",
+     "styles": {
+      "icon": [
+       {
+        "color": "blue"
+       }
+      ]
+     },
+     "tap_action": {
+      "action": "more-info"
+     },
+     "template": "vg_meter",
+     "type": "custom:button-card",
+     "variables": {
+      "max": 100,
+      "tint": "blue"
+     }
+    },
+    {
+     "content": "{% set ns = namespace(worst = -1, room = '', up = []) %}{% for r, n in [('living_room','Living room'), ('office','Guest room'), ('corridor','Corridor'), ('bedroom','Bedroom'), ('kid1','Kids room 1’ room'), ('kid2','Kids room 2’s room'), ('bathroom','Bathroom')] %}{% set v = states('sensor.climate_mould_' ~ r) | float(-1) %}{% if v > ns.worst %}{% set ns.worst = v %}{% set ns.room = n %}{% endif %}{% endfor %}{% for r, n in [('living_room','Living room'), ('office','Guest room'), ('bedroom','Bedroom'), ('kid1','Kids room 1’ room'), ('kid2','Kids room 2’s room')] %}{% set e = states('sensor.climate_night_target_' ~ r) | float(0) %}{% set o = states('input_number.climate_target_night_' ~ r) | float(0) %}{% if e > o %}{% set ns.up = ns.up + [n ~ ' ' ~ o ~ ' → ' ~ e ~ ' °C'] %}{% endif %}{% endfor %}{% if ns.worst < 0 %}No mould reading.{% elif ns.worst >= 80 %}**{{ ns.room }} {{ ns.worst | int }} % at the coldest wall — mould grows above 80 %. Air it briefly and keep it warm.**{% elif ns.worst >= 70 %}**{{ ns.room }} {{ ns.worst | int }} %** — damp wall{% else %}Highest {{ ns.room }} {{ ns.worst | int }} % — dry walls{% endif %}{% if ns.up %}\n\nFrost: night raised in {{ ns.up | join(', ') }}{% endif %}\n\n<details><summary><ha-icon icon=\"mdi:information-outline\"></ha-icon></summary>\n\nEach figure is the estimated humidity at the room's coldest wall surface, from the room's temperature and humidity and the outdoor temperature. Mould grows when a surface stays above 80 % for hours; 70–80 % is damp. On a frosty night a room's night setback is reduced until that wall stays below 80 % at the coldest hour forecast; it is never warmer than the day target.\n\n</details>",
+     "entity_id": [
+      "sensor.climate_mould_living_room",
+      "sensor.climate_mould_office",
+      "sensor.climate_mould_corridor",
+      "sensor.climate_mould_bedroom",
+      "sensor.climate_mould_kid1",
+      "sensor.climate_mould_kid2",
+      "sensor.climate_mould_bathroom",
+      "sensor.climate_night_target_living_room",
+      "sensor.climate_night_target_office",
+      "sensor.climate_night_target_bedroom",
+      "sensor.climate_night_target_kid1",
+      "sensor.climate_night_target_kid2"
+     ],
+     "grid_options": {
+      "columns": "full"
+     },
+     "type": "markdown"
+    }
+   ],
+   "column_span": 1,
+   "type": "grid"
+  },
+  {
+   "cards": [
+    {
      "heading": "Rooms",
      "icon": "mdi:home-thermometer-outline",
      "type": "heading"

@@ -211,31 +211,69 @@ def grid_meters(prefs_path=ENERGY):
 
 
 WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set voc_e = '[a-z0-9_.]+' %\}")
+NIGHT_HEADER = re.compile(r"^\{% set room = '([a-z0-9_]+)' %\}\{% set f = ([0-9.]+) %\}")
+
+# Formulas copied per room on purpose: run.py substitutes the reads in each sensor's own text and
+# cannot reach into an imported macro, so the copies stay, every case runs against each of them, and
+# this proves they are the same text after the per-room header (review #53 F2).
+COPIED_FAMILIES = (
+    ("Climate window ", WINDOW_HEADER, ("Climate window detector blind",)),
+    ("Climate night target ", NIGHT_HEADER, ()),
+)
 
 
-def window_copies():
-    """Review #53 F2: the window detectors are one formula copied per room; only the header differs.
-
-    A shared Jinja macro would be the usual cure, but run.py substitutes the reads in the sensor's
-    own text, and a read inside an imported macro is out of its reach. So the copies stay, every
-    case runs against each of them, and this proves they are the same text after the header: a
-    constant edited in one copy and not the other fails here even where no case straddles it.
-    Returns (titles, problem) where problem is None when the copies agree.
-    """
+def family_copies(prefix, header, exclude):
+    """Returns (titles, problem); problem is None when every copy matches after its header."""
     tpls = {t: v for t, v in harness.load_sensor_templates().items()
-            if t.startswith("Climate window ") and t != "Climate window detector blind"}
+            if t.startswith(prefix) and t not in exclude and "::" not in t}
     if len(tpls) < 2:
-        return sorted(tpls), "expected at least two window detectors, found %d" % len(tpls)
+        return sorted(tpls), "expected at least two '%s' sensors, found %d" % (prefix, len(tpls))
     bodies = {}
     for title, tpl in tpls.items():
-        m = WINDOW_HEADER.match(tpl)
+        m = header.match(tpl)
         if not m:
-            return sorted(tpls), "%s does not start with the room/voc_e header" % title
+            return sorted(tpls), "%s does not start with its per-room header" % title
         bodies.setdefault(tpl[m.end():], []).append(title)
     if len(bodies) > 1:
         return sorted(tpls), "the copies differ after the header: %s" % " | ".join(
             ", ".join(sorted(v)) for v in bodies.values())
     return sorted(tpls), None
+
+
+def window_copies():
+    return family_copies(*COPIED_FAMILIES[0])
+
+
+def mould_factors():
+    """Each frost night target's wall factor f must equal its room's Mould Indicator factor.
+
+    Both model the same wall: the indicator shows its surface humidity, the night target keeps it
+    below 80 %. Returns a list of problems (empty when they agree).
+    """
+    import io
+    import json
+    with io.open(harness.ENTRIES, encoding="utf-8") as fh:
+        entries = json.load(fh)["data"]["entries"]
+    mould = {}
+    for e in entries:
+        if e.get("domain") == "mold_indicator":
+            o = e.get("options") or {}
+            mould[o.get("indoor_temp_sensor")] = float(o.get("calibration_factor", 0))
+    out = []
+    for title, tpl in sorted(harness.load_sensor_templates().items()):
+        if not title.startswith("Climate night target ") or "::" in title:
+            continue
+        m = NIGHT_HEADER.match(tpl)
+        if not m:
+            out.append("%s has no room/factor header" % title)
+            continue
+        room, f = m.group(1), float(m.group(2))
+        got = mould.get("sensor.climate_temp_" + room)
+        if got is None:
+            out.append("%s: no Mould Indicator reads sensor.climate_temp_%s" % (title, room))
+        elif abs(got - f) > 1e-9:
+            out.append("%s: factor %s, its Mould Indicator %s" % (title, f, got))
+    return out
 
 
 def main():
@@ -284,11 +322,18 @@ def main():
         return 1
     print("  all %d definitions of night are under the truth table" % len(harness.NIGHT_CONSUMERS))
 
-    titles, problem = window_copies()
-    if problem:
-        print("  WINDOW COPIES   %s" % problem)
+    for prefix, header, exclude in COPIED_FAMILIES:
+        titles, problem = family_copies(prefix, header, exclude)
+        if problem:
+            print("  COPIES          %s" % problem)
+            return 1
+        print("  the %d '%s' sensors are one formula" % (len(titles), prefix.strip()))
+    factor_problems = mould_factors()
+    for p in factor_problems:
+        print("  MOULD FACTOR    %s" % p)
+    if factor_problems:
         return 1
-    print("  the %d window detectors are one formula: %s" % (len(titles), ", ".join(titles)))
+    print("  every frost night target uses its room's Mould Indicator factor")
 
     refs, skipped = referenced()
     if not refs:
