@@ -1,0 +1,84 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "start": "{% set a = is_state('alarm_control_panel.home', 'armed_away') %}{% set since = now().timestamp() - (state_attr('input_datetime.climate_away_since', 'timestamp') | float(0)) %}{% set d = states('sensor.home_nearest_distance') %}{% set dr = states('sensor.home_nearest_direction_of_travel') %}{{ a and since > 7200 and is_state('input_select.climate_house_mode', 'heat') and is_number(d) and d | float < 15000 and dr == 'towards' and not is_state('input_boolean.climate_arrival_preheat', 'on') }}",
+    "stop": "{% set d = states('sensor.home_nearest_distance') %}{{ is_state('input_boolean.climate_arrival_preheat', 'on') and (not is_state('alarm_control_panel.home', 'armed_away') or (is_number(d) and d | float > 25000) or (now().timestamp() - as_timestamp(states.input_boolean.climate_arrival_preheat.last_changed, 0)) > 7200) }}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ start }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_boolean.turn_on",
+       "target": {
+        "entity_id": "input_boolean.climate_arrival_preheat"
+       }
+      },
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "group": "climate",
+         "tag": "arrival-preheat"
+        },
+        "message": "{{ states('sensor.home_nearest_device') }} is heading home, {{ (states('sensor.home_nearest_distance') | float(0) / 1000) | round(1) }} km out: the house leaves its Away temperature now.",
+        "title": "Warming the house"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ stop }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_boolean.turn_off",
+       "target": {
+        "entity_id": "input_boolean.climate_arrival_preheat"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Climate — pre-heat on the way home",
+ "conditions": [],
+ "description": "Operator 2026-11-24: after more than 2 h of Away in the heating season, when the nearest tracked person is heading home (Proximity: direction 'towards') and within 15 km, input_boolean.climate_arrival_preheat goes on and both climate automations drop the Away floor for comfort targets. Off on arrival (the alarm leaves Away), when the trip turns back past 25 km, or after 2 h without arriving. Docs: docs/mould-and-frost-setback.md (arrival).",
+ "id": "1792300000070",
+ "max": 5,
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": [
+    "sensor.home_nearest_distance",
+    "sensor.home_nearest_direction_of_travel",
+    "alarm_control_panel.home"
+   ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": "input_boolean.climate_arrival_preheat",
+   "for": "02:00:00",
+   "to": "on",
+   "trigger": "state"
+  },
+  {
+   "minutes": "/10",
+   "trigger": "time_pattern"
+  }
+ ]
+}

@@ -2,7 +2,7 @@
  "actions": [
   {
    "variables": {
-    "away": "{{ is_state('alarm_control_panel.home','armed_away') and (now().timestamp() - (state_attr('input_datetime.climate_away_since','timestamp') | float(0))) > 1800 }}",
+    "away": "{{ is_state('alarm_control_panel.home','armed_away') and (now().timestamp() - (state_attr('input_datetime.climate_away_since','timestamp') | float(0))) > 1800 and not is_state('input_boolean.climate_arrival_preheat', 'on') }}",
     "away_min": "{{ states('input_number.climate_away_min') | float(18) }}",
     "comfort": "{{ is_state('input_boolean.climate_auto','on') }}",
     "house": "{{ states('input_select.climate_house_mode') }}",
@@ -247,7 +247,7 @@
  ],
  "alias": "Climate — radiators",
  "conditions": [],
- "description": "v6 (2026-10-11, operator). Home Assistant sets each Tado heating zone from the room's day/night targets (night = the alarm, see House - night mode). Heating season: the target; away: the pet floor (climate_away_min); shoulder/cool season: off; a disabled room or the comfort master off: back to Tado's own schedule ('auto'); an unknown season: nothing. Tado's free cloud tier allows ~100 calls a day, so a zone is commanded ONLY when it differs from what it should be. A zone changed by hand (dial or app) is noticed against input_number.climate_rad_cmd_<room> (last commanded: temperature, -1 off, -2 schedule, 0 never) and held for climate_manual_hold_hours; after HA's own command a 30-minute settle hold stops Tado's slow polling looking like a person. Radiators outnumber ACs: this list is ZONES, not AC rooms - a zone not listed here stays on Tado's schedule and is reported. Tests: tests/climate/cases.py (radiator:). While a zone's own window sensor is on, Tado's open-window protection owns it: HA neither judges nor commands it (review 2026-10-11), and re-checks when the window closes. 2026-11-24: the night target is sensor.climate_night_target_<room>: the operator night, raised in frost until the coldest wall stays below 80 % RH (docs/heating-energy-rating.md, frost setback).",
+ "description": "v6 (2026-10-11, operator). Home Assistant sets each Tado heating zone from the room's day/night targets (night = the alarm, see House - night mode). Heating season: the target; away: the pet floor (climate_away_min); shoulder/cool season: off; a disabled room or the comfort master off: back to Tado's own schedule ('auto'); an unknown season: nothing. Tado's free cloud tier allows ~100 calls a day, so a zone is commanded ONLY when it differs from what it should be. A zone changed by hand (dial or app) is noticed against input_number.climate_rad_cmd_<room> (last commanded: temperature, -1 off, -2 schedule, 0 never) and held for climate_manual_hold_hours; after HA's own command a 30-minute settle hold stops Tado's slow polling looking like a person. Radiators outnumber ACs: this list is ZONES, not AC rooms - a zone not listed here stays on Tado's schedule and is reported. Tests: tests/climate/cases.py (radiator:). While a zone's own window sensor is on, Tado's open-window protection owns it: HA neither judges nor commands it (review 2026-10-11), and re-checks when the window closes. 2026-11-24: the night target is sensor.climate_night_target_<room>: the operator night, raised in frost until the coldest wall stays below 80 % RH (docs/heating-energy-rating.md, frost setback). 2026-11-24: while input_boolean.climate_arrival_preheat is on (someone heading home after a long Away) the Away floor gives way.",
  "id": "1790300000001",
  "max": 5,
  "mode": "queued",
@@ -269,7 +269,8 @@
     "sensor.climate_night_target_kid1",
     "input_number.climate_target_day_kid2",
     "sensor.climate_night_target_kid2",
-    "input_number.climate_away_min"
+    "input_number.climate_away_min",
+    "input_boolean.climate_arrival_preheat"
    ],
    "trigger": "state"
   },

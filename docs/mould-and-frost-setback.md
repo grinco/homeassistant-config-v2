@@ -66,6 +66,35 @@ most an hour, or for as long as the measured outdoor reading is also missing (th
 only outdoor figure). The helper was seeded with the forecast minimum within a minute of its creation
 (a new input_number starts at its minimum, −40, which would have read as deep frost).
 
+## The corner probe (2026-11-24)
+
+The operator fixed a thermo-hygrometer in the kid 1 room's coldest corner (labels `wall_probe` and
+`not_on_room_pages`: it measures a surface, not the room; lint C33 accepts the label). Two uses:
+
+- **Measured fRsi.** `sensor.climate_corner_frsi_<kid1>` = (corner − outdoor) / (room − outdoor), only
+  when the room is at least 8 °C above outdoors and the result lies in 0..1 (a sunlit or handled probe
+  is not a wall reading); a 48-h mean beside it. The first reading in place was **0.71**, not the 0.6
+  assumed for that corner. After two days of data the room's factor (night target and Mould Indicator,
+  kept equal by `wiring.py`) is set from the mean: a reviewed calibration, not a live-adapting factor.
+- **Measured mould risk.** The probe's own humidity joins the 6-hour/80 % push and the Mould risk
+  section, so the corner is watched directly, not only through the model.
+
+## AC and open windows (2026-11-24)
+
+The AC loop now has a window entity per room (the window detector where there is one, else the Tado
+valve's flag; none for the office). An open window turns the AC off: comfort heat, cool, the boost
+and the air-filter toggle stand down. Frost and pet-floor safety, and a person's manual hold, still win.
+
+## Pre-heat on the way home (2026-11-24)
+
+Proximity (`zone.home`, the three tracked people; entities renamed `sensor.home_*` because the
+integration names them after the zone) gives the nearest distance and direction of travel. After more
+than 2 h of Away in the heating season, someone heading towards home within 15 km turns
+`input_boolean.climate_arrival_preheat` on; both climate automations then drop the Away floor for
+comfort targets. Off on arrival (the alarm leaves Away), when the trip turns back past 25 km, or after
+2 h. One push says it started. 15 km is roughly half an hour in town; the radiators need about that
+to lift a room a couple of degrees.
+
 ## Copies and checks
 
 The five night targets are one formula behind a `{% set room %}{% set f %}` header; `wiring.py`
