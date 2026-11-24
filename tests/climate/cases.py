@@ -1967,6 +1967,14 @@ A(case("warm-up: outside the window the night target stands", "target", "20.0",
        {"night": True, "preheat": False},
        subs={"states(r.night_t)": "'20'", "states(r.day_t)": "'22'"}, finding="v4 night target unchanged"))
 
+# Review #55 F2: the night target is now a template sensor. It renders None only when the operator's
+# own input_number is missing, so the consumers' fallbacks are the same as before: pinned here.
+A(case("an unknown night target falls back to 21 C in the AC loop", "target", "21",
+       {"night": True, "preheat": False},
+       subs={"states(r.night_t)": "'unknown'", "states(r.day_t)": "'22'"}, finding="review #55 F2"))
+A(rcase("an unknown night target falls back to 19 C for a radiator", "night_t", "19", {},
+        "review #55 F2", subs={"states(r.night_t)": "'unknown'"}))
+
 PH_ON = "is_state(r.preheat, 'on')"
 SCHED_IS_ON = "is_state('schedule.climate_night','on')"
 NEXT = "state_attr('schedule.climate_night','next_event')"
@@ -3335,20 +3343,36 @@ A(mir("a push without buttons is just its text", "body", "Still on: Corridor Lig
 # (1.43 = fRsi 0.7, the kid 1 corner 1.67 = fRsi 0.6), the same as its Mould Indicator helper.
 NT_N, NT_D = "states('input_number.climate_target_night_' ~ room)", "states('input_number.climate_target_day_' ~ room)"
 NT_OM = "states('input_number.climate_outdoor_min_12h')"
-NT_ROOMS = (("Climate night target living room", "living", 44.0, 44.5),
-            ("Climate night target office", "office", 44.0, 44.5),
-            ("Climate night target bedroom", "bedroom", 44.0, 44.5),
-            ("Climate night target " + K1["title"], "kid1", 37.5, 38.0),
-            ("Climate night target " + K2["title"], "kid2", 44.0, 44.5))
+NT_PREV = "this.state"
+# (title, label, hi just safe, hi just unsafe, hi holding a raised 19.5, hi releasing it)
+NT_ROOMS = (("Climate night target living room", "living", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target office", "office", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target bedroom", "bedroom", 44.0, 44.5, 44.0, 43.8),
+            ("Climate night target " + K1["title"], "kid1", 37.5, 38.0, 37.6, 37.4),
+            ("Climate night target " + K2["title"], "kid2", 44.0, 44.5, 44.0, 43.8))
 
 
-def nt(title, label, name, expect, n="'19'", d="'23'", ti="'21'", hi="'40'", ot="'0'", om="'-5'", finding=""):
+def nt(title, label, name, expect, n="'19'", d="'23'", ti="'21'", hi="'40'", ot="'0'", om="'-5'", prev="'unknown'",
+       finding=""):
     return sensor_case("night target %s: %s" % (label, name), expect,
-                       {NT_N: n, NT_D: d, W_T: ti, W_H: hi, W_OT: ot, NT_OM: om},
+                       {NT_N: n, NT_D: d, W_T: ti, W_H: hi, W_OT: ot, NT_OM: om, NT_PREV: prev},
                        finding=finding, sensor=title)
 
 
-for _title, _l, _lo, _hi in NT_ROOMS:
+for _title, _l, _lo, _hi, _hold, _rel in NT_ROOMS:
+    # Review #55 F1: one per cent of humidity moves the requirement by about half a degree, so a
+    # jittery humidity sensor would flip the target, and each flip can cost a Tado call. A raised
+    # target is held until the requirement falls 0.75 below it (three quarters of a step).
+    A(nt(_title, _l, "a raised target holds while the need is within 0.75", "19.5", hi="'%s'" % _hold,
+         prev="'19.5'", finding="review #55 F1: requirement 18.77-18.83 against a held 19.5"))
+    A(nt(_title, _l, "and is released when the need falls 0.75 below it", "19.0", hi="'%s'" % _rel,
+         prev="'19.5'", finding="review #55 F1: requirement 18.67-18.70: the step is released"))
+    A(nt(_title, _l, "a rising need is never held back", "23.0", hi="'55'", om="'-10'", prev="'19.5'",
+         finding="the hold only delays a fall"))
+    A(nt(_title, _l, "a held value never exceeds a lowered day target", "21.0", d="'21'", hi="'55'", om="'-10'",
+         prev="'23'", finding="the operator's day target still caps a held value"))
+    A(nt(_title, _l, "a held value never undercuts a raised operator night", "20.0", n="'20'", hi="'%s'" % _hold,
+         prev="'19.5'", finding="the operator's night still floors"))
     A(nt(_title, _l, "mild and dry: the operator's night", "19.0", hi="'30'", ot="'5'", om="'2'",
          finding="no raise where the wall is safe: the setback's saving is kept"))
     A(nt(_title, _l, "just safe at the coldest hour: unchanged", "19.0", hi="'%s'" % _lo,

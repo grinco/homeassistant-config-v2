@@ -16,9 +16,12 @@ Surface RH is the room's vapour pressure over the saturation pressure at `θsi` 
 
 `sensor.climate_mould_<room>`: Home Assistant's Mould Indicator helper for the living room, office,
 corridor, bedroom and both kids' rooms, with the factors above. The **bathroom** is a template with
-the same physics: a helper inherits the device of the sensor it reads, the bathroom's sensor sits in
-a Magic Areas room, and Magic Areas would then average a wall humidity into the room's air humidity
-(lint C20/C33 caught it before it shipped). Cases pin it against the helper's own reading.
+the same physics. A helper inherits the device of the sensor it reads; the bathroom's sensor sits in a
+Magic Areas room, so Magic Areas would average a wall humidity into the room's air humidity (the
+dashboard lint caught it before it shipped). Cases pin the template against the helper's own reading.
+
+The **corridor** is watch-only: it has a mould figure and can push, but no radiator or AC target to
+raise. A corridor push is a prompt to air it and check the litter-box corner, not an automatic remedy.
 
 **Push** (`automations/climate-mould-risk.json`): a figure above 80 % for 6 hours, once per crossing;
 a return from `unavailable` is not a crossing. **Climate view**, section *Mould risk*: one meter per
@@ -41,7 +44,16 @@ required = te + f · (θsi(80 %) − te)        te = min(measured outdoor, colde
 so a room is raised only as far as its wall needs at the coldest hour ahead, never above its day
 target, and an operator night set above the day target is never lowered. A missing room reading or
 both outdoor readings missing gives the operator's night; a missing night target gives `None`, and the
-consumers keep their own fallback, as before. Half degrees, so a valve is not chased by humidity noise.
+consumers keep their own fallback (19 °C for a radiator, 21 °C in the AC loop), exactly as when the
+input_number itself was missing; cases pin both (review #55 F2). Template sensors render during setup,
+before the start event the consumers trigger on, so a restart does not see a blank target.
+
+**Hold (review #55 F1).** One per cent of room humidity moves the requirement by about half a degree,
+so jitter would flip the half-degree target, and each flip can cost a Tado call (about 100 a day on
+the free tier). A raised target is therefore held (`this.state`) until the requirement falls 0.75 below
+it: a fall needs about 1.5 % RH of real drying, while a rise is never held back. Worst case: one step up
+and one step down per room per real humidity swing, so a handful of calls a night across four zones,
+and none outside frost, where the operator's night wins outright.
 
 On 24.11 (dry air, forecast −5 °C) nothing was raised; at −10 °C the bedroom (48 % RH) would go 21 → 22
 and the kid 1 room 20 → 21. It costs heat only where and when a wall is at risk.
@@ -50,7 +62,9 @@ and the kid 1 room 20 → 21. It costs heat only where and when a wall is at ris
 `automations/climate-coldest-hour-ahead.json` from `weather.get_forecasts`; fewer than 6 forecast hours
 or a failed call writes the measured outdoor instead. A stale value is bounded by the measured outdoor
 temperature, which the target always takes when it is colder; a stale *cold* value over-heats for at
-most an hour. Seeded at creation (a new input_number starts at its minimum, −40).
+most an hour, or for as long as the measured outdoor reading is also missing (the forecast is then the
+only outdoor figure). The helper was seeded with the forecast minimum within a minute of its creation
+(a new input_number starts at its minimum, −40, which would have read as deep frost).
 
 ## Copies and checks
 
