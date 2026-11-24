@@ -87,6 +87,7 @@ AUTOS = {
     "1792300000020": "house-leak-meter.json",
     "1792300000030": "energy-gas-interval.json",
     "1792300000031": "energy-degree-days.json",
+    "1792300000040": "climate-window-open.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
@@ -107,6 +108,8 @@ RESOLVED_TITLES = (
     "Lighting corridor presence", "Energy AC total", "Energy gas hot water per day",
     "Energy gas heating per degree-day", "Energy AC heating per degree-day",
     "Energy heating per m2 year", "Energy class", "Energy gas estimate", "Energy leak suspect",
+    "Energy air change rating", "Energy aired most", "Energy heating per m2 last 24h",
+    "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1",
 )
 RESOLVED_NOTE = (
     "Resolved per-room sensors, the floor/household and power aggregates derived from them, "

@@ -3153,3 +3153,98 @@ A(es("a fresh helper (0) is not a measurement", "not measured yet",
 A(es("a window in the last run outranks the structural leak", "kid2: window left open?", _K21,
      verdict="'23.11 3 h at 2 C. ... kid2:window'", finding="something to check now beats something known"))
 A(es("an unmeasured flat says so", "not measured yet", {}, verdict="'unknown'", finding="before the first Away"))
+
+
+# Window open (operator 2026-11-23). A room aired in the cold loses its moisture toward the outdoor
+# level while the rest of the flat keeps it, and its VOC index drops: fresh air. Backtested on
+# 11-13..11-23: ratio < 0.75 with VOC < 40 caught the 23.11 airing and a 20-min one on 16.11, and
+# nothing else, not even the radiator's on/off sawtooth that fooled a temperature-only rule.
+# Both sensors share the template text; only the header naming the room differs.
+W_T, W_H = "states('sensor.climate_temp_' ~ room)", "states('sensor.climate_humidity_' ~ room)"
+W_V, W_FT, W_FH = "states(voc_e)", "states('sensor.indoor_temperature')", "states('sensor.indoor_humidity')"
+W_OT, W_OH = "states('sensor.climate_temp_outdoor')", "state_attr('weather.home', 'humidity')"
+
+
+def win(title, name, expect, ti="'20'", hi="'45'", voc="'100'", ft="'20'", fh="'40'", ot="'4'", oh="70",
+        finding=""):
+    return sensor_case("window %s: %s" % (title.split()[-1] if "bedroom" in title else "kid1", name), expect,
+                       {W_T: ti, W_H: hi, W_V: voc, W_FT: ft, W_FH: fh, W_OT: ot, W_OH: oh},
+                       finding=finding, sensor=title)
+
+
+for _title in ("Climate window bedroom", "Climate window " + K1["title"]):
+    A(win(_title, "an ordinary closed room", "False", finding="ratio 1.35, VOC 100"))
+    A(win(_title, "aired wide open in the cold", "True", hi="'33'", voc="'6'",
+          finding="23.11 14:40: ratio 0.5, VOC 6"))
+    A(win(_title, "ratio 0.74 with fresh air", "True", hi="'36.3'", voc="'20'", finding="the ratio from below"))
+    A(win(_title, "ratio 0.76 with fresh air", "False", hi="'36.6'", voc="'20'", finding="the ratio from above"))
+    A(win(_title, "VOC 39 is fresh air", "True", hi="'33'", voc="'39'", finding="the VOC limit from below"))
+    A(win(_title, "VOC 40 is not", "False", hi="'33'", voc="'40'",
+          finding="dry but stale: the radiator, not a window"))
+    A(win(_title, "11.9 C outside is the heating season", "True", hi="'33'", voc="'6'", ot="'11.9'", oh="40",
+          finding="the season from below (dry outdoor air, so only the 12 C limit decides)"))
+    A(win(_title, "12 C outside is not", "False", hi="'33'", voc="'6'", ot="'12'", oh="40",
+          finding="in mild weather airing is no loss and no news"))
+    A(win(_title, "outdoor air nearly as moist as the flat says nothing", "False", hi="'33'", voc="'6'",
+          oh="96.2", finding="excess 0.79 g/m3: the ratio is noise"))
+    A(win(_title, "just enough moisture difference to judge", "True", hi="'33'", voc="'6'", oh="95.8",
+          finding="excess 0.82 g/m3: the limit from above"))
+    A(win(_title, "an unreachable air-quality sensor is not a window", "False", hi="'33'", voc="'unavailable'",
+          finding="unknown is not open"))
+
+
+# Dashboard readouts (operator 2026-11-24): the air-change rate with a word a child can read, the room
+# aired most (window detector) kept apart from the room that leaks most (Away meter), and heating
+# energy per m2 over 24 h and 7 days from the gas model + measured AC.
+ER = "Energy air change rating"
+ER_V = "states('input_number.leak_ach_living_room')"
+for _v, _w, _f in (("'0'", "not measured", "a fresh helper"), ("'0.19'", "low", "from below 0.2"),
+                   ("'0.2'", "moderate", "0.2 from above"), ("'0.3'", "moderate", "21.11 measured"),
+                   ("'0.49'", "moderate", "from below 0.5"), ("'0.5'", "high", "0.5 from above"),
+                   ("'0.99'", "high", "from below 1"), ("'1'", "very high", "1 from above"),
+                   ("'unavailable'", "not measured", "unknown is not a rate")):
+    A(en("air change %s/h reads %s" % (_v.strip("'"), _w), ER, _w, {ER_V: _v}, _f))
+
+EM = "Energy aired most"
+EM_LIST, EM_AREA = "states.sensor", "area_name('sensor.climate_temp_' ~ ns.best)"
+
+
+def em(name, expect, hours, finding):
+    lst = [{"entity_id": "sensor.airing_%s_last_7_days" % r, "state": str(h)} for r, h in hours.items()]
+    lst.append({"entity_id": "sensor.energy_ac_last_7_days", "state": "40"})   # not an airing counter
+    return en(name, EM, expect, {EM_LIST: repr(lst), EM_AREA: "none"}, finding)
+
+
+A(em("the room with the most window hours", "kid1: 3.2 h this week", {"kid1": 3.2, "bedroom": 0.4},
+     "ventilation, kept apart from the leak"))
+A(em("half an hour is the least worth naming", "bedroom: 0.5 h this week", {"kid1": 0.0, "bedroom": 0.5},
+     "from above"))
+A(em("under half an hour: none", "none this week", {"kid1": 0.49, "bedroom": 0.1}, "from below"))
+A(em("no counters yet", "none this week", {}, "before the first airing"))
+
+E24 = "Energy heating per m2 last 24h"
+E24_M, E24_AC = "states('sensor.energy_outdoor_daily_mean')", "states('sensor.energy_ac_last_24h')"
+
+
+def e24(name, expect, a="'4.95'", m="'5'", b="'0'", ac="'2'", finding=""):
+    return en(name, E24, expect, {EY_A: a, E24_M: m, EA_B: b, E24_AC: ac, EY_AREA: "'164.41'"}, finding)
+
+
+A(e24("a cold day: gas from degree-days plus the AC, per m2", "0.43", finding="(4.95*14 + 2) / 164.41"))
+A(e24("12.9 C is still a heating day", "0.2", m="'12.9'", finding="the 13 C limit from below"))
+A(e24("13 C is not: only hot water and AC", "0.01", m="'13'", finding="the 13 C limit from above"))
+A(e24("hot water counts every day", "0.07", m="'13'", b="'10'", finding="(10 + 2) / 164.41"))
+A(e24("a meter that went backwards adds nothing", "0.42", ac="'-5'", finding="AC change clamped at 0"))
+A(e24("no gas model yet: no figure", "None", a="'unknown'", finding="never a number from nothing"))
+
+E7 = "Energy heating per m2 last 7 days"
+E7_M, E7_AC = "states('sensor.energy_outdoor_weekly_mean')", "states('sensor.energy_ac_last_7_days')"
+
+
+def e7(name, expect, a="'4.95'", m="'6'", b="'0'", ac="'20'", finding=""):
+    return en(name, E7, expect, {EY_A: a, E7_M: m, EA_B: b, E7_AC: ac, EY_AREA: "'164.41'"}, finding)
+
+
+A(e7("a cold week: seven days of degree-days plus the AC", "2.86", finding="(4.95*7*13 + 20) / 164.41"))
+A(e7("a week averaging 13 C: hot water and AC only", "0.55", m="'13'", b="'10'", finding="(70 + 20) / 164.41"))
+A(e7("no gas model yet: no figure", "None", a="'unknown'", finding="never a number from nothing"))

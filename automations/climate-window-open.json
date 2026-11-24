@@ -1,0 +1,83 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "room": "{{ trigger.entity_id | replace('binary_sensor.climate_window_', '') }}"
+   }
+  },
+  {
+   "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "open"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "group": "windows",
+         "tag": "window-{{ room }}"
+        },
+        "message": "Fresh air for 20 minutes now; the room is at {{ states('sensor.climate_temp_' ~ room) }} °C with {{ states('sensor.climate_temp_outdoor') | float(0) | round(0) | int }} °C outside.",
+        "title": "Window open: {{ area_name('sensor.climate_temp_' ~ room) or room }}"
+       }
+      }
+     ]
+    },
+    {
+     "conditions": [
+      {
+       "condition": "trigger",
+       "id": "closed"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "notify.mobile_app_adult_phone_1",
+       "continue_on_error": true,
+       "data": {
+        "data": {
+         "tag": "window-{{ room }}"
+        },
+        "message": "clear_notification"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Climate — window open in the cold",
+ "conditions": [],
+ "description": "binary_sensor.climate_window_* (fresh air: VOC < 40 and the room's moisture falling toward outdoors while the flat keeps it; heating season only) held for 20 min: tell Vadim which room and how warm it still is. Cleared when it closes. Decision is in the sensors (cases in tests/climate); this only delivers.",
+ "id": "1792300000040",
+ "max": 4,
+ "mode": "parallel",
+ "triggers": [
+  {
+   "entity_id": [
+    "binary_sensor.climate_window_kid1",
+    "binary_sensor.climate_window_bedroom"
+   ],
+   "for": "00:20:00",
+   "id": "open",
+   "to": "on",
+   "trigger": "state"
+  },
+  {
+   "entity_id": [
+    "binary_sensor.climate_window_kid1",
+    "binary_sensor.climate_window_bedroom"
+   ],
+   "from": "on",
+   "id": "closed",
+   "to": "off",
+   "trigger": "state"
+  }
+ ]
+}

@@ -120,6 +120,33 @@ readings.
 
 11-14 → 11-18: 33.6 m³ in 4.4 days ≈ 80 kWh/day at outdoor ≈ 5–10 °C. A rough check, not a fit.
 
+## Seeding and the rolling readouts (2026-11-24)
+
+**Seeded from the recorder.** The winter sums were filled from the two intervals already on record,
+14.11→18.11 and 18.11→23.11, with degree-days computed per calendar day from the recorded outdoor
+temperature by the same rule as the nightly run. The two weeks disagree by 2× (7.1 vs 3.2 kWh per
+K·day); the operator suspects a typo in the 18.11 reading. The sums only add intervals, so the pooled
+figure (4.95 kWh/K·day over 111 K·day) equals one interval 14.11→23.11 and does not depend on the
+middle reading at all. Do not read anything into the per-week split.
+
+**Last 24 h / last 7 days, kWh/m².** `a · HDD + b · days + AC`, divided by the area. HDD comes from
+the 24 h and 7-day time-weighted outdoor means (`19 − mean`, times 7 for the week), not from the
+nightly counter, so the readout works before a week of counting exists. For the week this ignores
+the per-day 13 °C cut-off, which only matters in a week that mixes heating and non-heating days.
+
+## Window detector (2026-11-24)
+
+`binary_sensor.climate_window_<room>` for the two rooms with a VOC sensor (bedroom, kid 1 room). A
+room aired in the cold shows two things together: its VOC index drops (fresh air), and its moisture
+falls toward the outdoor level while the rest of the flat keeps it. On: outdoor below 12 °C, the
+flat's moisture excess over outdoors above 0.8 g/m³, VOC below 40, and the room's excess below 0.75 of
+the flat's. 5 min on-delay, 15 min off-delay. Backtested on 13.11–23.11: it caught the 23.11 airing
+and a 20-minute one on 16.11 and nothing else; a temperature-drop rule had fired 57 times, almost all
+on the kid 1 room's radiator on/off cycle (its sensor sits by the radiator; the valve started 172
+times in ten days against 66 in the kid 2 room). Twenty minutes open is a push to Vadim
+(`automations/climate-window-open.json`); hours open per week feed **Aired most**, shown apart from
+**Leaks most** so ventilation and structure are never confused.
+
 ## Not covered by cases
 
 The 23:59 write itself, the statistics helper's window, and notification delivery. The interval
