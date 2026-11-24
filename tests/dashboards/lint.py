@@ -194,7 +194,8 @@ Checks, each one written because something it catches actually shipped:
                          (`_device_temperature`); (c) a reading labelled
                          `not_on_room_pages` that is neither (a) nor an appliance's
                          own probe (a device with a climate, fan, ... entity, or a
-                         Home Connect appliance). On 2026-10-22 a kid's room showed
+                         Home Connect appliance) nor a `wall_probe` (a surface probe
+                         for the mould model). On 2026-10-22 a kid's room showed
                          its SwitchBot twice and hid the air-quality meter's
                          temperature and humidity, the one reading taken somewhere
                          else in the room.
@@ -563,6 +564,7 @@ def socket_universe():
 # carries one too (review 2026-10-22). Home Connect devices (the oven) are
 # appliances by integration, since they expose no such domain. So is the Solix
 # C2000 power station (anker_solix): its temperature is the battery's (2026-11-23).
+WALL_PROBE_LABEL = "wall_probe"
 APPLIANCE_DOMAINS = ("climate", "fan", "water_heater", "vacuum", "humidifier")
 APPLIANCE_INTEGRATIONS = ("home_connect", "anker_solix")
 CHIP_TEMP_RE = re.compile(r"_device_temperature$")
@@ -1339,7 +1341,10 @@ def main():
                     dup = probe.get(e["entity_id"]) in first.get(e["device_class"], ())
                     where = "%-14s %s" % (v.get("path"), e["entity_id"])
                     if ROOM_HIDDEN_LABEL in e["labels"]:
-                        if not (dup or is_app.get(e["entity_id"]) or CHIP_TEMP_RE.search(e["entity_id"])):
+                        # A wall probe (label wall_probe, 2026-11-24) measures a surface for the
+                        # mould model, not the room: hiding it is the point.
+                        if not (dup or is_app.get(e["entity_id"]) or CHIP_TEMP_RE.search(e["entity_id"])
+                                or WALL_PROBE_LABEL in e["labels"]):
                             hidden.append(where)
                         continue
                     shown = any(

@@ -23,7 +23,7 @@ BASE = dict(
     temp=21.0, safety_on=True, comfort=True, frost=7.0, away_min=18.0, away_max=30.0,
     manual_active=False, away=False, enabled=True, house="heat", now_mode="off",
     target=22.0, hyst=1.0, room_hyst=0.5, filter_on=False,
-    has_rad=False, night=False, boost=1.5, preheat=False,
+    has_rad=False, night=False, boost=1.5, preheat=False, window_open=False,
 )
 
 def case(name, expr, expect, given=None, subs=None, finding=""):
@@ -1821,6 +1821,25 @@ def rad(given):
     g = dict(RAD); g.update(given); return g
 
 
+# 2026-11-24 operator: no AC while the room's window is open. Tado already shuts the radiator; the
+# AC did not know, and an aired room falls behind its target, which is exactly what calls the boost.
+A(case("an open window stops the AC heating", "mode", "off", {"temp": 18.0, "window_open": True},
+       finding="2026-11-24: the room below target is the airing, not a call for heat"))
+A(case("the same room with the window shut heats", "mode", "heat", {"temp": 18.0, "window_open": False},
+       finding="the case above crosses only the window"))
+A(case("an open window stops the AC cooling", "mode", "off",
+       {"house": "cool", "temp": 27.0, "target": 24.0, "window_open": True}, finding="cool air out of a window"))
+A(case("an open window does not stop frost protection", "mode", "heat", {"temp": 6.0, "window_open": True},
+       finding="safety before savings: a window left open in frost still gets heat"))
+A(case("an open window does not override a person's hold", "mode", "manual",
+       {"temp": 18.0, "window_open": True, "manual_active": True}, finding="a person at the remote wins"))
+A(case("an open window outranks the air-filter toggle", "mode", "off",
+       {"temp": 18.0, "window_open": True, "filter_on": True}, finding="filtering air out of a window is waste"))
+A(case("the room's window is read from its detector", "window_open", "True", {},
+       subs={"is_state(r.win, 'on')": "true", "r.win": "'binary_sensor.w'"}, finding="the window entity per room"))
+A(case("a room without a window sensor never reads open", "window_open", "False", {},
+       subs={"r.win": "''"}, finding="the office has none"))
+
 A(case("radiator room at night: the AC does not heat for comfort", "mode", "off",
        rad({"night": True, "temp": 19.0}),
        finding="v6 operator: radiators only at night - silent, no fogged windows"))
@@ -3488,3 +3507,77 @@ A(ar("every detector room, most aired first", "bedroom 0.3 h · kid1 0.0 h", {"k
      finding="24.11: the bedroom's morning airing"))
 A(ar("no counters yet", "none this week", {}, finding="before the first airing"))
 A(ar("a blind detector says so", "detector blind", {"bedroom": 3.0}, blind="true", finding="review #53 F1"))
+
+# Pre-heat on the way home (operator 2026-11-24). After a long Away the house sits at the pet floor and
+# takes hours to recover. When someone heads home and is within 15 km, the Away floor gives way, both
+# for the radiators and the AC, so the house warms while they travel.
+ARR = "is_state('input_boolean.climate_arrival_preheat', 'on')"
+AWAY_ON = "is_state('alarm_control_panel.home','armed_away')"
+NOWTS = "now().timestamp()"
+for _arr, _want in (("false", "True"), ("true", "False")):
+    A(case("the AC's Away floor %s while someone heads home" % ("holds" if _want == "True" else "gives way"),
+           "away", _want, {"away_stamp": 1000}, subs={AWAY_ON: "true", NOWTS: "10000", ARR: _arr},
+           finding="2026-11-24: pre-heat on the way home"))
+    A(rcase("the radiators' Away floor %s while someone heads home" % ("holds" if _want == "True" else "gives way"),
+            "away", _want, {}, "2026-11-24: pre-heat on the way home",
+            subs={AWAY_ON: "true", NOWTS: "10000",
+                  "state_attr('input_datetime.climate_away_since','timestamp')": "1000", ARR: _arr}))
+
+PRE = "1792300000070"
+PRE_AWAY = "is_state('alarm_control_panel.home', 'armed_away')"
+PRE_SINCE = "state_attr('input_datetime.climate_away_since', 'timestamp')"
+PRE_D, PRE_DIR = "states('sensor.home_nearest_distance')", "states('sensor.home_nearest_direction_of_travel')"
+PRE_HEAT = "is_state('input_select.climate_house_mode', 'heat')"
+PRE_ON = "is_state('input_boolean.climate_arrival_preheat', 'on')"
+PRE_ON_SINCE = "as_timestamp(states.input_boolean.climate_arrival_preheat.last_changed, 0)"
+
+
+def pre(name, expr, expect, away="true", gone="7300", d="'12000'", dr="'towards'", heat="true", on="false",
+        on_for="60", finding=""):
+    subs = {PRE_AWAY: away, NOWTS: "100000", PRE_D: d, PRE_ON: on}
+    if expr == "start":
+        subs.update({PRE_SINCE: str(100000 - int(gone)), PRE_DIR: dr, PRE_HEAT: heat})
+    else:
+        subs.update({PRE_ON_SINCE: str(100000 - int(on_for))})
+    return dict(name="arrival pre-heat: " + name, automation=PRE, expr=expr, expect=expect, given={},
+                subs=subs, finding=finding)
+
+
+A(pre("heading home 12 km out after a long Away starts it", "start", "True", finding="the case it exists for"))
+A(pre("15.1 km is still too far", "start", "False", d="'15100'", finding="the distance from above"))
+A(pre("14.9 km is close enough", "start", "True", d="'14900'", finding="the distance from below"))
+A(pre("driving away does not start it", "start", "False", dr="'away_from'", finding="only towards home"))
+A(pre("standing still does not start it", "start", "False", dr="'stationary'", finding="a stop near home is not a return"))
+A(pre("a short Away does not need it", "start", "False", gone="7100", finding="2 h from below: the house is still warm"))
+A(pre("two hours Away does", "start", "True", gone="7300", finding="2 h from above"))
+A(pre("not outside the heating season", "start", "False", heat="false", finding="nothing to recover in summer"))
+A(pre("not when nobody is Away", "start", "False", away="false", finding="only Away has a floor to lift"))
+A(pre("an unknown distance does not start it", "start", "False", d="'unknown'", finding="no number, no trip"))
+A(pre("already on: not started twice", "start", "False", on="true", finding="one push per trip"))
+A(pre("arriving ends it", "stop", "True", on="true", away="false", finding="welcome home takes over"))
+A(pre("turning back past 25 km ends it", "stop", "True", on="true", d="'25100'", dr="'away_from'",
+      finding="a trip home that did not happen"))
+A(pre("24.9 km on the way does not end it", "stop", "False", on="true", d="'24900'", finding="the limit from below"))
+A(pre("two hours without arriving ends it", "stop", "True", on="true", on_for="7300", finding="a stale pre-heat"))
+A(pre("an hour into the trip it holds", "stop", "False", on="true", on_for="3600", finding="the time limit from below"))
+A(pre("nothing to stop when it is off", "stop", "False", on="false", away="false"))
+
+# Corner probe (operator 2026-11-24): a thermometer in the kid 1 room's coldest corner measures what the
+# wall model assumed. fRsi = (corner - outdoor) / (room - outdoor); the night target and the mould
+# figure assumed 0.6 there. Meaningful only when the room is well above the outdoor temperature.
+FR = "Climate corner fRsi " + K1["title"]
+FR_P = "states(probe)"
+
+
+def fr(name, expect, tc="'15.7'", ti="'20.3'", ot="'4.2'", finding=""):
+    return sensor_case("corner fRsi: " + name, expect, {FR_P: tc, W_T: ti, W_OT: ot}, finding=finding, sensor=FR)
+
+
+A(fr("the first reading in place", "0.71", finding="24.11: 15.7 C corner, 20.3 C room, 4.2 C outside"))
+A(fr("an 8.1 C difference is enough to judge", "0.78", tc="'10.5'", ti="'12.3'", ot="'4.2'",
+     finding="the difference from above: 6.3 / 8.1"))
+A(fr("a 7.9 C difference is not", "None", tc="'10.5'", ti="'12.1'", ot="'4.2'",
+     finding="mild weather: the ratio is noise"))
+A(fr("a corner warmer than the room is not a wall reading", "None", tc="'21'", ti="'20.3'",
+     finding="sun on the probe, or a hand"))
+A(fr("no probe reading, no figure", "None", tc="'unavailable'", finding="never a number from nothing"))

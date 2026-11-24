@@ -282,3 +282,9 @@ the integration out. Run it after changing the schedule in the app. Reasoning: `
   `sensor.climate_night_target_<room>`, which both climate automations now use as the night target.
 
 Design: `docs/mould-and-frost-setback.md`.
+
+## Arrival pre-heat (2026-11-24)
+
+- `climate-arrival-preheat.json`: after a long Away, someone heading home within 15 km lifts the Away
+  floor (input_boolean.climate_arrival_preheat) until they arrive, turn back or two hours pass.
+  Design: `docs/mould-and-frost-setback.md`.

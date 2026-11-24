@@ -664,6 +664,34 @@
   {
    "domain": "template",
    "options": {
+    "name": "Climate corner fRsi kid1",
+    "state": "{% set room = 'kid1' %}{% set probe = 'sensor.kid1_room_corner_thermometer_temperature' %}{% set tc = states(probe) %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set ot = states('sensor.climate_temp_outdoor') %}{% if not (is_number(tc) and is_number(ti) and is_number(ot)) or (ti | float - ot | float) < 8 %}{{ none }}{% else %}{% set r = (tc | float - ot | float) / (ti | float - ot | float) %}{{ (r | round(2)) if 0 <= r <= 1 else none }}{% endif %}",
+    "state_class": "measurement",
+    "template_type": "sensor"
+   },
+   "title": "Climate corner fRsi kid1"
+  },
+  {
+   "domain": "statistics",
+   "options": {
+    "entity_id": "sensor.climate_corner_frsi_kid1",
+    "keep_last_sample": true,
+    "max_age": {
+     "hours": 48,
+     "minutes": 0,
+     "seconds": 0
+    },
+    "name": "Climate corner fRsi kid1 48h",
+    "percentile": 50.0,
+    "precision": 2.0,
+    "sampling_size": 5000.0,
+    "state_characteristic": "mean"
+   },
+   "title": "Climate corner fRsi kid1 48h"
+  },
+  {
+   "domain": "template",
+   "options": {
     "device_class": "temperature",
     "name": "Climate night target living room",
     "state": "{% set room = 'living_room' %}{% set f = 1.43 %}{% set n = states('input_number.climate_target_night_' ~ room) %}{% set d = states('input_number.climate_target_day_' ~ room) %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set hi = states('sensor.climate_humidity_' ~ room) %}{% set ot = states('sensor.climate_temp_outdoor') %}{% set om = states('input_number.climate_outdoor_min_12h') %}{% if not is_number(n) %}{{ none }}{% elif not (is_number(d) and is_number(ti) and is_number(hi) and hi | float > 0) or not (is_number(ot) or is_number(om)) %}{{ n | float }}{% else %}{% set te = [ot, om] | select('is_number') | map('float') | min %}{% set ti = ti | float %}{% set pv = 6.112 * e ** (17.67 * ti / (ti + 243.5)) * (hi | float) / 100 %}{% set x = log(pv / 0.8 / 6.112) %}{% set ts = 243.5 * x / (17.67 - x) %}{% set req = te + f * (ts - te) %}{% set c = [n | float, [d | float, (req * 2) | round(0, 'ceil') / 2] | min] | max %}{% set p = this.state %}{% if is_number(p) and c < p | float and req > p | float - 0.75 %}{{ [n | float, [d | float, p | float] | min] | max }}{% else %}{{ c }}{% endif %}{% endif %}",
