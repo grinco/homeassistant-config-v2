@@ -395,7 +395,12 @@ GENERATED = [
     ("lovelace", "security", "Sensors"),
     ("lovelace", "security", "Cameras"),
     ("lovelace", "climate", "Heating & hot water"),
-    ("lovelace", "climate", "Rooms"),
+    # 2026-11-24 (operator): Climate's rooms split by floor and its 24 h charts by quantity, so
+    # sections of similar height sit side by side at every width.
+    ("lovelace", "climate", "Downstairs"),
+    ("lovelace", "climate", "Upstairs"),
+    ("lovelace", "climate", "Temperature, 24 h"),
+    ("lovelace", "climate", "Humidity, 24 h"),
     ("admin-panel", "system", "Phones & presence"),
     ("admin-panel", "devices", None),
 ]
