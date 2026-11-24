@@ -588,7 +588,7 @@
     "additional_options": {
      "delay_off": {
       "hours": 0,
-      "minutes": 15,
+      "minutes": 2,
       "seconds": 0
      },
      "delay_on": {
@@ -599,7 +599,7 @@
     },
     "device_class": "window",
     "name": "Climate window bedroom",
-    "state": "{% set room = 'bedroom' %}{% set voc_e = 'sensor.bedroom_air_quality_sensor_voc_index' %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set hi = states('sensor.climate_humidity_' ~ room) %}{% set voc = states(voc_e) %}{% set ft = states('sensor.indoor_temperature') %}{% set fh = states('sensor.indoor_humidity') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% set oh = state_attr('weather.home', 'humidity') %}{% if [ti, hi, voc, ft, fh, ot, oh] | select('is_number') | list | count < 7 %}{{ false }}{% else %}{% set ti, hi, ft, fh, ot, oh = ti | float, hi | float, ft | float, fh | float, ot | float, oh | float %}{% set a = 6.112 * e ** (17.67 * ti / (ti + 243.5)) * hi * 2.1674 / (273.15 + ti) %}{% set af = 6.112 * e ** (17.67 * ft / (ft + 243.5)) * fh * 2.1674 / (273.15 + ft) %}{% set ao = 6.112 * e ** (17.67 * ot / (ot + 243.5)) * oh * 2.1674 / (273.15 + ot) %}{{ ot < 12 and (af - ao) > 0.8 and voc | float < 40 and (a - ao) / (af - ao) < 0.75 and a - ao > -0.5 }}{% endif %}",
+    "state": "{% set room = 'bedroom' %}{% set voc_e = 'sensor.bedroom_air_quality_sensor_voc_index' %}{% set trv_w = 'binary_sensor.bedroom_trv_bedroom_trv_window' %}{% set tw = states(trv_w) %}{% set tage = now().timestamp() - (states[trv_w].last_changed.timestamp() if states[trv_w] is not none else 0) %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set hi = states('sensor.climate_humidity_' ~ room) %}{% set voc = states(voc_e) %}{% set ft = states('sensor.indoor_temperature') %}{% set fh = states('sensor.indoor_humidity') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% set oh = state_attr('weather.home', 'humidity') %}{% if tw == 'on' %}{{ true }}{% elif tw == 'off' and tage < 1800 %}{{ false }}{% elif [ti, hi, voc, ft, fh, ot, oh] | select('is_number') | list | count < 7 %}{{ false }}{% else %}{% set ti, hi, ft, fh, ot, oh = ti | float, hi | float, ft | float, fh | float, ot | float, oh | float %}{% set a = 6.112 * e ** (17.67 * ti / (ti + 243.5)) * hi * 2.1674 / (273.15 + ti) %}{% set af = 6.112 * e ** (17.67 * ft / (ft + 243.5)) * fh * 2.1674 / (273.15 + ft) %}{% set ao = 6.112 * e ** (17.67 * ot / (ot + 243.5)) * oh * 2.1674 / (273.15 + ot) %}{{ ot < 12 and (af - ao) > 0.8 and voc | float < 40 and (a - ao) / (af - ao) < 0.75 and a - ao > -0.5 }}{% endif %}",
     "template_type": "binary_sensor"
    },
    "title": "Climate window bedroom"
@@ -610,7 +610,7 @@
     "additional_options": {
      "delay_off": {
       "hours": 0,
-      "minutes": 15,
+      "minutes": 2,
       "seconds": 0
      },
      "delay_on": {
@@ -621,7 +621,7 @@
     },
     "device_class": "window",
     "name": "Climate window kid1",
-    "state": "{% set room = 'kid1' %}{% set voc_e = 'sensor.kid1_air_quality_voc_index' %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set hi = states('sensor.climate_humidity_' ~ room) %}{% set voc = states(voc_e) %}{% set ft = states('sensor.indoor_temperature') %}{% set fh = states('sensor.indoor_humidity') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% set oh = state_attr('weather.home', 'humidity') %}{% if [ti, hi, voc, ft, fh, ot, oh] | select('is_number') | list | count < 7 %}{{ false }}{% else %}{% set ti, hi, ft, fh, ot, oh = ti | float, hi | float, ft | float, fh | float, ot | float, oh | float %}{% set a = 6.112 * e ** (17.67 * ti / (ti + 243.5)) * hi * 2.1674 / (273.15 + ti) %}{% set af = 6.112 * e ** (17.67 * ft / (ft + 243.5)) * fh * 2.1674 / (273.15 + ft) %}{% set ao = 6.112 * e ** (17.67 * ot / (ot + 243.5)) * oh * 2.1674 / (273.15 + ot) %}{{ ot < 12 and (af - ao) > 0.8 and voc | float < 40 and (a - ao) / (af - ao) < 0.75 and a - ao > -0.5 }}{% endif %}",
+    "state": "{% set room = 'kid1' %}{% set voc_e = 'sensor.kid1_air_quality_voc_index' %}{% set trv_w = 'binary_sensor.kid1_room_trv_kid1_room_trv_window' %}{% set tw = states(trv_w) %}{% set tage = now().timestamp() - (states[trv_w].last_changed.timestamp() if states[trv_w] is not none else 0) %}{% set ti = states('sensor.climate_temp_' ~ room) %}{% set hi = states('sensor.climate_humidity_' ~ room) %}{% set voc = states(voc_e) %}{% set ft = states('sensor.indoor_temperature') %}{% set fh = states('sensor.indoor_humidity') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% set oh = state_attr('weather.home', 'humidity') %}{% if tw == 'on' %}{{ true }}{% elif tw == 'off' and tage < 1800 %}{{ false }}{% elif [ti, hi, voc, ft, fh, ot, oh] | select('is_number') | list | count < 7 %}{{ false }}{% else %}{% set ti, hi, ft, fh, ot, oh = ti | float, hi | float, ft | float, fh | float, ot | float, oh | float %}{% set a = 6.112 * e ** (17.67 * ti / (ti + 243.5)) * hi * 2.1674 / (273.15 + ti) %}{% set af = 6.112 * e ** (17.67 * ft / (ft + 243.5)) * fh * 2.1674 / (273.15 + ft) %}{% set ao = 6.112 * e ** (17.67 * ot / (ot + 243.5)) * oh * 2.1674 / (273.15 + ot) %}{{ ot < 12 and (af - ao) > 0.8 and voc | float < 40 and (a - ao) / (af - ao) < 0.75 and a - ao > -0.5 }}{% endif %}",
     "template_type": "binary_sensor"
    },
    "title": "Climate window kid1"
@@ -642,6 +642,24 @@
     "template_type": "binary_sensor"
    },
    "title": "Climate window detector blind"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy leak ranking",
+    "state": "{% set ns = namespace(l=[]) %}{% for s in states.input_number | selectattr('entity_id', 'match', 'input_number\\.leak_k_') %}{% set v = s.state | float(0) %}{% if v > 0 %}{% set ns.l = ns.l + [(s.entity_id[20:], v)] %}{% endif %}{% endfor %}{% set vals = ns.l | map(attribute=1) | sort | list %}{% set n = vals | count %}{% if n < 3 %}not measured yet{% else %}{% set med = (vals[(n - 1) // 2] + vals[n // 2]) / 2 %}{% set w = states('input_text.leak_meter_verdict') | regex_findall('([a-z0-9_]+):window') %}{% set out = namespace(l=[]) %}{% for r, v in ns.l | sort(attribute=1, reverse=true) %}{% set out.l = out.l + [(area_name('sensor.climate_temp_' ~ r) or r) ~ ' ' ~ ((v / med) | round(1)) ~ '×' ~ (' (window?)' if r in w else '')] %}{% endfor %}{{ out.l | join(' · ') }}{% endif %}",
+    "template_type": "sensor"
+   },
+   "title": "Energy leak ranking"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "name": "Energy airing ranking",
+    "state": "{% set ns = namespace(l=[]) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.airing_.*_last_7_days$') %}{% set ns.l = ns.l + [(s.entity_id[14:-12], s.state | float(0))] %}{% endfor %}{% if is_state('binary_sensor.climate_window_detector_blind', 'on') %}detector blind{% elif not ns.l %}none this week{% else %}{% set out = namespace(l=[]) %}{% for r, h in ns.l | sort(attribute=1, reverse=true) %}{% set out.l = out.l + [(area_name('sensor.climate_temp_' ~ r) or r) ~ ' ' ~ (h | round(1)) ~ ' h'] %}{% endfor %}{{ out.l | join(' · ') }}{% endif %}",
+    "template_type": "sensor"
+   },
+   "title": "Energy airing ranking"
   },
   {
    "domain": "template",

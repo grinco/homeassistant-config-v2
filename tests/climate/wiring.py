@@ -210,7 +210,7 @@ def grid_meters(prefs_path=ENERGY):
     return sorted(set(want) - set(ids)), sorted(set(ids) - set(want)), problem
 
 
-WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set voc_e = '[a-z0-9_.]+' %\}")
+WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set voc_e = '[a-z0-9_.]+' %\}\{% set trv_w = '[a-z0-9_.]+' %\}")
 NIGHT_HEADER = re.compile(r"^\{% set room = '([a-z0-9_]+)' %\}\{% set f = ([0-9.]+) %\}")
 
 # Formulas copied per room on purpose: run.py substitutes the reads in each sensor's own text and
