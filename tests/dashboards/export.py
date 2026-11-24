@@ -92,6 +92,7 @@ AUTOS = {
     "1792300000051": "climate-mould-risk.json",
     "1792300000060": "house-push-mirror.json",
     "1792300000070": "climate-arrival-preheat.json",
+    "1792300000080": "house-hot-water-away.json",
 }
 # `automations/resolved-sensors.json` is a curated selection of config-flow helpers
 # rather than a whole-file dump: these titles, in this order, as PUBLISHED (after the
