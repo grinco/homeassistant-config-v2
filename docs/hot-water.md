@@ -111,3 +111,21 @@ so the evening setpoint costs almost nothing extra.
   history on a weekend.
 - Not acted on: the shower room's humidity never falls below about 73–87 %, even hours after a
   shower. That is a mould risk, and the fix is ventilation, not hot water.
+
+## Off while the house is away (2026-11-24)
+
+Operator: the tank kept itself hot for an empty flat. `automations/house-hot-water-away.json`:
+
+- **Off** after 6 h of Away (`input_datetime.climate_away_since`), only if the tank runs its Tado
+  schedule (`auto`); a tank set by hand is never touched. `input_boolean.house_hot_water_paused`
+  records that HA did it and `input_datetime.house_hot_water_paused_at` when.
+- **Back to `auto`** when the alarm leaves Away, the arrival pre-heat starts, or the nearest tracked
+  person heads home within 15 km (Proximity; also outside the heating season, when the pre-heat does
+  not run). Only a pause HA made is undone.
+- **Legionella.** Off for more than 48 h means the water sat lukewarm for days: the tank first runs
+  one hour at 65 °C (`heat`), the weekend cycle's temperature, then returns to `auto`. Shorter pauses
+  go straight back; the weekly 15-17 h cycle on Saturday and Sunday still runs from the Tado schedule.
+
+Cases cover the pause, the restore and the 48 h choice (13, straddling 6 h, 15 km and 48 h). Not
+covered: Tado accepting `off` / `heat` / `auto` through the cloud (first real Away will show it in
+the trace), and the hour's delay.

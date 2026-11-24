@@ -3581,3 +3581,50 @@ A(fr("a 7.9 C difference is not", "None", tc="'10.5'", ti="'12.1'", ot="'4.2'",
 A(fr("a corner warmer than the room is not a wall reading", "None", tc="'21'", ti="'20.3'",
      finding="sun on the probe, or a hand"))
 A(fr("no probe reading, no figure", "None", tc="'unavailable'", finding="never a number from nothing"))
+
+# Hot water off while away (operator 2026-11-24): the Tado tank keeps itself hot for an empty flat.
+# After 6 h of Away it is switched off, and back on (its schedule) when someone heads home, the arrival
+# pre-heat starts, or the alarm leaves Away. Off for more than 48 h: one hour at 65 C first, the
+# temperature of the weekly legionella cycle, because water left lukewarm for days is the risk.
+DHW = "1792300000080"
+D_AWAY = "is_state('alarm_control_panel.home', 'armed_away')"
+D_SINCE = "state_attr('input_datetime.climate_away_since', 'timestamp')"
+D_MODE = "is_state('water_heater.hot_water_hot_water', 'auto')"
+D_PAUSED = "is_state('input_boolean.house_hot_water_paused', 'on')"
+D_PRE = "is_state('input_boolean.climate_arrival_preheat', 'on')"
+D_D, D_DIR = "states('sensor.home_nearest_distance')", "is_state('sensor.home_nearest_direction_of_travel', 'towards')"
+D_PAUSED_AT = "state_attr('input_datetime.house_hot_water_paused_at', 'timestamp')"
+
+
+def dhw(name, expr, expect, away="true", gone="21700", auto="true", paused="false", pre="false", d="'40000'",
+        towards="false", off_for="3600", finding=""):
+    if expr == "pause":
+        subs = {"now().timestamp()": "1000000", D_AWAY: away, D_SINCE: str(1000000 - int(gone)), D_MODE: auto,
+                D_PAUSED: paused}
+    elif expr == "restore":
+        subs = {D_PAUSED: paused, D_AWAY: away, D_PRE: pre, D_D: d, D_DIR: towards}
+    else:
+        subs = {"now().timestamp()": "1000000", D_PAUSED_AT: str(1000000 - int(off_for))}
+    return dict(name="hot water away: " + name, automation=DHW, expr=expr, expect=expect, given={}, subs=subs,
+                finding=finding)
+
+
+A(dhw("six hours Away switches it off", "pause", "True", finding="the case it exists for"))
+A(dhw("5 h 55 min is not yet", "pause", "False", gone="21300", finding="6 h from below: a day out is not a trip"))
+A(dhw("not while someone is home", "pause", "False", away="false"))
+A(dhw("a tank the operator set by hand is left alone", "pause", "False", auto="false",
+      finding="only the schedule ('auto') is ours to pause"))
+A(dhw("not paused twice", "pause", "False", paused="true"))
+A(dhw("coming home restores it", "restore", "True", paused="true", away="false"))
+A(dhw("the arrival pre-heat restores it", "restore", "True", paused="true", pre="true"))
+A(dhw("heading home within 15 km restores it", "restore", "True", paused="true", d="'14900'", towards="true",
+      finding="also outside the heating season, when the pre-heat does not run"))
+A(dhw("15.1 km out is not yet", "restore", "False", paused="true", d="'15100'", towards="true",
+      finding="the distance from above"))
+A(dhw("near home but driving away is not a return", "restore", "False", paused="true", d="'5000'"))
+A(dhw("nothing to restore that HA did not pause", "restore", "False", paused="false", away="false",
+      finding="a tank switched off by hand stays off"))
+A(dhw("off just over 48 h: a 65 C cycle first", "shock", "True", off_for="172900",
+      finding="the legionella limit from above"))
+A(dhw("off just under 48 h: straight back to the schedule", "shock", "False", off_for="172700",
+      finding="the limit from below; the weekly cycle still runs on its day"))
