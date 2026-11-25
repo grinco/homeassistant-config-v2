@@ -276,6 +276,51 @@ def mould_factors():
     return out
 
 
+LEAK_ID = "1792300000020"
+RADIATORS_ID = "1790300000001"
+PREHEAT = "input_boolean.climate_arrival_preheat"
+
+
+def _secs(v):
+    if isinstance(v, dict):
+        return v.get("hours", 0) * 3600 + v.get("minutes", 0) * 60 + v.get("seconds", 0)
+    h, m, sec = (int(x) for x in str(v).split(":"))
+    return h * 3600 + m * 60 + sec
+
+
+def leak_meter_window():
+    """The leak meter must measure only while the radiators are set back and cold.
+
+    2026-11-25, its first live run: the radiators drop to the Away floor 30 min into Away, the
+    snapshot was taken at 1 h (radiators still warm), and arrival pre-heat turned the heating back
+    on 37 min before Away ended. The three rooms it measured were stored 3-10x too airtight.
+    Two rules, read from the LIVE automations: the snapshot waits a full hour after the radiators'
+    own Away delay, and pre-heat switching on ends the run. Returns a list of problems.
+    """
+    import io
+    import yaml
+    with io.open(harness.AUTOMATIONS, encoding="utf-8") as fh:
+        autos = {str(a.get("id")): a for a in yaml.safe_load(fh)}
+    leak, rads = autos.get(LEAK_ID), autos.get(RADIATORS_ID)
+    if leak is None or rads is None:
+        return ["leak meter %s or radiators %s not found" % (LEAK_ID, RADIATORS_ID)]
+    trig = leak.get("triggers") or leak.get("trigger") or []
+    out = []
+    setback = [_secs(t["for"]) for t in rads.get("triggers") or rads.get("trigger") or []
+               if t.get("entity_id") == "alarm_control_panel.home" and t.get("to") == "armed_away" and t.get("for")]
+    start = [t for t in trig if t.get("id") == "start"]
+    if len(setback) != 1:
+        out.append("the radiator automation has %d Away-delay triggers, expected 1" % len(setback))
+    elif len(start) != 1 or not start[0].get("for"):
+        out.append("the leak meter needs exactly one delayed 'start' trigger")
+    elif _secs(start[0]["for"]) < setback[0] + 3600:
+        out.append("the snapshot is taken %d min into Away, the radiators set back at %d min: "
+                   "it must wait an hour after that" % (_secs(start[0]["for"]) // 60, setback[0] // 60))
+    if not any(t.get("id") == "end" and t.get("entity_id") == PREHEAT and t.get("to") == "on" for t in trig):
+        out.append("arrival pre-heat switching on does not end the leak meter's run")
+    return out
+
+
 def main():
     missing, extra = digest_meters()
     for m in missing:
@@ -334,6 +379,13 @@ def main():
     if factor_problems:
         return 1
     print("  every frost night target uses its room's Mould Indicator factor")
+
+    leak_problems = leak_meter_window()
+    for p in leak_problems:
+        print("  LEAK WINDOW     %s" % p)
+    if leak_problems:
+        return 1
+    print("  the leak meter measures only an unheated flat")
 
     refs, skipped = referenced()
     if not refs:
