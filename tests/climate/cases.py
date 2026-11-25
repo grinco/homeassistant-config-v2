@@ -1518,6 +1518,45 @@ _hw("True", "unavailable", "30", "off", out="true",
     finding="a dead FP300 by day defers to outdoors: no lamp at noon")
 _hw("False", "unknown", "30", "on", out="false",
     finding="a dead FP300 at night defers to outdoors: the lamp may come on")
+
+
+# ---------------------------------------------------------------- the office gets presence lighting
+# 2026-11-24, operator: an FP2 went into the office / guest room.  Same rule as the living room, on
+# the office FP2's own lux, against the HOUSEHOLD indoor slider in the admin panel
+# (`input_number.lighting_indoor_dark_below_lux`) - operator: "use them for the whole household", so
+# no per-room slider.  Measured at fit-up: Hugo at full adds ~10 lx at the sensor (41 -> 50), far
+# below the 2x band, so the lamp cannot carry its own room across the upper edge.  The room read
+# ~50 lx at a November noon with the lamps off: dark by the household threshold, as the operator
+# wanted.  A dead FP2 defers to the outdoor daylight sensor.
+OF_B = "Lighting office bright"
+OF_LUX = "states('sensor.guest_room_office_fp2_light_sensor_light_level')"
+OF_SL = "states('input_number.lighting_indoor_dark_below_lux')"
+
+
+def _of(expect, lux, slider, was, out="false", finding=""):
+    A(sensor_case("office: lux %s, slider %s, was %s, outdoor %s" % (lux, slider, was, out),
+                  expect, {OF_LUX: repr(lux), OF_SL: repr(slider), WAS: repr(was), HW_OUT: out},
+                  sensor=OF_B, finding=finding))
+
+
+_of("False", "50", "150", "on", out="true",
+    finding="2026-11-24: 50 lx at a November noon is dark, whatever outdoors says")
+_of("True", "301", "150", "off", finding="just above twice the household slider is bright")
+_of("False", "300", "150", "off", finding="the upper edge is exclusive")
+_of("True", "200", "150", "on", finding="held: a bright office stays bright inside the band")
+_of("False", "200", "150", "off", finding="held: a dark office stays dark inside the band")
+_of("False", "149", "150", "on", finding="just below the slider is dark")
+_of("True", "150", "150", "on", finding="the lower edge is exclusive")
+_of("True", "250", "100", "off", finding="the household slider moves the office edge too")
+_of("True", "301", "unavailable", "off", finding="a missing slider falls back to 150")
+_of("False", "100", "0", "off",
+    finding="a slider at 0 falls back to 150, not a threshold of 0 (100 lx would read bright)")
+_of("False", "0", "150", "on", out="true",
+    finding="0 lx is a reading, not a dead sensor: a pitch-dark office does not defer to outdoors")
+_of("True", "unavailable", "150", "off", out="true",
+    finding="a dead FP2 by day defers to outdoors: no lamp at noon")
+_of("False", "unknown", "150", "on", out="false",
+    finding="a dead FP2 at night defers to outdoors: the lamp may come on")
 _hw("False", "0", "30", "on", finding="0 lx is a reading, not a dead sensor")
 _hw("False", "45", "30", "unknown", finding="a first evaluation inside the band starts dark")
 
