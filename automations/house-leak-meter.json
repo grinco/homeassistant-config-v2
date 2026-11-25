@@ -199,13 +199,13 @@
  ],
  "alias": "House — leak meter",
  "conditions": [],
- "description": "Away sets every room to 16 C, so from one hour into Away the flat cools unheated. A snapshot (input_text.leak_meter_snapshot, survives a restart) is taken then; when Away ends: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), and baselines do not age (F7).",
+ "description": "The radiators drop to the Away floor 30 min into Away (Climate - radiators), so the snapshot (input_text.leak_meter_snapshot, survives a restart) is taken an hour after that, at 1 h 30 min; the run ends when Away ends or when arrival pre-heat turns the heating back on, whichever is first (2026-11-25: the first live run started on warm radiators and ended 37 min into pre-heat, and stored three rooms 3-10x too airtight; tests/climate/wiring.py checks both timings against the radiators). At the end: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), and baselines do not age (F7).",
  "id": "1792300000020",
  "mode": "queued",
  "triggers": [
   {
    "entity_id": "alarm_control_panel.home",
-   "for": "01:00:00",
+   "for": "01:30:00",
    "id": "start",
    "to": "armed_away",
    "trigger": "state"
@@ -219,6 +219,12 @@
     "armed_home",
     "armed_night"
    ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": "input_boolean.climate_arrival_preheat",
+   "id": "end",
+   "to": "on",
    "trigger": "state"
   }
  ]
