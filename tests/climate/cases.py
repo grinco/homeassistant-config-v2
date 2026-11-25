@@ -3116,12 +3116,33 @@ EE_CAL, EE_HDD, EE_NOW = ("states('input_number.gas_kwh_per_m3')", "states('inpu
 _SN = '\'{"t": 1000, "m": 6578.678, "h": 100, "n": 5, "a": 0}\''
 
 
-def ee(name, expect, s=_SN, a="'6.7'", b="'0'", hdd="'112'", now_=1000, finding=""):
+EE_DAYS, EE_MEAN = "states('input_number.energy_hdd_days')", "states('sensor.energy_outdoor_daily_mean')"
+_DAY = 86400
+
+
+def ee(name, expect, s=_SN, a="'6.7'", b="'0'", hdd="'112'", days="'7'", mean="'5'", now_=1000 + 2 * _DAY,
+       finding=""):
     return en(name, EE, expect, {EE_S: s, EE_M: "'6578.678'", EY_A: a, EA_B: b, EE_CAL: "'10.6'",
-                                 EE_HDD: hdd, EE_NOW: now_}, finding)
+                                 EE_HDD: hdd, EE_DAYS: days, EE_MEAN: mean, EE_NOW: now_}, finding)
 
 
-A(ee("degree-days since the reading add heating gas", "6586.263", finding="6.7 * 12 / 10.6 m3"))
+A(ee("degree-days since the reading add heating gas", "6586.263",
+     finding="2 days closed, 12 K-d, 2 days elapsed: 6.7 * 12 / 10.6 m3"))
+# 2026-11-25 validation: the reading was taken at 23:36; 23 minutes later the 23:59 close added the
+# WHOLE day's degree-days, although the meter already held that day's gas. The estimate read 7.6 m3
+# high. Degree-days are spread over the closed days and charged for the time actually elapsed.
+A(ee("a day closed minutes after the reading counts only the time since", "6579.689",
+     hdd="'116'", days="'6'", now_=1000 + _DAY // 10,
+     finding="2026-11-25: one closed day of 16 K-d, 0.1 day elapsed: 1.6 K-d, not 16"))
+A(ee("before the first close, today's heating is the running daily mean", "6583.735",
+     hdd="'100'", days="'5'", mean="'3'", now_=1000 + _DAY // 2,
+     finding="2026-11-25: half a day at a 3 C mean is 8 K-d, not nothing"))
+A(ee("a 13 C mean is no heating day", "6578.678", hdd="'100'", days="'5'", mean="'13'", now_=1000 + _DAY // 2,
+     finding="the 13 C heating-day rule of the degree-day close, straddled"))
+A(ee("a 12.9 C mean is a heating day", "6580.606", hdd="'100'", days="'5'", mean="'12.9'",
+     now_=1000 + _DAY // 2, finding="6.1 K x 0.5 day"))
+A(ee("no daily mean before the first close: no heating added", "6578.678", hdd="'100'", days="'5'",
+     mean="'unavailable'", now_=1000 + _DAY // 2, finding="an unknown mean is not a cold one"))
 A(ee("and days since the reading add hot water", "6588.15", b="'10'", now_=1000 + 2 * 86400,
      finding="+ 10 * 2 / 10.6 m3"))
 A(ee("no snapshot: the last reading", "6578.678", s="''", finding="before the first interval"))

@@ -526,7 +526,7 @@
    "domain": "template",
    "options": {
     "name": "Energy gas estimate",
-    "state": "{% set s = states('input_text.energy_gas_snapshot') %}{% set m = states('sensor.gas_total') | float(0) %}{% set a = states('sensor.energy_gas_heating_per_degree_day') %}{% set b = states('sensor.energy_gas_hot_water_per_day') | float(0) %}{% set cal = states('input_number.gas_kwh_per_m3') | float(0) %}{% if s[:1] != '{' or not is_number(a) or cal <= 0 %}{{ m }}{% else %}{% set j = s | from_json %}{% set dh = [0, states('input_number.energy_hdd_total') | float(0) - j.h] | max %}{% set dd = [0, (as_timestamp(now()) - j.t) / 86400] | max %}{{ (m + (a | float * dh + b * dd) / cal) | round(3) }}{% endif %}",
+    "state": "{% set s = states('input_text.energy_gas_snapshot') %}{% set m = states('sensor.gas_total') | float(0) %}{% set a = states('sensor.energy_gas_heating_per_degree_day') %}{% set b = states('sensor.energy_gas_hot_water_per_day') | float(0) %}{% set cal = states('input_number.gas_kwh_per_m3') | float(0) %}{% if s[:1] != '{' or not is_number(a) or cal <= 0 %}{{ m }}{% else %}{% set j = s | from_json %}{% set dh = [0, states('input_number.energy_hdd_total') | float(0) - j.h] | max %}{% set c = states('input_number.energy_hdd_days') | float(0) - (j.n | default(0)) %}{% set dd = [0, (as_timestamp(now()) - j.t) / 86400] | max %}{% set mo = states('sensor.energy_outdoor_daily_mean') %}{% set rate = (dh / c) if c > 0 else (([0, 19 - mo | float] | max) if is_number(mo) and mo | float < 13 else 0) %}{{ (m + (a | float * rate * dd + b * dd) / cal) | round(3) }}{% endif %}",
     "state_class": "measurement",
     "template_type": "sensor",
     "unit_of_measurement": "m³"

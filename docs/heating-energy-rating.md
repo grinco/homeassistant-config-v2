@@ -53,9 +53,20 @@ out worse than the truth, and it says so (`hot water not yet separated`).
 **One trust condition** (F5), used by the validation and the class alike: `ΣH_w ≥ 300 K·day`
 (three to four winter weeks).
 
-**Estimate between readings:** `gas_total + (a · ΔHDD + b · Δdays) / calorific`. Before the first
+**Estimate between readings:** `gas_total + (a · rate · Δdays + b · Δdays) / calorific`, where
+`rate` is the degree-days closed since the reading per closed day (`ΔHDD / Δclosed days`), or before
+the first 23:59 close the running day's own `19 − mean` (0 at a mean of 13 °C or more). Before the first
 summer interval it under-reads summer weeks by the whole hot-water term (F6): accepted, because
 the first summer reading measures `b` and ends it.
+
+*2026-11-25 validation:* the first form added `a · ΔHDD`. The 23.11 reading was taken at 23:36 and 23
+minutes later the 23:59 close added that whole day's 16 K·d, although the meter already held its gas:
+the estimate read 7.6 m³ high, and every later day was charged only at its close. Charging the closed
+days' mean rate for the time actually elapsed removes the 7.6 m³ over-charge and the lump added at each
+later close. Cases straddle 0.1 day after a close, the day before the first close, and the 13 °C rule.
+A missed 23:59 close (no daily mean) adds neither degree-days nor a closed day, so the rate is the mean
+of the days that did close, applied to the whole elapsed time; with none closed yet it is the running
+day's own rate (review #62 F2, intended: an estimate, corrected by the next reading).
 
 ### Each weekly reading
 
@@ -190,6 +201,19 @@ multiple of the median room, a room the last run flagged as a window marked `(wi
 `sensor.energy_airing_ranking`: hours aired this week per detector room, most first; `detector blind`
 when the detector cannot see. Both replace the single-name tiles on the Energy view's Airtightness
 section with numbered lists; *Leaks most* / *Aired most* remain as sensors for the briefing.
+
+### When the leak meter measures (2026-11-25)
+
+The first live run (Away 25.11 11:41-14:55) stored the living room, kid 2 room and corridor at
+0.9 / 0.2 / 1.3 %/h against 2.8 / 2.2 / 3.7 from 21.11. Two reasons, both timing. The radiators drop
+to the Away floor 30 min into Away, so the 1 h snapshot came 30 min after setback, on warm radiators;
+and arrival pre-heat raised the setpoints at 14:18, so the last 37 of 134 minutes were heated. The
+snapshot now waits an hour after the setback (1 h 30 min into Away), and pre-heat switching on ends
+the run as Away ending does. A run with under 1.5 h between the snapshot and its end is reported as
+skipped, which is what today's would have been (snapshot 13:11, pre-heat 14:18). Accepted: short trips
+with pre-heat will often skip, so baselines come mostly from long Aways (review #62 F6). `tests/climate/wiring.py` reads both delays from the live
+radiator and leak-meter automations and fails if they drift apart. The three baselines were put
+back to the 21.11 values. Not covered: a restart still resets the 1 h 30 min `for:` (F3, accepted).
 
 ## Not covered by cases
 
