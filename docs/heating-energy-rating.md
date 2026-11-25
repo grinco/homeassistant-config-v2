@@ -62,8 +62,11 @@ the first summer reading measures `b` and ends it.
 *2026-11-25 validation:* the first form added `a · ΔHDD`. The 23.11 reading was taken at 23:36 and 23
 minutes later the 23:59 close added that whole day's 16 K·d, although the meter already held its gas:
 the estimate read 7.6 m³ high, and every later day was charged only at its close. Charging the closed
-days' mean rate for the time actually elapsed removes both. Cases straddle 0.1 day after a close, the
-day before the first close, and the 13 °C rule.
+days' mean rate for the time actually elapsed removes the 7.6 m³ over-charge and the lump added at each
+later close. Cases straddle 0.1 day after a close, the day before the first close, and the 13 °C rule.
+A missed 23:59 close (no daily mean) adds neither degree-days nor a closed day, so the rate is the mean
+of the days that did close, applied to the whole elapsed time; with none closed yet it is the running
+day's own rate (review #62 F2, intended: an estimate, corrected by the next reading).
 
 ### Each weekly reading
 
@@ -206,8 +209,9 @@ The first live run (Away 25.11 11:41-14:55) stored the living room, kid 2 room a
 to the Away floor 30 min into Away, so the 1 h snapshot came 30 min after setback, on warm radiators;
 and arrival pre-heat raised the setpoints at 14:18, so the last 37 of 134 minutes were heated. The
 snapshot now waits an hour after the setback (1 h 30 min into Away), and pre-heat switching on ends
-the run as Away ending does. A run that becomes too short (under 1.5 h) is reported as skipped,
-which is what today's would have been. `tests/climate/wiring.py` reads both delays from the live
+the run as Away ending does. A run with under 1.5 h between the snapshot and its end is reported as
+skipped, which is what today's would have been (snapshot 13:11, pre-heat 14:18). Accepted: short trips
+with pre-heat will often skip, so baselines come mostly from long Aways (review #62 F6). `tests/climate/wiring.py` reads both delays from the live
 radiator and leak-meter automations and fails if they drift apart. The three baselines were put
 back to the 21.11 values. Not covered: a restart still resets the 1 h 30 min `for:` (F3, accepted).
 
