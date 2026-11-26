@@ -1,6 +1,97 @@
 {
  "actions": [
   {
+   "variables": {
+    "rooms_heat": {
+     "office": {
+      "add": [
+       "sensor.mini_rack_energy",
+       "sensor.solix_battery_out_energy",
+       "sensor.jankas_desk_energy",
+       "sensor.vadim_s_desk_energy",
+       "sensor.hugo_energy",
+       "sensor.office_main_energy",
+       "sensor.presence_sensor_fp2_5041_energy",
+       "sensor.guest_room_solix_c2000_gen_2_solix_solar_energy"
+      ],
+      "sub": [
+       "sensor.solix_battery_in_energy"
+      ],
+      "ac": "sensor.office_ac_energy"
+     },
+     "living_room": {
+      "add": [
+       "sensor.unifi_poe_network_energy",
+       "sensor.living_room_tv_socket_total_energy",
+       "sensor.media_corner_energy",
+       "sensor.the_moon_energy",
+       "sensor.zorik_energy",
+       "sensor.presence_sensor_fp2_a2d4_energy",
+       "sensor.gallery_left_energy",
+       "sensor.gallery_right_energy",
+       "sensor.kitchen_echo_dot_energy",
+       "sensor.ktl_energy",
+       "sensor.ktr_energy"
+      ],
+      "sub": [],
+      "ac": "sensor.living_room_ac_energy"
+     },
+     "bedroom": {
+      "add": [
+       "sensor.torchere_energy",
+       "sensor.prague_hue_energy",
+       "sensor.bedroom_dual_switch_energy",
+       "sensor.innr_plug_energy",
+       "sensor.aladdin_energy"
+      ],
+      "sub": [],
+      "ac": "sensor.bedroom_ac_energy"
+     },
+     "kid1": {
+      "add": [
+       "sensor.kid1_main_energy",
+       "sensor.0x00178801091dac3e_energy",
+       "sensor.0x00178801091dac48_energy",
+       "sensor.kid1_desk_socket_energy"
+      ],
+      "sub": [],
+      "ac": "sensor.kid1_room_ac_energy"
+     },
+     "kid2": {
+      "add": [],
+      "sub": [],
+      "ac": "sensor.kid2_room_ac_energy"
+     },
+     "corridor": {
+      "add": [
+       "sensor.entrance_light_energy",
+       "sensor.corridor_light_energy"
+      ],
+      "sub": [],
+      "ac": ""
+     }
+    },
+    "ua": {
+     "living_room": 61,
+     "office": 23,
+     "bedroom": 22,
+     "kid1": 9,
+     "kid2": 9,
+     "corridor": 31
+    }
+   }
+  },
+  {
+   "variables": {
+    "meter_vals": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% set ns.d = dict(ns.d, **{e: states(e)}) %}{% endfor %}{% endfor %}{{ ns.d }}"
+   }
+  },
+  {
+   "variables": {
+    "heat_now": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% set ok = namespace(v=true, a=0) %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% if not is_number(meter_vals.get(e)) %}{% set ok.v = false %}{% endif %}{% endfor %}{% if ok.v %}{% for e in m['add'] %}{% set ok.a = ok.a + meter_vals[e] | float %}{% endfor %}{% for e in m['sub'] %}{% set ok.a = ok.a - meter_vals[e] | float %}{% endfor %}{% set ns.d = dict(ns.d, **{r: [ok.a | round(2), (meter_vals[m['ac']] | float | round(2)) if m['ac'] else 0]}) %}{% endif %}{% endfor %}{{ ns.d }}"
+   }
+  },
+  {
    "choose": [
     {
      "conditions": [
@@ -53,6 +144,36 @@
          }
         }
        ]
+      },
+      {
+       "if": [
+        {
+         "condition": "template",
+         "value_template": "{{ heat_now | to_json | length <= 255 }}"
+        }
+       ],
+       "then": [
+        {
+         "action": "input_text.set_value",
+         "target": {
+          "entity_id": "input_text.leak_meter_heat"
+         },
+         "data": {
+          "value": "{{ heat_now | to_json }}"
+         }
+        }
+       ],
+       "else": [
+        {
+         "action": "input_text.set_value",
+         "target": {
+          "entity_id": "input_text.leak_meter_heat"
+         },
+         "data": {
+          "value": ""
+         }
+        }
+       ]
       }
      ]
     },
@@ -70,7 +191,8 @@
      "sequence": [
       {
        "variables": {
-        "snap": "{{ states('input_text.leak_meter_snapshot') | from_json(none) }}"
+        "snap": "{{ states('input_text.leak_meter_snapshot') | from_json(none) }}",
+        "heat_snap": "{{ states('input_text.leak_meter_heat') | from_json(none) }}"
        }
       },
       {
@@ -90,6 +212,15 @@
        },
        "target": {
         "entity_id": "input_text.leak_meter_snapshot"
+       }
+      },
+      {
+       "action": "input_text.set_value",
+       "target": {
+        "entity_id": "input_text.leak_meter_heat"
+       },
+       "data": {
+        "value": ""
        }
       },
       {
@@ -129,8 +260,13 @@
       },
       {
        "variables": {
+        "heat_w": "{% set ns = namespace(d={}) %}{% if heat_snap is mapping and hours > 0 %}{% for r in heat_now %}{% set s = heat_snap.get(r) %}{% set e = heat_now[r] %}{% if s is not none and e[0] >= s[0] and e[1] >= s[1] %}{% set ns.d = dict(ns.d, **{r: {'w': ((e[0] - s[0]) * 1000 / hours) | round(0) | int, 'ac': ((e[1] - s[1]) * 1000 / hours) | round(0) | int}}) %}{% endif %}{% endfor %}{% endif %}{{ ns.d }}"
+       }
+      },
+      {
+       "variables": {
         "ach": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set c1 = snap.C[r] %}{% set c2 = now_C.get(r) %}{% if c2 is number and (c1 - 400) >= 100 and c2 < c1 %}{% set ns.d = dict(ns.d, **{r: (log((c1 - 400) / ([c2 - 400, 30] | max)) / hours) | round(2)}) %}{% endif %}{% endfor %}{{ ns.d }}",
-        "k": "{% set ns = namespace(d={}) %}{% set hold = (states('input_number.climate_away_min') | float(0)) + 0.5 %}{% set o = (snap.o + now_o) / 2 %}{% for r in snap.T %}{% set t1 = snap.T[r] %}{% set t2 = now_T.get(r) %}{% if t2 is number and (t1 - o) >= 3 %}{% if t2 >= t1 or t2 <= hold %}{% set ns.d = dict(ns.d, **{r: -1}) %}{% elif (t2 - o) > 0.5 %}{% set ns.d = dict(ns.d, **{r: (100 * log((t1 - o) / (t2 - o)) / hours) | round(1)}) %}{% endif %}{% endif %}{% endfor %}{{ ns.d }}"
+        "k": "{% set ns = namespace(d={}) %}{% set hold = (states('input_number.climate_away_min') | float(0)) + 0.5 %}{% set o = (snap.o + now_o) / 2 %}{% for r in snap.T %}{% set t1 = snap.T[r] %}{% set t2 = now_T.get(r) %}{% set h = heat_w.get(r) %}{% set g = o + ((h['w'] / ua[r]) if h is mapping and r in ua else 0) %}{% if t2 is number and (t1 - o) >= 3 %}{% if r in rooms_heat and h is not mapping %}{% set ns.d = dict(ns.d, **{r: -3}) %}{% elif h is mapping and h['ac'] > 50 %}{% set ns.d = dict(ns.d, **{r: -2}) %}{% elif (t1 - g) < 3 or t2 >= t1 or t2 <= hold %}{% set ns.d = dict(ns.d, **{r: -1}) %}{% elif (t2 - g) > 0.5 %}{% set ns.d = dict(ns.d, **{r: (100 * log((t1 - g) / (t2 - g)) / hours) | round(1)}) %}{% endif %}{% endif %}{% endfor %}{{ ns.d }}"
        }
       },
       {
@@ -141,7 +277,7 @@
       {
        "variables": {
         "alert": "{{ signals | select('search', ':window$') | list | count > 0 }}",
-        "verdict": "{% set kk = k | dictsort(by='value', reverse=true) %}{{ now().strftime('%d.%m') }} {{ hours }} h at {{ ((snap.o + now_o) / 2) | round(1) }} C. Air/h: {% for r, a in ach | dictsort %}{{ r }} {{ a }}{{ ', ' if not loop.last }}{% else %}-{% endfor %}. Heat loss %/h: {% for r, v in kk %}{{ r }} {{ 'warm' if v < 0 else v }}{{ ', ' if not loop.last }}{% endfor %}. {{ signals | join(' ') if signals else 'nothing odd' }}",
+        "verdict": "{% set kk = k | dictsort(by='value', reverse=true) %}{{ now().strftime('%d.%m') }} {{ hours }} h at {{ ((snap.o + now_o) / 2) | round(1) }} C. Air/h: {% for r, a in ach | dictsort %}{{ r }} {{ a }}{{ ', ' if not loop.last }}{% else %}-{% endfor %}. Heat loss %/h: {% for r, v in kk %}{{ r }} {{ {-1: 'warm', -2: 'AC on', -3: 'no meter'}[v] if v < 0 else v }}{{ ', ' if not loop.last }}{% endfor %}. {{ signals | join(' ') if signals else 'nothing odd' }}",
         "writes": "{% set ns = namespace(l=[]) %}{% for r in k %}{% if k[r] > 0 and (r ~ ':window') not in signals and has_value('input_number.leak_k_' ~ r) %}{% set ns.l = ns.l + [{'e': 'input_number.leak_k_' ~ r, 'v': [k[r], 50] | min}] %}{% endif %}{% endfor %}{% for r in ach %}{% if has_value('input_number.leak_ach_' ~ r) %}{% set ns.l = ns.l + [{'e': 'input_number.leak_ach_' ~ r, 'v': [ach[r], 5] | min}] %}{% endif %}{% endfor %}{{ ns.l }}"
        }
       },
@@ -199,7 +335,7 @@
  ],
  "alias": "House — leak meter",
  "conditions": [],
- "description": "The radiators drop to the Away floor 30 min into Away (Climate - radiators), so the snapshot (input_text.leak_meter_snapshot, survives a restart) is taken an hour after that, at 1 h 30 min; the run ends when Away ends or when arrival pre-heat turns the heating back on, whichever is first (2026-11-25: the first live run started on warm radiators and ended 37 min into pre-heat, and stored three rooms 3-10x too airtight; tests/climate/wiring.py checks both timings against the radiators). At the end: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), and baselines do not age (F7).",
+ "description": "The radiators drop to the Away floor 30 min into Away (Climate - radiators), so the snapshot (input_text.leak_meter_snapshot, survives a restart) is taken an hour after that, at 1 h 30 min; the run ends when Away ends or when arrival pre-heat turns the heating back on, whichever is first (2026-11-25: the first live run started on warm radiators and ended 37 min into pre-heat, and stored three rooms 3-10x too airtight; tests/climate/wiring.py checks both timings against the radiators). At the end: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Socket heat (2026-11-27, operator: the office rack, the living-room PoE): each room's metered sockets (rooms_heat; a battery's net charge is not heat) are read at both ends (input_text.leak_meter_heat) and their mean watts move the point the room cools toward from outdoors to outdoors + W / H, H = the room's heat loss in W/K from the 1997 radiator sizing (ua; docs/heating-energy-rating.md). A room whose own sockets hold it within 3 C of its temperature is kept warm, not measured. A metered room whose meters could not be read is not measured (no meter), nor is one whose air conditioner drew over 50 W (AC on). wiring.py checks every metered socket in a measured room is listed. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), baselines do not age (F7), unmetered heat (the fridge in the living room) is not counted.",
  "id": "1792300000020",
  "mode": "queued",
  "triggers": [

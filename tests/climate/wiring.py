@@ -321,6 +321,82 @@ def leak_meter_window():
     return out
 
 
+# The leak meter's rooms and the areas their sockets sit in. The two kids' rooms come from the
+# gitignored rooms.local.json ("leak_key", "area"), like every other live name in the suite.
+LEAK_AREAS = {"office": ["bedroom"], "living_room": ["living_room", "kitchen"],
+              "bedroom": ["bedroom_2"], "corridor": ["corridor"]}
+
+
+def leak_meter_heat():
+    """Every metered socket and air conditioner in a measured room is in the leak meter's list.
+
+    2026-11-27 (operator): the office rack and the living-room PoE keep those rooms warm with the
+    heating off, so the meter subtracts each room's socket heat (`rooms_heat`, divided by its heat
+    loss `ua`). A plug added to a room later and not listed there would read as that room losing
+    heat slower than it does, with nothing to say so. A metered socket is the Energy tab's rule
+    (sockets_on_energy): a power sensor not made by Powercalc on a device with a switch and no
+    climate entity; one of its energy meters must be in the room's `add`. A device with a climate
+    entity and an energy meter is the room's air conditioner and must be its `ac`.
+    Returns a list of problems.
+    """
+    import io
+    import json
+    import yaml
+    with io.open(harness.AUTOMATIONS, encoding="utf-8") as fh:
+        leak = {str(a.get("id")): a for a in yaml.safe_load(fh)}.get(LEAK_ID)
+    if leak is None:
+        return ["leak meter %s not found" % LEAK_ID]
+    block = next((a["variables"] for a in _walk(leak.get("actions") or [])
+                  if isinstance(a.get("variables"), dict) and "rooms_heat" in a["variables"]), None)
+    if block is None or not isinstance(block.get("rooms_heat"), dict) or not isinstance(block.get("ua"), dict):
+        return ["the leak meter has no literal rooms_heat / ua"]
+    heat, ua = block["rooms_heat"], block["ua"]
+    out = []
+    if set(heat) != set(ua):
+        out.append("rooms_heat and ua name different rooms: %s" % sorted(set(heat) ^ set(ua)))
+    areas = dict(LEAK_AREAS)
+    rooms = harness.load_rooms()
+    for alias in ("kid1", "kid2"):
+        areas[rooms[alias]["leak_key"]] = [rooms[alias]["area"]]
+    if set(areas) != set(heat):
+        out.append("the measured rooms changed: wiring knows %s, the meter %s"
+                   % (sorted(areas), sorted(heat)))
+    reg = harness.ENTRIES.replace("core.config_entries", "core.entity_registry")
+    dreg = harness.ENTRIES.replace("core.config_entries", "core.device_registry")
+    with io.open(reg, encoding="utf-8") as fh:
+        ents = [e for e in json.load(fh)["data"]["entities"] if not e.get("disabled_by")]
+    with io.open(dreg, encoding="utf-8") as fh:
+        dev_area = {d["id"]: d.get("area_id") for d in json.load(fh)["data"]["devices"]}
+    known = {e["entity_id"] for e in ents}
+    for room, m in heat.items():
+        for eid in list(m.get("add") or []) + list(m.get("sub") or []) + ([m["ac"]] if m.get("ac") else []):
+            if eid not in known:
+                out.append("%s: %s does not exist" % (room, eid))
+    cls = lambda e: e.get("device_class") or e.get("original_device_class")
+    by_dev = {}
+    for e in ents:
+        if e.get("device_id"):
+            by_dev.setdefault(e["device_id"], []).append(e)
+    for did, dev in by_dev.items():
+        area = dev_area.get(did)
+        room = next((r for r, a in areas.items() if area in a), None)
+        if room is None or room not in heat:
+            continue
+        ids = [e["entity_id"] for e in dev]
+        mine = [e for e in dev if e.get("platform") != "powercalc"]
+        meters = {e["entity_id"] for e in mine if cls(e) == "energy" and e["entity_id"].startswith("sensor.")}
+        if not meters:
+            continue
+        if any(i.startswith("climate.") for i in ids):
+            if heat[room].get("ac") not in meters:
+                out.append("%s: its air conditioner's meter (%s) is not its ac" % (room, sorted(meters)[0]))
+        elif (any(cls(e) == "power" and e["entity_id"].startswith("sensor.") for e in mine)
+              and any(i.startswith("switch.") for i in ids)
+              and not meters & set((heat[room].get("add") or []) + (heat[room].get("sub") or []))):
+            out.append("%s: the metered socket %s is not in its rooms_heat" % (room, sorted(meters)[0]))
+    return out
+
+
 HOT_WATER_ID = "1792300000080"
 HOT_UNTIL = "input_datetime.house_hot_water_hot_until"
 HOT_HOLD = "input_boolean.house_hot_water_hot_hold"
@@ -450,6 +526,13 @@ def main():
     if leak_problems:
         return 1
     print("  the leak meter measures only an unheated flat")
+
+    heat_problems = leak_meter_heat()
+    for p in heat_problems:
+        print("  LEAK HEAT       %s" % p)
+    if heat_problems:
+        return 1
+    print("  the leak meter counts every metered socket and air conditioner in its rooms")
 
     hw_problems = hot_water_shock_hold()
     for p in hw_problems:
