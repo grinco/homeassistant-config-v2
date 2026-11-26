@@ -58,6 +58,14 @@ and none outside frost, where the operator's night wins outright.
 On 24.11 (dry air, forecast −5 °C) nothing was raised; at −10 °C the bedroom (48 % RH) would go 21 → 22
 and the kid 1 room 20 → 21. It costs heat only where and when a wall is at risk.
 
+**The cap leaves the worst corner at risk (2026-11-26, review of the field guide).** The kid 1 room's
+20 → 21 is the day-target cap, not the requirement. With f = 1.67, −10 °C and 48 % RH the requirement is
+about 27 °C, and at the room's 20.2 °C the modelled corner reaches about 105 %: condensation. The cap is
+deliberate (a child's room is not heated to 27 °C at night); in that case the remedy is lower room
+humidity and the furniture off the wall, and the corner probe's own humidity, which pushes at 80 % for
+6 h, is the safeguard. The probe's settling readings (fRsi ≈ 0.99 by 25.11) suggest the real corner is far
+better than 1.67 assumes.
+
 `input_number.climate_outdoor_min_12h` is written hourly at :05 and at start by
 `automations/climate-coldest-hour-ahead.json` from `weather.get_forecasts`; fewer than 6 forecast hours
 or a failed call writes the measured outdoor instead. A stale value is bounded by the measured outdoor

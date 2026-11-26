@@ -321,6 +321,70 @@ def leak_meter_window():
     return out
 
 
+HOT_WATER_ID = "1792300000080"
+HOT_UNTIL = "input_datetime.house_hot_water_hot_until"
+HOT_HOLD = "input_boolean.house_hot_water_hot_hold"
+
+
+def _walk(node):
+    """Every action dict in an automation's action tree, in order."""
+    if isinstance(node, list):
+        for x in node:
+            yield from _walk(x)
+    elif isinstance(node, dict):
+        yield node
+        for v in node.values():
+            if isinstance(v, (list, dict)):
+                yield from _walk(v)
+
+
+def hot_water_shock_hold():
+    """After a long pause the tank must be held hot long enough to disinfect.
+
+    Review 2026-11-26 (field guide, legionella): complete loss of culturability takes about 60 min
+    at 60 C (Cervero-Arago et al. 2019) and the hold starts from a tank that sat cold for two days,
+    so the hour at 65 C was mostly reheating. The weekend cycle already uses a two-hour window; the
+    shock after a pause must too. Read from the LIVE automation. Returns a list of problems.
+    """
+    import io
+    import yaml
+    with io.open(harness.AUTOMATIONS, encoding="utf-8") as fh:
+        autos = {str(a.get("id")): a for a in yaml.safe_load(fh)}
+    hw = autos.get(HOT_WATER_ID)
+    if hw is None:
+        return ["hot water automation %s not found" % HOT_WATER_ID]
+    steps = list(_walk(hw.get("actions") or hw.get("action") or []))
+    hot = [i for i, a in enumerate(steps) if a.get("action") == "water_heater.set_temperature"
+           and float((a.get("data") or {}).get("temperature", 0)) >= 60]
+    if len(hot) != 1:
+        return ["expected one hot (>= 60 C) set_temperature step, found %d" % len(hot)]
+    if any("delay" in a or "wait_template" in a or "wait_for_trigger" in a for a in steps[hot[0] + 1:]):
+        return ["the hot hold waits inside the run: a restart during it leaves the tank at 65 C "
+                "(2026-11-26); stamp its end in %s instead" % HOT_UNTIL]
+    # The release must run at the stamp, at start and on a 15-minute fallback (review round 3, F4):
+    # any one missing and a restart or a missed stamp leaves the tank at 65 C again.
+    trig = hw.get("triggers") or hw.get("trigger") or []
+    if not any(t.get("trigger") == "homeassistant" and t.get("event") == "start" for t in trig):
+        return ["no start trigger: a hold that ended while HA was down is not released at start"]
+    if not any(t.get("trigger") == "time_pattern" and str(t.get("minutes")) in ("/15", "/5", "/10") for t in trig):
+        return ["no 15-minute fallback trigger for the hot-water release"]
+    if not any(t.get("trigger") == "time" and HOT_UNTIL in str(t.get("at")) for t in trig):
+        return ["no trigger at %s: the hold is released only by the fallback" % HOT_UNTIL]
+    flag = [i for i, a in enumerate(steps) if a.get("action") == "input_boolean.turn_on" and HOT_HOLD in str(a.get("target"))]
+    if not flag or flag[0] > hot[0]:
+        return ["%s must be turned on before the 65 C command, or a failed call leaves no hold to release" % HOT_HOLD]
+    stamps = [a for a in steps if a.get("action") == "input_datetime.set_datetime"
+              and HOT_UNTIL in str(a.get("target"))]
+    if len(stamps) != 1:
+        return ["the hot step must stamp the end of its hold in %s" % HOT_UNTIL]
+    import re
+    m = re.search(r"now\(\)\.timestamp\(\)\s*\+\s*(\d+)", str((stamps[0].get("data") or {}).get("timestamp", "")))
+    if not m or int(m.group(1)) < 7200:
+        return ["the tank is held hot for %s s after a long pause; disinfection needs 2 h "
+                "(reheat plus an hour at >= 60 C)" % (m.group(1) if m else "an unreadable number of")]
+    return []
+
+
 def main():
     missing, extra = digest_meters()
     for m in missing:
@@ -386,6 +450,13 @@ def main():
     if leak_problems:
         return 1
     print("  the leak meter measures only an unheated flat")
+
+    hw_problems = hot_water_shock_hold()
+    for p in hw_problems:
+        print("  HOT WATER       %s" % p)
+    if hw_problems:
+        return 1
+    print("  the hot-water shock after a long pause lasts long enough to disinfect")
 
     refs, skipped = referenced()
     if not refs:

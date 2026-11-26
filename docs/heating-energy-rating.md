@@ -23,6 +23,12 @@ The Czech convention (ČSN 38 3350): a day counts when its mean outdoor temperat
 and contributes `19 − t_mean` K·day. The normal Prague season (Karlov, 1961–1990) is **3 235 K·day
 over 225 days**. That is the reference year everything is annualised to.
 
+*Which normal (2026-11-26).* 3 235 K·day is the 1961–1990 normal used by the Czech degree-day tables
+(tzb-info, ČHMÚ); the older value in ČSN 38 3350 change a is 3 308. Winters have warmed since, and recent
+seasons come out lower, so annualising to this normal makes `E_year` higher than a recent average year
+would. Kept: it is the published reference and it errs towards a worse class. It does not affect
+comparisons between our own intervals.
+
 - `sensor.energy_outdoor_daily_mean`: a `statistics` helper, time-weighted (`average_step`),
   `max_age` 24 h. Read at 23:59 its window is 23:59 yesterday to 23:59 today: the calendar day,
   one minute off. (Review F7 suspected a half-day offset; that applies to a window read at noon,
@@ -111,6 +117,8 @@ e      = E_year / 164.41 m²                kWh/m²·year
 
 Placed on the fixed **apartment-building** scale of the former vyhláška 148/2007:
 A < 43, B ≤ 82, C ≤ 120, D ≤ 162, E ≤ 205, F ≤ 245, G > 245 kWh/m²·year.
+(Checked 2026-11-26: the C/D boundary of 120 for apartment buildings is confirmed by a tzb-info worked
+example; the other boundaries are as transcribed from the decree's annex and were not re-checked.)
 
 **This is not a PENB.** A current certificate (vyhláška 264/2020) rates against a reference
 building computed from the geometry, and counts primary energy, lighting and auxiliary energy,
@@ -214,6 +222,13 @@ skipped, which is what today's would have been (snapshot 13:11, pre-heat 14:18).
 with pre-heat will often skip, so baselines come mostly from long Aways (review #62 F6). `tests/climate/wiring.py` reads both delays from the live
 radiator and leak-meter automations and fails if they drift apart. The three baselines were put
 back to the 21.11 values. Not covered: a restart still resets the 1 h 30 min `for:` (F3, accepted).
+
+### Air changes and outdoor CO₂ (2026-11-26)
+
+The air-change rate takes outdoor CO₂ as 400 ppm. The global mean is now about 425 ppm (NOAA), so the
+rate reads somewhat low (about 9 % for a decay from 900 to 600 ppm). Kept as an accepted bias: every
+stored baseline was computed the same way, the 1.8× comparison is between runs of one formula, and the
+sensors' own ±30–50 ppm drift is the larger error.
 
 ## Not covered by cases
 
