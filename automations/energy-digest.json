@@ -15,7 +15,7 @@
      "sensor.mini_rack_energy",
      "sensor.unifi_poe_network_energy",
      "sensor.jankas_desk_energy",
-     "sensor.rtx3090_pc_energy",
+     "sensor.vadim_s_desk_energy",
      "sensor.drier_socket_energy",
      "sensor.kid1_desk_socket_energy",
      "sensor.bedroom_dual_switch_energy",
