@@ -146,9 +146,16 @@ writes the hold's end (`input_datetime.house_hot_water_hot_until`, now + 2 h) an
 (`input_boolean.house_hot_water_hot_hold`) **before** commanding 65 °C, and returns. A separate branch,
 `release`, ends the hold once the flag is on and the stamp has passed: it clears the flag and, only if the
 tank is still in `heat`, sets `auto` (a tank someone changed by hand during the hold is left alone). It runs
-at the stamp itself, at every start, and every 15 minutes, so a restart delays the return by at most 15
-minutes. Cases straddle the stamp by one second and cover a stamp missed during a restart and an old stamp
-with no hold; `wiring.py` fails if a `delay` or a wait follows the hot step, or if the stamp is under 2 h.
+at the stamp itself, at every start (so a restart ends an overdue hold as soon as HA is back), and every 15
+minutes as a fallback.
+
+The hold only ever starts in the `restore` branch, i.e. when the pause ends because someone is coming home,
+and that branch clears the pause flag first. So `auto` at the end of the hold is the right state. If the trip
+turns back instead, the tank is in `auto` again and the 6-hour pause rule switches it off at the next check;
+during the hold the tank is in `heat`, which the pause rule never touches, and `restore` cannot fire because
+the pause flag is already off (review round 3, 2026-11-26: F1 to F3 checked against this and rejected). Cases straddle the stamp by one second and cover a stamp missed during a restart and an old stamp
+with no hold; `wiring.py` fails if a `delay` or a wait follows the hot step, if the stamp is under 2 h, if the
+hold flag is not turned on before the 65 °C command, or if any of the three release triggers is missing.
 Not covered: the `heat` check in the release branch and Tado accepting the calls.
 
 ## Where this departs from the hygiene guidance (2026-11-26)

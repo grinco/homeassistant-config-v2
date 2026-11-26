@@ -323,6 +323,7 @@ def leak_meter_window():
 
 HOT_WATER_ID = "1792300000080"
 HOT_UNTIL = "input_datetime.house_hot_water_hot_until"
+HOT_HOLD = "input_boolean.house_hot_water_hot_hold"
 
 
 def _walk(node):
@@ -360,6 +361,18 @@ def hot_water_shock_hold():
     if any("delay" in a or "wait_template" in a or "wait_for_trigger" in a for a in steps[hot[0] + 1:]):
         return ["the hot hold waits inside the run: a restart during it leaves the tank at 65 C "
                 "(2026-11-26); stamp its end in %s instead" % HOT_UNTIL]
+    # The release must run at the stamp, at start and on a 15-minute fallback (review round 3, F4):
+    # any one missing and a restart or a missed stamp leaves the tank at 65 C again.
+    trig = hw.get("triggers") or hw.get("trigger") or []
+    if not any(t.get("trigger") == "homeassistant" and t.get("event") == "start" for t in trig):
+        return ["no start trigger: a hold that ended while HA was down is not released at start"]
+    if not any(t.get("trigger") == "time_pattern" and str(t.get("minutes")) in ("/15", "/5", "/10") for t in trig):
+        return ["no 15-minute fallback trigger for the hot-water release"]
+    if not any(t.get("trigger") == "time" and HOT_UNTIL in str(t.get("at")) for t in trig):
+        return ["no trigger at %s: the hold is released only by the fallback" % HOT_UNTIL]
+    flag = [i for i, a in enumerate(steps) if a.get("action") == "input_boolean.turn_on" and HOT_HOLD in str(a.get("target"))]
+    if not flag or flag[0] > hot[0]:
+        return ["%s must be turned on before the 65 C command, or a failed call leaves no hold to release" % HOT_HOLD]
     stamps = [a for a in steps if a.get("action") == "input_datetime.set_datetime"
               and HOT_UNTIL in str(a.get("target"))]
     if len(stamps) != 1:
