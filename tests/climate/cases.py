@@ -3784,15 +3784,16 @@ PRE_D, PRE_DIR = "states('sensor.home_nearest_distance')", "states('sensor.home_
 PRE_HEAT = "is_state('input_select.climate_house_mode', 'heat')"
 PRE_ON = "is_state('input_boolean.climate_arrival_preheat', 'on')"
 PRE_ON_SINCE = "as_timestamp(states.input_boolean.climate_arrival_preheat.last_changed, 0)"
+PRE_DIR_SINCE = "as_timestamp(states.sensor.home_nearest_direction_of_travel.last_changed, 0)"
 
 
 def pre(name, expr, expect, away="true", gone="7300", d="'12000'", dr="'towards'", heat="true", on="false",
-        on_for="60", finding=""):
-    subs = {PRE_AWAY: away, NOWTS: "100000", PRE_D: d, PRE_ON: on}
+        on_for="60", dr_for="60", finding=""):
+    subs = {PRE_AWAY: away, NOWTS: "100000", PRE_D: d, PRE_ON: on, PRE_DIR: dr}
     if expr == "start":
-        subs.update({PRE_SINCE: str(100000 - int(gone)), PRE_DIR: dr, PRE_HEAT: heat})
+        subs.update({PRE_SINCE: str(100000 - int(gone)), PRE_HEAT: heat})
     else:
-        subs.update({PRE_ON_SINCE: str(100000 - int(on_for))})
+        subs.update({PRE_ON_SINCE: str(100000 - int(on_for)), PRE_DIR_SINCE: str(100000 - int(dr_for))})
     return dict(name="arrival pre-heat: " + name, automation=PRE, expr=expr, expect=expect, given={},
                 subs=subs, finding=finding)
 
@@ -3815,6 +3816,15 @@ A(pre("24.9 km on the way does not end it", "stop", "False", on="true", d="'2490
 A(pre("two hours without arriving ends it", "stop", "True", on="true", on_for="7300", finding="a stale pre-heat"))
 A(pre("an hour into the trip it holds", "stop", "False", on="true", on_for="3600", finding="the time limit from below"))
 A(pre("nothing to stop when it is off", "stop", "False", on="false", away="false"))
+# 2026-11-26: Away 13:15-17:06. The nearest phone sat ~3 km out all afternoon, drove past at 0.6-1.5 km
+# (15:16-15:18, 'towards') and went back to 3.6 km. Pre-heat ran 1 h 50 min for nobody, and ended the leak
+# meter's run. Within 25 km only arrival or 2 h stopped it. Now: heading away for 5 minutes ends it.
+A(pre("a drive-past heading away for 5 minutes ends it", "stop", "True", on="true", d="'2242'", dr="'away_from'",
+      dr_for="310", on_for="480", finding="2026-11-26: the drive-past heated the flat for 1 h 50 min"))
+A(pre("4.8 minutes heading away does not", "stop", "False", on="true", d="'2242'", dr="'away_from'",
+      dr_for="290", on_for="480", finding="the 5 min from below: a bend in the road is not a turn back"))
+A(pre("a long stop on the way does not end it", "stop", "False", on="true", d="'3600'", dr="'stationary'",
+      dr_for="3000", on_for="3600", finding="only heading away ends it, not traffic or a shop"))
 
 # Corner probe (operator 2026-11-24): a thermometer in the kid 1 room's coldest corner measures what the
 # wall model assumed. fRsi = (corner - outdoor) / (room - outdoor); the night target and the mould
