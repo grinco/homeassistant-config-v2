@@ -84,7 +84,9 @@ Heat kills legionella and the other usual waterborne bacteria (Pseudomonas, coli
 | 60 °C | thermal death 1.3–10.6 min across Legionellaceae; complete loss of culturability after 60 min | Stout, Best & Yu 1986 (PMC203540); Cervero-Aragó 2019 |
 | 70 °C | 0.7–2.6 min; under 2 min | same |
 
-So **60 °C or more for an hour** is the conservative reading, which is the rule below.
+Stout's minutes are from laboratory suspensions in clean water; in a tank, biofilm and sediment shield the
+bacteria, which is why the rule follows Cervero-Aragó's 60 minutes, not Stout's minutes. So **60 °C or more
+for an hour** is the conservative reading, which is the rule below.
 
 The rules followed, after the German DVGW W551 guidance:
 
