@@ -322,6 +322,7 @@ def leak_meter_window():
 
 
 HOT_WATER_ID = "1792300000080"
+HOT_UNTIL = "input_datetime.house_hot_water_hot_until"
 
 
 def _walk(node):
@@ -356,12 +357,18 @@ def hot_water_shock_hold():
            and float((a.get("data") or {}).get("temperature", 0)) >= 60]
     if len(hot) != 1:
         return ["expected one hot (>= 60 C) set_temperature step, found %d" % len(hot)]
-    holds = [a["delay"] for a in steps[hot[0] + 1:] if "delay" in a]
-    if not holds:
-        return ["the hot step is not followed by a hold"]
-    if _secs(holds[0]) < 7200:
-        return ["the tank is held hot for %d min after a long pause; disinfection needs 2 h "
-                "(reheat plus an hour at >= 60 C)" % (_secs(holds[0]) // 60)]
+    if any("delay" in a or "wait_template" in a or "wait_for_trigger" in a for a in steps[hot[0] + 1:]):
+        return ["the hot hold waits inside the run: a restart during it leaves the tank at 65 C "
+                "(2026-11-26); stamp its end in %s instead" % HOT_UNTIL]
+    stamps = [a for a in steps if a.get("action") == "input_datetime.set_datetime"
+              and HOT_UNTIL in str(a.get("target"))]
+    if len(stamps) != 1:
+        return ["the hot step must stamp the end of its hold in %s" % HOT_UNTIL]
+    import re
+    m = re.search(r"now\(\)\.timestamp\(\)\s*\+\s*(\d+)", str((stamps[0].get("data") or {}).get("timestamp", "")))
+    if not m or int(m.group(1)) < 7200:
+        return ["the tank is held hot for %s s after a long pause; disinfection needs 2 h "
+                "(reheat plus an hour at >= 60 C)" % (m.group(1) if m else "an unreadable number of")]
     return []
 
 
