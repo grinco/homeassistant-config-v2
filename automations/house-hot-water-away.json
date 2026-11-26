@@ -3,12 +3,49 @@
   {
    "variables": {
     "pause": "{{ is_state('alarm_control_panel.home', 'armed_away') and (now().timestamp() - (state_attr('input_datetime.climate_away_since', 'timestamp') | float(0))) > 21600 and is_state('water_heater.hot_water_hot_water', 'auto') and not is_state('input_boolean.house_hot_water_paused', 'on') }}",
+    "release": "{{ is_state('input_boolean.house_hot_water_hot_hold', 'on') and now().timestamp() >= (state_attr('input_datetime.house_hot_water_hot_until', 'timestamp') | float(0)) }}",
     "restore": "{% set d = states('sensor.home_nearest_distance') %}{{ is_state('input_boolean.house_hot_water_paused', 'on') and (not is_state('alarm_control_panel.home', 'armed_away') or is_state('input_boolean.climate_arrival_preheat', 'on') or (is_number(d) and d | float < 15000 and is_state('sensor.home_nearest_direction_of_travel', 'towards'))) }}",
     "shock": "{{ (now().timestamp() - (state_attr('input_datetime.house_hot_water_paused_at', 'timestamp') | float(0))) > 172800 }}"
    }
   },
   {
    "choose": [
+    {
+     "conditions": [
+      {
+       "condition": "template",
+       "value_template": "{{ release }}"
+      }
+     ],
+     "sequence": [
+      {
+       "action": "input_boolean.turn_off",
+       "target": {
+        "entity_id": "input_boolean.house_hot_water_hot_hold"
+       }
+      },
+      {
+       "if": [
+        {
+         "condition": "state",
+         "entity_id": "water_heater.hot_water_hot_water",
+         "state": "heat"
+        }
+       ],
+       "then": [
+        {
+         "action": "water_heater.set_operation_mode",
+         "data": {
+          "operation_mode": "auto"
+         },
+         "target": {
+          "entity_id": "water_heater.hot_water_hot_water"
+         }
+        }
+       ]
+      }
+     ]
+    },
     {
      "conditions": [
       {
@@ -58,6 +95,17 @@
        }
       },
       {
+       "else": [
+        {
+         "action": "water_heater.set_operation_mode",
+         "data": {
+          "operation_mode": "auto"
+         },
+         "target": {
+          "entity_id": "water_heater.hot_water_hot_water"
+         }
+        }
+       ],
        "if": [
         {
          "condition": "template",
@@ -65,6 +113,21 @@
         }
        ],
        "then": [
+        {
+         "action": "input_datetime.set_datetime",
+         "data": {
+          "timestamp": "{{ now().timestamp() + 7200 }}"
+         },
+         "target": {
+          "entity_id": "input_datetime.house_hot_water_hot_until"
+         }
+        },
+        {
+         "action": "input_boolean.turn_on",
+         "target": {
+          "entity_id": "input_boolean.house_hot_water_hot_hold"
+         }
+        },
         {
          "action": "water_heater.set_temperature",
          "data": {
@@ -74,24 +137,8 @@
          "target": {
           "entity_id": "water_heater.hot_water_hot_water"
          }
-        },
-        {
-         "delay": "02:00:00"
         }
        ]
-      },
-      {
-       "condition": "template",
-       "value_template": "{{ not is_state('input_boolean.house_hot_water_paused', 'on') }}"
-      },
-      {
-       "action": "water_heater.set_operation_mode",
-       "data": {
-        "operation_mode": "auto"
-       },
-       "target": {
-        "entity_id": "water_heater.hot_water_hot_water"
-       }
       }
      ]
     }
@@ -100,7 +147,7 @@
  ],
  "alias": "House — hot water off while away",
  "conditions": [],
- "description": "Operator 2026-11-24: after 6 h of Away the Tado hot water (only if it runs its schedule, 'auto') is switched off and input_boolean.house_hot_water_paused remembers that HA did it. Restored to 'auto' when the alarm leaves Away, the arrival pre-heat starts, or someone heads home within 15 km. Off for more than 48 h: two hours at 65 C first (reheat from cold plus an hour at 60 C or more; review 2026-11-26, tests/climate/wiring.py), then 'auto'. A tank set by hand is never touched. Docs: docs/hot-water.md.",
+ "description": "Operator 2026-11-24: after 6 h of Away the Tado hot water (only if it runs its schedule, 'auto') is switched off and input_boolean.house_hot_water_paused remembers that HA did it. Restored to 'auto' when the alarm leaves Away, the arrival pre-heat starts, or someone heads home within 15 km. Off for more than 48 h: two hours at 65 C first (reheat from cold plus an hour at 60 C or more; review 2026-11-26), then 'auto'. The end of that hold is a stamp (input_datetime.house_hot_water_hot_until with input_boolean.house_hot_water_hot_hold), checked at start and every 15 min, so a restart during it cannot leave the tank at 65 C (2026-11-26; it used to be a delay inside the run). A tank set by hand is never touched: a hold that ends on a tank no longer in 'heat' only clears its flag. Docs: docs/hot-water.md; tests: tests/climate/cases.py, wiring.py.",
  "id": "1792300000080",
  "max": 5,
  "mode": "queued",
@@ -123,6 +170,14 @@
   {
    "minutes": "/15",
    "trigger": "time_pattern"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  },
+  {
+   "at": "input_datetime.house_hot_water_hot_until",
+   "trigger": "time"
   }
  ]
 }

@@ -3644,7 +3644,7 @@ A(fr("no probe reading, no figure", "None", tc="'unavailable'", finding="never a
 
 # Hot water off while away (operator 2026-11-24): the Tado tank keeps itself hot for an empty flat.
 # After 6 h of Away it is switched off, and back on (its schedule) when someone heads home, the arrival
-# pre-heat starts, or the alarm leaves Away. Off for more than 48 h: one hour at 65 C first, the
+# pre-heat starts, or the alarm leaves Away. Off for more than 48 h: two hours at 65 C first, the
 # temperature of the weekly legionella cycle, because water left lukewarm for days is the risk.
 DHW = "1792300000080"
 D_AWAY = "is_state('alarm_control_panel.home', 'armed_away')"
@@ -3688,3 +3688,25 @@ A(dhw("off just over 48 h: a 65 C cycle first", "shock", "True", off_for="172900
       finding="the legionella limit from above"))
 A(dhw("off just under 48 h: straight back to the schedule", "shock", "False", off_for="172700",
       finding="the limit from below; the weekly cycle still runs on its day"))
+
+# The hot hold survives a restart (2026-11-26). The two hours at 65 C used to be a `delay` inside the
+# run: a restart during it ended the run before the tank went back to 'auto', with the pause flag
+# already cleared, so the tank stayed at 65 C. The end of the hold is now a stamp
+# (input_datetime.house_hot_water_hot_until) with a flag (input_boolean.house_hot_water_hot_hold),
+# and `release` is evaluated at start and every 15 min.
+D_HOLD = "is_state('input_boolean.house_hot_water_hot_hold', 'on')"
+D_UNTIL = "state_attr('input_datetime.house_hot_water_hot_until', 'timestamp')"
+
+
+def dhw_rel(name, expect, hold="true", left="-1", finding=""):
+    subs = {"now().timestamp()": "1000000", D_HOLD: hold, D_UNTIL: str(1000000 + int(left))}
+    return dict(name="hot water away: " + name, automation=DHW, expr="release", expect=expect, given={},
+                subs=subs, finding=finding)
+
+
+A(dhw_rel("the hold ends at its stamp", "True", left="0", finding="the end from above"))
+A(dhw_rel("one second before the stamp it holds", "False", left="1", finding="the end from below"))
+A(dhw_rel("a hold missed during a restart is ended late", "True", left="-5400",
+          finding="the restart case: HA came back after the stamp"))
+A(dhw_rel("no hold, nothing to end", "False", hold="false", left="-5400",
+          finding="an old stamp alone never touches the tank"))

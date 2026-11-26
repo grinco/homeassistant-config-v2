@@ -84,7 +84,9 @@ Heat kills legionella and the other usual waterborne bacteria (Pseudomonas, coli
 | 60 °C | thermal death 1.3–10.6 min across Legionellaceae; complete loss of culturability after 60 min | Stout, Best & Yu 1986 (PMC203540); Cervero-Aragó 2019 |
 | 70 °C | 0.7–2.6 min; under 2 min | same |
 
-So **60 °C or more for an hour** is the conservative reading, which is the rule below.
+Stout's minutes are from laboratory suspensions in clean water; in a tank, biofilm and sediment shield the
+bacteria, which is why the rule follows Cervero-Aragó's 60 minutes, not Stout's minutes. So **60 °C or more
+for an hour** is the conservative reading, which is the rule below.
 
 The rules followed, after the German DVGW W551 guidance:
 
@@ -137,10 +139,24 @@ Cases cover the pause, the restore and the 48 h choice (13, straddling 6 h, 15 k
 covered: Tado accepting `off` / `heat` / `auto` through the cloud (first real Away will show it in
 the trace), and the delay itself.
 
-**Open (found 2026-11-26):** the hold is a `delay`, and a Home Assistant restart during it ends the run
-before the step that returns the tank to `auto`. The pause flag is already cleared by then, so nothing
-restores it: the tank would stay on `heat` at 65 °C until someone notices. It existed with the one-hour hold
-and the two-hour hold doubles the window. Not fixed here; the operator decides.
+**The hold survives a restart (2026-11-26).** The hold used to be a `delay` inside the run, and a Home
+Assistant restart during it ended the run before the step that returns the tank to `auto`, with the pause
+flag already cleared: the tank stayed at 65 °C until someone noticed. Now the run that starts the hot cycle
+writes the hold's end (`input_datetime.house_hot_water_hot_until`, now + 2 h) and a flag
+(`input_boolean.house_hot_water_hot_hold`) **before** commanding 65 °C, and returns. A separate branch,
+`release`, ends the hold once the flag is on and the stamp has passed: it clears the flag and, only if the
+tank is still in `heat`, sets `auto` (a tank someone changed by hand during the hold is left alone). It runs
+at the stamp itself, at every start (so a restart ends an overdue hold as soon as HA is back), and every 15
+minutes as a fallback.
+
+The hold only ever starts in the `restore` branch, i.e. when the pause ends because someone is coming home,
+and that branch clears the pause flag first. So `auto` at the end of the hold is the right state. If the trip
+turns back instead, the tank is in `auto` again and the 6-hour pause rule switches it off at the next check;
+during the hold the tank is in `heat`, which the pause rule never touches, and `restore` cannot fire because
+the pause flag is already off (review round 3, 2026-11-26: F1 to F3 checked against this and rejected). Cases straddle the stamp by one second and cover a stamp missed during a restart and an old stamp
+with no hold; `wiring.py` fails if a `delay` or a wait follows the hot step, if the stamp is under 2 h, if the
+hold flag is not turned on before the 65 °C command, or if any of the three release triggers is missing.
+Not covered: the `heat` check in the release branch and Tado accepting the calls.
 
 ## Where this departs from the hygiene guidance (2026-11-26)
 
