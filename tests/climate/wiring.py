@@ -321,6 +321,50 @@ def leak_meter_window():
     return out
 
 
+HOT_WATER_ID = "1792300000080"
+
+
+def _walk(node):
+    """Every action dict in an automation's action tree, in order."""
+    if isinstance(node, list):
+        for x in node:
+            yield from _walk(x)
+    elif isinstance(node, dict):
+        yield node
+        for v in node.values():
+            if isinstance(v, (list, dict)):
+                yield from _walk(v)
+
+
+def hot_water_shock_hold():
+    """After a long pause the tank must be held hot long enough to disinfect.
+
+    Review 2026-11-26 (field guide, legionella): complete loss of culturability takes about 60 min
+    at 60 C (Cervero-Arago et al. 2019) and the hold starts from a tank that sat cold for two days,
+    so the hour at 65 C was mostly reheating. The weekend cycle already uses a two-hour window; the
+    shock after a pause must too. Read from the LIVE automation. Returns a list of problems.
+    """
+    import io
+    import yaml
+    with io.open(harness.AUTOMATIONS, encoding="utf-8") as fh:
+        autos = {str(a.get("id")): a for a in yaml.safe_load(fh)}
+    hw = autos.get(HOT_WATER_ID)
+    if hw is None:
+        return ["hot water automation %s not found" % HOT_WATER_ID]
+    steps = list(_walk(hw.get("actions") or hw.get("action") or []))
+    hot = [i for i, a in enumerate(steps) if a.get("action") == "water_heater.set_temperature"
+           and float((a.get("data") or {}).get("temperature", 0)) >= 60]
+    if len(hot) != 1:
+        return ["expected one hot (>= 60 C) set_temperature step, found %d" % len(hot)]
+    holds = [a["delay"] for a in steps[hot[0] + 1:] if "delay" in a]
+    if not holds:
+        return ["the hot step is not followed by a hold"]
+    if _secs(holds[0]) < 7200:
+        return ["the tank is held hot for %d min after a long pause; disinfection needs 2 h "
+                "(reheat plus an hour at >= 60 C)" % (_secs(holds[0]) // 60)]
+    return []
+
+
 def main():
     missing, extra = digest_meters()
     for m in missing:
@@ -386,6 +430,13 @@ def main():
     if leak_problems:
         return 1
     print("  the leak meter measures only an unheated flat")
+
+    hw_problems = hot_water_shock_hold()
+    for p in hw_problems:
+        print("  HOT WATER       %s" % p)
+    if hw_problems:
+        return 1
+    print("  the hot-water shock after a long pause lasts long enough to disinfect")
 
     refs, skipped = referenced()
     if not refs:
