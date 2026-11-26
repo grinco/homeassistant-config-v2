@@ -76,7 +76,7 @@
          }
         },
         {
-         "delay": "01:00:00"
+         "delay": "02:00:00"
         }
        ]
       },
@@ -100,7 +100,7 @@
  ],
  "alias": "House — hot water off while away",
  "conditions": [],
- "description": "Operator 2026-11-24: after 6 h of Away the Tado hot water (only if it runs its schedule, 'auto') is switched off and input_boolean.house_hot_water_paused remembers that HA did it. Restored to 'auto' when the alarm leaves Away, the arrival pre-heat starts, or someone heads home within 15 km. Off for more than 48 h: one hour at 65 C first (the weekly legionella temperature), then 'auto'. A tank set by hand is never touched. Docs: docs/hot-water.md.",
+ "description": "Operator 2026-11-24: after 6 h of Away the Tado hot water (only if it runs its schedule, 'auto') is switched off and input_boolean.house_hot_water_paused remembers that HA did it. Restored to 'auto' when the alarm leaves Away, the arrival pre-heat starts, or someone heads home within 15 km. Off for more than 48 h: two hours at 65 C first (reheat from cold plus an hour at 60 C or more; review 2026-11-26, tests/climate/wiring.py), then 'auto'. A tank set by hand is never touched. Docs: docs/hot-water.md.",
  "id": "1792300000080",
  "max": 5,
  "mode": "queued",

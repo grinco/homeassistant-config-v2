@@ -71,15 +71,20 @@ tap, and that pipe-full then cools. No setpoint changes that.
 
 ## The hot cycle
 
-Heat kills legionella and the other usual waterborne bacteria (Pseudomonas, coliforms). Rough
-times to kill 90 % of legionella:
+Heat kills legionella and the other usual waterborne bacteria (Pseudomonas, coliforms).
 
-| water | time |
-|---|---|
-| 50 °C | 1.5–2 hours |
-| 55 °C | about 20 minutes |
-| 60 °C | about 2 minutes |
-| 70 °C | seconds |
+*Corrected 2026-11-26 (review of the field guide).* The table that stood here (90 % kill in 1.5–2 h at
+50 °C, ~20 min at 55 °C, ~2 min at 60 °C, seconds at 70 °C) had no source and is too optimistic at 55 and
+60 °C. What the laboratory studies report, with several-fold spread between strains and more in biofilm:
+
+| water | time | source |
+|---|---|---|
+| 50 °C | survives for hours, not reliably killed | HSE HSG274 Part 2; WHO 2007 |
+| 55 °C | complete loss of culturability after 3–8 h | Cervero-Aragó et al. 2019 (PMC6520252) |
+| 60 °C | thermal death 1.3–10.6 min across Legionellaceae; complete loss of culturability after 60 min | Stout, Best & Yu 1986 (PMC203540); Cervero-Aragó 2019 |
+| 70 °C | 0.7–2.6 min; under 2 min | same |
+
+So **60 °C or more for an hour** is the conservative reading, which is the rule below.
 
 The rules followed, after the German DVGW W551 guidance:
 
@@ -123,9 +128,24 @@ Operator: the tank kept itself hot for an empty flat. `automations/house-hot-wat
   person heads home within 15 km (Proximity; also outside the heating season, when the pre-heat does
   not run). Only a pause HA made is undone.
 - **Legionella.** Off for more than 48 h means the water sat lukewarm for days: the tank first runs
-  one hour at 65 °C (`heat`), the weekend cycle's temperature, then returns to `auto`. Shorter pauses
+  **two hours** at 65 °C (`heat`), the weekend cycle's temperature, then returns to `auto` (2026-11-26:
+  was one hour, which from a tank cold for two days is mostly reheating; `tests/climate/wiring.py` now
+  fails if the hold after the hot step is under 2 h). Shorter pauses
   go straight back; the weekly 15-17 h cycle on Saturday and Sunday still runs from the Tado schedule.
 
 Cases cover the pause, the restore and the 48 h choice (13, straddling 6 h, 15 km and 48 h). Not
 covered: Tado accepting `off` / `heat` / `auto` through the cloud (first real Away will show it in
-the trace), and the hour's delay.
+the trace), and the delay itself.
+
+**Open (found 2026-11-26):** the hold is a `delay`, and a Home Assistant restart during it ends the run
+before the step that returns the tank to `auto`. The pause flag is already cleared by then, so nothing
+restores it: the tank would stay on `heat` at 65 °C until someone notices. It existed with the one-hour hold
+and the two-hour hold doubles the window. Not fixed here; the operator decides.
+
+## Where this departs from the hygiene guidance (2026-11-26)
+
+HSE HSG274 Part 2 and the Czech National Institute of Public Health (SZU, recommendation of 4.9.2025)
+recommend storing hot water at **60 °C** and reaching at least **50 °C (better 55 °C) at the tap within a
+minute**. The day setting of 45 °C and the overnight off are below that, by the operator's choice: lower
+standing losses against a higher legionella risk, mitigated by the twice-weekly 65 °C cycle, the flush and
+the 48-hour rule. A household with an elderly or immunocompromised member should follow the guidance.
