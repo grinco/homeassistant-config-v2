@@ -230,6 +230,67 @@ rate reads somewhat low (about 9 % for a decay from 900 to 600 ppm). Kept as an 
 stored baseline was computed the same way, the 1.8× comparison is between runs of one formula, and the
 sensors' own ±30–50 ppm drift is the larger error.
 
+### Socket heat (2026-11-27)
+
+Operator: "you're not taking into account the heat produced by devices when nobody is home: the rack
+with a few servers in the office, the network PoE power supply in the living room". A room with a
+steady heat source P does not cool toward outdoors but toward outdoors + P/H, where H is the room's
+heat loss in W/K. Measured against outdoors, it looks tighter than it is. On 21.11 the office read
+1.2 %/h, the flat's tightest at 0.4× the median, with about 225 W of rack and desk in it.
+
+**H per room** comes from the flat's 1997 heating design (the building-office file of the loft
+conversion, kept privately): a total design heat loss of 7 950 W (ČSN 06 0210, Prague's −12 °C design
+outdoor, 20 °C rooms, so a 32 K difference), with each room's radiator sized to its own loss. A room's
+share of the 7 950 W is its radiator's rated output over the sum of all twelve (approximate catalogue
+outputs at 75/65/20 °C for 500 mm panels: type 11 ≈ 780, 21 ≈ 1 100, 22 ≈ 1 460 W per metre; towel
+rails ≈ 550 and 1 000 W; installed ≈ 10.7 kW, 1.34× the loss). Only the shares matter, so the
+catalogue figures' absolute error cancels.
+
+| Room | Radiator | Design loss | H (W/K) |
+|---|---|---|---|
+| Living room + kitchen (one space) | 2 × 21 / 1200 | 1 960 W | 61 |
+| Corridor (lower hall) | 22 / 900 | 980 W | 31 |
+| Office | 21 / 900 | 740 W | 23 |
+| Bedroom | 11 / 1200 | 700 W | 22 |
+| Kid 1 room | 11 / 500 | 290 W | 9 |
+| Kid 2 room | 11 / 500 | 290 W | 9 |
+
+**Socket heat per room** is the energy of every metered socket in the room between the snapshot and
+the end, as mean watts (`rooms_heat`, read into `input_text.leak_meter_heat` at the snapshot). The
+office rack sits behind the Solix battery, whose charging goes through the same plug: energy stored is
+not heat, so the battery's charge is subtracted and its discharge (and any solar input) added
+(`sensor.solix_battery_in_energy` / `_out_energy`). On 21.11 the plug drew 1.57 kWh over the run, 0.96 kWh of it into the battery.
+The rate is then `100 ln((T1 − g) / (T2 − g)) / h` with `g = outdoor + W / H`. The living room's
+~75 W (PoE, media) moves `g` up by 1.2 °C.
+
+Rules: a room whose own sockets hold it within 3 °C of its temperature (`T1 − g < 3`) is reported kept
+warm, not measured: its cooling is then mostly the equipment, and the result swings with an H nobody
+measured. A metered room whose meters could not be read at both ends is reported `no meter` and not
+measured (an uncorrected office would be stored ~3× too airtight). A meter that went backwards (a
+reset) counts as unread. A room whose air conditioner drew over 50 W on average is reported `AC on`
+and not measured: a heat pump delivers 3–4× its electricity, and standby is about 1 W. No AC
+specification is needed for that rule. `tests/climate/wiring.py` fails when a metered socket or an
+air conditioner in a measured room's area is missing from `rooms_heat`, or when `rooms_heat` and `ua`
+name different rooms.
+
+**21.11 recomputed with the rule as built.** Living room 2.8 → 3.0 %/h. The office is kept warm: the
+rack plug drew 1.57 kWh over the run while the Solix stored 0.96 kWh (it was charging), so the room
+held 0.63 kWh, 355 W, and `g` = 5.7 + 355 / 23 = 21.1 °C, above the office's 20.4 °C. The office
+cooled anyway, by 0.3 °C, so its real H is above 24 W/K: the radiator figure misses the heat it gives
+the cooler rooms next to it through the plasterboard walls, which the other rooms barely have, since
+they cool together. The office is therefore not measurable by this method on a run like that one; its
+baseline was cleared (0, "not measured") rather than kept at the uncorrected 1.2, and the living room's
+set to 3.0. Ranking from 21.11: kid 1 room 7.1, bedroom 3.8, corridor 3.7, living room 3.0, kid 2 room
+2.2; office not measured.
+
+Accepted: H is the 1997 design (radiators may have been changed since, and the design loss includes
+heat to the unheated stairwell and neighbours); interior exchange between rooms is ignored, which is
+fair for rooms that cool together and wrong for one with its own heat source (above); unmetered heat
+(the fridge, about 40 W in the living room) is not counted. The kid rooms' small H means a desk PC
+left on (100 W) moves their equilibrium by 11 °C: such a run reports the room kept warm. A per-room H
+fitted from several runs with different socket heat (the office's varies by ~150 W with the Solix
+charging) would replace the 1997 figure; it needs a winter of runs and is not built.
+
 ## Not covered by cases
 
 The 23:59 write itself, the statistics helper's window, notification delivery, and the blind

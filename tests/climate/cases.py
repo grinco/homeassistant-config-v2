@@ -2949,6 +2949,9 @@ L_AWAY = "states('input_number.climate_away_min')"
 def leak(name, expr, expect, finding, subs=None, **given):
     if expr == "k" and subs is None:
         subs = {L_AWAY: "'0'"}   # the setpoint exclusion has its own cases; elsewhere it is out of the way
+    if expr == "k":
+        # socket heat has its own cases; a room with no meters and no heat-loss figure is uncorrected
+        given = {"rooms_heat": {}, "heat_w": {}, "ua": {}} | given
     return dict(name="leak meter: " + name, automation=LEAK, expr=expr, expect=expect, given=given,
                 subs=subs or {}, finding=finding)
 
@@ -2976,6 +2979,70 @@ A(leak("a room that reached the Away setpoint was heated: kept warm", "k", "{'ki
 A(leak("just above the Away setpoint is measured", "k", "{'kid1': 16.1}",
        "the 0.5 C margin straddled from above", subs={L_AWAY: "'16'"},
        snap={"t": 0, "o": 5.0, "T": {"kid1": 21.0}, "C": {}}, now_T={"kid1": 16.6}, now_o=5.0, hours=2))
+
+# Socket heat (operator 2026-11-26): "the heat produced by devices when nobody is home - the rack
+# with a few servers in the office, the PoE power supply in the living room". A room with a steady
+# source P cools toward outdoors + P/H, not toward outdoors (H: its heat loss in W/K, from the
+# 1997 radiator sizing, docs/heating-energy-rating.md). The rate is measured against that
+# equilibrium. 21.11: the office read 1.2 %/h, the flat's tightest, with ~225 W of rack in it.
+_OFFICE = {"office": {"add": ["m.rack", "m.out"], "sub": ["m.in"], "ac": "m.ac"}}
+_OSNAP = {"t": 0, "o": 5.705, "T": {"office": 20.4}, "C": {}}
+A(leak("a room's socket heat moves the point it cools toward", "k", "{'office': 3.5}",
+       "operator 2026-11-26: the rack kept the office 'tightest' (21.11: 1.2 uncorrected)",
+       snap=_OSNAP, now_T={"office": 20.1}, now_o=5.705, hours=1.78, rooms_heat=_OFFICE,
+       heat_w={"office": {"w": 225, "ac": 0}}, ua={"office": 23}))
+A(leak("without its heat figure the same room reads as before", "k", "{'office': 1.2}",
+       "the correction is the only difference: 21.11's stored value", snap=_OSNAP,
+       now_T={"office": 20.1}, now_o=5.705, hours=1.78))
+A(leak("a metered room whose meters could not be read is not measured (-3)", "k", "{'office': -3}",
+       "an uncorrected office would be stored ~3x too airtight", snap=_OSNAP,
+       now_T={"office": 20.1}, now_o=5.705, hours=1.78, rooms_heat=_OFFICE, heat_w={}, ua={"office": 23}))
+A(leak("an air conditioner heating during the run: not measured (-2)", "k", "{'office': -2}",
+       "a heat pump delivers 3-4x its power; heat added is not heat kept", snap=_OSNAP,
+       now_T={"office": 20.1}, now_o=5.705, hours=1.78, rooms_heat=_OFFICE,
+       heat_w={"office": {"w": 225, "ac": 51}}, ua={"office": 23}))
+A(leak("an air conditioner at 50 W is standby noise: measured", "k", "{'office': 3.5}",
+       "the 50 W threshold straddled from below", snap=_OSNAP,
+       now_T={"office": 20.1}, now_o=5.705, hours=1.78, rooms_heat=_OFFICE,
+       heat_w={"office": {"w": 225, "ac": 50}}, ua={"office": 23}))
+A(leak("a room its own sockets hold within 3 C of its temperature is kept warm (-1)", "k", "{'office': -1}",
+       "21.11: 355 W (rack + the Solix charging) put the office's equilibrium above the office; "
+       "18 C over outdoors but 2.9 C over where 347 W holds it", snap={"t": 0, "o": 5.0, "T": {"office": 23.0}, "C": {}},
+       now_T={"office": 22.8}, now_o=5.0, hours=2, rooms_heat=_OFFICE,
+       heat_w={"office": {"w": 347, "ac": 0}}, ua={"office": 23}))
+A(leak("exactly 3 C over the equilibrium is measured", "k", "{'office': 3.4}",
+       "the threshold straddled from above", snap={"t": 0, "o": 5.0, "T": {"office": 23.0}, "C": {}},
+       now_T={"office": 22.8}, now_o=5.0, hours=2, rooms_heat=_OFFICE,
+       heat_w={"office": {"w": 345, "ac": 0}}, ua={"office": 23}))
+
+# heat_now: per metered room, [net kWh, AC kWh] from meter_vals (each meter's state, read once)
+_HROOMS = {"office": {"add": ["m.rack", "m.out"], "sub": ["m.in"], "ac": "m.ac"},
+           "kid2": {"add": [], "sub": [], "ac": "m.ac2"}, "corridor": {"add": ["m.l"], "sub": [], "ac": ""}}
+_HVALS = {"m.rack": "651.31", "m.out": "0.62", "m.in": "0.98", "m.ac": "30.42", "m.ac2": "3.81", "m.l": "2.78"}
+A(leak("a room's heat is its meters' sum less what its battery stored", "heat_now",
+       "{'office': [650.95, 30.42], 'kid2': [0.0, 3.81], 'corridor': [2.78, 0]}",
+       "the Solix charges through the rack plug: stored energy is not heat",
+       rooms_heat=_HROOMS, meter_vals=_HVALS))
+A(leak("a room with any meter unreadable is left out", "heat_now", "{'kid2': [0.0, 3.81], 'corridor': [2.78, 0]}",
+       "a partial sum would read as less heat", rooms_heat=_HROOMS, meter_vals=_HVALS | {"m.in": "unavailable"}))
+A(leak("an unreadable air conditioner leaves its room out too", "heat_now", "{'office': [650.95, 30.42], 'corridor': [2.78, 0]}",
+       "an unseen heat pump could be heating", rooms_heat=_HROOMS, meter_vals=_HVALS | {"m.ac2": "unknown"}))
+
+# heat_w: mean watts over the run from the two readings
+A(leak("socket heat is the energy between the readings over the hours", "heat_w",
+       "{'office': {'w': 225, 'ac': 6}}", "W = kWh x 1000 / h",
+       heat_snap={"office": [650.0, 30.40]}, heat_now={"office": [650.45, 30.412]}, hours=2))
+A(leak("a meter that went backwards (reset) leaves the room out", "heat_w", "{}",
+       "a negative sum is a reset, not a cooler room",
+       heat_snap={"office": [650.0, 30.4]}, heat_now={"office": [0.2, 30.4]}, hours=2))
+A(leak("an air conditioner counter that went backwards leaves the room out", "heat_w", "{}",
+       "the AC test must not pass on a reset", heat_snap={"office": [650.0, 30.4]},
+       heat_now={"office": [650.4, 0.1]}, hours=2))
+A(leak("a room missing from either reading is left out", "heat_w", "{'office': {'w': 200, 'ac': 0}}",
+       "both ends or nothing", heat_snap={"office": [650.0, 0], "corridor": [2.7, 0]},
+       heat_now={"office": [650.4, 0]}, hours=2))
+A(leak("no heat snapshot: nothing", "heat_w", "{}", "a pre-existing snapshot or an oversize one",
+       heat_snap=None, heat_now={"office": [650.4, 0]}, hours=2))
 
 _CSNAP = {"t": 0, "o": 5.0, "T": {}, "C": {"living_room": 700.0}}
 A(leak("air changes from the CO2 decay", "ach", "{'living_room': 0.55}", "ach = ln((C1-400)/(C2-400)) / h",
