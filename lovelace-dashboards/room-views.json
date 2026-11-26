@@ -9,6 +9,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "living_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -791,45 +830,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "living_room",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -852,6 +852,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kitchen",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -1634,45 +1673,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kitchen",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -1695,6 +1695,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -2477,45 +2516,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -2538,6 +2538,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "corridor",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -3320,45 +3359,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "corridor",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -3381,6 +3381,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "stairs",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -4163,45 +4202,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "stairs",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -4224,6 +4224,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bedroom_2",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -5006,45 +5045,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bedroom_2",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -5067,6 +5067,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kid1_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -5849,45 +5888,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid1_room",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -5910,6 +5910,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "kid2_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -6692,45 +6731,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "kid2_room",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -6753,6 +6753,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "hallway",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -7535,45 +7574,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "hallway",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -7596,6 +7596,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "bathroom",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -8378,45 +8417,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "bathroom",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -8439,6 +8439,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "shower",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -9221,45 +9260,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "shower",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -9282,6 +9282,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "laundry_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -10064,45 +10103,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "laundry_room",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -10125,6 +10125,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "closet",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -10907,45 +10946,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "closet",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
@@ -10968,6 +10968,45 @@
     "cards": [
      {
       "card": {
+       "heading": "Automation",
+       "heading_style": "subtitle",
+       "icon": "mdi:robot-outline",
+       "type": "heading"
+      },
+      "card_param": "badges",
+      "filter": {
+       "exclude": [
+        {
+         "hidden_by": "/.+/"
+        },
+        {
+         "attributes": {
+          "device_class": "outlet"
+         }
+        }
+       ],
+       "include": [
+        {
+         "area": "tea_room",
+         "domain": "switch",
+         "integration": "magic_areas",
+         "options": {
+          "show_name": true,
+          "show_state": true,
+          "tap_action": {
+           "action": "toggle"
+          },
+          "type": "entity"
+         }
+        }
+       ]
+      },
+      "show_empty": false,
+      "type": "custom:auto-entities",
+      "unique": "entity"
+     },
+     {
+      "card": {
        "columns": 1,
        "square": false,
        "type": "grid"
@@ -11750,45 +11789,6 @@
       "sort": {
        "method": "friendly_name"
       },
-      "type": "custom:auto-entities",
-      "unique": "entity"
-     },
-     {
-      "card": {
-       "heading": "Automation",
-       "heading_style": "subtitle",
-       "icon": "mdi:robot-outline",
-       "type": "heading"
-      },
-      "card_param": "badges",
-      "filter": {
-       "exclude": [
-        {
-         "hidden_by": "/.+/"
-        },
-        {
-         "attributes": {
-          "device_class": "outlet"
-         }
-        }
-       ],
-       "include": [
-        {
-         "area": "tea_room",
-         "domain": "switch",
-         "integration": "magic_areas",
-         "options": {
-          "show_name": true,
-          "show_state": true,
-          "tap_action": {
-           "action": "toggle"
-          },
-          "type": "entity"
-         }
-        }
-       ]
-      },
-      "show_empty": false,
       "type": "custom:auto-entities",
       "unique": "entity"
      }
