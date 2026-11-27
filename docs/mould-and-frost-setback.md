@@ -103,6 +103,16 @@ comfort targets. Off on arrival (the alarm leaves Away), when the trip turns bac
 2 h. One push says it started. 15 km is roughly half an hour in town; the radiators need about that
 to lift a room a couple of degrees.
 
+**Heading away for 5 minutes also ends it (2026-11-26).** That afternoon the nearest phone sat about
+3 km out, drove past at 0.6–1.5 km and went back to 3.6 km. The short 'towards' leg started the
+pre-heat, and inside 25 km only arrival or the 2 h limit could stop it: the flat heated for 1 h 50 min
+for nobody, and the leak meter's run ended 31 minutes after its snapshot. Daily errands here are all
+within a few km, so the distance limits cannot tell a drive-past from a return; the direction can.
+Five minutes, not at once: a bend in the road can read 'away_from' for a sample or two. A long
+'stationary' (a shop, traffic) does not end it. If the trip really does turn home again, the start
+rule fires again (a second push). A state trigger at 5 min ends it on time; the 10-minute pattern is
+the backstop, and a restart re-stamps the direction's `last_changed`, which only delays the stop.
+
 ## Copies and checks
 
 The five night targets are one formula behind a `{% set room %}{% set f %}` header; `wiring.py`
