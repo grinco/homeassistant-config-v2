@@ -377,6 +377,30 @@ def leak_meter_heat():
     for e in ents:
         if e.get("device_id"):
             by_dev.setdefault(e["device_id"], []).append(e)
+    # room_temps (2026-11-27): a room's air sensors, averaged. Each must be a temperature sensor in
+    # that room, and not on an AC unit (a climate device with an energy meter: it reads near the
+    # ceiling) or a radiator valve (a climate device named _trv: it reads its radiator).
+    by_id = {e["entity_id"]: e for e in ents}
+    for room, sensors in (block.get("room_temps") or {}).items():
+        if room not in areas:
+            out.append("room_temps names %s, not a measured room" % room)
+            continue
+        for eid in sensors:
+            e = by_id.get(eid)
+            if e is None:
+                out.append("%s: %s does not exist" % (room, eid))
+                continue
+            area = e.get("area_id") or dev_area.get(e.get("device_id"))
+            sib = [x["entity_id"] for x in by_dev.get(e.get("device_id"), [])]
+            if cls(e) != "temperature":
+                out.append("%s: %s is not a temperature sensor" % (room, eid))
+            elif area not in areas[room]:
+                out.append("%s: %s is in area %s" % (room, eid, area))
+            elif any(i.startswith("climate.") for i in sib) and (
+                    any("_trv" in i for i in sib)
+                    or any(cls(x) == "energy" for x in by_dev.get(e.get("device_id"), []))):
+                # a wall thermostat has a climate entity too, and does read room air
+                out.append("%s: %s is on an AC unit or a valve, not room air" % (room, eid))
     for did, dev in by_dev.items():
         area = dev_area.get(did)
         room = next((r for r, a in areas.items() if area in a), None)
@@ -532,7 +556,7 @@ def main():
         print("  LEAK HEAT       %s" % p)
     if heat_problems:
         return 1
-    print("  the leak meter counts every metered socket and air conditioner in its rooms")
+    print("  the leak meter counts every metered socket and air conditioner in its rooms, and averages only air sensors")
 
     hw_problems = hot_water_shock_hold()
     for p in hw_problems:
