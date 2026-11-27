@@ -1,0 +1,139 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "away_now": "{{ states('alarm_control_panel.home') == 'armed_away' }}",
+    "rooms": "{% set ns = namespace(l=[]) %}{% for b in states.input_boolean | selectattr('entity_id', 'match', '^input_boolean\\.sleeping_') %}{% set a = area_id(b.entity_id) %}{% set sw = (area_entities(a) | select('match', '^switch\\.magic_areas_light_groups_.+_light_control$') | list) if a else [] %}{% if sw %}{% set ns.l = ns.l + [[sw[0] | replace('switch.magic_areas_light_groups_', '') | replace('_light_control', ''), states(sw[0]), b.state == 'on']] %}{% endif %}{% endfor %}{{ ns.l }}",
+    "stored": "{% set s = states('input_text.sleeping_paused') %}{{ [] if s in ['unknown', 'unavailable', 'none', ''] else s.split(',') | reject('eq', '') | list }}"
+   }
+  },
+  {
+   "variables": {
+    "pause": "{% set ns = namespace(l=[]) %}{% for r in rooms %}{% if r[2] and r[1] == 'on' %}{% set ns.l = ns.l + [r[0]] %}{% endif %}{% endfor %}{{ ns.l }}",
+    "release": "{% set ns = namespace(l=[]) %}{% for s in stored %}{% set m = namespace(asleep=false) %}{% for r in rooms %}{% if r[0] == s and r[2] %}{% set m.asleep = true %}{% endif %}{% endfor %}{% if not m.asleep %}{% set ns.l = ns.l + [s] %}{% endif %}{% endfor %}{{ ns.l }}"
+   }
+  },
+  {
+   "variables": {
+    "handoff": "{% if away_now %}{% set s = states('input_text.house_away_paused') %}{% set have = [] if s in ['unknown', 'unavailable', 'none', ''] else s.split(',') | reject('eq', '') | list %}{{ (have + release) | unique | list }}{% else %}{{ [] }}{% endif %}",
+    "keep": "{{ ((stored | reject('in', release) | list) + pause) | unique | list }}"
+   }
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ keep | join(',') != stored | join(',') }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "input_text.set_value",
+     "data": {
+      "value": "{{ keep | join(',') }}"
+     },
+     "target": {
+      "entity_id": "input_text.sleeping_paused"
+     }
+    }
+   ]
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ pause | count > 0 }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "switch.turn_off",
+     "target": {
+      "entity_id": "{{ pause | map('regex_replace', '^(.*)$', 'switch.magic_areas_light_groups_\\\\1_light_control') | list }}"
+     }
+    }
+   ]
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ release | count > 0 }}"
+    }
+   ],
+   "then": [
+    {
+     "else": [
+      {
+       "action": "switch.turn_on",
+       "target": {
+        "entity_id": "{% set have = states.switch | map(attribute='entity_id') | list %}{{ release | map('regex_replace', '^(.*)$', 'switch.magic_areas_light_groups_\\\\1_light_control') | select('in', have) | list }}"
+       }
+      }
+     ],
+     "if": [
+      {
+       "condition": "template",
+       "value_template": "{{ away_now }}"
+      }
+     ],
+     "then": [
+      {
+       "action": "input_text.set_value",
+       "data": {
+        "value": "{{ handoff | join(',') }}"
+       },
+       "target": {
+        "entity_id": "input_text.house_away_paused"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "alias": "Sleeping — pause presence lighting",
+ "conditions": [
+  {
+   "condition": "template",
+   "value_template": "{{ trigger.id != 'switch' or trigger.to_state.context.user_id is none }}"
+  }
+ ],
+ "description": "2026-11-27 (operator: 'the lights might turn on as well while people are sleeping'). While a room's input_boolean.sleeping_<room> is on, its Magic Areas light_control is off, so movement in bed does not light the room. Only rooms whose presence lighting was ON are paused, and they are remembered in input_text.sleeping_paused (area slugs) so a restart loses nothing; clearing the toggle (by hand or at noon) releases only those. A room released while the house is Away is handed to input_text.house_away_paused instead, so Away's return restores it. If another automation (Away's return) switches a sleeping room's presence lighting back on, it is paused again; a PERSON switching it on is left alone until the next toggle change. The room's switch is found by area, so no list to keep. Tests: tests/climate/cases.py (sleeping lights). Design: docs/presence-lighting.md.",
+ "id": "1792400000011",
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": [
+    "input_boolean.sleeping_living_room",
+    "input_boolean.sleeping_office",
+    "input_boolean.sleeping_bedroom",
+    "input_boolean.sleeping_kid1",
+    "input_boolean.sleeping_kid2"
+   ],
+   "id": "toggle",
+   "to": [
+    "on",
+    "off"
+   ],
+   "trigger": "state"
+  },
+  {
+   "entity_id": [
+    "switch.magic_areas_light_groups_living_room_light_control",
+    "switch.magic_areas_light_groups_guest_room_light_control",
+    "switch.magic_areas_light_groups_bedroom_light_control",
+    "switch.magic_areas_light_groups_kid1_room_light_control",
+    "switch.magic_areas_light_groups_kid2_room_light_control"
+   ],
+   "id": "switch",
+   "to": "on",
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "id": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

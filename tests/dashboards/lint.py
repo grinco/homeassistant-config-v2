@@ -294,6 +294,11 @@ Checks, each one written because something it catches actually shipped:
                          for one shows only when it is abnormal (a visibility condition).
                          2026-11-13: four always-green pills, and the doorbell PIR shown as a
                          heading badge and again as a pill.
+  C48 sleeping-on-top    every room page shows its "Sleeping here" toggle as the first card
+                         under the Automation heading (above Occupancy), and nowhere else on
+                         the page. Operator, 2026-11-27: it pauses the room's AC and presence
+                         lighting, so it belongs with the automations, near the top - not in
+                         the Climate grid where it first landed.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -429,6 +434,8 @@ RESOURCE_SLUG = {
     "auto-entities": "lovelace-auto-entities",
 }
 
+
+SLEEPING_RE = "/^input_boolean\\.sleeping_/"
 
 def load(name):
     with io.open(os.path.join(STORAGE, name), encoding="utf-8") as fh:
@@ -1815,6 +1822,34 @@ def main():
                      for e, p_ in sorted(seen.items()) if len(p_) > 1]
             if loud:
                 fail("C47", "%s: Security repeats itself or shows normal health as a card" % label, loud)
+
+        # C48 - "Sleeping here" sits on top of each room page, once.
+        if label == "lovelace":
+            misplaced = []
+            for v in views:
+                if not (v.get("subview") and v.get("back_path") == "/lovelace/home"
+                        and v.get("path") != "home-classic" and not is_floor_page(v)):
+                    continue
+                first = ((v.get("sections") or [{}])[0].get("cards") or [])
+                heading = first[0].get("card", {}).get("heading") if first else None
+                second = first[1] if len(first) > 1 else {}
+                inc = (second.get("filter") or {}).get("include") or []
+                top_ok = (heading == "Automation" and len(inc) == 1
+                          and inc[0].get("domain") == "input_boolean"
+                          and inc[0].get("entity_id") == SLEEPING_RE)
+                if not top_ok:
+                    misplaced.append("%s: the card under Automation is not the Sleeping here tile" % v.get("path"))
+                for path, card in cards(v, v.get("path")):
+                    if card is second:
+                        continue
+                    f = card.get("filter") or {}
+                    for r in f.get("include") or []:
+                        dom = r.get("domain")
+                        if dom == "input_boolean" and r.get("entity_id") != SLEEPING_RE and not any(
+                                x.get("entity_id") == SLEEPING_RE for x in f.get("exclude") or []):
+                            misplaced.append("%s: %s can show a sleeping toggle a second time" % (v.get("path"), path))
+            if misplaced:
+                fail("C48", "%s: a room's Sleeping here is not on top, or shows twice" % label, misplaced)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}
