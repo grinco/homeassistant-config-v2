@@ -2806,3 +2806,33 @@ decommission the bridge rather than paper over it with a freshness gate:
 If a meter's BLE path is lost now, the room drops to its next real instrument, which is the
 behaviour v5.10 argued against. The trade is deliberate: a worse but live reading beats a good
 but frozen one.
+
+## v6.2 — "Sleeping here" (2026-11-27)
+
+**Observed.** On 24 and 25 November someone was sleeping in the office. At 06:00:00 the alarm left
+night mode, the office target moved from its night value (19) to its day value (21), and the AC
+started heating. The office has no radiator, so the AC is its only heater. The sleeper woke up with
+hot air blowing in their face. The operator asked for a way to stop the AC blowing air, hot or cold,
+in a room where someone is sleeping.
+
+**The rule.** Each room has `input_boolean.sleeping_<room>`, shown on its room page as "Sleeping here" and
+exposed to Assist. It is deliberately not a climate helper: it says *someone is asleep in this
+room*, and lighting is meant to read it too (operator, same day). The operator plans to set it
+automatically later, from night-time CO₂ rise or a bed pressure sensor. While it is on, the AC does not run for comfort in that room:
+
+- no heating, no cooling, no morning warm-up and no air-filter fan;
+- it sits in the mode law directly under the open window, `... {% elif window_open %}off{% elif sleeping %}off ...`,
+  so the frost and 18–30 °C safety branches and a person's hold at the remote still outrank it;
+- the radiators are not affected, so a radiator room stays warm silently.
+
+**It clears itself at 12:00** (`automation.sleeping_toggles_clear_at_noon`). A forgotten
+toggle can therefore cost the office at most one morning of heat, and the safety floor of 18 holds
+during that time. A guest staying several nights switches it on each evening. The toggles are also
+in the loop's trigger list, so switching one on stops a running unit within seconds rather than at
+the next 10-minute tick.
+
+**Accepted.** The office drifts towards the 18 °C floor while the toggle is on. Turning a running unit
+off can itself make a sound; that is the operator's call when switching the toggle.
+
+Tests: `cases.py` *someone sleeping: …* (each straddles the toggle against its twin); `mutate.py`
+*sleeping: …* (ignored, outranks safety, outranks a person's hold, only heating stops, never read).

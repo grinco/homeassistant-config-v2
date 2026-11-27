@@ -1,0 +1,27 @@
+{
+ "actions": [
+  {
+   "action": "input_boolean.turn_off",
+   "target": {
+    "entity_id": [
+     "input_boolean.sleeping_living_room",
+     "input_boolean.sleeping_office",
+     "input_boolean.sleeping_bedroom",
+     "input_boolean.sleeping_kid1",
+     "input_boolean.sleeping_kid2"
+    ]
+   }
+  }
+ ],
+ "alias": "Sleeping toggles clear at noon",
+ "conditions": [],
+ "description": "2026-11-27 (operator): 'Sleeping here' marks a room where someone is asleep; the climate loop keeps its AC from blowing air there, and other automations (lights) may read it too. It clears itself at 12:00 so a forgotten toggle cannot leave a room unheated for days (the safety band still holds 18 C meanwhile). Design: docs/climate-control-design.md, v6.2.",
+ "id": "1792400000010",
+ "mode": "single",
+ "triggers": [
+  {
+   "at": "12:00:00",
+   "trigger": "time"
+  }
+ ]
+}
