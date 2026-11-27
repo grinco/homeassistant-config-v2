@@ -291,6 +291,26 @@ left on (100 W) moves their equilibrium by 11 °C: such a run reports the room k
 fitted from several runs with different socket heat (the office's varies by ~150 W with the Solix
 charging) would replace the 1997 figure; it needs a winter of runs and is not built.
 
+### One temperature per room: the mean of its air sensors (2026-11-27)
+
+Operator: "use the average for the leak meter (same for all rooms that have multiple sensors)". The
+office's two desk sensors read 21.3 and 20.1 °C at the same moment: one desk is not the room. The leak
+meter now reads a room with several air sensors as their mean (`room_temps`), and the others by their
+`climate_temp_` sensor as before. Only air sensors count. Not counted: AC indoor units (they read near
+the ceiling, 1–2 °C warm), radiator valves (they read their radiator), the motion and presence sensors'
+chip temperatures, and the kid 1 room's corner probe (it measures the wall surface, for mould).
+
+| Room | Sensors averaged |
+|---|---|
+| Office | the CO₂ meter on one desk, the thermometer on the other |
+| Living room | the CO₂ meter, the Tado wall thermostat |
+| Kid 1 room | the furniture thermometer, the air-quality sensor |
+
+A room with one of its sensors unreadable at either end has no reading, and is not measured: a mean
+of the one left would step to that sensor's level. Climate control keeps its own sensors; this is the
+leak meter only. `tests/climate/wiring.py` fails when an averaged sensor is missing, is not a
+temperature sensor in that room, or sits on an AC unit or a valve (a wall thermostat is allowed).
+
 ## Not covered by cases
 
 The 23:59 write itself, the statistics helper's window, notification delivery, and the blind

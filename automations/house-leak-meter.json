@@ -78,17 +78,34 @@
      "kid1": 9,
      "kid2": 9,
      "corridor": 31
+    },
+    "room_temps": {
+     "office": [
+      "sensor.meter_pro_co2_5fe9_temperature",
+      "sensor.janka_s_desk_temperature"
+     ],
+     "living_room": [
+      "sensor.meter_pro_co2_b5be_temperature",
+      "sensor.livingroom_thermostat_livingroom_thermostat_temperature"
+     ],
+     "kid1": [
+      "sensor.indoor_outdoor_meter_228b_temperature",
+      "sensor.kid1_air_quality_temperature"
+     ]
     }
    }
   },
   {
    "variables": {
-    "meter_vals": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% set ns.d = dict(ns.d, **{e: states(e)}) %}{% endfor %}{% endfor %}{{ ns.d }}"
+    "meter_vals": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% set ns.d = dict(ns.d, **{e: states(e)}) %}{% endfor %}{% endfor %}{{ ns.d }}",
+    "temp_base": "{% set ns = namespace(d={}) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.climate_temp_') %}{% set r = s.entity_id[20:] %}{% if r != 'outdoor' %}{% set ns.d = dict(ns.d, **{r: s.state}) %}{% endif %}{% endfor %}{{ ns.d }}",
+    "temp_reads": "{% set ns = namespace(d={}) %}{% for r, l in room_temps.items() %}{% for e in l %}{% set ns.d = dict(ns.d, **{e: states(e)}) %}{% endfor %}{% endfor %}{{ ns.d }}"
    }
   },
   {
    "variables": {
-    "heat_now": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% set ok = namespace(v=true, a=0) %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% if not is_number(meter_vals.get(e)) %}{% set ok.v = false %}{% endif %}{% endfor %}{% if ok.v %}{% for e in m['add'] %}{% set ok.a = ok.a + meter_vals[e] | float %}{% endfor %}{% for e in m['sub'] %}{% set ok.a = ok.a - meter_vals[e] | float %}{% endfor %}{% set ns.d = dict(ns.d, **{r: [ok.a | round(2), (meter_vals[m['ac']] | float | round(2)) if m['ac'] else 0]}) %}{% endif %}{% endfor %}{{ ns.d }}"
+    "heat_now": "{% set ns = namespace(d={}) %}{% for r, m in rooms_heat.items() %}{% set ok = namespace(v=true, a=0) %}{% for e in m['add'] + m['sub'] + ([m['ac']] if m['ac'] else []) %}{% if not is_number(meter_vals.get(e)) %}{% set ok.v = false %}{% endif %}{% endfor %}{% if ok.v %}{% for e in m['add'] %}{% set ok.a = ok.a + meter_vals[e] | float %}{% endfor %}{% for e in m['sub'] %}{% set ok.a = ok.a - meter_vals[e] | float %}{% endfor %}{% set ns.d = dict(ns.d, **{r: [ok.a | round(2), (meter_vals[m['ac']] | float | round(2)) if m['ac'] else 0]}) %}{% endif %}{% endfor %}{{ ns.d }}",
+    "room_t": "{% set ns = namespace(d={}) %}{% for r, v in temp_base.items() %}{% if r in room_temps %}{% set m = namespace(s=0, n=0, ok=true) %}{% for e in room_temps[r] %}{% if is_number(temp_reads.get(e)) %}{% set m.s = m.s + temp_reads[e] | float %}{% set m.n = m.n + 1 %}{% else %}{% set m.ok = false %}{% endif %}{% endfor %}{% set ns.d = dict(ns.d, **{r: (m.s / m.n) | round(2) if m.ok and m.n else none}) %}{% else %}{% set ns.d = dict(ns.d, **{r: v | float | round(2) if is_number(v) else none}) %}{% endif %}{% endfor %}{{ ns.d }}"
    }
   },
   {
@@ -112,7 +129,7 @@
      "sequence": [
       {
        "variables": {
-        "snap_json": "{% set ns = namespace(T={}, C={}) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.climate_temp_') %}{% set r = s.entity_id[20:] %}{% if r != 'outdoor' and is_number(s.state) %}{% set ns.T = dict(ns.T, **{r: s.state | float | round(1)}) %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.climate_co2_') %}{% set r = s.entity_id[19:] %}{% if is_number(s.state) %}{% set ns.C = dict(ns.C, **{r: s.state | float | round(0) | int}) %}{% endif %}{% endfor %}{{ {'t': as_timestamp(now()) | int, 'o': states('sensor.climate_temp_outdoor') | float | round(1), 'T': ns.T, 'C': ns.C} | to_json }}"
+        "snap_json": "{% set ns = namespace(T={}, C={}) %}{% for r, v in room_t.items() %}{% if v is number %}{% set ns.T = dict(ns.T, **{r: v}) %}{% endif %}{% endfor %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.climate_co2_') %}{% set r = s.entity_id[19:] %}{% if is_number(s.state) %}{% set ns.C = dict(ns.C, **{r: s.state | float | round(0) | int}) %}{% endif %}{% endfor %}{{ {'t': as_timestamp(now()) | int, 'o': states('sensor.climate_temp_outdoor') | float | round(1), 'T': ns.T, 'C': ns.C} | to_json }}"
        }
       },
       {
@@ -253,7 +270,7 @@
       {
        "variables": {
         "now_C": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set v = states('sensor.climate_co2_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
-        "now_T": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set v = states('sensor.climate_temp_' ~ r) %}{% set ns.d = dict(ns.d, **{r: v | float if is_number(v) else none}) %}{% endfor %}{{ ns.d }}",
+        "now_T": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set v = room_t.get(r) %}{% set ns.d = dict(ns.d, **{r: v if v is number else none}) %}{% endfor %}{{ ns.d }}",
         "prev_ach": "{% set ns = namespace(d={}) %}{% for r in snap.C %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_ach_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}",
         "prev_k": "{% set ns = namespace(d={}) %}{% for r in snap.T %}{% set ns.d = dict(ns.d, **{r: states('input_number.leak_k_' ~ r) | float(0)}) %}{% endfor %}{{ ns.d }}"
        }
@@ -335,7 +352,7 @@
  ],
  "alias": "House — leak meter",
  "conditions": [],
- "description": "The radiators drop to the Away floor 30 min into Away (Climate - radiators), so the snapshot (input_text.leak_meter_snapshot, survives a restart) is taken an hour after that, at 1 h 30 min; the run ends when Away ends or when arrival pre-heat turns the heating back on, whichever is first (2026-11-25: the first live run started on warm radiators and ended 37 min into pre-heat, and stored three rooms 3-10x too airtight; tests/climate/wiring.py checks both timings against the radiators). At the end: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Socket heat (2026-11-27, operator: the office rack, the living-room PoE): each room's metered sockets (rooms_heat; a battery's net charge is not heat) are read at both ends (input_text.leak_meter_heat) and their mean watts move the point the room cools toward from outdoors to outdoors + W / H, H = the room's heat loss in W/K from the 1997 radiator sizing (ua; docs/heating-energy-rating.md). A room whose own sockets hold it within 3 C of its temperature is kept warm, not measured. A metered room whose meters could not be read is not measured (no meter), nor is one whose air conditioner drew over 50 W (AC on). wiring.py checks every metered socket in a measured room is listed. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), baselines do not age (F7), unmetered heat (the fridge in the living room) is not counted.",
+ "description": "The radiators drop to the Away floor 30 min into Away (Climate - radiators), so the snapshot (input_text.leak_meter_snapshot, survives a restart) is taken an hour after that, at 1 h 30 min; the run ends when Away ends or when arrival pre-heat turns the heating back on, whichever is first (2026-11-25: the first live run started on warm radiators and ended 37 min into pre-heat, and stored three rooms 3-10x too airtight; tests/climate/wiring.py checks both timings against the radiators). A room with several air sensors (room_temps; not AC units, valves or chip temperatures) is read as their mean, the others by their climate_temp_ sensor (2026-11-27). At the end: per room the % of its indoor-outdoor gap lost per hour, per CO2 room the air changes per hour. Socket heat (2026-11-27, operator: the office rack, the living-room PoE): each room's metered sockets (rooms_heat; a battery's net charge is not heat) are read at both ends (input_text.leak_meter_heat) and their mean watts move the point the room cools toward from outdoors to outdoors + W / H, H = the room's heat loss in W/K from the 1997 radiator sizing (ua; docs/heating-energy-rating.md). A room whose own sockets hold it within 3 C of its temperature is kept warm, not measured. A metered room whose meters could not be read is not measured (no meter), nor is one whose air conditioner drew over 50 W (AC on). wiring.py checks every metered socket in a measured room is listed. Stored in input_number.leak_k_* / leak_ach_*; summary in input_text.leak_meter_verdict. A room >= 2x the flat's median and >= 1.8x its own last run = probably a window open: push to Vadim, and that run is not stored as its baseline. Templates because the decay maths has no native helper. A room that cooled to climate_away_min + 0.5 C was heated from then on and is reported kept warm, not measured (review #49 F5). Both floors share air over the open stairs, so a window anywhere also raises its neighbours' loss; the median absorbs some of it (F6). A skipped run writes its reason to the verdict (F4). Accepted: a restart in the first hour of Away loses that run's snapshot (F3), baselines do not age (F7), unmetered heat (the fridge in the living room) is not counted.",
  "id": "1792300000020",
  "mode": "queued",
  "triggers": [

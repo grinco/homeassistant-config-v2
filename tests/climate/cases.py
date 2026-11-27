@@ -3015,6 +3015,22 @@ A(leak("exactly 3 C over the equilibrium is measured", "k", "{'office': 3.4}",
        now_T={"office": 22.8}, now_o=5.0, hours=2, rooms_heat=_OFFICE,
        heat_w={"office": {"w": 345, "ac": 0}}, ua={"office": 23}))
 
+# room_t: a room's temperature for the leak meter (operator 2026-11-27: "use the average for the
+# leak meter, same for all rooms that have multiple sensors"). The office's two desk sensors read
+# 21.3 and 20.1: one desk is not the room. Rooms with several air sensors (room_temps) take their
+# mean, others their climate_temp_ sensor (base). Not air: AC units, valves, chip temperatures.
+_RT = {"office": ["t.a", "t.b"], "kid1": ["t.c", "t.d"]}
+A(leak("a room with several air sensors reads their mean", "room_t",
+       "{'office': 20.7, 'kid1': 20.95, 'corridor': 19.5}", "operator 2026-11-27: one desk is not the room",
+       temp_base={"office": "21.3", "kid1": "20.9", "corridor": "19.5"}, room_temps=_RT,
+       temp_reads={"t.a": "21.3", "t.b": "20.1", "t.c": "20.9", "t.d": "21"}))
+A(leak("one of its sensors unreadable: the room has no reading", "room_t",
+       "{'office': None, 'corridor': 19.5}", "a mean of one is the other sensor's level: a false step",
+       temp_base={"office": "21.3", "corridor": "19.5"}, room_temps=_RT,
+       temp_reads={"t.a": "21.3", "t.b": "unavailable"}))
+A(leak("a single-sensor room unreadable has no reading", "room_t", "{'corridor': None}",
+       "unavailable is not cold", temp_base={"corridor": "unknown"}, room_temps=_RT, temp_reads={}))
+
 # heat_now: per metered room, [net kWh, AC kWh] from meter_vals (each meter's state, read once)
 _HROOMS = {"office": {"add": ["m.rack", "m.out"], "sub": ["m.in"], "ac": "m.ac"},
            "kid2": {"add": [], "sub": [], "ac": "m.ac2"}, "corridor": {"add": ["m.l"], "sub": [], "ac": ""}}
