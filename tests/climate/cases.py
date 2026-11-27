@@ -23,7 +23,7 @@ BASE = dict(
     temp=21.0, safety_on=True, comfort=True, frost=7.0, away_min=18.0, away_max=30.0,
     manual_active=False, away=False, enabled=True, house="heat", now_mode="off",
     target=22.0, hyst=1.0, room_hyst=0.5, filter_on=False,
-    has_rad=False, night=False, boost=1.5, preheat=False, window_open=False,
+    has_rad=False, night=False, boost=1.5, preheat=False, window_open=False, sleeping=False,
 )
 
 def case(name, expr, expect, given=None, subs=None, finding=""):
@@ -1217,8 +1217,9 @@ A(sensor_case(
     sensor=OUT, finding="after a restart or re-pair the sensor is 'unknown' first"))
 A(sensor_case(
     "a terrace reading of exactly zero is a reading", "0.0",
-    {OUT_T: "'0.0'", OUT_W: "'3.0'"},
-    sensor=OUT, finding="0 C is the reading that matters most in winter; not falsy"))
+    {OUT_T: "'0.0'", OUT_A: "'2.0'", OUT_W: "'3.0'"},
+    sensor=OUT, finding="0 C is the reading that matters most in winter; not falsy. The AC helper is "
+                        "pinned: left live, it read 0.0 on 2026-11-27 and the falsy-zero mutation passed"))
 A(sensor_case(
     "a sub-zero terrace reading is used as it is", "-5.3",
     {OUT_T: "'-5.3'", OUT_W: "'-2.0'"},
@@ -1879,6 +1880,37 @@ A(case("the room's window is read from its detector", "window_open", "True", {},
 A(case("a room without a window sensor never reads open", "window_open", "False", {},
        subs={"r.win": "''"}, finding="the office has none"))
 
+# 2026-11-27 operator: someone sleeping in the office was woken at 06:00 by the AC blowing hot air in
+# their face - the alarm left night mode, the office target went 19 -> 21, and the AC is its only heater.
+# "Sleeping here" stops the AC for comfort in that room (heat, cool, warm-up, filter fan); safety stays.
+A(case("someone sleeping: the AC does not heat at the morning edge", "mode", "off",
+       {"temp": 20.0, "target": 21.0, "sleeping": True},
+       finding="2026-11-27: hot air in the face at 06:00"))
+A(case("the same room with nobody sleeping heats", "mode", "heat",
+       {"temp": 20.0, "target": 21.0, "sleeping": False}, finding="the case above crosses only the toggle"))
+A(case("someone sleeping: the AC does not cool either", "mode", "off",
+       {"house": "cool", "temp": 27.0, "target": 24.0, "sleeping": True}, finding="operator: no air, hot or cold"))
+A(case("the same room cooling with nobody sleeping cools", "mode", "cool",
+       {"house": "cool", "temp": 27.0, "target": 24.0, "sleeping": False}, finding="review #71: twin of the cool case"))
+A(case("the same warm-up with nobody sleeping heats", "mode", "heat",
+       {"temp": 20.0, "target": 22.0, "night": True, "preheat": True, "has_rad": True, "sleeping": False},
+       finding="review #71: twin of the warm-up case"))
+A(case("the same filter fan with nobody sleeping runs", "mode", "fan_only",
+       {"house": "shoulder", "filter_on": True, "sleeping": False}, finding="review #71: twin of the filter case"))
+A(case("someone sleeping outranks the morning warm-up", "mode", "off",
+       {"temp": 20.0, "target": 22.0, "night": True, "preheat": True, "has_rad": True, "sleeping": True},
+       finding="the warm-up is exactly the 05:15 blast"))
+A(case("someone sleeping outranks the air-filter fan", "mode", "off",
+       {"house": "shoulder", "filter_on": True, "sleeping": True}, finding="the filter fan is air in the face too"))
+A(case("someone sleeping does not stop the safety floor", "mode", "heat",
+       {"temp": 17.0, "sleeping": True}, finding="a forgotten toggle must not let a room fall below 18"))
+A(case("someone sleeping does not override a person at the remote", "mode", "manual",
+       {"temp": 20.0, "manual_active": True, "sleeping": True}, finding="the sleeper turning it on wins"))
+A(case("the room's sleeping toggle is read", "sleeping", "True", {},
+       subs={"is_state(r.sleep, 'on')": "true"}, finding="per-room input_boolean"))
+A(case("the room's sleeping toggle off reads awake", "sleeping", "False", {},
+       subs={"is_state(r.sleep, 'on')": "false"}, finding="per-room input_boolean"))
+
 A(case("radiator room at night: the AC does not heat for comfort", "mode", "off",
        rad({"night": True, "temp": 19.0}),
        finding="v6 operator: radiators only at night - silent, no fogged windows"))
@@ -2423,6 +2455,85 @@ A(away("the note names what is open", "open_now", "['Bedroom window']",
            _bs("binary_sensor.door", "off", "door"),
            _bs("binary_sensor.pir", "on", "motion"),
            _bs("binary_sensor.gone", "unavailable", "window"))}))
+
+
+# ---------------------------------------------------------------- sleeping: presence lighting (2026-11-27)
+# Operator: "the lights might turn on as well while people are sleeping". A room's "Sleeping here"
+# pauses its Magic Areas light_control; clearing it un-pauses only what this automation paused. During
+# Away the room is handed to Away's list instead, so it comes back with the house, not while it is empty.
+SLEEPL = "1792400000011"
+SL_PAUSED = "states('input_text.sleeping_paused')"
+SLF = "2026-11-27 operator: presence lighting must not wake a sleeper"
+
+
+def sl(name, expr, expect, given=None, subs=None, finding=SLF):
+    return dict(name="sleeping lights: " + name, automation=SLEEPL, expr=expr, expect=expect,
+                given=given or {}, subs=subs or {}, finding=finding)
+
+
+# Review #71: the noon clear re-runs the climate loop, so a guest still asleep at 12:00 got the blast.
+# Now a toggle clears from 12:00 to 20:00 once its room is EMPTY; an occupied room waits until it empties.
+NOON = "1792400000010"
+
+
+def noon(name, expect, given, finding="review #71: never wake a sleeper at noon"):
+    return dict(name="sleeping clear: " + name, automation=NOON, expr="clear", expect=expect,
+                given=given, subs={}, finding=finding)
+
+
+A(noon("an empty room clears at noon", "['input_boolean.sleeping_office']",
+       dict(window_ok=True, rooms=[["input_boolean.sleeping_office", False]])))
+A(noon("a room still occupied at noon keeps its toggle", "[]",
+       dict(window_ok=True, rooms=[["input_boolean.sleeping_office", True]]),
+       finding="review #71: the guest asleep past noon"))
+A(noon("only the empty one of two rooms clears", "['input_boolean.sleeping_bedroom']",
+       dict(window_ok=True, rooms=[["input_boolean.sleeping_office", True], ["input_boolean.sleeping_bedroom", False]])))
+A(noon("an empty room before noon keeps its toggle", "[]",
+       dict(window_ok=False, rooms=[["input_boolean.sleeping_office", False]]),
+       finding="a sleeper lying still can read empty at night"))
+A(dict(name="sleeping clear: 12:00 opens the window", automation=NOON, expr="window_ok", expect="True",
+               given={}, subs={"now().hour": "12"}, finding="review #71"))
+A(dict(name="sleeping clear: 11:00 is before the window", automation=NOON, expr="window_ok", expect="False",
+       given={}, subs={"now().hour": "11"}, finding="review #71"))
+A(dict(name="sleeping clear: 20:00 closes the window", automation=NOON, expr="window_ok", expect="False",
+       given={}, subs={"now().hour": "20"}, finding="review #71: the evening toggle must survive an empty-looking room"))
+A(dict(name="sleeping clear: 19:00 is inside the window", automation=NOON, expr="window_ok", expect="True",
+       given={}, subs={"now().hour": "19"}, finding="review #71"))
+
+
+A(sl("a sleeping room with live presence lighting is paused", "pause", "['guest_room']",
+     given=dict(rooms=[["guest_room", "on", True], ["living_room", "on", False]])))
+A(sl("an awake room is not paused", "pause", "[]",
+     given=dict(rooms=[["guest_room", "on", False]]), finding="the case above crosses only the toggle"))
+A(sl("a room whose presence lighting is off by choice is left alone", "pause", "[]",
+     given=dict(rooms=[["bedroom", "off", True]]),
+     finding="the operator switched the bedroom's off; we must never later switch it ON"))
+A(sl("a woken room this automation paused is released", "release", "['guest_room']",
+     given=dict(stored=["guest_room"], rooms=[["guest_room", "off", False]])))
+A(sl("a room still asleep is not released", "release", "[]",
+     given=dict(stored=["guest_room"], rooms=[["guest_room", "off", True]])))
+A(sl("a room that lost its toggle is released, not held for ever", "release", "['old_room']",
+     given=dict(stored=["old_room"], rooms=[]), finding="a deleted toggle must not leave a room dark"))
+A(sl("only what was paused here is remembered", "keep", "['guest_room']",
+     given=dict(stored=["living_room"], release=["living_room"], pause=["guest_room"])))
+A(sl("a room still asleep stays remembered when nothing new is paused", "keep", "['guest_room']",
+     given=dict(stored=["guest_room"], release=[], pause=[]),
+     finding="the next run (another room's toggle) must not forget it, or noon never restores it"))
+A(sl("a room paused twice is remembered once", "keep", "['guest_room']",
+     given=dict(stored=["guest_room"], release=[], pause=["guest_room"])))
+A(sl("the stored list survives a restart", "stored", "['guest_room', 'closet']",
+     subs={SL_PAUSED: "'guest_room,closet'"}))
+A(sl("a fresh helper stores nothing", "stored", "[]", subs={SL_PAUSED: "''"}))
+A(sl("an unavailable helper stores nothing", "stored", "[]", subs={SL_PAUSED: "'unavailable'"},
+     finding="never release a room called 'unavailable'"))
+A(sl("woken during Away: handed to Away, not switched on", "handoff", "['closet', 'guest_room']",
+     given=dict(away_now=True, release=["guest_room"]), subs={PAUSED: "'closet'"},
+     finding="the noon clear while the house is empty must not re-arm presence lighting"))
+A(sl("woken at home: nothing handed to Away", "handoff", "[]",
+     given=dict(away_now=False, release=["guest_room"]), subs={PAUSED: "'closet'"},
+     finding="the case above crosses only Away"))
+A(sl("Away is the alarm's armed_away", "away_now", "True", subs={ALARM: "'armed_away'"}))
+A(sl("Night is not Away", "away_now", "False", subs={ALARM: "'armed_night'"}))
 
 
 # ---------------------------------------------------------------- everyone left: arm Away? (2026-10-14)

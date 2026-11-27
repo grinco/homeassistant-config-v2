@@ -479,3 +479,34 @@ both directions, the household slider moving the edge, a missing or zero slider,
 a dead FP2 by day and by night) and six `mutate.py` rows (outdoors overriding, 0 lx read as dead, no
 hysteresis, a zero threshold, a dead sensor reading dark, the slider ignored). The groups and the night switch-over are actuation
 and are not reachable by the suite; the options were read back from the live entry.
+
+## Sleeping here: presence lighting pauses (2026-11-27)
+
+Operator: "the lights might turn on as well while people are sleeping". It makes sense for visitors
+sleeping in the office. A room's `input_boolean.sleeping_<room>` ("Sleeping here", the same toggle
+that stops its AC, see the climate design v6.2) now also pauses the room's Magic Areas
+`light_control`. The automation is `automation.sleeping_pause_presence_lighting` (1792400000011).
+
+- **The switch is found by area.** Each sleeping toggle is in its room's area, and so is that
+  room's `switch.magic_areas_light_groups_<slug>_light_control`. A new room needs no edit.
+- **Only rooms whose presence lighting is on are paused.** They are remembered as area slugs in
+  `input_text.sleeping_paused`, and only those are released when the toggle clears (by hand, or from 12:00 once the
+  room is empty). A room whose presence lighting the operator switched off (the bedroom today) is never
+  switched on by this automation.
+- **Away is respected.** A room released while the alarm is `armed_away` is not switched on. It is
+  added to `input_text.house_away_paused`, and Away's return restores it with the rest of the house.
+- **Away's return cannot wake a sleeper.** If an automation switches a sleeping room's
+  `light_control` back on, the room is paused again. A person who switches it on by hand
+  (`context.user_id` set) is left alone until the next toggle change.
+- Lights already on are left as they are: the toggle usually goes on just before someone switches
+  the lamp off themselves.
+
+Tests: `tests/climate/cases.py` *sleeping lights: …*; `mutate.py` has a mutation for each rule.
+Verified live on 2026-11-27: the office toggle paused `guest_room`, recorded it, and clearing the
+toggle restored it and emptied the record. The re-pause after an automation's switch-on is checked
+by its condition only. It cannot be triggered from here without acting as a person.
+
+**Room pages.** "Sleeping here" is the first tile under each room page's *Automation* heading,
+above *Occupancy*. It is full width and turns deep purple when on, and the heading's presence
+lighting badge reads *Off* while it is on. It is excluded from the Climate grid, where it first
+appeared. Lint C48 enforces both.

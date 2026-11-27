@@ -1192,7 +1192,33 @@ def m_total_graph_hand_lists(d):
     return "C13"
 
 
+
+def _room(doc, path):
+    return [v for v in doc["data"]["config"]["views"] if v.get("path") == path][0]
+
+
+def m_sleeping_below_occupancy(d):
+    """2026-11-27: "Sleeping here" slides down under Occupancy."""
+    doc = _cfg(d, LOV)
+    cs = _room(doc, "guest-room")["sections"][0]["cards"]
+    cs[1], cs[2] = cs[2], cs[1]
+    _save(d, LOV, doc)
+    return "C48"
+
+
+def m_sleeping_back_in_climate(d):
+    """2026-11-27: the Climate grid shows the sleeping toggle a second time."""
+    doc = _cfg(d, LOV)
+    for c in _walk(_room(doc, "bedroom")["sections"]):
+        f = c.get("filter") or {}
+        if any(r.get("domain") == "input_boolean" and not r.get("entity_id") for r in f.get("include") or []):
+            f["exclude"] = [x for x in f.get("exclude", []) if "sleeping_" not in str(x.get("entity_id"))]
+    _save(d, LOV, doc)
+    return "C48"
+
 MUTATIONS = [
+    ("sleeping toggle below occupancy", m_sleeping_below_occupancy),
+    ("sleeping toggle back in the Climate grid", m_sleeping_back_in_climate),
     ("Environment tiles named reading + device again", m_env_names_with_device),
     ("two readings in a room share a tile name", m_env_names_collide),
     ("the AC graph also draws the sockets", m_graph_unlabelled),

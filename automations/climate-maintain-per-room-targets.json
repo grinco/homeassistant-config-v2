@@ -45,6 +45,7 @@
       "rad_window": "binary_sensor.livingroom_thermostat_livingroom_thermostat_window",
       "reason": "input_select.climate_hold_reason_living_room",
       "resolved": "sensor.climate_temp_living_room",
+      "sleep": "input_boolean.sleeping_living_room",
       "trv_watch": "",
       "win": "binary_sensor.livingroom_thermostat_livingroom_thermostat_window"
      },
@@ -66,6 +67,7 @@
       "rad_window": "",
       "reason": "input_select.climate_hold_reason_office",
       "resolved": "sensor.climate_temp_office",
+      "sleep": "input_boolean.sleeping_office",
       "trv_watch": "",
       "win": ""
      },
@@ -87,6 +89,7 @@
       "rad_window": "binary_sensor.bedroom_trv_bedroom_trv_window",
       "reason": "input_select.climate_hold_reason_bedroom",
       "resolved": "sensor.climate_temp_bedroom",
+      "sleep": "input_boolean.sleeping_bedroom",
       "trv_watch": "climate.bedroom_trv_bedroom_trv",
       "win": "binary_sensor.climate_window_bedroom"
      },
@@ -108,6 +111,7 @@
       "rad_window": "binary_sensor.kid1_room_trv_kid1_room_trv_window",
       "reason": "input_select.climate_hold_reason_kid1",
       "resolved": "sensor.climate_temp_kid1",
+      "sleep": "input_boolean.sleeping_kid1",
       "trv_watch": "climate.kid1_room_trv_kid1_room_trv",
       "win": "binary_sensor.climate_window_kid1"
      },
@@ -129,6 +133,7 @@
       "rad_window": "binary_sensor.kid2_room_trv_kid2_room_trv_window",
       "reason": "input_select.climate_hold_reason_kid2",
       "resolved": "sensor.climate_temp_kid2",
+      "sleep": "input_boolean.sleeping_kid2",
       "trv_watch": "climate.kid2_room_trv_kid2_room_trv",
       "win": "binary_sensor.kid2_room_trv_kid2_room_trv_window"
      }
@@ -262,6 +267,7 @@
        "now_mode": "{{ states(r.climate) }}",
        "now_preset": "{{ state_attr(r.climate,'preset_mode') }}",
        "now_target": "{{ state_attr(r.climate,'temperature') | float(-1) }}",
+       "sleeping": "{{ is_state(r.sleep, 'on') }}",
        "target": "{{ (states(r.night_t) if (night and not preheat) else states(r.day_t)) | float(21) }}",
        "temp": "{{ states(r.resolved) | float(-999) }}",
        "umax": "{{ state_attr(r.climate,'max_temp') | float(30) }}",
@@ -292,7 +298,7 @@
      {
       "note": "Precedence: skip > frost > away floor > away ceiling > manual hold > comfort. v6 (2026-10-11): in a room WITH A RADIATOR in heating season the radiator is the heat source - at night the AC heats only through the safety branches above; by day it boosts only when the room is `boost` behind and hands back at target - room_hyst.",
       "variables": {
-       "mode": "{% if temp <= -900 %}skip{% elif safety_on and temp < frost %}heat{% elif safety_on and temp < away_min %}heat{% elif safety_on and temp > away_max %}cool{% elif manual_active %}manual{% elif not comfort %}off{% elif away or not enabled %}off{% elif window_open %}off{% elif house == 'heat' %}{% if filter_on %}heat{% elif has_rad and night and not preheat %}off{% elif has_rad and not preheat %}{% if temp < target - (room_hyst if now_mode == 'heat' else boost) %}heat{% else %}off{% endif %}{% elif temp < target - (0 if now_mode == 'heat' else room_hyst) %}heat{% else %}off{% endif %}{% elif house == 'cool' %}{% if filter_on or temp > target + (0 if now_mode == 'cool' else room_hyst) %}cool{% else %}off{% endif %}{% else %}{% if filter_on %}fan_only{% else %}off{% endif %}{% endif %}",
+       "mode": "{% if temp <= -900 %}skip{% elif safety_on and temp < frost %}heat{% elif safety_on and temp < away_min %}heat{% elif safety_on and temp > away_max %}cool{% elif manual_active %}manual{% elif not comfort %}off{% elif away or not enabled %}off{% elif window_open %}off{% elif sleeping %}off{% elif house == 'heat' %}{% if filter_on %}heat{% elif has_rad and night and not preheat %}off{% elif has_rad and not preheat %}{% if temp < target - (room_hyst if now_mode == 'heat' else boost) %}heat{% else %}off{% endif %}{% elif temp < target - (0 if now_mode == 'heat' else room_hyst) %}heat{% else %}off{% endif %}{% elif house == 'cool' %}{% if filter_on or temp > target + (0 if now_mode == 'cool' else room_hyst) %}cool{% else %}off{% endif %}{% else %}{% if filter_on %}fan_only{% else %}off{% endif %}{% endif %}",
        "want_target": "{% if safety_on and temp > -900 and temp < frost %}{{ frost }}{% elif safety_on and temp > -900 and temp < away_min %}{{ away_min }}{% elif safety_on and temp > -900 and temp > away_max %}{{ away_max }}{% else %}{{ target }}{% endif %}"
       }
      },
@@ -788,7 +794,7 @@
    ]
   }
  ],
- "description": "ARRIVAL (2026-11-24): while input_boolean.climate_arrival_preheat is on (someone heading home after a long Away), the Away floor gives way to comfort targets. WINDOW (2026-11-24, operator): a room whose window is open (its window detector, else its Tado valve flag) gets no AC: comfort heat, cool, boost and the air-filter toggle all stand down; frost and pet-floor safety and a person manual hold still win. FROST NIGHT TARGET (2026-11-24): each room reads sensor.climate_night_target_<room>, the operator night raised in frost until the coldest wall stays below 80 % RH, never above the day target (docs/heating-energy-rating.md). v6. MORNING WARM-UP: per-room input_boolean.climate_preheat_<room>; the last input_number.climate_preheat_minutes before the night schedule ends heat to the DAY target, by AC even in a radiator room. RADIATORS FIRST (2026-10-11, operator): Tado now runs the boiler per zone, so in heating season a room with a radiator is heated by it - the AC heats there at night only for safety, and by day only boosts a room input_number.climate_ac_boost_below behind its target. Radiator setpoints are commanded by automation Climate - radiators. v5.12. NIGHT IS THE ALARM: night means alarm_control_panel.home is armed_night (2026-10-11, operator); only while the alarm ITSELF is unavailable/unknown (a reload, a restart) does schedule.climate_night stand in, so a reload at night cannot compute day targets (review F12). schedule.climate_night only moves the alarm at its edges (automation House - night mode), so a manual switch to day or night wins until the next edge. v5.11. Room hysteresis is a RE-ENTRY deadband BELOW the target, not an overshoot band above it: a room heats until it REACHES its target and then waits until it drifts input_number.climate_room_hysteresis past it before restarting. The old form exited at target + hyst, which the unit could never deliver because it is commanded `target` and stops at its own setpoint - so 'off' was unreachable and a room sat in heat all day. input_number.climate_hysteresis now governs the HOUSE season band only. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating. A calibration offset INSIDE ITS HELPER'S RANGE IS ALWAYS HONOURED - the range is the plausibility envelope, and overriding an in-range value can under-correct a correctly-configured room and fail cold. Only the TRV offset, whose helper range is far wider than any physically plausible bias on a cold radiator, is still substituted. The HOUSE decides heat vs cool from the outdoor temperature with exit-only hysteresis; that temperature is ONE resolved sensor too (sensor.climate_temp_outdoor): the terrace sensor, falling back to the forecast. Each ROOM has a day target and a night target plus an optional air-filter mode. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, gated by input_boolean.climate_safety_always. Changes made outside this automation are detected from a per-room command timestamp versus the unit's own last_changed, and repeated ones are surfaced without asserting a cause the automation cannot know. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Presets are per-mode: wind-free whenever cooling, quiet when heating at night, nothing asserted otherwise.",
+ "description": "SLEEPING (2026-11-27, operator): while a room's input_boolean.sleeping_<room> ('Sleeping here') is on, the AC does not run for comfort there - no heat, cool, warm-up or filter fan; a person's hold and the safety band still apply; radiators are unaffected; the toggles clear at 12:00 (automation sleeping_toggles_clear_at_noon). ARRIVAL (2026-11-24): while input_boolean.climate_arrival_preheat is on (someone heading home after a long Away), the Away floor gives way to comfort targets. WINDOW (2026-11-24, operator): a room whose window is open (its window detector, else its Tado valve flag) gets no AC: comfort heat, cool, boost and the air-filter toggle all stand down; frost and pet-floor safety and a person manual hold still win. FROST NIGHT TARGET (2026-11-24): each room reads sensor.climate_night_target_<room>, the operator night raised in frost until the coldest wall stays below 80 % RH, never above the day target (docs/heating-energy-rating.md). v6. MORNING WARM-UP: per-room input_boolean.climate_preheat_<room>; the last input_number.climate_preheat_minutes before the night schedule ends heat to the DAY target, by AC even in a radiator room. RADIATORS FIRST (2026-10-11, operator): Tado now runs the boiler per zone, so in heating season a room with a radiator is heated by it - the AC heats there at night only for safety, and by day only boosts a room input_number.climate_ac_boost_below behind its target. Radiator setpoints are commanded by automation Climate - radiators. v5.12. NIGHT IS THE ALARM: night means alarm_control_panel.home is armed_night (2026-10-11, operator); only while the alarm ITSELF is unavailable/unknown (a reload, a restart) does schedule.climate_night stand in, so a reload at night cannot compute day targets (review F12). schedule.climate_night only moves the alarm at its edges (automation House - night mode), so a manual switch to day or night wins until the next edge. v5.11. Room hysteresis is a RE-ENTRY deadband BELOW the target, not an overshoot band above it: a room heats until it REACHES its target and then waits until it drifts input_number.climate_room_hysteresis past it before restarting. The old form exited at target + hyst, which the unit could never deliver because it is commanded `target` and stops at its own setpoint - so 'off' was unreachable and a room sat in heat all day. input_number.climate_hysteresis now governs the HOUSE season band only. Each room's temperature comes from ONE resolved template sensor (sensor.climate_temp_<room>) that owns source priority, per-sensor bias and usability gating. A calibration offset INSIDE ITS HELPER'S RANGE IS ALWAYS HONOURED - the range is the plausibility envelope, and overriding an in-range value can under-correct a correctly-configured room and fail cold. Only the TRV offset, whose helper range is far wider than any physically plausible bias on a cold radiator, is still substituted. The HOUSE decides heat vs cool from the outdoor temperature with exit-only hysteresis; that temperature is ONE resolved sensor too (sensor.climate_temp_outdoor): the terrace sensor, falling back to the forecast. Each ROOM has a day target and a night target plus an optional air-filter mode. SAFETY (frost / away floor / away ceiling) runs even when the comfort master is off, gated by input_boolean.climate_safety_always. Changes made outside this automation are detected from a per-room command timestamp versus the unit's own last_changed, and repeated ones are surfaced without asserting a cause the automation cannot know. Commanded setpoints are rounded to whole degrees and clamped to the unit's own min_temp/max_temp. Presets are per-mode: wind-free whenever cooling, quiet when heating at night, nothing asserted otherwise.",
  "id": "1789725511503",
  "max_exceeded": "silent",
  "mode": "single",
@@ -816,7 +822,12 @@
     "input_boolean.climate_preheat_office",
     "input_boolean.climate_preheat_bedroom",
     "input_boolean.climate_preheat_kid1",
-    "input_boolean.climate_preheat_kid2"
+    "input_boolean.climate_preheat_kid2",
+    "input_boolean.sleeping_living_room",
+    "input_boolean.sleeping_office",
+    "input_boolean.sleeping_bedroom",
+    "input_boolean.sleeping_kid1",
+    "input_boolean.sleeping_kid2"
    ],
    "trigger": "state"
   },

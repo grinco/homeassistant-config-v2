@@ -1,0 +1,60 @@
+{
+ "actions": [
+  {
+   "variables": {
+    "rooms": "{% set ns = namespace(l=[]) %}{% for b in states.input_boolean | selectattr('entity_id', 'match', '^input_boolean\\.sleeping_') | selectattr('state', 'eq', 'on') %}{% set a = area_id(b.entity_id) %}{% set occ = ((area_entities(a) | select('match', '^binary_sensor\\.magic_areas_presence_tracking_.+_area_state$') | select('is_state', 'on') | list | count) > 0) if a else false %}{% set ns.l = ns.l + [[b.entity_id, occ]] %}{% endfor %}{{ ns.l }}",
+    "window_ok": "{{ 12 <= now().hour < 20 }}"
+   }
+  },
+  {
+   "variables": {
+    "clear": "{% if window_ok %}{% set ns = namespace(l=[]) %}{% for r in rooms %}{% if not r[1] %}{% set ns.l = ns.l + [r[0]] %}{% endif %}{% endfor %}{{ ns.l }}{% else %}{{ [] }}{% endif %}"
+   }
+  },
+  {
+   "if": [
+    {
+     "condition": "template",
+     "value_template": "{{ clear | count > 0 }}"
+    }
+   ],
+   "then": [
+    {
+     "action": "input_boolean.turn_off",
+     "target": {
+      "entity_id": "{{ clear }}"
+     }
+    }
+   ]
+  }
+ ],
+ "alias": "Sleeping toggles clear at noon",
+ "conditions": [],
+ "description": "2026-11-27 (operator): 'Sleeping here' (input_boolean.sleeping_<room>) marks a room where someone is asleep; the climate loop keeps its AC from blowing air there and presence lighting is paused. A toggle clears itself between 12:00 and 20:00 once its room is EMPTY (its Magic Areas presence state is off), so a forgotten toggle cannot leave a room unheated for days. Review #71: a plain 12:00 clear re-ran the climate loop and could start the AC on a guest still asleep, so an occupied room keeps its toggle until it empties. Outside the window an empty-looking room never clears it: a sleeper lying still can read empty. Rooms with no presence sensor read empty and clear at 12:00. Tests: tests/climate/cases.py (sleeping clear). Design: docs/climate-control-design.md, v6.2.",
+ "id": "1792400000010",
+ "mode": "queued",
+ "triggers": [
+  {
+   "at": "12:00:00",
+   "id": "noon",
+   "trigger": "time"
+  },
+  {
+   "entity_id": [
+    "binary_sensor.magic_areas_presence_tracking_living_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_guest_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_bedroom_area_state",
+    "binary_sensor.magic_areas_presence_tracking_kid1_room_area_state",
+    "binary_sensor.magic_areas_presence_tracking_kid2_room_area_state"
+   ],
+   "id": "empty",
+   "to": "off",
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "id": "start",
+   "trigger": "homeassistant"
+  }
+ ]
+}

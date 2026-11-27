@@ -44,6 +44,10 @@ legend on (lint C37), or its header names only the first line.
 | `offline_ok` | device | a device that is allowed to be unresponsive; keeps it off the health lists |
 | `on_home_page` | entity | pin it to Home → *Around the house* (sensors get a 7-day trend, buttons press on tap). The cat toilet's visits, weight and *Clean litter box now* carry it |
 
+**"Sleeping here" (2026-11-27, lint C48).** Every room page carries one more generated card, the first
+under *Automation*: the room's `input_boolean.sleeping_*` as a full-width tile. Other `input_boolean`
+rules on the page exclude it. Rooms without a toggle show nothing there (`show_empty: false`).
+
 ## Rules the generators use
 
 - **Metered socket:** a device with a switch and its own power sensor (not Powercalc) and no climate
