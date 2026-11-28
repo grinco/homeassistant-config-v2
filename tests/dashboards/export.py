@@ -68,6 +68,7 @@ AUTO_OUT = os.path.join(REPO, "automations")
 # automation id -> file. Exported because `automations/README.md` promises these
 # track the instance, and a snapshot nobody refreshes is worse than none.
 AUTOS = {
+    "1792400000020": "room-shortcut-settle.json",
     "1789725511503": "climate-maintain-per-room-targets.json",
     "1789802676002": "climate-stamp-ha-start.json",
     "1789947000001": "purifier-after-cat-toilet.json",
@@ -116,7 +117,8 @@ RESOLVED_TITLES = (
     "Energy gas heating per degree-day", "Energy AC heating per degree-day",
     "Energy heating per m2 year", "Energy class", "Energy gas estimate", "Energy leak suspect",
     "Energy air change rating", "Energy aired most", "Energy heating per m2 last 24h",
-    "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1", "Climate window detector blind", "Energy leak ranking", "Energy airing ranking",
+    "Energy heating per m2 last 7 days", "Climate window bedroom", "Climate window kid1", "Climate window detector blind", "Climate CO2 window living room",
+    "Climate CO2 window office", "Phone presence living room", "Phone presence office", "Energy leak ranking", "Energy airing ranking",
     "Climate corner fRsi kid1", "Climate corner fRsi kid1 48h",
     "Climate night target living room", "Climate night target office", "Climate night target bedroom",
     "Climate night target kid1", "Climate night target kid2",

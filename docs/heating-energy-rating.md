@@ -325,3 +325,22 @@ The 23:59 write itself, the statistics helper's window, notification delivery, a
 sensor's 30-minute delay. The interval
 verdict, the coefficients, the estimate and the class are templates with cases; the sum update is
 the verdict's `count` branch.
+
+### CO2 window detector, living room and office (2026-11-28)
+
+The two rooms with a CO2 meter have no VOC sensor, and the moisture rule does not carry over: run on
+14-28.11 it would have fired 137 times in the living room, nearly always because the room is drier
+than the flat mean, not aired. The usable signal is CO2 falling fast. `binary_sensor.climate_co2_window_<room>`
+is on when the reading is at least 100 ppm **and** at least 30 % of its excess over outdoor air
+(420 ppm) below its 20-minute maximum (`sensor.climate_co2_<room>_max_20min`, a statistics helper),
+with outdoor air below 12 °C; the living room's thermostat window flag also opens it. 5 min off-delay.
+Missing inputs read closed. A person leaving with the door open decays the excess by roughly 15 % in
+20 min; an open window takes most of it. In the backtest this rule fired about 10 times in 10 days in
+the living room and 15 in the office, with no record yet of which were real airings.
+
+**Provisional.** It feeds only `sensor.airing_<room>_last_7_days`, and through it *Aired most* and the
+ranking. It is **not** in the climate loop's `win` (an error there would turn a room's heat off) and
+not in the 20-minute push. It graduates once a few logged airings per room confirm the thresholds.
+The office meter reported only every ~30 min until it was wired (28.11); at that rate a 20-minute
+maximum holds a single reading and the office detector cannot fire. The blind sensor still covers
+only the VOC rooms.

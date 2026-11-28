@@ -646,6 +646,60 @@
   {
    "domain": "template",
    "options": {
+    "additional_options": {
+     "delay_off": {
+      "hours": 0,
+      "minutes": 5,
+      "seconds": 0
+     }
+    },
+    "device_class": "window",
+    "name": "Climate CO2 window living room",
+    "state": "{% set room = 'living_room' %}{% set trv_w = 'binary_sensor.livingroom_thermostat_livingroom_thermostat_window' %}{% set c = states('sensor.climate_co2_' ~ room) %}{% set m = states('sensor.climate_co2_' ~ room ~ '_max_20min') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% if states(trv_w) == 'on' %}{{ true }}{% elif [c, m, ot] | select('is_number') | list | count < 3 %}{{ false }}{% else %}{% set c, m, ot = c | float, m | float, ot | float %}{{ ot < 12 and m - c >= 100 and m - c >= 0.3 * (m - 420) }}{% endif %}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Climate CO2 window living room"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "additional_options": {
+     "delay_off": {
+      "hours": 0,
+      "minutes": 5,
+      "seconds": 0
+     }
+    },
+    "device_class": "window",
+    "name": "Climate CO2 window office",
+    "state": "{% set room = 'office' %}{% set trv_w = '' %}{% set c = states('sensor.climate_co2_' ~ room) %}{% set m = states('sensor.climate_co2_' ~ room ~ '_max_20min') %}{% set ot = states('sensor.climate_temp_outdoor') %}{% if states(trv_w) == 'on' %}{{ true }}{% elif [c, m, ot] | select('is_number') | list | count < 3 %}{{ false }}{% else %}{% set c, m, ot = c | float, m | float, ot | float %}{{ ot < 12 and m - c >= 100 and m - c >= 0.3 * (m - 420) }}{% endif %}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Climate CO2 window office"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "occupancy",
+    "name": "Phone presence living room",
+    "state": "{% set area = 'living_room' %}{{ states.input_text | selectattr('entity_id', 'match', 'input_text\\.room_') | selectattr('state', 'eq', area_name(area)) | list | count > 0 }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Phone presence living room"
+  },
+  {
+   "domain": "template",
+   "options": {
+    "device_class": "occupancy",
+    "name": "Phone presence office",
+    "state": "{% set area = 'bedroom' %}{{ states.input_text | selectattr('entity_id', 'match', 'input_text\\.room_') | selectattr('state', 'eq', area_name(area)) | list | count > 0 }}",
+    "template_type": "binary_sensor"
+   },
+   "title": "Phone presence office"
+  },
+  {
+   "domain": "template",
+   "options": {
     "name": "Energy leak ranking",
     "state": "{% set ns = namespace(l=[]) %}{% for s in states.input_number | selectattr('entity_id', 'match', 'input_number\\.leak_k_') %}{% set v = s.state | float(0) %}{% if v > 0 %}{% set ns.l = ns.l + [(s.entity_id[20:], v)] %}{% endif %}{% endfor %}{% set vals = ns.l | map(attribute=1) | sort | list %}{% set n = vals | count %}{% if n < 3 %}not measured yet{% else %}{% set med = (vals[(n - 1) // 2] + vals[n // 2]) / 2 %}{% set w = states('input_text.leak_meter_verdict') | regex_findall('([a-z0-9_]+):window') %}{% set out = namespace(l=[]) %}{% for r, v in ns.l | sort(attribute=1, reverse=true) %}{% set out.l = out.l + [(area_name('sensor.climate_temp_' ~ r) or r) ~ ' ' ~ ((v / med) | round(1)) ~ '×' ~ (' (window?)' if r in w else '')] %}{% endfor %}{{ out.l | join(' · ') }}{% endif %}",
     "template_type": "sensor"

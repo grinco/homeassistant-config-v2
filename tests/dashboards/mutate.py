@@ -1206,6 +1206,38 @@ def m_sleeping_below_occupancy(d):
     return "C48"
 
 
+def _room_badges(doc):
+    home = _room(doc, "home")
+    return [b for b in home.get("badges") or [] if (b.get("entity") or "").startswith("input_text.room_")]
+
+
+def m_room_badge_dead_page(d):
+    """2026-11-28: a room shortcut opens a page that does not exist."""
+    doc = _cfg(d, LOV)
+    _room_badges(doc)[0]["tap_action"]["navigation_path"] = "/lovelace/office"
+    _save(d, LOV, doc)
+    return "C49"
+
+
+def m_room_badge_everyone(d):
+    """2026-11-28: a person's room shortcut shows to every user."""
+    doc = _cfg(d, LOV)
+    b = _room_badges(doc)[0]
+    b["visibility"] = [c for c in b["visibility"] if c.get("condition") != "user"]
+    _save(d, LOV, doc)
+    return "C49"
+
+
+def m_room_badge_wrong_area(d):
+    """2026-11-28: a room shortcut keyed to a name that is no area (the Magic Areas slug)."""
+    doc = _cfg(d, LOV)
+    b = _room_badges(doc)[0]
+    [st] = [c for c in b["visibility"] if c.get("condition") == "state"]
+    st["state"] = "guest_room"
+    _save(d, LOV, doc)
+    return "C49"
+
+
 def m_sleeping_back_in_climate(d):
     """2026-11-27: the Climate grid shows the sleeping toggle a second time."""
     doc = _cfg(d, LOV)
@@ -1219,6 +1251,9 @@ def m_sleeping_back_in_climate(d):
 MUTATIONS = [
     ("sleeping toggle below occupancy", m_sleeping_below_occupancy),
     ("sleeping toggle back in the Climate grid", m_sleeping_back_in_climate),
+    ("room shortcut opens no page", m_room_badge_dead_page),
+    ("room shortcut shown to everyone", m_room_badge_everyone),
+    ("room shortcut keyed to no area", m_room_badge_wrong_area),
     ("Environment tiles named reading + device again", m_env_names_with_device),
     ("two readings in a room share a tile name", m_env_names_collide),
     ("the AC graph also draws the sockets", m_graph_unlabelled),
