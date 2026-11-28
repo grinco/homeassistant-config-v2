@@ -37,10 +37,11 @@ live only.
 ## Presence for Magic Areas
 
 `binary_sensor.phone_presence_living_room` / `_office` (occupancy) are on while anyone's settled room
-is that area. They are deliberately **not** assigned to their areas yet: Magic Areas takes every
-occupancy sensor in an area as a presence source, and a phone left on the desk would hold the room
-occupied, lights included, until it moves. The operator decides between a full source and keep-only
-(it can hold a room occupied but cannot make it so).
+is that area. Each is assigned to its area and listed in that area's Magic Areas
+`keep_only_entities` (operator, 28.11). A keep-only source holds an occupied room occupied, so lights
+stay on while someone sits still, but cannot make the room occupied by itself; motion and the FP2
+still start presence. Accepted risk: a phone left on the desk keeps an already occupied room occupied
+until it moves or leaves.
 
 ## Adding a person
 
