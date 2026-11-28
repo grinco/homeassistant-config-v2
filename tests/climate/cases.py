@@ -3958,3 +3958,50 @@ A(dhw_rel("a hold missed during a restart is ended late", "True", left="-5400",
           finding="the restart case: HA came back after the stamp"))
 A(dhw_rel("no hold, nothing to end", "False", hold="false", left="-5400",
           finding="an old stamp alone never touches the tank"))
+
+
+# 2026-11-28 phone room fingerprint (shadow only): Bermuda names the nearest proxy, and five rooms
+# have none, so it calls the bedroom "Closet" and both bathrooms "Corridor". The matcher reads the
+# phone's distance to every proxy: a room's own proxy within 2 m names that room; otherwise the
+# nearest walk fingerprint (log distance) does. Fewer than two proxies hearing the phone is no room.
+FP = "Presence room fingerprint vadim"
+_FPP = "states('sensor.vadim_s_iphone_distance_to_%s')"
+FP_READS = [_FPP % "closet_bt_proxy", "states('%s')" % _RM["kid1"]["ble_dist_vadim"],
+            _FPP % "livingroom_br_proxy", _FPP % "office_bt_proxy", _FPP % "corridor_bt_proxy",
+            _FPP % "geiger_counter_ble_proxy"]
+
+
+def fpc(name, expect, metres, finding=""):
+    """metres: closet, kid-1 room, living room, office, corridor, Geiger; None = not heard."""
+    subs = {r: "'unavailable'" if m is None else "'%s'" % m for r, m in zip(FP_READS, metres)}
+    return sensor_case("fingerprint: " + name, expect, subs, finding=finding, sensor=FP)
+
+
+_BED = [4.3, 27.1, 21.1, 29.3, 9.3, None]
+_SOFA = [7.9, 18.8, 3.2, 4.8, 4.7, 4.6]
+A(fpc("the bedroom's walk reading is the bedroom, not the closet", "Bedroom", _BED,
+      finding="Bermuda said Closet 18 of 18 in the bedroom"))
+A(fpc("the closet proxy at 2.0 m names the closet", "Closet", [2.0] + _BED[1:],
+      finding="the own-proxy radius from inside"))
+A(fpc("the closet proxy at 2.1 m is left to the fingerprints", "Bedroom", [2.1] + _BED[1:],
+      finding="the own-proxy radius from outside"))
+A(fpc("the office proxy within 2 m names the office", "Guest Room", _SOFA[:3] + [1.5] + _SOFA[4:],
+      finding="the office has no walk fingerprint; its proxy is the evidence"))
+A(fpc("the sofa is the living room though its proxy is 3 m away", "Living Room", _SOFA,
+      finding="the walk: sofa 3.2 m from the living-room proxy"))
+A(fpc("two room proxies near: the nearer wins", "Closet", [1.2, 18.8, 1.9, 4.8, 4.7, 4.6],
+      finding="the closet sits above the kitchen"))
+A(fpc("a bedroom reading without the closet proxy is still not the closet", "Bedroom",
+      [None] + _BED[1:], finding="an unheard proxy is far, never near"))
+A(fpc("the downstairs bathroom is the shower, not the corridor", "Shower",
+      [9.3, 14.7, 7.0, 13.1, 3.2, 15.7], finding="Bermuda said Corridor 18 of 18 at the sink"))
+A(fpc("the upstairs bathroom is the bathroom, not the kid-1 room", "Bathroom",
+      [14.5, 4.0, 17.1, 11.6, 4.0, 12.6], finding="Bermuda said kid-1 room 14 of 18 there"))
+A(fpc("kid-2's room is not the corridor", _RM["kid2"]["area_name"], [8.6, 8.0, 5.4, 8.2, 2.9, 7.4],
+      finding="Bermuda said Corridor 17 of 18 there"))
+A(fpc("one proxy hearing the phone is no room", "", [None, None, None, None, 2.5, None],
+      finding="a phone at the door is not in the corridor"))
+A(fpc("two proxies hearing the phone is a room", "Corridor", [None, None, 5.7, None, 2.5, None],
+      finding="the heard count from above"))
+A(fpc("a far proxy reading double is noise, not another room", _RM["kid2"]["area_name"],
+      [8.6, 16.0, 5.4, 8.2, 2.9, 7.4], finding="log distance: 8 m against 16 m weighs as 2 m against 4 m"))
