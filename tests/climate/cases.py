@@ -3550,8 +3550,11 @@ def em(name, expect, hours, finding, blind="false"):
 
 A(em("a blind detector says so instead of 'none'", "detector blind", {"kid1": 0.0}, "review #53 F1",
      blind="true"))
-A(em("a blind detector still names hours it counted before", "detector blind", {"kid1": 3.2},
-     "review #53 F1: hours from a half-blind week are not the week", blind="true"))
+# Operator 2026-11-28 overrides review #53 F1's "a half-blind week is not the week": one room's VOC
+# sensor dropping out at 23:39 hid the airings counted at 22:23 and 23:46. Hours counted stay shown,
+# flagged, so a dead sensor never erases a week.
+A(em("a blind detector still names hours it counted, flagged", "kid1: 3.2 h this week (detector blind)",
+     {"kid1": 3.2}, "2026-11-28: yesterday's airings vanished behind 'detector blind'", blind="true"))
 
 
 A(em("the room with the most window hours", "kid1: 3.2 h this week", {"kid1": 3.2, "bedroom": 0.4},
@@ -3760,7 +3763,10 @@ def ar(name, expect, hours, blind="false", finding=""):
 A(ar("every detector room, most aired first", "bedroom 0.3 h · kid1 0.0 h", {"kid1": 0.0, "bedroom": 0.27},
      finding="24.11: the bedroom's morning airing"))
 A(ar("no counters yet", "none this week", {}, finding="before the first airing"))
-A(ar("a blind detector says so", "detector blind", {"bedroom": 3.0}, blind="true", finding="review #53 F1"))
+A(ar("a blind detector keeps the counted hours", "bedroom 3.0 h · kid1 0.2 h", {"bedroom": 3.0, "kid1": 0.23},
+     blind="true", finding="2026-11-28: yesterday's airings vanished behind 'detector blind'"))
+A(ar("a blind detector with nothing counted says so", "detector blind", {"bedroom": 0.0}, blind="true",
+     finding="review #53 F1"))
 
 # Pre-heat on the way home (operator 2026-11-24). After a long Away the house sits at the pet floor and
 # takes hours to recover. When someone heads home and is within 15 km, the Away floor gives way, both

@@ -555,7 +555,7 @@
    "domain": "template",
    "options": {
     "name": "Energy aired most",
-    "state": "{% set ns = namespace(best='', h=0) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.airing_.*_last_7_days$') %}{% set v = s.state | float(0) %}{% if v > ns.h %}{% set ns.best = s.entity_id[14:-12] %}{% set ns.h = v %}{% endif %}{% endfor %}{% if is_state('binary_sensor.climate_window_detector_blind', 'on') %}detector blind{% elif ns.h < 0.5 %}none this week{% else %}{{ area_name('sensor.climate_temp_' ~ ns.best) or ns.best }}: {{ ns.h | round(1) }} h this week{% endif %}",
+    "state": "{% set ns = namespace(best='', h=0) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.airing_.*_last_7_days$') %}{% set v = s.state | float(0) %}{% if v > ns.h %}{% set ns.best = s.entity_id[14:-12] %}{% set ns.h = v %}{% endif %}{% endfor %}{% set blind = is_state('binary_sensor.climate_window_detector_blind', 'on') %}{% if ns.h < 0.5 %}{{ 'detector blind' if blind else 'none this week' }}{% else %}{{ area_name('sensor.climate_temp_' ~ ns.best) or ns.best }}: {{ ns.h | round(1) }} h this week{{ ' (detector blind)' if blind else '' }}{% endif %}",
     "template_type": "sensor"
    },
    "title": "Energy aired most"
@@ -656,7 +656,7 @@
    "domain": "template",
    "options": {
     "name": "Energy airing ranking",
-    "state": "{% set ns = namespace(l=[]) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.airing_.*_last_7_days$') %}{% set ns.l = ns.l + [(s.entity_id[14:-12], s.state | float(0))] %}{% endfor %}{% if is_state('binary_sensor.climate_window_detector_blind', 'on') %}detector blind{% elif not ns.l %}none this week{% else %}{% set out = namespace(l=[]) %}{% for r, h in ns.l | sort(attribute=1, reverse=true) %}{% set out.l = out.l + [(area_name('sensor.climate_temp_' ~ r) or r) ~ ' ' ~ (h | round(1)) ~ ' h'] %}{% endfor %}{{ out.l | join(' · ') }}{% endif %}",
+    "state": "{% set ns = namespace(l=[]) %}{% for s in states.sensor | selectattr('entity_id', 'match', 'sensor\\.airing_.*_last_7_days$') %}{% set ns.l = ns.l + [(s.entity_id[14:-12], s.state | float(0))] %}{% endfor %}{% if is_state('binary_sensor.climate_window_detector_blind', 'on') and (ns.l | map(attribute=1) | sum) < 0.05 %}detector blind{% elif not ns.l %}none this week{% else %}{% set out = namespace(l=[]) %}{% for r, h in ns.l | sort(attribute=1, reverse=true) %}{% set out.l = out.l + [(area_name('sensor.climate_temp_' ~ r) or r) ~ ' ' ~ (h | round(1)) ~ ' h'] %}{% endfor %}{{ out.l | join(' · ') }}{% endif %}",
     "template_type": "sensor"
    },
    "title": "Energy airing ranking"

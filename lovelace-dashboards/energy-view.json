@@ -778,7 +778,7 @@
      "type": "markdown"
     },
     {
-     "content": "**Aired most** · hours a window was open this week\n\n{% set l = states('sensor.energy_airing_ranking') %}{% if ' h' in l or '×' in l %}{% for x in l.split(' · ') %}{{ loop.index }}. {{ x }}\n{% endfor %}{% else %}{{ l }}{% endif %}",
+     "content": "**Aired most** · hours a window was open this week\n\n{% set l = states('sensor.energy_airing_ranking') %}{% if ' h' in l or '×' in l %}{% for x in l.split(' · ') %}{{ loop.index }}. {{ x }}\n{% endfor %}{% else %}{{ l }}{% endif %}{% if is_state('binary_sensor.climate_window_detector_blind', 'on') %}\n<small>Window detector blind since {{ as_local(states.binary_sensor.climate_window_detector_blind.last_changed).strftime('%-d.%-m. %H:%M') }} · hours may be short</small>{% endif %}",
      "entity_id": [
       "sensor.energy_airing_ranking"
      ],
