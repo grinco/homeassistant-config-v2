@@ -3511,6 +3511,44 @@ for _title in ("Climate window bedroom", "Climate window " + K1["title"]):
           finding="review #53 F4: the tolerance from outside"))
 
 
+# CO2 window detector (operator 2026-11-28): the living room and office have CO2 meters but no VOC
+# sensor, and the moisture ratio is useless there (backtest 14-28.11: 137 hits in the living room,
+# a room merely drier than the flat). Fresh air shows as CO2 falling fast: at least 100 ppm, and at
+# least 30 % of the excess over outdoor air (420 ppm), below the 20-minute maximum (a statistics
+# helper). A person leaving decays the excess by ~15 % in 20 min; an open window by most of it.
+# Counts airing hours only: not wired to the AC loop or the push until logged airings confirm it.
+CW_C, CW_M = "states('sensor.climate_co2_' ~ room)", "states('sensor.climate_co2_' ~ room ~ '_max_20min')"
+CW_OT, CW_TW = "states('sensor.climate_temp_outdoor')", "states(trv_w)"
+
+
+def cw(title, name, expect, c="'800'", m="'800'", ot="'4'", tw="'off'", finding=""):
+    return sensor_case("co2 window %s: %s" % (title[len("Climate CO2 window "):], name), expect,
+                       {CW_C: c, CW_M: m, CW_OT: ot, CW_TW: tw}, finding=finding, sensor=title)
+
+
+for _title in ("Climate CO2 window living room", "Climate CO2 window office"):
+    A(cw(_title, "a steady room", "False", finding="no fall, no window"))
+    A(cw(_title, "aired: 900 to 600 ppm", "True", m="'900'", c="'600'", finding="26.11 20:07: 791 to 557"))
+    A(cw(_title, "a 99 ppm fall is noise", "False", m="'700'", c="'601'", finding="the fall from below"))
+    A(cw(_title, "a 100 ppm fall at 36 % of the excess counts", "True", m="'700'", c="'600'",
+         finding="the fall from above"))
+    A(cw(_title, "172 of 580 ppm excess is someone leaving", "False", m="'1000'", c="'828'",
+         finding="the share from below: 30 % is 174"))
+    A(cw(_title, "176 of 580 ppm excess is fresh air", "True", m="'1000'", c="'824'",
+         finding="the share from above"))
+    A(cw(_title, "11.9 C outside is the heating season", "True", m="'900'", c="'600'", ot="'11.9'",
+         finding="the season from below"))
+    A(cw(_title, "12 C outside is not", "False", m="'900'", c="'600'", ot="'12'",
+         finding="in mild weather airing is no loss and no news"))
+    A(cw(_title, "the valve's own window flag is an opening", "True", tw="'on'",
+         finding="the thermostat saw it, whatever the air says"))
+    for _k, _sub in ((CW_C, "CO2 reading"), (CW_M, "20-minute maximum"), (CW_OT, "outdoor temperature")):
+        _kw = {CW_C: "'600'", CW_M: "'900'", CW_OT: "'4'", CW_TW: "'off'"}
+        _kw[_k] = "'unavailable'"
+        A(sensor_case("co2 window %s: no %s is not a window" % (_title[len("Climate CO2 window "):], _sub),
+                      "False", _kw, finding="unknown is not open", sensor=_title))
+
+
 # Review #53 F1: the detector fails closed when an input is missing, which is right for the decision
 # and silent for the household: Aired most would say "none this week" with the detector blind. This
 # names that state; Aired most reads it.

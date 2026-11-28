@@ -183,6 +183,10 @@ def build_house():
              device_class="occupancy")
     h.entity("input_select.material_you_spec", "Material You spec", "2025",
              {"options": ["2021", "2025"]}, platform="input_select")
+    # 2026-11-28 room shortcut: Home's header badges read each person's settled room; empty
+    # here, so the invented house renders with no badge showing (they are per-user anyway)
+    h.entity("input_text.room_vadim", "Room vadim", "", {"min": 0, "max": 64, "mode": "text"},
+             platform="input_text")
     return h
 
 

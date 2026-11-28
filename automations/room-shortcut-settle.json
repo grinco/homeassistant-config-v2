@@ -1,0 +1,64 @@
+{
+ "actions": [
+  {
+   "repeat": {
+    "for_each": "{{ phones }}",
+    "sequence": [
+     {
+      "variables": {
+       "area": "{{ states(repeat.item[0]) }}",
+       "room": "{{ area if area not in ['unknown', 'unavailable', 'not_home', 'none', ''] else '' }}"
+      }
+     },
+     {
+      "if": [
+       {
+        "condition": "template",
+        "value_template": "{{ states(repeat.item[1]) != room and (trigger.platform != 'state' or trigger.entity_id == repeat.item[0]) }}"
+       }
+      ],
+      "then": [
+       {
+        "action": "input_text.set_value",
+        "data": {
+         "value": "{{ room }}"
+        },
+        "target": {
+         "entity_id": "{{ repeat.item[1] }}"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "alias": "Room shortcut: settle each phone's room",
+ "conditions": [],
+ "description": "2026-11-28 (operator): POC. Bermuda's per-phone area flickers while walking (a 6 s Corridor between Living room and Office). A room is copied to the person's input_text.room_<name> only after it has held 30 s; the Home header's room badges read that helper. Unknown/unavailable/away clears it. Add a person by adding a trigger and a phones entry.",
+ "id": "1792400000020",
+ "mode": "queued",
+ "triggers": [
+  {
+   "entity_id": [
+    "sensor.vadim_s_iphone_area"
+   ],
+   "for": {
+    "seconds": 30
+   },
+   "trigger": "state"
+  },
+  {
+   "event": "start",
+   "trigger": "homeassistant"
+  }
+ ],
+ "variables": {
+  "phones": [
+   [
+    "sensor.vadim_s_iphone_area",
+    "input_text.room_vadim"
+   ]
+  ]
+ }
+}

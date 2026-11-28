@@ -211,6 +211,7 @@ def grid_meters(prefs_path=ENERGY):
 
 
 WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set voc_e = '[a-z0-9_.]+' %\}\{% set trv_w = '[a-z0-9_.]+' %\}")
+CO2_WINDOW_HEADER = re.compile(r"^\{% set room = '[a-z0-9_]+' %\}\{% set trv_w = '[a-z0-9_.]*' %\}")
 NIGHT_HEADER = re.compile(r"^\{% set room = '([a-z0-9_]+)' %\}\{% set f = ([0-9.]+) %\}")
 
 # Formulas copied per room on purpose: run.py substitutes the reads in each sensor's own text and
@@ -219,6 +220,7 @@ NIGHT_HEADER = re.compile(r"^\{% set room = '([a-z0-9_]+)' %\}\{% set f = ([0-9.
 COPIED_FAMILIES = (
     ("Climate window ", WINDOW_HEADER, ("Climate window detector blind",)),
     ("Climate night target ", NIGHT_HEADER, ()),
+    ("Climate CO2 window ", CO2_WINDOW_HEADER, ()),
 )
 
 

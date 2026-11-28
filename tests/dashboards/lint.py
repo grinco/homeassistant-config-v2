@@ -299,6 +299,10 @@ Checks, each one written because something it catches actually shipped:
                          the page. Operator, 2026-11-27: it pauses the room's AC and presence
                          lighting, so it belongs with the automations, near the top - not in
                          the Climate grid where it first landed.
+  C49 room-shortcut      each room badge on Home (entity input_text.room_<person>) opens an
+                         existing page, shows only to its one user and only while that person's
+                         settled room is a real area, and no person has two badges for one area.
+                         Operator, 2026-11-28: a quick launch for the room the phone is in.
   C7 compact-layout      the vg_stat family is two lines tall, so it gets
                          `rows: 1` (56px), not `rows: 2` (120px) with half the
                          card empty; `columns` stays on the 6/12/full ladder so
@@ -1850,6 +1854,37 @@ def main():
                             misplaced.append("%s: %s can show a sleeping toggle a second time" % (v.get("path"), path))
             if misplaced:
                 fail("C48", "%s: a room's Sleeping here is not on top, or shows twice" % label, misplaced)
+
+        # C49 - room shortcut badges on Home: a real page, one user, a real area, once each.
+        if label == "lovelace":
+            room_names = set(area_names().values())
+            paths_ = {v.get("path") for v in views}
+            bad, seen_ = [], set()
+            for v in views:
+                for b in v.get("badges") or []:
+                    eid = b.get("entity") or ""
+                    if not eid.startswith("input_text.room_"):
+                        continue
+                    nav = (b.get("tap_action") or {}).get("navigation_path") or ""
+                    vis = b.get("visibility") or []
+                    users = [c for c in vis if c.get("condition") == "user"]
+                    st = [c for c in vis if c.get("condition") == "state" and c.get("entity") == eid]
+                    where = "%s badge %s" % (v.get("path"), b.get("name"))
+                    if v.get("path") != "home":
+                        bad.append("%s: room badges belong on Home" % where)
+                    if not nav.startswith("/lovelace/") or nav[len("/lovelace/"):] not in paths_:
+                        bad.append("%s: opens %r, not a page" % (where, nav))
+                    if len(users) != 1 or len(users[0].get("users") or []) != 1:
+                        bad.append("%s: not limited to exactly one user" % where)
+                    if len(st) != 1 or st[0].get("state") not in room_names:
+                        bad.append("%s: not tied to one real area of its own helper" % where)
+                    else:
+                        key = (eid, st[0]["state"])
+                        if key in seen_:
+                            bad.append("%s: a second badge for %s" % (where, key[1]))
+                        seen_.add(key)
+            if bad:
+                fail("C49", "%s: a room shortcut badge is wrong" % label, bad)
 
         # C32 - in-app links in markdown land on a view that exists.
         paths = {v.get("path") for v in views}

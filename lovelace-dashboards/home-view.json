@@ -1,6 +1,384 @@
 {
  "badges": [
   {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:sofa-outline",
+   "name": "Living room",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/living-room"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Living Room"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:countertop-outline",
+   "name": "Kitchen",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/kitchen"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Kitchen"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:desk",
+   "name": "Office",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/guest-room"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Guest Room"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:stairs",
+   "name": "Corridor",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/corridor"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Corridor"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:stairs-down",
+   "name": "Stairs",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/stairs"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Stairs"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:bed-outline",
+   "name": "Bedroom",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/bedroom"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Bedroom"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:teddy-bear",
+   "name": "Kids room 1",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/kid1"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Kids room 1’ Room"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:teddy-bear",
+   "name": "Kids room 2",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/kid2"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Kids room 2’s Room"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:door",
+   "name": "Hallway",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/hallway"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Hallway"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:bathtub-outline",
+   "name": "Bathroom",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/bathroom"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Bathroom"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:shower-head",
+   "name": "Shower",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/shower"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Shower"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:washing-machine",
+   "name": "Laundry",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/laundry-room"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Laundry Room"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:hanger",
+   "name": "Closet",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/closet"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Closet"
+    }
+   ]
+  },
+  {
+   "color": "deep-orange",
+   "entity": "input_text.room_vadim",
+   "icon": "mdi:tea-outline",
+   "name": "Tea room",
+   "show_icon": true,
+   "show_name": true,
+   "show_state": false,
+   "tap_action": {
+    "action": "navigate",
+    "navigation_path": "/lovelace/tea-room"
+   },
+   "type": "entity",
+   "visibility": [
+    {
+     "condition": "user",
+     "users": [
+      "43341eb6e503484cb5affcac9886b3bf"
+     ]
+    },
+    {
+     "condition": "state",
+     "entity": "input_text.room_vadim",
+     "state": "Tea Room"
+    }
+   ]
+  },
+  {
    "entity": "person.vadim_grinco",
    "name": "Vadim",
    "show_entity_picture": true,
