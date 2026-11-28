@@ -210,6 +210,14 @@ multiple of the median room, a room the last run flagged as a window marked `(wi
 when the detector cannot see. Both replace the single-name tiles on the Energy view's Airtightness
 section with numbered lists; *Leaks most* / *Aired most* remain as sensors for the briefing.
 
+**A blind detector no longer hides the week (operator, 2026-11-28).** Review #53 F1 had a blind
+detector replace the list with `detector blind`, on the reasoning that hours from a half-blind week
+are not the week. In practice one room's VOC sensor dropped out at 23:39 on 27.11 and hid the two
+airings it had counted at 22:23 and 23:46. The `history_stats` counters are already a rolling 7 days
+and keep what they counted, so the list now always shows them; `detector blind` appears only when
+nothing was counted. *Aired most* appends `(detector blind)` to the room it names, and the Energy
+card adds a small line with the time the detector went blind.
+
 ### When the leak meter measures (2026-11-25)
 
 The first live run (Away 25.11 11:41-14:55) stored the living room, kid 2 room and corridor at
